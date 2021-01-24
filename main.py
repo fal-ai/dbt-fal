@@ -6,17 +6,12 @@ def init():
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     return
 
-def stage():
-    bashCommand = 'git add .'
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    return
-
 def commit(message: str):
-    bashCommand = 'git add .'
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    bashCommand = 'git commit -m'.split()
-    bashCommand.append("%s" %(message))
-    process = subprocess.Popen(bashCommand, stdout=subprocess.PIPE)
+    addCommand = 'git add .'
+    process = subprocess.Popen(addCommand.split(), stdout=subprocess.PIPE)
+    commitCommand = 'git commit -m'.split()
+    commitCommand.append("%s" %(message))
+    process = subprocess.Popen(commitCommand, stdout=subprocess.PIPE)
     return
 
 def push():
@@ -26,7 +21,6 @@ def push():
 if __name__ == "__main__":
     fire.Fire({
         "init": init,
-        "stage": stage,
         "commit": commit,
         "push": push
     })
