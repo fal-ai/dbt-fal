@@ -14,6 +14,7 @@ pystan = "2.18.0"
 fbprophet = "^0.7.1"
 google-cloud-bigquery = "^2.28.1"
 google-cloud-bigquery-storage = "^2.9.1"
+pyarrow = "^5.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
