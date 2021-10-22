@@ -6,11 +6,14 @@ import json
 import pandas as pd
 import datetime
 import time
+import pathlib
+from glob import glob
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from fbprophet import Prophet
 from fbprophet.plot import plot_plotly
 from google.cloud import bigquery, bigquery_storage
+from typing import List
 
 
 DBT_PROJECT_YML = "dbt_project.yml"
@@ -21,29 +24,54 @@ SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 
 
 @click.command()
-@click.argument("model")
-@click.argument("message")
-def run(model: str, message: str):
+def run():
     """Run forecast."""
     try:
         with open(DBT_PROJECT_YML) as raw_project:
             project = yaml.load(raw_project, Loader=yaml.FullLoader)
-            target_path = project['target-path']
-            model_table = find_model_table(
-                model_name=model, target_path=target_path)
-            df = get_bq_df(table_id=model_table)
-            forecast = make_forecast(
-                dataframe=df,
-                filename=f"{FORECAST_PREFIX}{time.time()}.png")
-            send_slack_file(
-                file_path=forecast,
-                message_text=message,
-                channel_id=CHANNEL_ID,
-                slack_token=SLACK_TOKEN
-            )
+            project_dir = str(pathlib.Path().resolve())
+            # Find all YMLs
+            paths = [filename for item in os.walk(str(project_dir)) for filename in glob(os.path.join(item[0], '*.yml'))]
+
+            # Find model names
+            model_names = [_find_model_names(path) for path in paths]
+            model_names = [model for sublist in model_names for model in sublist]
+
+            # Run forecast
+            for model in model_names:
+                _forecast(model=model, message=f"Forecast for {model}", project=project)
+
     except (OSError, yaml.YAMLError):
         raise OSError(
             f"File {DBT_PROJECT_YML} not found")
+
+
+def _find_model_names(filepath) -> List[str]:
+    with open(filepath) as rawyml:
+        tree = yaml.load(rawyml, Loader=yaml.FullLoader)
+        output = []
+        for key in tree:
+            if 'models' in tree:
+                for model in tree['models']:
+                    if 'meta' in model and 'fal_model' in model['meta']:
+                        output.append(model['name'])
+        return list(dict.fromkeys(output))
+
+
+def _forecast(model, message, project: dict):
+    target_path = project['target-path']
+    model_table = find_model_table(
+        model_name=model, target_path=target_path)
+    df = get_bq_df(table_id=model_table)
+    forecast = make_forecast(
+        dataframe=df,
+        filename=f"{FORECAST_PREFIX}{time.time()}.png")
+    send_slack_file(
+        file_path=forecast,
+        message_text=message,
+        channel_id=CHANNEL_ID,
+        slack_token=SLACK_TOKEN
+    )
 
 
 def find_model_table(model_name: str, target_path: str):
