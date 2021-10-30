@@ -1,0 +1,26 @@
+name: "asdfasdf"
+
+on_event: "model.success"
+
+jobs:
+  something:
+    steps:
+      - name: channel_name
+        run: |
+          echo "#my_channel"
+      - name: sleep_time
+        run: |
+          echo "4"
+      - name: wait
+        run: |
+          sleep {{ steps.sleep_time.outputs.stdout }}
+      - name: message
+        run: |
+          echo "Send this message!"
+  some_other_thing:
+    steps:
+      - name: zxcvzxcv
+        python_class: actions.slack.slack_action.SlackAction
+        with:
+          channel: '{{ steps.channel_name.outputs.stdout }}'
+          message: '{{ steps.message.outputs.stdout }}'

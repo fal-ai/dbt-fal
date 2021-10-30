@@ -1,0 +1,21 @@
+name: 'Slack action'
+description: 'Sends a slack message'
+inputs:
+  message:
+    description: 'Message to send'
+  channel:
+    description: 'Channel to send it to'
+  # token:
+  #   description: Used to pull node distributions from node-versions.  Since there's a default, this is typically not supplied by the user.
+  #   default: ${{ github.token }}
+  # version:
+  #   description: 'Deprecated. Use node-version instead. Will not be supported after October 1, 2019'
+  #   deprecationMessage: 'The version property will not be supported after October 1, 2019. Use node-version instead'
+outputs:
+  status: 
+    description: 'Status of message delivery'
+# runs:
+#   using: 'node12'
+#   main: 'dist/setup/index.js'
+#   post: 'dist/cache-save/index.js'
+#   post-if: success()
