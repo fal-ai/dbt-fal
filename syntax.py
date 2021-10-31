@@ -9,11 +9,13 @@ class On(str, Enum):
 class BashStep(BaseModel):
     name: str
     run: str
+    env: Dict[str, str] = {}
 
 class PythonClassStep(BaseModel):
     name: str
     python_class: str
     with_: Dict[str, str]
+    env: Dict[str, str] = {}
 
     class Config:
         fields = {
@@ -22,6 +24,7 @@ class PythonClassStep(BaseModel):
 
 class Job(BaseModel):
     steps: List[Union[BashStep, PythonClassStep]]
+    env: Dict[str, str] = {}
 
 class Workflow(BaseModel):
     name: str

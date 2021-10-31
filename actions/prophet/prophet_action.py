@@ -1,9 +1,6 @@
 from prophet import Prophet
 from utils import get_table_as_df
 
-import os
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/burkaygur/Downloads/learning-project-305919-7332af49c95b.json"
-
 class ProphetAction:
     def __init__(self):
         self.model = Prophet()

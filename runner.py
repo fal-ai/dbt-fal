@@ -9,6 +9,7 @@ from syntax import PythonClassStep, Workflow, BashStep
 
 from jinja2 import Template
 
+import os
 
 class Runner():
     def __init__(self):
@@ -24,6 +25,11 @@ class Runner():
 
         msg = tm.render(steps=template_context)
         return msg
+
+    def _set_env(self, env) -> None:
+        for k, v in env.items():
+            os.environ[k] = v
+        return
 
     def run_simple_step(self, step) -> None:
         step_context = StepContext()
@@ -76,9 +82,11 @@ class Runner():
         for job_id in workflow.jobs:
             print(f'# Running job: {job_id}')
             job = workflow.jobs[job_id]
+            self._set_env(job.env)
 
             for step in job.steps:
                 print(f'  * Running step: {step.name}')
+                self._set_env(step.env)
 
                 if isinstance(step, BashStep):
                     self.run_simple_step(step)

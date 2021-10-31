@@ -28,6 +28,8 @@ jobs:
   forecast:
     steps:
       - name: forecast
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /Users/burkaygur/Downloads/learning-project-305919-7332af49c95b.json
         python_class: actions.prophet.prophet_action.ProphetAction
         with:
           df: 'daily_orders'
