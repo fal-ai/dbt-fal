@@ -9,7 +9,6 @@ from syntax import PythonClassStep, Workflow, BashStep
 
 from jinja2 import Template
 
-import pprint
 
 class Runner():
     def __init__(self):
@@ -18,7 +17,6 @@ class Runner():
 
     def _substitute_variables(self, cmd: str):
         tm = Template(cmd)
-
         template_context = {}
 
         for step_name, step_context in self.global_context['steps'].items():

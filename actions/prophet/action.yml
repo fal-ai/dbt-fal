@@ -1,0 +1,18 @@
+name: 'Prophet action'
+description: 'Makes a forecast'
+inputs:
+  df:
+    description: 'Input dataframe'
+  y:
+    description: 'Column to predict'
+  ts:
+    description: 'Timestamp column'
+  periods:
+    description: 'How far to forecast'
+    default: 14
+outputs:
+  graph: 
+    description: 'Graph as an image'
+  df:
+    description: 'Output dataframe'
+

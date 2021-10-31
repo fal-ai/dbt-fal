@@ -24,3 +24,13 @@ jobs:
         with:
           channel: '{{ steps.channel_name.outputs.stdout }}'
           message: '{{ steps.message.outputs.stdout }}'
+
+  forecast:
+    steps:
+      - name: forecast
+        python_class: actions.prophet.prophet_action.ProphetAction
+        with:
+          df: 'daily_orders'
+          y: 'num_completed_orders'
+          ds: 'ds'
+          periods: 14
