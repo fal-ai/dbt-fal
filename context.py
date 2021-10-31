@@ -1,5 +1,4 @@
 import pprint
-from typing import Any
 
 def _merge_two_dicts(x, y):
     z = x.copy()   # start with keys and values of x
