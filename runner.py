@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 import subprocess
 import shlex
-from actions.context import StepContext
+from context import StepContext
 
 from syntax import PythonClassStep, Workflow, BashStep
 
