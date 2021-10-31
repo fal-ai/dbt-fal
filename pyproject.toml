@@ -17,6 +17,8 @@ google-cloud-bigquery-storage = "^2.9.1"
 pyarrow = "^5.0.0"
 plotly = "^5.3.1"
 kaleido = "0.2.0"
+pydantic = "^1.8.2"
+PyYAML = "^6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
