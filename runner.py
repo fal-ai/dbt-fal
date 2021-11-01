@@ -57,11 +57,13 @@ class Runner():
         step_context = StepContext({"inputs" : inputs})
 
         # Dynamically load action class
+        # format: actions.slack.slack_action.SlackAction
         python_class = step.python_class.split('.')
         cls = python_class[-1]
         mdl = ".".join(python_class[:-1])
 
         module = __import__(mdl,  fromlist=[''])
+        # from actions.slack.slack_action import SlackAction
         action_cls = getattr(module, cls)
         action_cls().run(step_context)
 
@@ -95,5 +97,6 @@ class Runner():
                 else:
                     raise Exception
 
+                # Debug: To see context
                 # pprint.pprint(self.global_context)
         return workflow

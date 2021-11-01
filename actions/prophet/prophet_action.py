@@ -4,6 +4,11 @@ from utils import get_table_as_df
 class ProphetAction:
     def __init__(self):
         self.model = Prophet()
+        # self.inputs = utils.get_inputs()
+        # df = context.get_input('df')
+        # y = context.get_input('y')
+        # ds = context.get_input('ds')
+        # periods = int(context.get_input('periods'))
         return
 
     def run(self, context):
