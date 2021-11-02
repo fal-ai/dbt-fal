@@ -1,7 +1,0 @@
-prophet
-pydantic
-jinja2
-google-cloud
-pyyaml
-google-api-python-client
-google-cloud-bigquery

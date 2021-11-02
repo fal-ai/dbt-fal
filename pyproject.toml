@@ -19,6 +19,8 @@ plotly = "^5.3.1"
 kaleido = "0.2.0"
 pydantic = "^1.8.2"
 PyYAML = "^6.0"
+ninja = "^1.10.2"
+Jinja2 = "^3.0.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
