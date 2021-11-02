@@ -2,6 +2,8 @@ import os
 import json
 import glob, os
 
+import click
+
 from dbt.utils.yaml_helper import load_yaml_text
 from dbt.project import (
     DbtModel,
@@ -12,6 +14,7 @@ from dbt.project import (
 )
 
 from typing import Dict, List, List, Any
+from pathlib import Path
 
 
 class FalParseError(Exception):
@@ -89,6 +92,7 @@ def parse_project(root_dir, keyword):
         models=_flatten(models),
         manifest=parse_manifest(manifest_path),
         keyword=keyword,
+        profile=parse_profile(None),
     )
 
 
@@ -104,8 +108,9 @@ def parse_profile(profile_path) -> DbtProfileFile:
     """
     if profile_path is None:
         # check if profiles.yml exists otherwise throw
-        profile_data = _read_json("~/.dbt/profiles.yml")
-        return DbtProfileFile(**profile_data)
+        profile_data = _load_yaml(str(Path.home()) + "/" + "/.dbt/profiles.yml")
+        click.echo(profile_data)
+        return DbtProfileFile.parse_obj(profile_data)
     else:
-        profile_data = _read_json(profile_path)
+        profile_data = _load_yaml(profile_path)
         return DbtProfileFile(**profile_data)

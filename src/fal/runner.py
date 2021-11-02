@@ -3,7 +3,7 @@
 import click
 import os
 from actions.actions import forecast, make_forecast
-from dbt.parse import parse_project
+from dbt.parse import parse_profile, parse_project
 
 
 @click.command()

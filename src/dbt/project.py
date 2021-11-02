@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from os import name
-from typing import Dict, List, Optional, List, Any, Callable, TypeVar
+from typing import Dict, List, Optional, List, Any, TypeVar
 from pydantic import BaseModel
 from google.cloud import bigquery, bigquery_storage
+from pathlib import Path
 
 
 class FalGeneralException(Exception):
@@ -43,17 +44,29 @@ class DbtModel(BaseModel):
         return "model." + project_name + "." + self.name
 
 
+class DbtProfileOutputDetail(BaseModel):
+    type: str
+    method: str
+    ## pydantic is parsing default values as Lists
+    ## for example; "dataset: [the name of your dbt dataset]""
+    ## so they are Any types for now
+    keyfile: Any
+    project: Any
+    dataset: Any
+
+
 class DbtProfileOutput(BaseModel):
-    target: str
+    dev: DbtProfileOutputDetail
+    prod: DbtProfileOutputDetail
 
 
 class DbtProfile(BaseModel):
     target: str
-    outputs: List[DbtProfileOutput]
+    outputs: DbtProfileOutput
 
 
 class DbtProfileFile(BaseModel):
-    profiles: List[DbtProfile]
+    __root__: Dict[str, DbtProfile]
 
 
 T = TypeVar("T", bound="DbtProject")
@@ -66,6 +79,7 @@ class DbtProject:
     models: List[DbtModel]
     manifest: DbtManifest
     keyword: str
+    profile: DbtProfile
 
     def state_has_changed(self, other: DbtManifest) -> bool:
         return self.manifest != other
