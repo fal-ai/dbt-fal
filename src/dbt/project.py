@@ -79,7 +79,7 @@ class DbtProject:
     models: List[DbtModel]
     manifest: DbtManifest
     keyword: str
-    profile: DbtProfile
+    profiles: Dict[str, DbtProfile]
 
     def state_has_changed(self, other: DbtManifest) -> bool:
         return self.manifest != other
