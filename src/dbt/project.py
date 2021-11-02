@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from os import name
-from typing import Dict, List, Optional, List, Any, Callable
+from typing import Dict, List, Optional, List, Any, Callable, TypeVar
 from pydantic import BaseModel
 from google.cloud import bigquery, bigquery_storage
-from dbt.parse import parse_profile
 
 
 class FalGeneralException(Exception):
@@ -57,6 +56,9 @@ class DbtProfileFile(BaseModel):
     profiles: List[DbtProfile]
 
 
+T = TypeVar("T", bound="DbtProject")
+
+
 @dataclass
 class DbtProject:
     name: str
@@ -64,23 +66,13 @@ class DbtProject:
     models: List[DbtModel]
     manifest: DbtManifest
     keyword: str
-    meta_filter_parser: Callable
-
-    def filter_models(self) -> List[DbtModel]:
-        return list(
-            filter(lambda model: self.meta_filter_parser(model.meta), self.models)
-        )
 
     def state_has_changed(self, other: DbtManifest) -> bool:
         return self.manifest != other
 
     def find_model_location(self, model: DbtModel) -> List[str]:
         model_node = self.manifest.nodes[model.model_key(self.name)]
-        return model_node.relation_name
-
-    def get_credentials(self, profile_name: str, credential_name: str):
-        profile = parse_profile(None, self.name)
-        pass
+        return model_node.relation_name.replace("`", "")
 
     def get_materilization_type(self, model: DbtModel) -> str:
         model_node = self.manifest.nodes[model.model_key(self.name)]

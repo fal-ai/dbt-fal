@@ -2,7 +2,7 @@ import os
 import json
 import glob, os
 
-from utils.yaml_helper import load_yaml_text
+from dbt.utils.yaml_helper import load_yaml_text
 from dbt.project import (
     DbtModel,
     DbtProfileFile,
@@ -60,7 +60,7 @@ def _get_all_model_config(project_root, project_dict):
     )
 
 
-def parseProject(root_dir, keyword, meta_parser):
+def parse_project(root_dir, keyword):
     project_root = os.path.normpath(root_dir)
     project_yaml_filepath = os.path.join(project_root, "dbt_project.yml")
 
@@ -89,7 +89,6 @@ def parseProject(root_dir, keyword, meta_parser):
         models=_flatten(models),
         manifest=parse_manifest(manifest_path),
         keyword=keyword,
-        meta_filter_parser=meta_parser,
     )
 
 
