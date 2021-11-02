@@ -1,0 +1,20 @@
+name: 'Prophet action'
+description: 'Makes a forecast'
+inputs:
+  df:
+    type: dbt_model
+    description: 'Input dataframe'
+  y:
+    description: 'Column to predict'
+  ts:
+    description: 'Timestamp column'
+  periods:
+    description: 'How far to forecast'
+    default: 14
+    type: int
+outputs:
+  graph: 
+    description: 'Graph as an image'
+  df:
+    description: 'Output dataframe'
+
