@@ -4,8 +4,8 @@ import glob, os
 
 import click
 
-from dbt.utils.yaml_helper import load_yaml_text
-from dbt.project import (
+from faldbt.utils.yaml_helper import load_yaml_text
+from faldbt.project import (
     DbtModel,
     DbtProfileFile,
     DbtProject,
