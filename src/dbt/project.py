@@ -106,12 +106,4 @@ class DbtProject:
 
     def get_data_frame_for_model(self, model: DbtModel):
         table_id = self.find_model_location(model)
-        db_type = self.manifest.metadata["adapter_type"]
-        if db_type == "bigquery":
-            rows = bigquery.Client().list_rows(
-                bigquery.TableReference.from_string(table_id)
-            )
-            client = bigquery_storage.BigQueryReadClient()
-            return rows.to_dataframe(bqstorage_client=client)
-        else:
-            raise FalGeneralException(db_type + "is not supported in Fal yet.")
+        return self.get_data_frame(table_id)
