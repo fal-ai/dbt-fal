@@ -109,7 +109,9 @@ class DbtProject:
             rows = bigquery.Client(
                 credentials=credentials, project=credentials.project_id
             ).list_rows(bigquery.TableReference.from_string(table_id))
-            client = bigquery_storage.BigQueryReadClient()
+            client = bigquery_storage.BigQueryReadClient(
+                credentials=credentials
+            )
             return rows.to_dataframe(bqstorage_client=client)
         else:
             raise FalGeneralException(db_type + "is not supported in Fal yet.")

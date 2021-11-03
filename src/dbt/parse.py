@@ -56,7 +56,7 @@ def _get_all_model_config(project_root, project_dict):
             ## look at all of them find the ones that has model in them
             ## and keep remembering it
             lambda model_path: glob.glob(
-                os.path.join(project_root, model_path + "/**.yml")
+                os.path.join(project_root, model_path + "/**/*.yml")
             ),
             project_dict["source-paths"],
         )
