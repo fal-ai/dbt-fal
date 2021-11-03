@@ -3,6 +3,7 @@ from os import name
 from typing import Dict, List, Optional, List, Any, TypeVar
 from pydantic import BaseModel
 from google.cloud import bigquery, bigquery_storage
+from google.oauth2 import service_account
 from pathlib import Path
 
 
@@ -96,10 +97,17 @@ class DbtProject:
 
     def get_data_frame(self, table_id: str):
         db_type = self.manifest.metadata["adapter_type"]
+        key_file = self.profiles[self.name].outputs.dev.keyfile
+
+        credentials = service_account.Credentials.from_service_account_file(
+            key_file,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
+
         if db_type == "bigquery":
-            rows = bigquery.Client().list_rows(
-                bigquery.TableReference.from_string(table_id)
-            )
+            rows = bigquery.Client(
+                credentials=credentials, project=credentials.project_id
+            ).list_rows(bigquery.TableReference.from_string(table_id))
             client = bigquery_storage.BigQueryReadClient()
             return rows.to_dataframe(bqstorage_client=client)
         else:

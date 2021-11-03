@@ -112,7 +112,7 @@ def parse_profile(profile_path) -> DbtProfileFile:
     if profile_path is None:
         # check if profiles.yml exists otherwise throw
         profile_data = _load_yaml(str(Path.home()) + "/" + "/.dbt/profiles.yml")
-        return DbtProfileFile.parse_obj(profile_data)
+        return DbtProfileFile.parse_obj(profile_data).__root__
     else:
         profile_data = _load_yaml(profile_path)
-        return DbtProfileFile(**profile_data)
+        return DbtProfileFile.parse_obj(profile_data).__root__
