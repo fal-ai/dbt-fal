@@ -80,6 +80,7 @@ class DbtProject:
     manifest: DbtManifest
     keyword: str
     profiles: Dict[str, DbtProfile]
+    scripts: List[Path]
 
     def state_has_changed(self, other: DbtManifest) -> bool:
         return self.manifest != other
@@ -105,5 +106,10 @@ class DbtProject:
             raise FalGeneralException(db_type + "is not supported in Fal yet.")
 
     def get_data_frame_for_model(self, model: DbtModel):
+        table_id = self.find_model_location(model)
+        return self.get_data_frame(table_id)
+
+    def get_data_frame_for_model_name(self, model_name: str):
+        model = next(model for model in self.models if model.name == model_name)
         table_id = self.find_model_location(model)
         return self.get_data_frame(table_id)

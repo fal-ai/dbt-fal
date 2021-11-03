@@ -67,6 +67,8 @@ def parse_project(root_dir, keyword):
     project_root = os.path.normpath(root_dir)
     project_yaml_filepath = os.path.join(project_root, "dbt_project.yml")
 
+    scripts = glob.glob(os.path.join(project_root, project_root + "/**.py"))
+
     if not os.path.lexists(project_yaml_filepath):
         raise FalParseError(
             "no dbt_project.yml found at expected path {}".format(project_yaml_filepath)
@@ -92,7 +94,8 @@ def parse_project(root_dir, keyword):
         models=_flatten(models),
         manifest=parse_manifest(manifest_path),
         keyword=keyword,
-        profile=parse_profile(None),
+        profiles=parse_profile(None),
+        scripts=scripts,
     )
 
 
@@ -109,7 +112,6 @@ def parse_profile(profile_path) -> DbtProfileFile:
     if profile_path is None:
         # check if profiles.yml exists otherwise throw
         profile_data = _load_yaml(str(Path.home()) + "/" + "/.dbt/profiles.yml")
-        click.echo(profile_data)
         return DbtProfileFile.parse_obj(profile_data)
     else:
         profile_data = _load_yaml(profile_path)

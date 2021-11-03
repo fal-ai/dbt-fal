@@ -2,6 +2,7 @@
 
 import click
 import os
+import sys
 from actions.actions import forecast, make_forecast
 from dbt.parse import parse_profile, parse_project
 
@@ -22,4 +23,9 @@ from dbt.parse import parse_profile, parse_project
 )
 def run(run, dbt_dir, keyword):
     project = parse_project(dbt_dir, keyword)
-    forecast("WOHOO", project)
+    for script in project.scripts:
+        script_descriptor = open(script)
+        a_script = script_descriptor.read()
+        sys.argv = [project.get_data_frame]
+        exec(a_script, {"ref": project.get_data_frame_for_model_name})
+        script_descriptor.close()
