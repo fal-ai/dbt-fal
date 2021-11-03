@@ -37,7 +37,7 @@ class DbtManifest(BaseModel):
 
 class DbtModel(BaseModel):
     name: str
-    meta: Any
+    meta: Optional[Dict[str, Any]] = {}
     description: str
     columns: Any
 
@@ -58,7 +58,8 @@ class DbtProfileOutputDetail(BaseModel):
 
 class DbtProfileOutput(BaseModel):
     dev: DbtProfileOutputDetail
-    prod: DbtProfileOutputDetail
+    prod: Optional[DbtProfileOutputDetail]
+    default: Optional[DbtProfileOutputDetail]
 
 
 class DbtProfile(BaseModel):

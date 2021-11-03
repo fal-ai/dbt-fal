@@ -23,6 +23,10 @@ from dbt.parse import parse_profile, parse_project
 )
 def run(run, dbt_dir, keyword):
     project = parse_project(dbt_dir, keyword)
+    filtered_models = list(
+        filter(lambda model: model.meta.get(keyword, None) != None, project.models)
+    )
+    click.echo(filtered_models)
     for script in project.scripts:
         with open(script) as file:
             a_script = file.read()
