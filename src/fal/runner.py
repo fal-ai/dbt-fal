@@ -24,8 +24,7 @@ from dbt.parse import parse_profile, parse_project
 def run(run, dbt_dir, keyword):
     project = parse_project(dbt_dir, keyword)
     for script in project.scripts:
-        script_descriptor = open(script)
-        a_script = script_descriptor.read()
-        sys.argv = [project.get_data_frame]
-        exec(a_script, {"ref": project.get_data_frame_for_model_name})
-        script_descriptor.close()
+        with open(script) as file:
+            a_script = file.read()
+            sys.argv = [project.get_data_frame]
+            exec(a_script, {"ref": project.get_data_frame_for_model_name})
