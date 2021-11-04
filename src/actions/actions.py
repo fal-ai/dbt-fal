@@ -9,7 +9,7 @@ from fbprophet.plot import plot_plotly
 from typing import List
 import click
 
-from dbt.project import DbtProject
+from faldbt.project import DbtProject
 
 
 DBT_PROJECT_YML = "dbt_project.yml"

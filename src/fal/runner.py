@@ -4,7 +4,7 @@ import click
 import os
 import sys
 from actions.actions import forecast, make_forecast
-from dbt.parse import parse_project
+from faldbt.parse import parse_project
 from typing import Dict, Any
 
 
