@@ -4,7 +4,8 @@ import click
 import os
 import sys
 from actions.actions import forecast, make_forecast
-from dbt.parse import parse_profile, parse_project
+from dbt.parse import parse_project
+from typing import Dict, Any
 
 
 @click.command()
@@ -29,9 +30,26 @@ def run(run, dbt_dir, keyword):
     )
 
     for model in filtered_models:
-        for script in model.meta[keyword]['scripts']:
+        for script in model.meta[keyword]["scripts"]:
+            ## remove scripts put everything else as args
+            args = model.meta[keyword]
+            _del_key(args, "scripts")
+            args.update({"current_model": model.name})
+
             real_script = os.path.join(dbt_dir, script)
             with open(real_script) as file:
                 a_script = file.read()
-                exec(a_script, {"ref": project.get_data_frame_for_model_name,
-                                "current_model": model.name })
+                exec(
+                    a_script,
+                    {
+                        "ref": project.get_data_frame_for_model_name,
+                        "args": args,
+                    },
+                )
+
+
+def _del_key(dict: Dict[str, Any], key: str):
+    try:
+        del dict[key]
+    except KeyError:
+        pass

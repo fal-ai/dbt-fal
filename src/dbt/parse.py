@@ -56,7 +56,7 @@ def _get_all_model_config(project_root, project_dict):
             ## look at all of them find the ones that has model in them
             ## and keep remembering it
             lambda model_path: glob.glob(
-                os.path.join(project_root, model_path + "/**/*.yml")
+                os.path.join(project_root, model_path + "/**/*.yml"), recursive=True
             ),
             project_dict["source-paths"],
         )
@@ -67,7 +67,7 @@ def parse_project(root_dir, keyword):
     project_root = os.path.normpath(root_dir)
     project_yaml_filepath = os.path.join(project_root, "dbt_project.yml")
 
-    scripts = glob.glob(os.path.join(project_root, project_root + "/**.py"))
+    scripts = glob.glob(os.path.join(project_root, project_root + "*/**.py"))
 
     if not os.path.lexists(project_yaml_filepath):
         raise FalParseError(
@@ -80,7 +80,6 @@ def parse_project(root_dir, keyword):
         raise FalParseError("dbt_project.yml does not parse to a dictionary")
 
     model_config_paths = _get_all_model_config(project_root, project_dict)
-
     models = list(
         map(lambda config_path: _model_from_path(config_path), model_config_paths)
     )
