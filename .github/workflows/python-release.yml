@@ -1,0 +1,39 @@
+# This workflow will update the latest version and upload a Python Package using Artifactory on changes to main
+
+name: Upload Python Package
+
+on:
+  push:
+    branches: [ release ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+
+      - name: Set TOML version
+        run: |
+          CLIENT_VERSION=$(cat VERSION)
+          sed -i "s/999999/$CLIENT_VERSION/g" pyproject.toml
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: '1.1.4'
+
+      - name: Build and publish
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          PYPI_REPO_URL: ${{ secrets.PYPI_REPO_URL }}
+        run: |
+            poetry config repositories.pypi $PYPI_REPO_URL
+            poetry publish --build -r pypi -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n

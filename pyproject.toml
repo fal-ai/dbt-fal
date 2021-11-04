@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fal"
-version = "0.1.0"
+version = "999999"
 description = ""
 authors = ["Meder Kamalov <meder@fal.ai>"]
 
