@@ -67,7 +67,7 @@ def parse_project(root_dir, keyword):
     project_root = os.path.normpath(root_dir)
     project_yaml_filepath = os.path.join(project_root, "dbt_project.yml")
 
-    scripts = glob.glob(os.path.join(project_root, project_root + "*/**.py"))
+    scripts = glob.glob(os.path.join(project_root, project_root + "/**.py"))
 
     if not os.path.lexists(project_yaml_filepath):
         raise FalParseError(
