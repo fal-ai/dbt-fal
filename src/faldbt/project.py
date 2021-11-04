@@ -45,28 +45,6 @@ class DbtModel(BaseModel):
         return "model." + project_name + "." + self.name
 
 
-class DbtProfileOutputDetail(BaseModel):
-    type: str
-    method: str
-    ## pydantic is parsing default values as Lists
-    ## for example; "dataset: [the name of your dbt dataset]""
-    ## so they are Any types for now
-    keyfile: Any
-    project: Any
-    dataset: Any
-
-
-class DbtProfileOutput(BaseModel):
-    dev: DbtProfileOutputDetail
-    prod: Optional[DbtProfileOutputDetail]
-    default: Optional[DbtProfileOutputDetail]
-
-
-class DbtProfile(BaseModel):
-    target: str
-    outputs: DbtProfileOutput
-
-
 class DbtRunResult(BaseModel):
     status: str
     timing: List[Any]
@@ -83,10 +61,6 @@ class DbtRunResultFile(BaseModel):
     results: List[DbtRunResult]
 
 
-class DbtProfileFile(BaseModel):
-    __root__: Dict[str, DbtProfile]
-
-
 T = TypeVar("T", bound="DbtProject")
 
 
@@ -97,7 +71,6 @@ class DbtProject:
     models: List[DbtModel]
     manifest: DbtManifest
     keyword: str
-    profiles: Dict[str, DbtProfile]
     scripts: List[Path]
     results: DbtRunResultFile
 

@@ -7,10 +7,8 @@ import click
 from faldbt.utils.yaml_helper import load_yaml_text
 from faldbt.project import (
     DbtModel,
-    DbtProfileFile,
     DbtProject,
     DbtManifest,
-    DbtProfileFile,
     DbtRunResultFile,
 )
 
@@ -96,7 +94,6 @@ def parse_project(root_dir, keyword):
         models=_flatten(models),
         manifest=parse_manifest(manifest_path),
         keyword=keyword,
-        profiles=parse_profile(None),
         scripts=scripts,
         results=results,
     )
@@ -106,16 +103,3 @@ def parse_manifest(manifest_path) -> DbtManifest:
     manifest_data = _read_json(manifest_path)
     return DbtManifest(**manifest_data)
 
-
-def parse_profile(profile_path) -> DbtProfileFile:
-    """
-    profiles are by default in ~/.dbt/profiles.yml if its not there that means its overwritten
-    by DBT_PROFILES_DIR or CLI arg
-    """
-    if profile_path is None:
-        # check if profiles.yml exists otherwise throw
-        profile_data = _load_yaml(str(Path.home()) + "/" + "/.dbt/profiles.yml")
-        return DbtProfileFile.parse_obj(profile_data).__root__
-    else:
-        profile_data = _load_yaml(profile_path)
-        return DbtProfileFile.parse_obj(profile_data).__root__
