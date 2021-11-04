@@ -49,11 +49,6 @@ def run(run, dbt_dir, profiles_dir, keyword, changed_only):
     dbt.tracking.initialize_tracking(profiles_dir) # Necessary for parse_to_manifest to not fail
     manifest = lib.parse_to_manifest(config)
 
-    result = lib.execute_sql(manifest, dbt_dir, 'SELECT * FROM `learning-project-305919`.`dbt_matteo`.`cut_times__latest_timestamp`')
-    print(result.table.column_names)
-    for row in result.table.rows:
-        print(row)
-
     project = parse_project(dbt_dir, keyword)
 
     changed_model_names = list(
