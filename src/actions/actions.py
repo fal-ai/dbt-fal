@@ -16,7 +16,7 @@ DBT_PROJECT_YML = "dbt_project.yml"
 DBT_MANIFEST_JSON = "manifest.json"
 FORECAST_PREFIX = "fal_forecast_"
 CHANNEL_ID = "C01GYF1KWV7"
-SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
+SLACK_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 
 
 def forecast(message, project: DbtProject):
