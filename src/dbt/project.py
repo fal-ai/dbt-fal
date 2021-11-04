@@ -67,6 +67,22 @@ class DbtProfile(BaseModel):
     outputs: DbtProfileOutput
 
 
+class DbtRunResult(BaseModel):
+    status: str
+    timing: List[Any]
+    thread_id: str
+    execution_time: int
+    adapter_response: Dict[str, str]
+    message: str
+    failures: Any
+    unique_id: str
+
+
+class DbtRunResultFile(BaseModel):
+    metadata: Any
+    results: List[DbtRunResult]
+
+
 class DbtProfileFile(BaseModel):
     __root__: Dict[str, DbtProfile]
 
@@ -83,6 +99,7 @@ class DbtProject:
     keyword: str
     profiles: Dict[str, DbtProfile]
     scripts: List[Path]
+    results: DbtRunResultFile
 
     def state_has_changed(self, other: DbtManifest) -> bool:
         return self.manifest != other
@@ -109,9 +126,7 @@ class DbtProject:
             rows = bigquery.Client(
                 credentials=credentials, project=credentials.project_id
             ).list_rows(bigquery.TableReference.from_string(table_id))
-            client = bigquery_storage.BigQueryReadClient(
-                credentials=credentials
-            )
+            client = bigquery_storage.BigQueryReadClient(credentials=credentials)
             return rows.to_dataframe(bqstorage_client=client)
         else:
             raise FalGeneralException(db_type + "is not supported in Fal yet.")

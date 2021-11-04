@@ -25,8 +25,16 @@ from typing import Dict, Any
 def run(run, dbt_dir, keyword):
     project = parse_project(dbt_dir, keyword)
 
+    changed_model_names = list(
+        map(lambda result: result.unique_id.split(".")[-1], project.results.results)
+    )
+
     filtered_models = list(
-        filter(lambda model: model.meta.get(keyword, None) != None, project.models)
+        filter(
+            lambda model: (model.meta.get(keyword, None) != None)
+            and model.name in changed_model_names,
+            project.models,
+        )
     )
 
     for model in filtered_models:

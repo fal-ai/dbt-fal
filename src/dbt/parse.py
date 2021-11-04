@@ -11,6 +11,7 @@ from dbt.project import (
     DbtProject,
     DbtManifest,
     DbtProfileFile,
+    DbtRunResultFile,
 )
 
 from typing import Dict, List, List, Any
@@ -86,6 +87,8 @@ def parse_project(root_dir, keyword):
 
     target_path = os.path.join(project_root, project_dict["target-path"])
     manifest_path = os.path.join(target_path, "manifest.json")
+    run_result_path = os.path.join(target_path, "run_results.json")
+    results = DbtRunResultFile(**_read_json(run_result_path))
 
     return DbtProject(
         name=project_dict["name"],
@@ -95,6 +98,7 @@ def parse_project(root_dir, keyword):
         keyword=keyword,
         profiles=parse_profile(None),
         scripts=scripts,
+        results=results,
     )
 
 
