@@ -18,6 +18,8 @@ import json
 import dbt.tracking
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
+import pandas as pd
+
 @click.command()
 @click.argument("run")
 @click.option(
@@ -66,7 +68,8 @@ def run(run, dbt_dir, profiles_dir, keyword, changed_only):
     for model in filtered_models:
         def ref_resolver(target_model_name: str, target_package_name: Optional[str] = None):
             target_model = manifest.resolve_ref(target_model_name, target_package_name, dbt_dir, model.package_name)
-            return lib.fetch_model(manifest, dbt_dir, target_model)
+            result = lib.fetch_model(manifest, dbt_dir, target_model)
+            return pd.DataFrame.from_records(result.table.rows, columns=result.table.column_names)
 
         for script in model.config.meta.get(keyword, {}).get('scripts', []):
             ## remove scripts put everything else as args
