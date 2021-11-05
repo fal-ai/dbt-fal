@@ -71,6 +71,11 @@ def run(run, dbt_dir, profiles_dir, keyword, changed_only):
             result = lib.fetch_model(manifest, dbt_dir, target_model)
             return pd.DataFrame.from_records(result.table.rows, columns=result.table.column_names)
 
+        def source_resolver(target_source_name: str, target_table_name: str):
+            target_source = manifest.resolve_source(target_source_name, target_table_name, dbt_dir, model.package_name)
+            result = lib.fetch_model(manifest, dbt_dir, target_source)
+            return pd.DataFrame.from_records(result.table.rows, columns=result.table.column_names)
+
         for script in model.config.meta.get(keyword, {}).get('scripts', []):
             ## remove scripts put everything else as args
             args = model.config.meta[keyword]
@@ -80,7 +85,7 @@ def run(run, dbt_dir, profiles_dir, keyword, changed_only):
             real_script = os.path.join(dbt_dir, script)
             with open(real_script) as file:
                 a_script = file.read()
-                exec(a_script, { "ref": ref_resolver, "args": args })
+                exec(a_script, { "ref": ref_resolver, "args": args, "source": source_resolver })
 
 
 def _del_key(dict: Dict[str, Any], key: str):
