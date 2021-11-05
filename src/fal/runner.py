@@ -20,6 +20,7 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 import pandas as pd
 
+
 @click.command()
 @click.argument("run")
 @click.option(
@@ -41,14 +42,17 @@ import pandas as pd
     type=click.STRING,
 )
 @click.option(
-    "--changed-only",
+    "--all",
     is_flag=True,
     help="To only run models that ran in the last dbt run",
 )
-def run(run, dbt_dir, profiles_dir, keyword, changed_only):
+def run(run, dbt_dir, profiles_dir, keyword, run_all):
+    ## todo this should be relateive path
     config = lib.get_dbt_config(dbt_dir)
 
-    dbt.tracking.initialize_tracking(profiles_dir) # Necessary for parse_to_manifest to not fail
+    dbt.tracking.initialize_tracking(
+        profiles_dir
+    )  # Necessary for parse_to_manifest to not fail
     manifest = lib.parse_to_manifest(config)
 
     project = parse_project(dbt_dir, keyword)
@@ -59,24 +63,37 @@ def run(run, dbt_dir, profiles_dir, keyword, changed_only):
 
     filtered_models: List[ParsedModelNode] = []
     for node in manifest.nodes.values():
-        if node.resource_type == NodeType.Model:
-            if changed_only and node.name not in changed_model_names:
-                continue
-            if keyword in node.config.meta:
+        if keyword in node.config.meta and node.resource_type == NodeType.Model:
+            if run_all:
                 filtered_models.append(node)
+            elif node.name in changed_model_names:
+                filtered_models.append(node)
+            else:
+                continue
 
     for model in filtered_models:
-        def ref_resolver(target_model_name: str, target_package_name: Optional[str] = None):
-            target_model = manifest.resolve_ref(target_model_name, target_package_name, dbt_dir, model.package_name)
+
+        def ref_resolver(
+            target_model_name: str, target_package_name: Optional[str] = None
+        ):
+            target_model = manifest.resolve_ref(
+                target_model_name, target_package_name, dbt_dir, model.package_name
+            )
             result = lib.fetch_model(manifest, dbt_dir, target_model)
-            return pd.DataFrame.from_records(result.table.rows, columns=result.table.column_names)
+            return pd.DataFrame.from_records(
+                result.table.rows, columns=result.table.column_names
+            )
 
         def source_resolver(target_source_name: str, target_table_name: str):
-            target_source = manifest.resolve_source(target_source_name, target_table_name, dbt_dir, model.package_name)
+            target_source = manifest.resolve_source(
+                target_source_name, target_table_name, dbt_dir, model.package_name
+            )
             result = lib.fetch_model(manifest, dbt_dir, target_source)
-            return pd.DataFrame.from_records(result.table.rows, columns=result.table.column_names)
+            return pd.DataFrame.from_records(
+                result.table.rows, columns=result.table.column_names
+            )
 
-        for script in model.config.meta.get(keyword, {}).get('scripts', []):
+        for script in model.config.meta.get(keyword, {}).get("scripts", []):
             ## remove scripts put everything else as args
             args = model.config.meta[keyword]
             _del_key(args, "scripts")
@@ -85,7 +102,10 @@ def run(run, dbt_dir, profiles_dir, keyword, changed_only):
             real_script = os.path.join(dbt_dir, script)
             with open(real_script) as file:
                 a_script = file.read()
-                exec(a_script, { "ref": ref_resolver, "args": args, "source": source_resolver })
+                exec(
+                    a_script,
+                    {"ref": ref_resolver, "args": args, "source": source_resolver},
+                )
 
 
 def _del_key(dict: Dict[str, Any], key: str):
