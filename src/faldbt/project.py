@@ -2,37 +2,17 @@ from dataclasses import dataclass
 from os import name
 from typing import Dict, List, Optional, List, Any, TypeVar
 from pydantic import BaseModel
-from google.cloud import bigquery, bigquery_storage
-from google.oauth2 import service_account
 from pathlib import Path
+from dbt.contracts.graph.manifest import Manifest
 
 
 class FalGeneralException(Exception):
     pass
 
 
-class DbtNodeDeps(BaseModel):
-    nodes: List[str]
-
-
-class DbtNodeConfig(BaseModel):
-    materialized: Optional[str]
-
-
-class Node(BaseModel):
-    unique_id: str
-    path: str
-    resource_type: str
-    description: str
-    depends_on: Optional[DbtNodeDeps]
-    config: DbtNodeConfig
-    relation_name: Optional[str]
-
-
-class DbtManifest(BaseModel):
-    nodes: Dict[str, Node]
-    sources: Dict[str, Node]
-    metadata: Dict[str, Any]
+@dataclass
+class DbtManifest:
+    nativeManifest: Manifest
 
 
 class DbtModel(BaseModel):

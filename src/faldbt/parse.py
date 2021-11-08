@@ -2,8 +2,7 @@ import os
 import json
 import glob, os
 
-import click
-
+import faldbt.lib as lib
 from faldbt.utils.yaml_helper import load_yaml_text
 from faldbt.project import (
     DbtModel,
@@ -12,8 +11,9 @@ from faldbt.project import (
     DbtRunResultFile,
 )
 
+import dbt.tracking
+
 from typing import Dict, List, List, Any
-from pathlib import Path
 
 
 class FalParseError(Exception):
@@ -62,8 +62,16 @@ def _get_all_model_config(project_root, project_dict):
     )
 
 
-def parse_project(root_dir, keyword):
-    project_root = os.path.normpath(root_dir)
+def parse_project(dbt_dir, profiles_dir, keyword):
+    ## todo this should be relateive path
+    config = lib.get_dbt_config(dbt_dir)
+
+    dbt.tracking.initialize_tracking(
+        profiles_dir
+    )  # Necessary for parse_to_manifest to not fail
+    manifest = lib.parse_to_manifest(config)
+
+    project_root = os.path.normpath(dbt_dir)
     project_yaml_filepath = os.path.join(project_root, "dbt_project.yml")
 
     scripts = glob.glob(os.path.join(project_root, project_root + "/**.py"))
@@ -84,7 +92,6 @@ def parse_project(root_dir, keyword):
     )
 
     target_path = os.path.join(project_root, project_dict["target-path"])
-    manifest_path = os.path.join(target_path, "manifest.json")
     run_result_path = os.path.join(target_path, "run_results.json")
     results = DbtRunResultFile(**_read_json(run_result_path))
 
@@ -92,14 +99,8 @@ def parse_project(root_dir, keyword):
         name=project_dict["name"],
         model_config_paths=list(model_config_paths),
         models=_flatten(models),
-        manifest=parse_manifest(manifest_path),
+        manifest=DbtManifest(nativeManifest=manifest),
         keyword=keyword,
         scripts=scripts,
         results=results,
     )
-
-
-def parse_manifest(manifest_path) -> DbtManifest:
-    manifest_data = _read_json(manifest_path)
-    return DbtManifest(**manifest_data)
-

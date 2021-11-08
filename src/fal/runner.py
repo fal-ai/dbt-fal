@@ -6,16 +6,11 @@ import os
 import sys
 from dbt.config import project
 
-from dbt.context.providers import RuntimeRefResolver
-from dbt.contracts.graph.compiled import CompiledModelNode, ManifestNode
 from dbt.contracts.graph.parsed import ParsedModelNode
 from dbt.node_types import NodeType
-from actions.actions import forecast, make_forecast
 from faldbt.parse import parse_project
 from typing import Dict, Any
 import faldbt.lib as lib
-import json
-import dbt.tracking
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 import pandas as pd
@@ -47,20 +42,13 @@ import pandas as pd
     help="To only run models that ran in the last dbt run",
 )
 def run(run, dbt_dir, profiles_dir, keyword, all):
-    ## todo this should be relateive path
-    config = lib.get_dbt_config(dbt_dir)
+    project = parse_project(dbt_dir, profiles_dir, keyword)
 
-    dbt.tracking.initialize_tracking(
-        profiles_dir
-    )  # Necessary for parse_to_manifest to not fail
-    manifest = lib.parse_to_manifest(config)
-
-    project = parse_project(dbt_dir, keyword)
+    manifest = project.manifest.nativeManifest
 
     changed_model_names = list(
         map(lambda result: result.unique_id.split(".")[-1], project.results.results)
     )
-
     filtered_models: List[ParsedModelNode] = []
     for node in manifest.nodes.values():
         if keyword in node.config.meta and node.resource_type == NodeType.Model:
