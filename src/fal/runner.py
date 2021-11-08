@@ -46,7 +46,7 @@ import pandas as pd
     is_flag=True,
     help="To only run models that ran in the last dbt run",
 )
-def run(run, dbt_dir, profiles_dir, keyword, run_all):
+def run(run, dbt_dir, profiles_dir, keyword, all):
     ## todo this should be relateive path
     config = lib.get_dbt_config(dbt_dir)
 
@@ -64,7 +64,7 @@ def run(run, dbt_dir, profiles_dir, keyword, run_all):
     filtered_models: List[ParsedModelNode] = []
     for node in manifest.nodes.values():
         if keyword in node.config.meta and node.resource_type == NodeType.Model:
-            if run_all:
+            if all:
                 filtered_models.append(node)
             elif node.name in changed_model_names:
                 filtered_models.append(node)
