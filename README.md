@@ -73,11 +73,13 @@ $ fal run
 # Why are we building this?
 We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with. 
 
-From the perspective of an analytics engineer or a data analyst, `dbt`'s SQL only design is very powerful. But if you ever want to get out of SQL-land and get into Python-land for any reason, you will have a hard time. We built `fal` to enable Python workloads (sending alerts to Slack, building predictive models, pushing data to non-data warehose destinations and more) **right within `dbt`.**
+From the perspective of an analytics engineer or a data analyst, `dbt`'s SQL only design is very powerful. But if you ever want to get out of SQL-land and get into Python-land for any reason, you will have a hard time. We built `fal` to enable Python workloads (sending alerts to Slack, building predictive models, pushing data to non-data warehose destinations and more) **right within `dbt`**.
 
 # Concepts
 ## `meta` Syntax
 Here we explain how you can use `meta`
+
+For a complete reference of how `fal` leverages the `meta` property, go [here](docs/meta-reference.md).
 
 ## Magic variables
 Here we explain the magic variables
