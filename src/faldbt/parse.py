@@ -1,19 +1,15 @@
 import os
 import json
 import glob, os
-
+import dbt.tracking
 import faldbt.lib as lib
 from faldbt.utils.yaml_helper import load_yaml_text
+from typing import Dict, Any
 from faldbt.project import (
-    DbtModel,
     DbtProject,
     DbtManifest,
     DbtRunResultFile,
 )
-
-import dbt.tracking
-
-from typing import Dict, List, List, Any
 
 
 class FalParseError(Exception):

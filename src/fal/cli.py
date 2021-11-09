@@ -1,10 +1,5 @@
-"""Run **ANYTHING** with FAL."""
-
 import click
 import os
-from dbt.contracts.graph.manifest import Manifest
-
-from dbt.contracts.graph.parsed import ParsedModelNode
 from fal.run_scripts import run_scripts
 from faldbt.parse import parse_project
 from dbt.config.profile import DEFAULT_PROFILES_DIR

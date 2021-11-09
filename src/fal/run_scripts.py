@@ -1,12 +1,10 @@
-from typing import Optional
 import os
+import faldbt.lib as lib
+import pandas as pd
+from typing import Optional
 from dbt.contracts.graph.manifest import Manifest
-
 from dbt.contracts.graph.parsed import ParsedModelNode
 from typing import Dict, Any
-import faldbt.lib as lib
-
-import pandas as pd
 
 
 def run_scripts(model: ParsedModelNode, keyword: str, manifest: Manifest, dbt_dir: str):
