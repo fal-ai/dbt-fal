@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from os import name
 from typing import Dict, List, Optional, List, Any, TypeVar
 from dbt.contracts.graph.parsed import ParsedModelNode
@@ -15,18 +15,35 @@ class FalGeneralException(Exception):
 
 
 @dataclass
-class DbtManifest:
-    nativeManifest: Manifest
+class DbtModel:
+    node: ParsedModelNode
+    name: str = field(init=False)
+    meta: Dict[str, Any] = field(init=False)
 
-
-class DbtModel(BaseModel):
-    name: str
-    meta: Optional[Dict[str, Any]] = {}
-    description: str
-    columns: Any
+    def __post_init__(self):
+        self.name = self.node.name
+        self.meta = self.node.config.meta
 
     def model_key(self, project_name):
         return "model." + project_name + "." + self.name
+
+
+@dataclass
+class DbtManifest:
+    nativeManifest: Manifest
+
+    def get_models(self) -> List[DbtModel]:
+        return list(
+            filter(
+                lambda model: model.node.resource_type == NodeType.Model,
+                map(
+                    lambda node: DbtModel(node=node), self.nativeManifest.nodes.values()
+                ),
+            )
+        )
+
+    def get_models_with_keyword(self, keyword) -> List[DbtModel]:
+        return list(filter(lambda model: keyword in model.meta, self.get_models()))
 
 
 class DbtRunResult(BaseModel):
@@ -72,15 +89,11 @@ class DbtProject:
 
     def get_filtered_models(self, all):
         filtered_models: List[ParsedModelNode] = []
-        for node in self.manifest.nativeManifest.nodes.values():
-            if (
-                self.keyword in node.config.meta
-                and node.resource_type == NodeType.Model
-            ):
-                if all:
-                    filtered_models.append(node)
-                elif node.name in self.changed_model_names():
-                    filtered_models.append(node)
-                else:
-                    continue
+        for node in self.manifest.get_models_with_keyword(self.keyword):
+            if all:
+                filtered_models.append(node)
+            elif node.name in self.changed_model_names():
+                filtered_models.append(node)
+            else:
+                continue
         return filtered_models

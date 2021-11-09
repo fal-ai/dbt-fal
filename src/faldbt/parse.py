@@ -43,11 +43,6 @@ def _flatten(t):
     return [item for sublist in t for item in sublist]
 
 
-def _model_from_path(config_path) -> List[DbtModel]:
-    config_dict = _load_yaml(config_path)
-    return list(map(lambda model: DbtModel(**model), config_dict["models"]))
-
-
 def _get_all_model_config(project_root, project_dict):
     return _flatten(
         map(
@@ -63,14 +58,6 @@ def _get_all_model_config(project_root, project_dict):
 
 
 def parse_project(dbt_dir, profiles_dir, keyword):
-    ## todo this should be relateive path
-    config = lib.get_dbt_config(dbt_dir)
-
-    dbt.tracking.initialize_tracking(
-        profiles_dir
-    )  # Necessary for parse_to_manifest to not fail
-    manifest = lib.parse_to_manifest(config)
-
     project_root = os.path.normpath(dbt_dir)
     project_yaml_filepath = os.path.join(project_root, "dbt_project.yml")
 
@@ -87,18 +74,24 @@ def parse_project(dbt_dir, profiles_dir, keyword):
         raise FalParseError("dbt_project.yml does not parse to a dictionary")
 
     model_config_paths = _get_all_model_config(project_root, project_dict)
-    models = list(
-        map(lambda config_path: _model_from_path(config_path), model_config_paths)
-    )
 
     target_path = os.path.join(project_root, project_dict["target-path"])
     run_result_path = os.path.join(target_path, "run_results.json")
     results = DbtRunResultFile(**_read_json(run_result_path))
 
+    ## todo this should be relateive path
+    config = lib.get_dbt_config(dbt_dir)
+
+    dbt.tracking.initialize_tracking(
+        profiles_dir
+    )  # Necessary for parse_to_manifest to not fail
+    manifest = lib.parse_to_manifest(config)
+
+    dbtmanifest = DbtManifest(nativeManifest=manifest)
     return DbtProject(
         name=project_dict["name"],
         model_config_paths=list(model_config_paths),
-        models=_flatten(models),
+        models=dbtmanifest.get_models(),
         manifest=DbtManifest(nativeManifest=manifest),
         keyword=keyword,
         scripts=scripts,

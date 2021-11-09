@@ -10,9 +10,9 @@ import pandas as pd
 
 
 def run_scripts(model: ParsedModelNode, keyword: str, manifest: Manifest, dbt_dir: str):
-    for script in model.config.meta.get(keyword, {}).get("scripts", []):
+    for script in model.meta.get(keyword, {}).get("scripts", []):
         ## remove scripts put everything else as context
-        meta = model.config.meta[keyword]
+        meta = model.meta[keyword]
         _del_key(meta, "scripts")
         current_model = {
             "name": model.name,
@@ -25,9 +25,9 @@ def run_scripts(model: ParsedModelNode, keyword: str, manifest: Manifest, dbt_di
             exec(
                 a_script,
                 {
-                    "ref": _get_ref_resolver(model, manifest, dbt_dir),
+                    "ref": _get_ref_resolver(model.node, manifest, dbt_dir),
                     "context": context,
-                    "source": _get_source_resolver(model, manifest, dbt_dir),
+                    "source": _get_source_resolver(model.node, manifest, dbt_dir),
                 },
             )
 
