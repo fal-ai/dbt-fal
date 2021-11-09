@@ -8,7 +8,7 @@ With fal, you can:
 
 and more...
 
-Check out [Getting Started](#getting-started) to get a quick start or see [in-depth examples](#next-steps) to see what you can do with `fal`.
+Check out [Getting Started](#getting-started) to get a quick start or play with [in-depth examples](#next-steps) to see how `fal` can help you get more done.
 
 
 # Getting Started
@@ -43,17 +43,47 @@ try:
 except SlackApiError as e:
     assert e.response["error"]
 ```
-
-## 4. Run `dbt` and `fal` after each other
+## 4. Add `fal` `meta` to your `schema.yml`
+```yaml
+models:
+  - name: boston
+    description: Ozone levels
+    config:
+      materialized: table
+    columns:
+      - name: ozone_level
+        description: Ozone level
+      - name: ds
+        description: Date
+    meta:
+      fal:
+        scripts:
+          - slack.py
+```
+## 5. Run `dbt` and `fal` after each other
 ```bash
 $ dbt run
+# Your dbt models are ran
 
 $ fal run
+# Your python scripts are ran
 ```
 
 
 # Why are we building this?
-We think `dbt` is awesome, and data folks should be even more empowered.
+We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with. 
+
+From the perspective of an analytics engineer or a data analyst, `dbt`'s SQL only design is very powerful. But if you ever want to get out of SQL-land and get into Python-land for any reason, you will have a hard time. We built `fal` to enable Python workloads (sending alerts to Slack, building predictive models, pushing data to non-data warehose destinations and more) **right within `dbt`.**
+
+# Concepts
+## `meta` Syntax
+Here we explain how you can use `meta`
+
+## Magic variables
+Here we explain the magic variables
+
+## Lifecycle Management
+Here we talk about how we handle state / `--all` etc.
 
 # Next steps
 - [Example 1: Send Slack notifications](docs/slack-example.md)
