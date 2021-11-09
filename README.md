@@ -3,9 +3,12 @@ fal allows you to run python scripts directly from your [dbt](https://www.getdbt
 
 With fal, you can:
 - Send Slack notifications upon model success or failure.
-- Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model)`
+- Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`
 - Use python libraries such as `sklearn` or `prophet` to build more complex pipelines downstream of dbt models.
-- and more...
+
+and more...
+
+Check out [Getting Started](#getting-started) to get a quick start or see [in-depth examples](#next-steps) to see what you can do with `fal`.
 
 
 # Getting Started
@@ -49,8 +52,15 @@ $ fal run
 ```
 
 
-# Why did we build this?
+# Why are we building this?
+We think `dbt` is awesome, and data folks should be even more empowered.
 
-# Roadmap
+# Next steps
+- [Example 1: Send Slack notifications](docs/slack-example.md)
+- [Example 2: Metric forecasting](docs/metric-forecast.md)
+- [Example 3: Anomaly detection](docs/anomaly-detection.md)
+- [Example 4: Sentiment analysis on support tickets](docs/sentiment-analysis.md)
+- [`meta` reference](docs/meta-reference.md)
 
-# Get in touch
+# Need help?
+[Join us in #fal on Discord](https://discord.gg/)
