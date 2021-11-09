@@ -1,0 +1,73 @@
+from typing import Optional
+import os
+from dbt.contracts.graph.manifest import Manifest
+
+from dbt.contracts.graph.parsed import ParsedModelNode
+from typing import Dict, Any
+import faldbt.lib as lib
+
+import pandas as pd
+
+
+def run_scripts(model: ParsedModelNode, keyword: str, manifest: Manifest, dbt_dir: str):
+    for script in model.config.meta.get(keyword, {}).get("scripts", []):
+        ## remove scripts put everything else as context
+        meta = model.config.meta[keyword]
+        _del_key(meta, "scripts")
+        current_model = {
+            "name": model.name,
+            "status": None,  # TODO: get status from run status
+        }
+        context = {"meta": meta, "current_model": current_model}
+        real_script = os.path.join(dbt_dir, script)
+        with open(real_script) as file:
+            a_script = file.read()
+            exec(
+                a_script,
+                {
+                    "ref": _get_ref_resolver(model, manifest, dbt_dir),
+                    "context": context,
+                    "source": _get_source_resolver(model, manifest, dbt_dir),
+                },
+            )
+
+
+def _del_key(dict: Dict[str, Any], key: str):
+    try:
+        del dict[key]
+    except KeyError:
+        pass
+
+
+def _get_ref_resolver(
+    model: ParsedModelNode,
+    manifest: Manifest,
+    dbt_dir: str,
+):
+    def ref_resolver(target_model_name: str, target_package_name: Optional[str] = None):
+        target_model = manifest.resolve_ref(
+            target_model_name, target_package_name, dbt_dir, model.package_name
+        )
+        result = lib.fetch_model(manifest, dbt_dir, target_model)
+        return pd.DataFrame.from_records(
+            result.table.rows, columns=result.table.column_names
+        )
+
+    return ref_resolver
+
+
+def _get_source_resolver(
+    model: ParsedModelNode,
+    manifest: Manifest,
+    dbt_dir: str,
+):
+    def source_resolver(target_source_name: str, target_table_name: str):
+        target_source = manifest.resolve_source(
+            target_source_name, target_table_name, dbt_dir, model.package_name
+        )
+        result = lib.fetch_model(manifest, dbt_dir, target_source)
+        return pd.DataFrame.from_records(
+            result.table.rows, columns=result.table.column_names
+        )
+
+    return source_resolver

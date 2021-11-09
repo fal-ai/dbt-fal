@@ -6,6 +6,8 @@ from dbt.node_types import NodeType
 from pydantic import BaseModel
 from pathlib import Path
 from dbt.contracts.graph.manifest import Manifest
+import faldbt.lib as lib
+import pandas as pd
 
 
 class FalGeneralException(Exception):
