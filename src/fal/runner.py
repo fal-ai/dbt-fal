@@ -82,17 +82,24 @@ def run(run, dbt_dir, profiles_dir, keyword, all):
             )
 
         for script in model.config.meta.get(keyword, {}).get("scripts", []):
-            ## remove scripts put everything else as args
-            args = model.config.meta[keyword]
-            _del_key(args, "scripts")
-            args.update({"current_model": model.name})
-
+            ## remove scripts put everything else as context
+            meta = model.config.meta[keyword]
+            _del_key(meta, "scripts")
+            current_model = {
+                "name": model.name,
+                "status": None,  # TODO: get status from run status
+            }
+            context = {"meta": meta, "current_model": current_model}
             real_script = os.path.join(dbt_dir, script)
             with open(real_script) as file:
                 a_script = file.read()
                 exec(
                     a_script,
-                    {"ref": ref_resolver, "args": args, "source": source_resolver},
+                    {
+                        "ref": ref_resolver,
+                        "context": context,
+                        "source": source_resolver,
+                    },
                 )
 
 
