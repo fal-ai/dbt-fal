@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from os import name
 from typing import Dict, List, Optional, List, Any, TypeVar
+from dbt.contracts.graph.parsed import ParsedModelNode
+from dbt.node_types import NodeType
 from pydantic import BaseModel
 from pathlib import Path
 from dbt.contracts.graph.manifest import Manifest
@@ -60,3 +62,23 @@ class DbtProject:
     def find_model_location(self, model: DbtModel) -> List[str]:
         model_node = self.manifest.nodes[model.model_key(self.name)]
         return model_node.relation_name.replace("`", "")
+
+    def changed_model_names(self) -> List[str]:
+        return list(
+            map(lambda result: result.unique_id.split(".")[-1], self.results.results)
+        )
+
+    def get_filtered_models(self, all):
+        filtered_models: List[ParsedModelNode] = []
+        for node in self.manifest.nativeManifest.nodes.values():
+            if (
+                self.keyword in node.config.meta
+                and node.resource_type == NodeType.Model
+            ):
+                if all:
+                    filtered_models.append(node)
+                elif node.name in self.changed_model_names():
+                    filtered_models.append(node)
+                else:
+                    continue
+        return filtered_models

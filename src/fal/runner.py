@@ -5,6 +5,7 @@ import click
 import os
 import sys
 from dbt.config import project
+from dbt.contracts.graph.manifest import Manifest
 
 from dbt.contracts.graph.parsed import ParsedModelNode
 from dbt.node_types import NodeType
@@ -46,20 +47,7 @@ def run(run, dbt_dir, profiles_dir, keyword, all):
 
     manifest = project.manifest.nativeManifest
 
-    changed_model_names = list(
-        map(lambda result: result.unique_id.split(".")[-1], project.results.results)
-    )
-    filtered_models: List[ParsedModelNode] = []
-    for node in manifest.nodes.values():
-        if keyword in node.config.meta and node.resource_type == NodeType.Model:
-            if all:
-                filtered_models.append(node)
-            elif node.name in changed_model_names:
-                filtered_models.append(node)
-            else:
-                continue
-
-    for model in filtered_models:
+    for model in project.get_filtered_models(all):
 
         def ref_resolver(
             target_model_name: str, target_package_name: Optional[str] = None
