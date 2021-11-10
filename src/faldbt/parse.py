@@ -52,20 +52,8 @@ def _get_all_model_config(project_root, project_dict):
 
 def parse_project(dbt_dir, profiles_dir, keyword):
     project_root = os.path.normpath(dbt_dir)
-    project_yaml_filepath = os.path.join(project_root, "dbt_project.yml")
-
+    project_dict = _get_project_dict(dbt_dir)
     scripts = glob.glob(os.path.join(project_root, project_root + "/**.py"))
-
-    if not os.path.lexists(project_yaml_filepath):
-        raise FalParseError(
-            "no dbt_project.yml found at expected path {}".format(project_yaml_filepath)
-        )
-
-    project_dict = _load_yaml(project_yaml_filepath)
-
-    if not isinstance(project_dict, dict):
-        raise FalParseError("dbt_project.yml does not parse to a dictionary")
-
     model_config_paths = _get_all_model_config(project_root, project_dict)
     target_path = os.path.join(project_root, project_dict["target-path"])
     run_result_path = os.path.join(target_path, "run_results.json")
@@ -96,3 +84,20 @@ def parse_project(dbt_dir, profiles_dir, keyword):
         scripts=scripts,
         run_result=DbtRunResult(run_result_artifact),
     )
+
+
+def _get_project_dict(dbt_dir):
+    project_root = os.path.normpath(dbt_dir)
+    project_yaml_filepath = os.path.join(project_root, "dbt_project.yml")
+
+    if not os.path.lexists(project_yaml_filepath):
+        raise FalParseError(
+            "no dbt_project.yml found at expected path {}".format(project_yaml_filepath)
+        )
+
+    project_dict = _load_yaml(project_yaml_filepath)
+
+    if not isinstance(project_dict, dict):
+        raise FalParseError("dbt_project.yml does not parse to a dictionary")
+
+    return project_dict
