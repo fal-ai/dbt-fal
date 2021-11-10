@@ -3,13 +3,10 @@ import json
 import glob, os
 import dbt.tracking
 import faldbt.lib as lib
+from dbt.contracts.results import RunResultsArtifact
 from faldbt.utils.yaml_helper import load_yaml_text
 from typing import Dict, Any
-from faldbt.project import (
-    DbtProject,
-    DbtManifest,
-    DbtRunResultFile,
-)
+from faldbt.project import DbtProject, DbtManifest, DbtRunResult
 
 
 class FalParseError(Exception):
@@ -70,10 +67,8 @@ def parse_project(dbt_dir, profiles_dir, keyword):
         raise FalParseError("dbt_project.yml does not parse to a dictionary")
 
     model_config_paths = _get_all_model_config(project_root, project_dict)
-
     target_path = os.path.join(project_root, project_dict["target-path"])
     run_result_path = os.path.join(target_path, "run_results.json")
-    results = DbtRunResultFile(**_read_json(run_result_path))
 
     ## todo this should be relateive path
     config = lib.get_dbt_config(dbt_dir)
@@ -82,14 +77,22 @@ def parse_project(dbt_dir, profiles_dir, keyword):
         profiles_dir
     )  # Necessary for parse_to_manifest to not fail
     manifest = lib.parse_to_manifest(config)
-
+    run_result_artifact = RunResultsArtifact(**_read_json(run_result_path))
     dbtmanifest = DbtManifest(nativeManifest=manifest)
+
+    models = dbtmanifest.get_models()
+    status_map = dict(
+        map(lambda result: [result["unique_id"], result["status"]], run_result_artifact)
+    )
+    for model in models:
+        model.status = status_map[model.model_key(project_dict["name"])]
+
     return DbtProject(
         name=project_dict["name"],
         model_config_paths=list(model_config_paths),
-        models=dbtmanifest.get_models(),
+        models=models,
         manifest=DbtManifest(nativeManifest=manifest),
         keyword=keyword,
         scripts=scripts,
-        results=results,
+        run_result=DbtRunResult(run_result_artifact),
     )

@@ -1,5 +1,6 @@
 import click
 import os
+
 from fal.run_scripts import run_scripts
 from faldbt.parse import parse_project
 from dbt.config.profile import DEFAULT_PROFILES_DIR

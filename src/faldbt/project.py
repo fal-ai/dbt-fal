@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, List, Any, TypeVar
+from typing import Dict, List, List, Any, TypeVar, Sequence
 from dbt.contracts.graph.parsed import ParsedModelNode
 from dbt.node_types import NodeType
-from pydantic import BaseModel
 from pathlib import Path
 from dbt.contracts.graph.manifest import Manifest
+from dbt.contracts.results import RunResultsArtifact, RunResultOutput
 
 
 class FalGeneralException(Exception):
@@ -16,6 +16,7 @@ class DbtModel:
     node: ParsedModelNode
     name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
+    status: str = field(init=False)
 
     def __post_init__(self):
         self.name = self.node.name
@@ -39,24 +40,14 @@ class DbtManifest:
             )
         )
 
-    def get_models_with_keyword(self, keyword) -> List[DbtModel]:
-        return list(filter(lambda model: keyword in model.meta, self.get_models()))
 
+@dataclass
+class DbtRunResult:
+    nativeRunResult: RunResultsArtifact
+    results: Sequence[RunResultOutput] = field(init=False)
 
-class DbtRunResult(BaseModel):
-    status: str
-    timing: List[Any]
-    thread_id: str
-    execution_time: int
-    adapter_response: Dict[str, str]
-    message: str
-    failures: Any
-    unique_id: str
-
-
-class DbtRunResultFile(BaseModel):
-    metadata: Any
-    results: List[DbtRunResult]
+    def __post_init__(self):
+        self.results = self.nativeRunResult.results
 
 
 T = TypeVar("T", bound="DbtProject")
@@ -70,7 +61,7 @@ class DbtProject:
     manifest: DbtManifest
     keyword: str
     scripts: List[Path]
-    results: DbtRunResultFile
+    run_result: DbtRunResult
 
     def state_has_changed(self, other: DbtManifest) -> bool:
         return self.manifest != other
@@ -81,12 +72,18 @@ class DbtProject:
 
     def changed_model_names(self) -> List[str]:
         return list(
-            map(lambda result: result.unique_id.split(".")[-1], self.results.results)
+            map(
+                lambda result: result["unique_id"].split(".")[-1],
+                self.run_result.results,
+            )
         )
 
+    def get_models_with_keyword(self, keyword) -> List[DbtModel]:
+        return list(filter(lambda model: keyword in model.meta, self.models))
+
     def get_filtered_models(self, all):
-        filtered_models: List[ParsedModelNode] = []
-        for node in self.manifest.get_models_with_keyword(self.keyword):
+        filtered_models: List[DbtModel] = []
+        for node in self.get_models_with_keyword(self.keyword):
             if all:
                 filtered_models.append(node)
             elif node.name in self.changed_model_names():

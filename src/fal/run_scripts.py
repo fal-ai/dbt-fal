@@ -5,17 +5,17 @@ from typing import Optional
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.graph.parsed import ParsedModelNode
 from typing import Dict, Any
+from faldbt.project import DbtModel
 
 
-def run_scripts(model: ParsedModelNode, keyword: str, manifest: Manifest, dbt_dir: str):
+def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str):
     for script in model.meta.get(keyword, {}).get("scripts", []):
         ## remove scripts put everything else as context
         meta = model.meta[keyword]
         _del_key(meta, "scripts")
-        current_model = {
-            "name": model.name,
-            "status": None,  # TODO: get status from run status
-        }
+
+        current_model = {"name": model.name, "status": model.status}
+
         context = {"meta": meta, "current_model": current_model}
         real_script = os.path.join(dbt_dir, script)
         with open(real_script) as file:
