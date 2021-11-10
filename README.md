@@ -8,7 +8,7 @@ With fal, you can:
 
 and more...
 
-Check out [Getting Started](#getting-started) to get a quick start or play with [in-depth examples](#next-steps) to see how `fal` can help you get more done.
+Check out [Getting Started](#getting-started) to get a quick start or play with [in-depth examples](#next-steps) to see how fal can help you get more done with dbt.
 
 
 # Getting Started
@@ -60,7 +60,7 @@ models:
         scripts:
           - slack.py
 ```
-## 5. Run `dbt` and `fal` after each other
+## 5. Run `dbt` and `fal` consecutively
 ```bash
 $ dbt run
 # Your dbt models are ran
