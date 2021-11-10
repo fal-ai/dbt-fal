@@ -90,15 +90,12 @@ Here we explain the variables you have access to within the Python context
 ## Lifecycle Management
 Here we talk about how we handle state / `--all` etc.
 
-# Next steps
+# Examples
 To explore what is possible with fal, take a look at the in-depth examples below. We will be adding more examples here over time:
 - [Example 1: Send Slack notifications](docs/slack-example.md)
 - [Example 2: Metric forecasting](docs/metric-forecast.md)
 - [Example 3: Anomaly detection](docs/anomaly-detection.md)
 - [Example 4: Sentiment analysis on support tickets](docs/sentiment-analysis.md)
-
-# More documentation
-- [`meta` reference](docs/meta-reference.md)
 
 # Have feedback or need help?
 [Join us in #fal on Discord](https://discord.gg/)
