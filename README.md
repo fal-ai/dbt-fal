@@ -81,8 +81,8 @@ Here we explain how you can use `meta`
 
 For a complete reference of how `fal` leverages the `meta` property, go [here](docs/meta-reference.md).
 
-## Magic variables
-Here we explain the magic variables
+## Variables
+Here we explain the variables you have access to within the Python context
 
 ## Lifecycle Management
 Here we talk about how we handle state / `--all` etc.
