@@ -1,4 +1,4 @@
-# fal: Do more with dbt
+# fal: do more with dbt
 fal allows you to run python scripts directly from your [dbt](https://www.getdbt.com/) project.
 
 With fal, you can:
