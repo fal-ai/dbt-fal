@@ -45,7 +45,7 @@ except SlackApiError as e:
 ## 4. Add a `meta` section in your `schema.yml`
 ```yaml
 models:
-  - name: boston
+  - name: historical_ozone_levels
     description: Ozone levels
     config:
       materialized: table
@@ -76,22 +76,69 @@ To explore what is possible with fal, take a look at the in-depth examples below
 - [Example 4: Sentiment analysis on support tickets](docs/sentiment-analysis.md)
 
 # How it works?
-Here we describe how `fal` works.
+`fal` is a command line tool that can read the state of your `dbt` project and help you run Python scripts after your `dbt run`s by leveraging the [`meta` config](https://docs.getdbt.com/reference/resource-configs/meta).
 
-## profile.yml
-`fal` integrates with `dbt`'s `profile.yml` file to access and read data from the data warehouse. Once you setup credentials in your `profile.yml` file for your existing `dbt` workflows anytime you use `ref` or `source` to create a dataframe `fal` authenticates using the credentials specified in the `profile.yml` file. 
+```yaml
+models:
+  - name: historical_ozone_levels
+    ...
+    meta:
+      fal:
+        scripts:
+          - send_slack_message.py
+          - another_python_script.py # will be ran after the first script
+```
+
+By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run` (So if you are using model selectors, `fal` will only run on the selected models). If you want to run all Python scripts regardless, you can use the `--all` flag with the `fal` CLI.
+
+`fal` also provides useful helpers within the Python context to seamlessly interact with dbt models: `ref("my_dbt_model_name")` will pull a dbt model into your Python script as a [`pandas.DataFrame`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html).
 
 # Concepts
-## `meta` Syntax
-Here we explain how you can use `meta`
+## profile.yml and Credentials
+`fal` integrates with `dbt`'s `profile.yml` file to access and read data from the data warehouse. Once you setup credentials in your `profile.yml` file for your existing `dbt` workflows anytime you use `ref` or `source` to create a dataframe `fal` authenticates using the credentials specified in the `profile.yml` file. 
 
-For a complete reference of how `fal` leverages the `meta` property, go [here](docs/meta-reference.md).
+## `meta` Syntax
+```yaml
+models:
+  - name: historical_ozone_levels
+    ...
+    meta:
+      fal:
+        scripts:
+          - send_slack_message.py
+          - another_python_script.py # will be ran sequentially
+```
+Use the `fal` and `scripts` keys underneath the `meta` config to let `fal` CLI know where to look for the Python scripts. You can pass a list of scripts as shown above to run one or more scripts as a post-hook operation after a `dbt run`.
 
 ## Variables
-Here we explain the variables you have access to within the Python context
+Inside a Python script, you get access to some useful variables:
 
-## Lifecycle Management
-Here we talk about how we handle state / `--all` etc.
+```python
+# send_slack_message.py
+
+# Refer to dbt models or sources by name. Returns a pandas.DataFrame.
+ref('model_name')
+source('source_name', 'table_name')
+
+# Refer to a fal Context, which provides useful attributes about the dbt model in context.
+context.current_model.name # Returns the current model name
+
+context.current_model.meta # Returns the meta config of the current model as a Python dict
+context.current_model.meta["owner"] # will return the "owner" key in the meta config
+
+context.current_model.status # Returns the status of the last dbt run
+
+ref(context.current_model.name) # Returns a pandas.DataFrame for the current model in context
+```
+
+## Lifecycle and State Management
+By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run` (So if you are using model selectors, `fal` will only run on the selected models). 
+
+If you want to run all Python scripts regardless, you can do so by using the `--all` flag with the `fal` CLI:
+
+```bash
+$ fal run --all
+```
 
 # Why are we building this?
 We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with. 
