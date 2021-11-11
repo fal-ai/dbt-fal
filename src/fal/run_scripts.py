@@ -30,7 +30,6 @@ def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str)
         meta = model.meta[keyword]
         _del_key(meta, "scripts")
 
-        print(model.columns)
         current_model = CurrentModel(
             name=model.name, status=model.status, columns=model.columns
         )
