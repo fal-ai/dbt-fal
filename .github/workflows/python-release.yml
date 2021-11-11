@@ -1,6 +1,6 @@
 # This workflow will update the latest version and upload a Python Package using Artifactory on changes to main
 
-name: Upload Python Package
+name: Publish Python Package
 
 on:
   push:
