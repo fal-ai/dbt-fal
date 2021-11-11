@@ -9,7 +9,7 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 @click.command()
 @click.argument("run")
 @click.option(
-    "--dbt-dir",
+    "--project-dir",
     default=os.getcwd(),
     help="Directory to look for dbt_project.yml",
     type=click.Path(exists=True),
@@ -31,7 +31,10 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
     is_flag=True,
     help="To only run models that ran in the last dbt run",
 )
-def run(run, dbt_dir, profiles_dir, keyword, all):
-    project = parse_project(dbt_dir, profiles_dir, keyword)
+def run(run, project_dir, profiles_dir, keyword, all):
+    real_project_dir = os.path.realpath(os.path.normpath(project_dir))
+    real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
+
+    project = parse_project(real_project_dir, real_profiles_dir, keyword)
     for model in project.get_filtered_models(all):
-        run_scripts(model, keyword, project.manifest.nativeManifest, dbt_dir)
+        run_scripts(model, keyword, project.manifest.nativeManifest, real_project_dir)

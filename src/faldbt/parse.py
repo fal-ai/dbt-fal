@@ -1,6 +1,6 @@
 import os
 import json
-import glob, os
+import glob
 import dbt.tracking
 import faldbt.lib as lib
 from dbt.contracts.results import RunResultsArtifact
@@ -43,23 +43,21 @@ def _get_all_model_config(project_root, project_dict):
             ## look at all of them find the ones that has model in them
             ## and keep remembering it
             lambda model_path: glob.glob(
-                os.path.join(project_root, model_path + "/**/*.yml"), recursive=True
+                os.path.join(project_root, model_path, "**.yml"), recursive=True
             ),
             project_dict["source-paths"],
         )
     )
 
 
-def parse_project(dbt_dir, profiles_dir, keyword):
-    project_root = os.path.normpath(dbt_dir)
-    project_dict = _get_project_dict(dbt_dir)
-    scripts = glob.glob(os.path.join(project_root, project_root + "/**.py"))
-    model_config_paths = _get_all_model_config(project_root, project_dict)
-    target_path = os.path.join(project_root, project_dict["target-path"])
+def parse_project(project_dir: str, profiles_dir: str, keyword: str):
+    project_dict = _get_project_dict(project_dir)
+    scripts = glob.glob(os.path.join(project_dir, "**.py"), recursive=True)
+    model_config_paths = _get_all_model_config(project_dir, project_dict)
+    target_path = os.path.join(project_dir, project_dict["target-path"])
     run_result_path = os.path.join(target_path, "run_results.json")
 
-    ## todo this should be relateive path
-    config = lib.get_dbt_config(dbt_dir)
+    config = lib.get_dbt_config(project_dir)
 
     dbt.tracking.initialize_tracking(
         profiles_dir
@@ -86,9 +84,8 @@ def parse_project(dbt_dir, profiles_dir, keyword):
     )
 
 
-def _get_project_dict(dbt_dir):
-    project_root = os.path.normpath(dbt_dir)
-    project_yaml_filepath = os.path.join(project_root, "dbt_project.yml")
+def _get_project_dict(project_dir):
+    project_yaml_filepath = os.path.join(project_dir, "dbt_project.yml")
 
     if not os.path.lexists(project_yaml_filepath):
         raise FalParseError(
