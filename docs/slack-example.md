@@ -78,3 +78,5 @@ try:
 except SlackApiError as e:
     assert e.response["error"]
 ```
+
+You can find the full code example [here](scripts/slack_example.py).
