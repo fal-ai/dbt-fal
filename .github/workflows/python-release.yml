@@ -31,8 +31,7 @@ jobs:
 
       - name: Build and publish
         env:
-          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          PYPI_USERNAME: ${{ secrets.PYPI_USER }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-          PYPI_REPO_URL: ${{ secrets.PYPI_REPO_URL }}
         run: |
             poetry publish --build -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
