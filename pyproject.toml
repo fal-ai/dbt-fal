@@ -2,7 +2,11 @@
 name = "fal"
 version = "999999"
 description = ""
-authors = ["Meder Kamalov <meder@fal.ai>"]
+authors = [
+        "Meder Kamalov <meder@fal.ai>",
+        "Matteo Ferrando <matteo@fal.ai>",
+        "Burkay Gur <burkay@fal.ai>",
+        "Gorkem Yurtseven <gorkem@fal.ai>"]
 
 [tool.poetry.dependencies]
 python = "^3.8, <3.10"
