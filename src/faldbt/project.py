@@ -17,10 +17,12 @@ class DbtModel:
     name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
     status: str = field(init=False)
+    columns: Dict[str, Any] = field(init=False)
 
     def __post_init__(self):
         self.name = self.node.name
         self.meta = self.node.config.meta
+        self.columns = self.node.columns
 
     def model_key(self, project_name):
         return "model." + project_name + "." + self.name

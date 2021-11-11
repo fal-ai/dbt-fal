@@ -1,11 +1,27 @@
 import os
+from faldbt.cp.contracts.graph.parsed import ColumnInfo
 import faldbt.lib as lib
 import pandas as pd
-from typing import Optional
+from typing import Optional, Union, List
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.graph.parsed import ParsedModelNode
 from typing import Dict, Any
 from faldbt.project import DbtModel
+from dataclasses import dataclass
+from dbt.contracts.results import RunStatus, TestStatus, FreshnessStatus
+
+
+@dataclass
+class CurrentModel:
+    name: str
+    status: Union[RunStatus, TestStatus, FreshnessStatus]
+    columns: Dict[str, ColumnInfo]
+
+
+@dataclass
+class Context:
+    meta: Dict[Any, Any]
+    current_model: CurrentModel
 
 
 def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str):
@@ -14,9 +30,12 @@ def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str)
         meta = model.meta[keyword]
         _del_key(meta, "scripts")
 
-        current_model = {"name": model.name, "status": model.status}
+        print(model.columns)
+        current_model = CurrentModel(
+            name=model.name, status=model.status, columns=model.columns
+        )
 
-        context = {"meta": meta, "current_model": current_model}
+        context = Context(meta=meta, current_model=current_model)
         real_script = os.path.join(dbt_dir, script)
         with open(real_script) as file:
             a_script = file.read()
