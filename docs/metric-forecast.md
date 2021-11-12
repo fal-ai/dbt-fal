@@ -46,6 +46,9 @@ from fbprophet.plot import plot_plotly
 fig = plot_plotly(m, forecast, xlabel="Date", ylabel="Agent Wait Time")
 fig.write_image("some_file_name.png")
 ```
+This results in a plot like this:
+
+![Forecast plot](fal_forecast_1636707573.278499.png)
 
 Putting it all together into a function:
 ```python
