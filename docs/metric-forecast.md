@@ -1,14 +1,17 @@
 # Example 2: Run forecasts on metrics and send visualizations to Slack
-In this example we use [prophet](https://facebook.github.io/prophet/) and [slack_sdk](https://slack.dev/python-slack-sdk/) in order to make predictions on our models and send the resulting plots to slack. 
+In this example we use [prophet](https://facebook.github.io/prophet/) and [slack_sdk](https://slack.dev/python-slack-sdk/) in order to make predictions on our models and send the resulting plots to slack.
 
 See [slack example](slack-example.md), for instructions on how to set up a minimal Slack bot.
+
+This example is built for a model that has two columns: `y` and `ds`, where `y` is a metric measure and `ds` is a timestamp. The metric that we look at is Agent Wait Time in minutes.
 
 ## Meta tag
 In a `schema.yml` file, within a target model, a meta tag should be added in order to connect the model to fal:
 ```yaml
     meta:
       fal:
-        scripts: ["path_to_fal_script.py"]
+        scripts:
+			- path_to_fal_script.py
 ```
 
 ## Make a forecast
