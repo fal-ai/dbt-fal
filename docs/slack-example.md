@@ -45,7 +45,8 @@ In a `schema.yml` file, within a target model, a meta tag should be added in ord
 ```yaml
     meta:
       fal:
-        scripts: ["path_to_fal_script.py"]
+        scripts:
+			- path_to_fal_script.py
 ```
 
 ## Fal script
