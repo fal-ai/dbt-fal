@@ -1,5 +1,6 @@
 import click
 import os
+from fal.dag import ScriptGraph, ScriptGraphBuilder
 
 from dbt.logger import log_manager
 from dbt.config.profile import DEFAULT_PROFILES_DIR
@@ -48,7 +49,8 @@ def run(run, project_dir, profiles_dir, keyword, all, debug):
         real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
 
         project = parse_project(real_project_dir, real_profiles_dir, keyword)
-        for model in project.get_filtered_models(all):
-            run_scripts(
-                model, keyword, project.manifest.nativeManifest, real_project_dir
-            )
+        models = project.get_filtered_models(all)
+        ordered_scripts = ScriptGraph(models, keyword, project_dir).sort()
+        ## TODO: Run ordered scripts instead
+        for model in models:
+            run_scripts(model, keyword, project.manifest.nativeManifest, real_project_dir)

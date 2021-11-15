@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 from typing import Dict, List, List, Any, TypeVar, Sequence
 from dbt.contracts.graph.parsed import ParsedModelNode
@@ -25,6 +26,12 @@ class DbtModel:
         self.columns = self.node.columns
         self.unique_id = self.node.unique_id
 
+    def __hash__(self) -> int:
+        return self.unique_id.__hash__()        
+
+    def get_scipts(self, keyword, dbt_root) -> List[Path]:
+        scripts = self.node.config.meta[keyword]["scripts"]
+        return list(map(lambda script: Path(os.path.realpath(os.path.normpath(dbt_root + "/" + script))), scripts))
 
 @dataclass
 class DbtManifest:
