@@ -80,4 +80,4 @@ except SlackApiError as e:
     assert e.response["error"]
 ```
 
-You can find the full code example [here](scripts/slack_example.py).
+You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/slack.py).

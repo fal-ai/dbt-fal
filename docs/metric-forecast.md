@@ -11,7 +11,7 @@ In a `schema.yml` file, within a target model, a meta tag should be added in ord
     meta:
       fal:
         scripts:
-			- path_to_fal_script.py
+          - path_to_fal_script.py
 ```
 
 ## Make a forecast
@@ -117,4 +117,4 @@ send_slack_file(
     slack_token=SLACK_TOKEN,
 )
 ```
-You can find the full code example [here](scripts/forecast_slack.py).
+You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/forecast_slack.py).
