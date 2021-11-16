@@ -15,15 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-
-      - name: Set TOML version
-        run: |
-          CLIENT_VERSION=$(cat VERSION)
-          sed -i "s/999999/$CLIENT_VERSION/g" pyproject.toml
-
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: '3.8.x'
 
       - uses: abatilo/actions-poetry@v2.0.0
         with:
@@ -34,4 +28,11 @@ jobs:
           PYPI_USERNAME: ${{ secrets.PYPI_USER }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-            poetry publish --build -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
+          pip install --upgrade pip
+          pip install fal
+          long_version=$(pip show fal | grep Version)
+          IFS=" " read -ra version_arr <<< $long_version
+          short_version=${version_arr[1]}
+          poetry version $short_version
+          poetry version patch
+          poetry publish --build -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
