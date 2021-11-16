@@ -1,9 +1,11 @@
 import os
+
+from dbt.config.runtime import RuntimeConfig
 from faldbt.cp.contracts.graph.parsed import ColumnInfo
 import faldbt.lib as lib
 import pandas as pd
 from typing import Optional, Union, List
-from dbt.contracts.graph.manifest import Manifest
+from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.graph.parsed import ParsedModelNode
 from typing import Dict, Any
 from faldbt.project import DbtModel
@@ -44,6 +46,7 @@ def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str)
                     "ref": _get_ref_resolver(model.node, manifest, dbt_dir),
                     "context": context,
                     "source": _get_source_resolver(model.node, manifest, dbt_dir),
+                    "write_to_source": _write_to_source(model.node, manifest, dbt_dir),
                 },
             )
 
@@ -61,10 +64,15 @@ def _get_ref_resolver(
     dbt_dir: str,
 ):
     def ref_resolver(target_model_name: str, target_package_name: Optional[str] = None):
-        target_model = manifest.resolve_ref(
+        target_model: MaybeNonSource = manifest.resolve_ref(
             target_model_name, target_package_name, dbt_dir, model.package_name
         )
-        result = lib.fetch_model(manifest, dbt_dir, target_model)
+        if target_model is None:
+            raise Exception(
+                f"Could not find model {target_model_name}{target_package_name or ''}"
+            )
+
+        result = lib.fetch_target(manifest, dbt_dir, target_model)
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
         )
@@ -78,12 +86,39 @@ def _get_source_resolver(
     dbt_dir: str,
 ):
     def source_resolver(target_source_name: str, target_table_name: str):
-        target_source = manifest.resolve_source(
+        target_source: MaybeParsedSource = manifest.resolve_source(
             target_source_name, target_table_name, dbt_dir, model.package_name
         )
-        result = lib.fetch_model(manifest, dbt_dir, target_source)
+
+        if target_source is None:
+            raise Exception(
+                f"Could not find source {target_source_name}.{target_table_name}"
+            )
+        result = lib.fetch_target(manifest, dbt_dir, target_source)
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
         )
 
     return source_resolver
+
+
+def _write_to_source(
+    model: ParsedModelNode,
+    manifest: Manifest,
+    dbt_dir: str,
+):
+    def source_writer(
+        data: pd.DataFrame, target_source_name: str, target_table_name: str
+    ):
+        target_source: MaybeParsedSource = manifest.resolve_source(
+            target_source_name, target_table_name, dbt_dir, model.package_name
+        )
+
+        if target_source is None:
+            raise Exception(
+                f"Could not find source '{target_source_name}'.'{target_table_name}'"
+            )
+
+        lib.write_target(data, manifest, dbt_dir, target_source)
+
+    return source_writer
