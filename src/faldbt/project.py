@@ -23,9 +23,7 @@ class DbtModel:
         self.name = self.node.name
         self.meta = self.node.config.meta
         self.columns = self.node.columns
-
-    def model_key(self, project_name):
-        return "model." + project_name + "." + self.name
+        self.unique_id = self.node.unique_id
 
 
 @dataclass
@@ -69,7 +67,7 @@ class DbtProject:
         return self.manifest != other
 
     def find_model_location(self, model: DbtModel) -> List[str]:
-        model_node = self.manifest.nodes[model.model_key(self.name)]
+        model_node = self.manifest.nodes[model.unique_id]
         return model_node.relation_name.replace("`", "")
 
     def changed_model_names(self) -> List[str]:
