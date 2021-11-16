@@ -1,9 +1,12 @@
 import click
 import os
 
+from dbt.logger import log_manager
+from dbt.config.profile import DEFAULT_PROFILES_DIR
+
 from fal.run_scripts import run_scripts
 from faldbt.parse import parse_project
-from dbt.config.profile import DEFAULT_PROFILES_DIR
+import faldbt.lib as lib
 
 
 @click.command()
@@ -31,10 +34,21 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
     is_flag=True,
     help="To only run models that ran in the last dbt run",
 )
-def run(run, project_dir, profiles_dir, keyword, all):
-    real_project_dir = os.path.realpath(os.path.normpath(project_dir))
-    real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
+@click.option(
+    "--debug",
+    is_flag=True,
+    help="To only run models that ran in the last dbt run",
+)
+def run(run, project_dir, profiles_dir, keyword, all, debug):
+    with log_manager.applicationbound():
+        if debug:
+            log_manager.set_debug()
 
-    project = parse_project(real_project_dir, real_profiles_dir, keyword)
-    for model in project.get_filtered_models(all):
-        run_scripts(model, keyword, project.manifest.nativeManifest, real_project_dir)
+        real_project_dir = os.path.realpath(os.path.normpath(project_dir))
+        real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
+
+        project = parse_project(real_project_dir, real_profiles_dir, keyword)
+        for model in project.get_filtered_models(all):
+            run_scripts(
+                model, keyword, project.manifest.nativeManifest, real_project_dir
+            )
