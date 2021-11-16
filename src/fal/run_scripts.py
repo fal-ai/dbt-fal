@@ -26,7 +26,6 @@ class Context:
 
 def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str):
     for script in model.meta.get(keyword, {}).get("scripts", []):
-        ## remove scripts put everything else as context
         meta = model.meta
         _del_key(meta, keyword)
 
