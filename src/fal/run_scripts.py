@@ -16,25 +16,25 @@ class CurrentModel:
     name: str
     status: Union[RunStatus, TestStatus, FreshnessStatus]
     columns: Dict[str, ColumnInfo]
+    meta: Dict[Any, Any]
 
 
 @dataclass
 class Context:
-    meta: Dict[Any, Any]
     current_model: CurrentModel
 
 
 def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str):
     for script in model.meta.get(keyword, {}).get("scripts", []):
         ## remove scripts put everything else as context
-        meta = model.meta[keyword]
-        _del_key(meta, "scripts")
+        meta = model.meta
+        _del_key(meta, keyword)
 
         current_model = CurrentModel(
-            name=model.name, status=model.status, columns=model.columns
+            name=model.name, status=model.status, columns=model.columns, meta=meta
         )
 
-        context = Context(meta=meta, current_model=current_model)
+        context = Context(current_model=current_model)
         real_script = os.path.join(dbt_dir, script)
         with open(real_script) as file:
             a_script = file.read()
