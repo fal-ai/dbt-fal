@@ -1,6 +1,6 @@
 # Example 4: Run sentiment analysis using HuggingFace and store results in your data warehouse
 
-Sentiment Analysis is a powerful tecnique that takes advantage of NLP to identify affective states. It is usually used to identify custumer satisfaction. For simplicity we are taking advantage of a pretrained model and going to use [HuggingFace transformers for sentiment analysis](https://huggingface.co/transformers/quicktour.html).
+Sentiment Analysis is a powerful technique that takes advantage of NLP to identify affective states. It is usually used to identify customer satisfaction. For simplicity we are taking advantage of a pretrained model and going to use [HuggingFace transformers for sentiment analysis](https://huggingface.co/transformers/quicktour.html).
 
 We are going to use sample data from the [Fivetran dbt-zendesk](https://github.com/fivetran/dbt_zendesk/tree/main/integration_tests/data) repo to classify sentiment of fake customer support ticket reviews.
 
@@ -15,19 +15,19 @@ In a `schema.yml` file, within a target model, a meta tag should be added in ord
         config:
         materialized: table
         meta:
-        fal:
-            scripts: ["models/zendesk_sentiment_analysis.py"]
+            fal:
+                scripts: ["models/zendesk_sentiment_analysis.py"]
 ```
 
 ## Seeding data to the warehouse
 
 If you are just following this example for some practice with fal or dbt, one useful feature of dbt is to [seed csv data to your warehouse](https://docs.getdbt.com/docs/building-a-dbt-project/seeds). Instead of adding the dummy data to your warehouse you can put [Fivetran dbt-zendesk](https://github.com/fivetran/dbt_zendesk/tree/main/integration_tests/data) ticket data in the data folder of your project and run `dbt seed`. Just a friendly warning that seeding should only be used with small amount of data.
 
-Alternatively you can load this data to your warehouse with in any as you like.
+Alternatively you can load this data to your warehouse with in any way as you like.
 
 ## Using ref() and transformer
 
-Let's first install the transformer library from hugging face. Head to your terminal and the python environment that you have install `fal` and run:
+Let's first install the transformer library from hugging face. Head to your terminal and the python environment that you have installed `fal` and run:
 
 ```
 pip install transformers
