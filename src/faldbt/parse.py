@@ -1,6 +1,7 @@
 import os
 import json
 import glob
+from dbt.config.runtime import RuntimeConfig
 import dbt.tracking
 import faldbt.lib as lib
 from dbt.contracts.results import RunResultsArtifact
@@ -58,10 +59,11 @@ def parse_project(project_dir: str, profiles_dir: str, keyword: str):
     run_result_path = os.path.join(target_path, "run_results.json")
 
     config = lib.get_dbt_config(project_dir)
+    lib.register_adapters(config)
 
-    dbt.tracking.initialize_tracking(
-        profiles_dir
-    )  # Necessary for parse_to_manifest to not fail
+    # Necessary for parse_to_manifest to not fail
+    dbt.tracking.initialize_tracking(profiles_dir)
+
     manifest = lib.parse_to_manifest(config)
     run_result_artifact = RunResultsArtifact(**_read_json(run_result_path))
     dbtmanifest = DbtManifest(nativeManifest=manifest)
