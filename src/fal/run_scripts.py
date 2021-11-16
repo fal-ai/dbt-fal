@@ -1,9 +1,16 @@
+"""Run fal scripts."""
 import os
 from typing import Optional, Union, Dict, Any, List
 
 import faldbt.lib as lib
 
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
+import uuid
+from faldbt.cp.contracts.graph.parsed import ColumnInfo
+import faldbt.lib as lib
+import pandas as pd
+from typing import Optional, Union
+from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.graph.parsed import ParsedModelNode
 from dbt.contracts.results import RunStatus, TestStatus, FreshnessStatus
 
@@ -13,6 +20,9 @@ from faldbt.project import DbtModel
 import pandas as pd
 from dataclasses import dataclass
 from fal.dag import FalScript
+import firebase_admin
+from firebase_admin import credentials, firestore
+
 
 @dataclass
 class CurrentModel:
@@ -47,6 +57,7 @@ def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str)
                     "context": context,
                     "source": _get_source_resolver(model.node, manifest, dbt_dir),
                     "write_to_source": _write_to_source(model.node, manifest, dbt_dir),
+                    "write_firestore": _get_firestore_writer(model.node, manifest)
                 },
             )
 
@@ -94,6 +105,37 @@ def _get_ref_resolver(
         )
 
     return ref_resolver
+
+
+def _get_firestore_writer(model: ParsedModelNode, manifest: Manifest):
+    # Use the application default credentials
+    cred = credentials.ApplicationDefault()
+    app_name = str(uuid.uuid4())
+
+    app = firebase_admin.initialize_app(cred, {
+        'projectId': model.database,
+    }, name=app_name)
+
+    db = firestore.client(app=app)
+
+    def firestore_writer(
+            df: pd.DataFrame,
+            collection: str,
+            document: str,
+            key_column: str = None,
+            merge=True):
+        doc_ref = db.collection(collection).document(document)
+        data = {}
+        df_dict = df.to_dict('records')
+        for i in range(len(df_dict)):
+            if key_column is not None:
+                key = df_dict[i][key_column]
+            else:
+                key = str(i+1)
+            data[key] = df_dict[i]
+        doc_ref.set(data, merge=merge)
+
+    return firestore_writer
 
 
 def _get_source_resolver(
