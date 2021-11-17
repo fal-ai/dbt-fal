@@ -10,7 +10,7 @@ import faldbt.lib as lib
 
 
 @click.command()
-@click.argument("run")
+@click.argument("command")
 @click.option(
     "--project-dir",
     default=os.getcwd(),
@@ -39,7 +39,10 @@ import faldbt.lib as lib
     is_flag=True,
     help="Display debug logging during dbt execution",
 )
-def run(run, project_dir, profiles_dir, keyword, all, debug):
+def run(command, project_dir, profiles_dir, keyword, all, debug):
+    if command != "run":
+        raise Exception("Please use run command")
+
     with log_manager.applicationbound():
         if debug:
             log_manager.set_debug()
