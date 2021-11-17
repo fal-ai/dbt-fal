@@ -149,4 +149,4 @@ This library will form the basis of our attempt to more comprehensively enable *
 
 
 # Have feedback or need help?
-[Join us in #fal on Discord](https://discord.gg/)
+[Join us in #fal on Discord](https://discord.gg/ABbMkuBpNY)
