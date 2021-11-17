@@ -26,18 +26,18 @@ import faldbt.lib as lib
 @click.option(
     "--keyword",
     default="fal",
-    help="This keyword is used if we need to parse meta",
+    help="Property in meta to look for fal configurations",
     type=click.STRING,
 )
 @click.option(
     "--all",
     is_flag=True,
-    help="To only run models that ran in the last dbt run",
+    help="Only run models that ran in the last dbt run",
 )
 @click.option(
     "--debug",
     is_flag=True,
-    help="To only run models that ran in the last dbt run",
+    help="Display debug logging during dbt execution",
 )
 def run(run, project_dir, profiles_dir, keyword, all, debug):
     with log_manager.applicationbound():
