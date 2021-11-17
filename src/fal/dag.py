@@ -34,7 +34,7 @@ class FalScript:
                     dependency_names.append(group)
             return dependency_names    
     
-    def addDependency(self, dependency: T):
+    def add_dependency(self, dependency: T):
         if (dependency not in self.dependencies):
             self.dependencies.append(dependency)
 
@@ -86,9 +86,9 @@ class ScriptGraphBuilder:
                 dependency_key = UniqueKey(model, dependency_script)
                 if (self.falScripts.get(dependency_key) is None):
                     self.recursively_set_dependencies(dependency_key)
-                current_script.addDependency(self.falScripts.get(dependency_key))
+                current_script.add_dependency(self.falScripts.get(dependency_key))
     
-    def getValues(self) -> List[FalScript]:
+    def get_values(self) -> List[FalScript]:
         return self.falScripts.values()
 
 
@@ -99,7 +99,7 @@ class ScriptGraph:
     ordered_list: List[FalScript] = []
 
     def __init__(self, models: List[DbtModel], keyword: str, root: str):
-        self.graph = ScriptGraphBuilder(models, keyword, root).getValues()
+        self.graph = ScriptGraphBuilder(models, keyword, root).get_values()
         self.incoming = dict(map(lambda script: [script, script.dependencies], self.graph))
         for edge in self.graph:
             for dependency in edge.dependencies:
