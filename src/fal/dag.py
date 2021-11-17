@@ -122,10 +122,9 @@ class ScriptGraph:
             for item in outgoing_copy:
                 self.incoming[item].remove(node)
                 self.outgoing[node].remove(item)
-                if (self.incoming[item]):
+                if (not self.incoming[item]):
                     leaf_nodes.append(item)
-        detect_cycles = self.outgoing
-        print(detect_cycles)
+        detect_cycles = _flatten(self.outgoing.values())
         if (detect_cycles):
             raise Exception("Your python scripts contain a cycle could not determine the right order")
         return self.ordered_list
