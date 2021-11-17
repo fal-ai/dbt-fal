@@ -14,7 +14,7 @@ class FalScript:
     dependencies: List[T] = field(default_factory=list)
 
     def __hash__(self):
-        return self.path.__hash__()
+        return self.path.__hash__() * self.model.name.__hash__()
 
     def __repr__(self):
         return "FalScript(" + self.path.__str__() + ")"
@@ -67,15 +67,14 @@ class ScriptGraphBuilder:
         for model in models:
             self.modelToScriptLookup[model.name] = model.get_scipts(keyword, root)
             self.modelNameToModelLookup[model.name] = model
-        # self.scripts = _flatten(self.modelToScriptLookup.values())
         for model_name, script_list in self.modelToScriptLookup.items():
             for script in script_list:
-                self.recursivelySetDependencies(UniqueKey(self.modelNameToModelLookup[model_name], script))
+                self.recursively_set_dependencies(UniqueKey(self.modelNameToModelLookup[model_name], script))
 
-    def recursivelySetDependencies(self, key: UniqueKey):
-        if (self.falScripts.get(key) is None):
-            self.falScripts[key] = FalScript(key.model, key.script_path)
-
+    def recursively_set_dependencies(self, key: UniqueKey):
+        if key in self.falScripts:
+          return
+        self.falScripts[key] = FalScript(key.model, key.script_path)
         current_script = self.falScripts.get(key)
         dependency_models = current_script.parse()
        
@@ -83,10 +82,11 @@ class ScriptGraphBuilder:
             model = self.modelNameToModelLookup[model_name]
             dependency_scripts = self.modelToScriptLookup.get(model_name, [])
 
-            for dependency_scipt in dependency_scripts:
-                if (self.falScripts.get(UniqueKey(model, dependency_scipt)) is None):
-                    self.recursivelySetDependencies(UniqueKey(model, dependency_scipt))
-                current_script.addDependency(self.falScripts.get(UniqueKey(model, dependency_scipt)))
+            for dependency_script in dependency_scripts:
+                dependency_key = UniqueKey(model, dependency_script)
+                if (self.falScripts.get(dependency_key) is None):
+                    self.recursively_set_dependencies(dependency_key)
+                current_script.addDependency(self.falScripts.get(dependency_key))
     
     def getValues(self) -> List[FalScript]:
         return self.falScripts.values()
