@@ -84,8 +84,7 @@ class ScriptGraphBuilder:
 
             for dependency_script in dependency_scripts:
                 dependency_key = UniqueKey(model, dependency_script)
-                if (self.falScripts.get(dependency_key) is None):
-                    self.recursively_set_dependencies(dependency_key)
+                self.recursively_set_dependencies(dependency_key)
                 current_script.add_dependency(self.falScripts.get(dependency_key))
     
     def get_values(self) -> List[FalScript]:
