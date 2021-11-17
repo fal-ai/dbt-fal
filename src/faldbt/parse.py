@@ -74,7 +74,7 @@ def parse_project(project_dir: str, profiles_dir: str, keyword: str):
         map(lambda result: [result["unique_id"], result["status"]], run_result_artifact)
     )
     for model in models:
-        model.status = status_map[model.unique_id]
+        model.status = status_map.get(model.unique_id)
 
     return DbtProject(
         name=project_dict["name"],
