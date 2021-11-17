@@ -1,16 +1,17 @@
 import os
+from typing import Optional, Union, Dict, Any
 
-from dbt.config.runtime import RuntimeConfig
-from faldbt.cp.contracts.graph.parsed import ColumnInfo
 import faldbt.lib as lib
-import pandas as pd
-from typing import Optional, Union, List
+
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.graph.parsed import ParsedModelNode
-from typing import Dict, Any
-from faldbt.project import DbtModel
-from dataclasses import dataclass
 from dbt.contracts.results import RunStatus, TestStatus, FreshnessStatus
+
+from faldbt.cp.contracts.graph.parsed import ColumnInfo
+from faldbt.project import DbtModel
+
+import pandas as pd
+from dataclasses import dataclass
 
 
 @dataclass

@@ -1,12 +1,13 @@
 import os
 import json
 import glob
-from dbt.config.runtime import RuntimeConfig
-import dbt.tracking
-import faldbt.lib as lib
-from dbt.contracts.results import RunResultsArtifact
-from faldbt.utils.yaml_helper import load_yaml_text
 from typing import Dict, Any
+
+import dbt.tracking
+from dbt.contracts.results import RunResultsArtifact
+
+import faldbt.lib as lib
+from faldbt.utils.yaml_helper import load_yaml_text
 from faldbt.project import DbtProject, DbtManifest, DbtRunResult
 
 
