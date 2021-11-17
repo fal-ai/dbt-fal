@@ -5,11 +5,10 @@ import six
 from datetime import datetime
 from uuid import uuid4
 from collections import namedtuple
-from typing import List, Type, Union
+from typing import List, Tuple, Type, Union
 
-from dbt.adapters.factory import Adapter
-from dbt.adapters.protocol import ConnectionManagerProtocol
 from dbt.config.runtime import RuntimeConfig
+from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.graph.manifest import Manifest
 import dbt.clients.agate_helper as agate_helper
 import dbt.adapters.factory as adapters_factory
@@ -78,7 +77,9 @@ def _get_adapter(project_path: str):
     return adapters_factory.get_adapter(config)
 
 
-def _execute_sql(manifest: Manifest, project_path: str, sql: str):
+def _execute_sql(
+    manifest: Manifest, project_path: str, sql: str
+) -> Tuple[AdapterResponse, RemoteRunResult]:
     node = _get_operation_node(manifest, project_path, sql)
     adapter = _get_adapter(project_path)
 
@@ -120,7 +121,7 @@ def _get_target_relation(
     return relation
 
 
-def execute_sql(manifest: Manifest, project_path: str, sql: str):
+def execute_sql(manifest: Manifest, project_path: str, sql: str) -> RemoteRunResult:
     _, result = _execute_sql(manifest, project_path, sql)
     return result
 
@@ -129,7 +130,7 @@ def fetch_target(
     manifest: Manifest,
     project_path: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
-):
+) -> RemoteRunResult:
     relation = _get_target_relation(target, project_path)
 
     if relation is None:
@@ -145,7 +146,7 @@ def write_target(
     manifest: Manifest,
     project_path: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
-):
+) -> RemoteRunResult:
     relation = _get_target_relation(target, project_path)
 
     column_names: List[str] = list(data.columns)
@@ -161,21 +162,19 @@ def write_target(
     )
 
     if relation is None:
-        stmt = CreateTable(alchemy_table).compile(
+        create_stmt = CreateTable(alchemy_table).compile(
             compile_kwargs={"literal_binds": True}
         )
-        stmt_str = six.text_type(stmt).strip()
 
-        _execute_sql(manifest, project_path, stmt_str)
+        _execute_sql(manifest, project_path, six.text_type(create_stmt).strip())
 
-    stmt = (
+    insert_stmt = (
         Insert(alchemy_table)
         .values(row_dicts)
         .compile(compile_kwargs={"literal_binds": True})
     )
-    stmt_str = six.text_type(stmt).strip()
 
-    _, result = _execute_sql(manifest, project_path, stmt_str)
+    _, result = _execute_sql(manifest, project_path, six.text_type(insert_stmt).strip())
     return result
 
 
