@@ -115,14 +115,21 @@ class ScriptGraph:
         run before the script itsef
         """
         leaf_nodes = list(filter(lambda key: len(self.incoming[key]) == 0, self.incoming.keys()))
-        while (len(leaf_nodes) != 0):
+        while leaf_nodes:
             node = leaf_nodes.pop(0)
             self.ordered_list.append(node)
             outgoing_copy = self.outgoing[node].copy()
             for item in outgoing_copy:
                 self.incoming[item].remove(node)
                 self.outgoing[node].remove(item)
-                if (len(self.incoming[item]) == 0):
+                if (self.incoming[item]):
                     leaf_nodes.append(item)
+        detect_cycles = self.outgoing
+        print(detect_cycles)
+        if (detect_cycles):
+            raise Exception("Your python scripts contain a cycle could not determine the right order")
         return self.ordered_list
 
+
+def _flatten(t):
+    return [item for sublist in t for item in sublist]
