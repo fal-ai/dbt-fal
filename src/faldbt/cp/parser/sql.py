@@ -4,13 +4,14 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from dbt.contracts.graph.manifest import SourceFile
-from faldbt.cp.contracts.graph.parsed import ParsedSqlNode, ParsedMacro
 from dbt.contracts.graph.unparsed import UnparsedMacro
 from dbt.exceptions import InternalException
-from faldbt.cp.node_types import NodeType
 from dbt.parser.base import SimpleSQLParser
 from dbt.parser.macros import MacroParser
 from dbt.parser.search import FileBlock
+
+from faldbt.cp.contracts.graph.parsed import ParsedSqlNode, ParsedMacro
+from faldbt.cp.node_types import NodeType
 
 
 @dataclass

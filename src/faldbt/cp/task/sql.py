@@ -4,14 +4,15 @@ from datetime import datetime
 from typing import Generic, TypeVar
 
 import dbt.exceptions
+from dbt.logger import GLOBAL_LOGGER as logger
+from dbt.task.compile import CompileRunner
+
 from faldbt.cp.contracts.sql import (
     RemoteCompileResult,
     RemoteCompileResultMixin,
     RemoteRunResult,
     ResultTable,
 )
-from dbt.logger import GLOBAL_LOGGER as logger
-from dbt.task.compile import CompileRunner
 
 
 SQLResult = TypeVar('SQLResult', bound=RemoteCompileResultMixin)

@@ -16,26 +16,31 @@ from typing import (
     TypeVar,
 )
 
-from dbt.dataclass_schema import (
-    dbtClassMixin, ExtensibleDbtClassMixin
-)
-
+from dbt.dataclass_schema import dbtClassMixin, ExtensibleDbtClassMixin
 from dbt.clients.system import write_file
 from dbt.contracts.files import FileHash, MAXIMUM_SEED_SIZE_NAME
 from dbt.contracts.graph.unparsed import (
-    UnparsedNode, UnparsedDocumentation, Quoting, Docs,
-    UnparsedBaseNode, FreshnessThreshold, ExternalTable,
-    HasYamlMetadata, MacroArgument, UnparsedSourceDefinition,
-    UnparsedSourceTableDefinition, UnparsedColumn, TestDef,
-    ExposureOwner, ExposureType, MaturityType
+    UnparsedNode,
+    UnparsedDocumentation,
+    Quoting,
+    Docs,
+    UnparsedBaseNode,
+    FreshnessThreshold,
+    ExternalTable,
+    HasYamlMetadata,
+    MacroArgument,
+    UnparsedSourceDefinition,
+    UnparsedSourceTableDefinition,
+    UnparsedColumn,
+    TestDef,
+    ExposureOwner,
+    ExposureType,
+    MaturityType,
 )
 from dbt.contracts.util import Replaceable, AdditionalPropertiesMixin
 from dbt.exceptions import warn_or_error
 from dbt.logger import GLOBAL_LOGGER as logger  # noqa
 from dbt import flags
-from faldbt.cp.node_types import NodeType
-
-
 from dbt.contracts.graph.model_config import (
     NodeConfig,
     SeedConfig,
@@ -44,6 +49,8 @@ from dbt.contracts.graph.model_config import (
     EmptySnapshotConfig,
     SnapshotConfig,
 )
+
+from faldbt.cp.node_types import NodeType
 
 
 @dataclass

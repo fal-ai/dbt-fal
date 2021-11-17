@@ -1,11 +1,13 @@
 import os
 import json
 import glob
-import dbt.tracking
-import faldbt.lib as lib
-from dbt.contracts.results import RunResultsArtifact
-from faldbt.utils.yaml_helper import load_yaml_text
 from typing import Dict, Any
+
+import dbt.tracking
+from dbt.contracts.results import RunResultsArtifact
+
+import faldbt.lib as lib
+from faldbt.utils.yaml_helper import load_yaml_text
 from faldbt.project import DbtProject, DbtManifest, DbtRunResult
 
 
@@ -58,10 +60,11 @@ def parse_project(project_dir: str, profiles_dir: str, keyword: str):
     run_result_path = os.path.join(target_path, "run_results.json")
 
     config = lib.get_dbt_config(project_dir)
+    lib.register_adapters(config)
 
-    dbt.tracking.initialize_tracking(
-        profiles_dir
-    )  # Necessary for parse_to_manifest to not fail
+    # Necessary for parse_to_manifest to not fail
+    dbt.tracking.initialize_tracking(profiles_dir)
+
     manifest = lib.parse_to_manifest(config)
     run_result_artifact = RunResultsArtifact(**_read_json(run_result_path))
     dbtmanifest = DbtManifest(nativeManifest=manifest)
@@ -71,7 +74,7 @@ def parse_project(project_dir: str, profiles_dir: str, keyword: str):
         map(lambda result: [result["unique_id"], result["status"]], run_result_artifact)
     )
     for model in models:
-        model.status = status_map[model.model_key(project_dict["name"])]
+        model.status = status_map[model.unique_id]
 
     return DbtProject(
         name=project_dict["name"],
