@@ -111,10 +111,11 @@ models:
 Use the `fal` and `scripts` keys underneath the `meta` config to let `fal` CLI know where to look for the Python scripts. You can pass a list of scripts as shown above to run one or more scripts as a post-hook operation after a `dbt run`.
 
 ## Variables and functions
-Inside a Python script, you get access to some useful variables and functions:
+Inside a Python script, you get access to some useful variables and functions
+
+### Variables
 
 A `context` object with information relevant to the model through which the script was run. For the [`meta` Syntax](#meta-syntax) example, we would get the following:
-
 ```python
 context.current_model.name
 #= historical_ozone_levels
@@ -132,8 +133,8 @@ context.current_model.status
 #= 'skipped'
 ```
 
-`fal` also includes some familiar functions from dbt as well as adding a couple of new useful ones
-
+### `ref` and `source` functions
+There are also available some familiar functions from `dbt`
 ```python
 # Refer to dbt models or sources by name and returns it as `pandas.DataFrame`
 ref('model_name')
@@ -143,8 +144,10 @@ source('source_name', 'table_name')
 ref(context.current_model.name)
 ```
 
+### `write_to_source` function
 It is also possible to send data back to your datawarehouse. This makes it easy to get the data, process it and upload it back into dbt territory.
 
+All you have to do is define the target source in your schema and use it in fal.
 ```python
 # Upload a `pandas.DataFrame` back to the datawarehouse
 write_to_source(df, 'source_name', 'table_name2')
