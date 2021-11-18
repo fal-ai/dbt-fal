@@ -77,24 +77,20 @@ class DbtProject:
         model_node = self.manifest.nodes[model.unique_id]
         return model_node.relation_name.replace("`", "")
 
-    def changed_model_names(self) -> List[str]:
-        return list(
-            map(
-                lambda result: result["unique_id"].split(".")[-1],
-                self.run_result.results,
-            )
-        )
+    def changed_models_ids(self) -> List[str]:
+        return list(map(lambda res: res["unique_id"], self.run_result.results))
 
     def get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(filter(lambda model: keyword in model.meta, self.models))
 
     def get_filtered_models(self, all):
+        changed_models_ids = self.changed_models_ids()
         filtered_models: List[DbtModel] = []
+
         for node in self.get_models_with_keyword(self.keyword):
             if all:
                 filtered_models.append(node)
-            elif node.name in self.changed_model_names():
+            elif node.unique_id in changed_models_ids:
                 filtered_models.append(node)
-            else:
-                continue
+
         return filtered_models
