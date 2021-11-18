@@ -1,0 +1,32 @@
+name: Run Tests
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: google-github-actions/setup-gcloud@master
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8.x"
+
+      - uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: "1.1.4"
+
+      - name: Test
+        run: |
+          poetry install
+          poetry run pytest -s
