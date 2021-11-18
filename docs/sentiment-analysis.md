@@ -9,15 +9,15 @@ We are going to use sample data from the [Fivetran dbt-zendesk](https://github.c
 In a `schema.yml` file, within a target model, a meta tag should be added in order to connect the model to fal:
 
 ```yaml
-    models:
-    - name: stg_zendesk_ticket_data
-        description: zendesk ticket data
-        config:
-        materialized: table
-        meta:
-            fal:
-                scripts:
-                    - "models/zendesk_sentiment_analysis.py"
+models:
+- name: stg_zendesk_ticket_data
+    description: zendesk ticket data
+    config:
+    materialized: table
+    meta:
+        fal:
+            scripts:
+                - "models/zendesk_sentiment_analysis.py"
 ```
 
 ## Seeding data to the warehouse
