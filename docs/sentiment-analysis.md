@@ -1,6 +1,6 @@
 # Example 4: Run sentiment analysis using HuggingFace and store results in your data warehouse
 
-Sentiment Analysis is a powerful technique that takes advantage of NLP to identify affective states. It is usually used to identify customer satisfaction. For simplicity we are taking advantage of a pretrained model and going to use [HuggingFace transformers for sentiment analysis](https://huggingface.co/transformers/quicktour.html).
+Sentiment Analysis is a powerful technique that takes advantage of NLP to understand opinions based on text. It is usually used to identify customer satisfaction. For simplicity we are taking advantage of a pretrained model and going to use [HuggingFace transformers for sentiment analysis](https://huggingface.co/transformers/quicktour.html).
 
 We are going to use sample data from the [Fivetran dbt-zendesk](https://github.com/fivetran/dbt_zendesk/tree/main/integration_tests/data) repo to classify sentiment of fake customer support ticket reviews.
 
