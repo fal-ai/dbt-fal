@@ -8,28 +8,20 @@ from pathlib import Path
 import shutil
 import pytest
 
+profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 
-def test_run():
+def test_run_error():
     runner = CliRunner()
-    result = runner.invoke(cli, ["run"])
+    result = runner.invoke(cli, ["run", "--profiles-dir", profiles_dir])
     assert "no dbt_project.yml found at expected path" in str(result.exception)
 
-
-def test_no_arg():
-    runner = CliRunner()
-    result = runner.invoke(cli, [])
-    assert result.exit_code == 0
-    assert "Usage: cli [OPTIONS] COMMAND [ARGS]..." in result.output
-
-
-@pytest.mark.skip("Getting 'Could not find profile named 'fal_dbt_examples''")
 def test_run_with_project_dir():
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(
             os.path.join(Path.cwd(), "tests/mock"), tmp_dir, dirs_exist_ok=True
         )
-        result = runner.invoke(cli, ["run", "--project-dir", tmp_dir])
+        result = runner.invoke(cli, ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
     assert result.exit_code == 0
 
 

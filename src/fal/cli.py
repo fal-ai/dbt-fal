@@ -51,6 +51,9 @@ def run(project_dir, profiles_dir, keyword, all, debug):
 
         real_project_dir = os.path.realpath(os.path.normpath(project_dir))
         real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
+        
+        old_profiles_dir = os.getenv("DBT_PROFILES_DIR")
+        os.environ['DBT_PROFILES_DIR'] = real_profiles_dir
 
         project = parse_project(real_project_dir, real_profiles_dir, keyword)
         models = project.get_filtered_models(all)
@@ -58,3 +61,5 @@ def run(project_dir, profiles_dir, keyword, all, debug):
             run_scripts(
                 model, keyword, project.manifest.nativeManifest, real_project_dir
             )
+
+        os.environ['DBT_PROFILES_DIR'] = old_profiles_dir
