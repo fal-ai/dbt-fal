@@ -1,0 +1,12 @@
+fal_dbt_examples:
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      threads: 1
+      schema: example
+      timeout_seconds: 300
+      location: US
+      priority: interactive
+
+  target: dev
