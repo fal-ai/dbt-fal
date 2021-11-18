@@ -16,7 +16,8 @@ In a `schema.yml` file, within a target model, a meta tag should be added in ord
         materialized: table
         meta:
             fal:
-                scripts: ["models/zendesk_sentiment_analysis.py"]
+                scripts:
+                    - "models/zendesk_sentiment_analysis.py"
 ```
 
 ## Seeding data to the warehouse
