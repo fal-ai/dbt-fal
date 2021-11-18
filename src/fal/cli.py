@@ -10,40 +10,42 @@ from faldbt.parse import parse_project
 import faldbt.lib as lib
 
 
-@click.command()
-@click.argument("command")
+@click.group()
+@click.version_option()
+def cli():
+    pass
+
+
+@cli.command()
 @click.option(
     "--project-dir",
     default=os.getcwd(),
-    help="Directory to look for dbt_project.yml",
+    help="Directory to look for dbt_project.yml.",
     type=click.Path(exists=True),
 )
 @click.option(
     "--profiles-dir",
     default=DEFAULT_PROFILES_DIR,
-    help="Directory to look for profiles.yml",
+    help="Directory to look for profiles.yml.",
     type=click.Path(exists=True),
 )
 @click.option(
     "--keyword",
     default="fal",
-    help="Property in meta to look for fal configurations",
+    help="Property in meta to look for fal configurations.",
     type=click.STRING,
 )
 @click.option(
     "--all",
+    help="Only run models that ran in the last dbt run.",
     is_flag=True,
-    help="Only run models that ran in the last dbt run",
 )
 @click.option(
     "--debug",
+    help="Display debug logging during execution.",
     is_flag=True,
-    help="Display debug logging during dbt execution",
 )
-def run(command, project_dir, profiles_dir, keyword, all, debug):
-    if command != "run":
-        raise Exception("Please use run command")
-
+def run(project_dir, profiles_dir, keyword, all, debug):
     with log_manager.applicationbound():
         if debug:
             log_manager.set_debug()
@@ -56,4 +58,6 @@ def run(command, project_dir, profiles_dir, keyword, all, debug):
         ordered_scripts = ScriptGraph(models, keyword, project_dir).sort()
         ## TODO: Run ordered scripts instead
         for model in models:
-            run_scripts(model, keyword, project.manifest.nativeManifest, real_project_dir)
+            run_scripts(
+                model, keyword, project.manifest.nativeManifest, real_project_dir
+            )
