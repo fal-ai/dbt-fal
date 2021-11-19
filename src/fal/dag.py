@@ -7,6 +7,10 @@ import re
 
 T = TypeVar("T", bound="FalScript")
 
+
+class FalDagCycle(Exception):
+    pass
+
 @dataclass(frozen=True)
 class FalScript:
     model: DbtModel
@@ -99,8 +103,11 @@ class ScriptGraph:
     incoming: Dict[FalScript, List[FalScript]] = {}
     ordered_list: List[FalScript] = []
 
-    def __init__(self, models: List[DbtModel], keyword: str, root: str):
-        self.graph = ScriptGraphBuilder(models, keyword, root).get_values()
+    def __init__(self, models: List[DbtModel], keyword: str, root: str, graph = []):
+        if (graph):
+            self.graph = graph
+        else:
+            self.graph = ScriptGraphBuilder(models, keyword, root).get_values()
         self.incoming = dict(map(lambda script: [script, script.dependencies], self.graph))
         for edge in self.graph:
             for dependency in edge.dependencies:
@@ -128,7 +135,7 @@ class ScriptGraph:
                     leaf_nodes.append(item)
         detect_cycles = _flatten(self.outgoing.values())
         if (detect_cycles):
-            raise Exception("Your python scripts contain a cycle could not determine the right order")
+            raise FalDagCycle("Your python scripts contain a cycle could not determine the right order")
         return self.ordered_list
 
 

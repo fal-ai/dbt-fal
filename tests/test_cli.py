@@ -1,5 +1,3 @@
-from fal import __version__
-
 from click.testing import CliRunner
 from fal.cli import cli
 import tempfile
@@ -34,6 +32,10 @@ def test_run_with_project_dir():
 
 
 def test_version():
+    import importlib.metadata
+
+    version = importlib.metadata.version("fal")
+
     runner = CliRunner()
     result = runner.invoke(cli, ["--version"])
-    assert f"cli, version {__version__}" in result.output
+    assert f"cli, version {version}" in result.output

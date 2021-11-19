@@ -7,6 +7,7 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 from fal.run_scripts import run_ordered_scripts, run_scripts
 from faldbt.parse import parse_project
 from fal.dag import ScriptGraph
+from fal.utils import print_run_info
 
 
 @click.group()
@@ -60,6 +61,7 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         project = parse_project(real_project_dir, real_profiles_dir, keyword)
         models = project.get_filtered_models(all)
         manifest = project.manifest.nativeManifest
+        print_run_info(models)
         
         if experimental_ordering:
             ordered_scripts = ScriptGraph(models, keyword, project_dir).sort()
@@ -69,4 +71,6 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
                 run_scripts(
                     model, keyword, project.manifest.nativeManifest, real_project_dir
                 )
+
+
 
