@@ -74,6 +74,7 @@ To explore what is possible with fal, take a look at the in-depth examples below
 - [Example 2: Metric forecasting](docs/metric-forecast.md)
 - [Example 3: Sentiment analysis on support tickets](docs/sentiment-analysis.md)
 - [Example 4: Send event to Datadog](docs/datadog_event.md)
+- [Example 5: Incorporate fal in CI/CD workflow](docs/ci_example.md)
 
 # How it works?
 `fal` is a command line tool that can read the state of your `dbt` project and help you run Python scripts after your `dbt run`s by leveraging the [`meta` config](https://docs.getdbt.com/reference/resource-configs/meta).
