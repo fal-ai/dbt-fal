@@ -29,6 +29,7 @@ agate-sql = "^0.5.8"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+black = "^21.11b1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
