@@ -65,7 +65,7 @@ def parse_project(project_dir: str, profiles_dir: str, keyword: str):
     except IOError as e:
         raise FalParseError("Did you forget to run dbt run?") from e
 
-    config = lib.get_dbt_config(project_dir)
+    config = lib.get_dbt_config(project_dir, profiles_dir)
     lib.register_adapters(config)
 
     # Necessary for parse_to_manifest to not fail
