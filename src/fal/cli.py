@@ -5,8 +5,8 @@ from dbt.logger import log_manager
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import run_scripts
+from fal.utils import print_run_info
 from faldbt.parse import parse_project
-import faldbt.lib as lib
 
 
 @click.group()
@@ -54,6 +54,9 @@ def run(project_dir, profiles_dir, keyword, all, debug):
 
         project = parse_project(real_project_dir, real_profiles_dir, keyword)
         models = project.get_filtered_models(all)
+
+        print_run_info(models)
+
         for model in models:
             run_scripts(
                 model, keyword, project.manifest.nativeManifest, real_project_dir
