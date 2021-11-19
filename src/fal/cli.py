@@ -1,12 +1,12 @@
 import click
 import os
 
-from dbt.logger import log_manager, print_timestamped_line
+from dbt.logger import log_manager
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import run_scripts
+from fal.utils import print_run_info
 from faldbt.parse import parse_project
-import faldbt.lib as lib
 
 
 @click.group()
@@ -55,12 +55,7 @@ def run(project_dir, profiles_dir, keyword, all, debug):
         project = parse_project(real_project_dir, real_profiles_dir, keyword)
         models = project.get_filtered_models(all)
 
-        models_arr = map(
-            lambda model: f"{model.name}: {', '.join(model.meta['fal']['scripts'])}",
-            models
-        )
-        models_str = '\n'.join(models_arr)
-        print_timestamped_line(f"Starting FAL run for following models (model_name: scripts): \n{models_str}")
+        print_run_info(models)
 
         for model in models:
             run_scripts(
