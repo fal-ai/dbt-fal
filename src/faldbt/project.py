@@ -27,11 +27,19 @@ class DbtModel:
         self.unique_id = self.node.unique_id
 
     def __hash__(self) -> int:
-        return self.unique_id.__hash__()        
+        return self.unique_id.__hash__()
 
-    def get_scipts(self, keyword, dbt_root) -> List[Path]:
+    def get_scripts(self, keyword, dbt_root) -> List[Path]:
         scripts = self.node.config.meta[keyword]["scripts"]
-        return list(map(lambda script: Path(os.path.realpath(os.path.normpath(dbt_root + "/" + script))), scripts))
+        return list(
+            map(
+                lambda script: Path(
+                    os.path.realpath(os.path.normpath(dbt_root + "/" + script))
+                ),
+                scripts,
+            )
+        )
+
 
 @dataclass
 class DbtManifest:
