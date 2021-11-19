@@ -35,14 +35,15 @@ class FalScript:
             return dependency_names    
     
     def add_dependency(self, dependency: T):
-        if (dependency not in self.dependencies):
+        if (dependency not in self.dependencies and dependency != self):
             self.dependencies.append(dependency)
 
-    def exec(self, ref, context, source):
+    def exec(self, ref, context, source, write):
+
         """
         Executes the script
         """
-        with open(path) as file:
+        with open(self.path) as file:
             a_script = file.read()
             exec(
                 a_script,
@@ -50,6 +51,7 @@ class FalScript:
                     "ref": ref,
                     "context": context,
                     "source": source,
+                    "write_to_source": write
                 },
             )
 

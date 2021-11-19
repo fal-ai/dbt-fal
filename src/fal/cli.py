@@ -4,9 +4,9 @@ import os
 from dbt.logger import log_manager
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
-from fal.run_scripts import run_scripts
+from fal.run_scripts import run_ordered_scripts, run_scripts
 from faldbt.parse import parse_project
-import faldbt.lib as lib
+from fal.dag import ScriptGraph
 
 
 @click.group()
@@ -40,11 +40,16 @@ def cli():
     is_flag=True,
 )
 @click.option(
+    "--experimental-ordering",
+    help="Turns on ordering of the fal scripts.",
+    is_flag=True,
+)
+@click.option(
     "--debug",
     help="Display debug logging during execution.",
     is_flag=True,
 )
-def run(project_dir, profiles_dir, keyword, all, debug):
+def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
     with log_manager.applicationbound():
         if debug:
             log_manager.set_debug()
@@ -54,7 +59,14 @@ def run(project_dir, profiles_dir, keyword, all, debug):
 
         project = parse_project(real_project_dir, real_profiles_dir, keyword)
         models = project.get_filtered_models(all)
-        for model in models:
-            run_scripts(
-                model, keyword, project.manifest.nativeManifest, real_project_dir
-            )
+        manifest = project.manifest.nativeManifest
+        
+        if experimental_ordering:
+            ordered_scripts = ScriptGraph(models, keyword, project_dir).sort()
+            run_ordered_scripts(ordered_scripts, keyword, manifest, real_project_dir)
+        else:
+            for model in models:
+                run_scripts(
+                    model, keyword, project.manifest.nativeManifest, real_project_dir
+                )
+
