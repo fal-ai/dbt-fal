@@ -72,9 +72,8 @@ $ fal run
 To explore what is possible with fal, take a look at the in-depth examples below. We will be adding more examples here over time:
 - [Example 1: Send Slack notifications](docs/slack-example.md)
 - [Example 2: Metric forecasting](docs/metric-forecast.md)
-- [Example 3: Anomaly detection](docs/anomaly-detection.md)
-- [Example 4: Sentiment analysis on support tickets](docs/sentiment-analysis.md)
-- [Example 5: Send event to Datadog](docs/datadog_event.md)
+- [Example 3: Sentiment analysis on support tickets](docs/sentiment-analysis.md)
+- [Example 4: Send event to Datadog](docs/datadog_event.md)
 
 # How it works?
 `fal` is a command line tool that can read the state of your `dbt` project and help you run Python scripts after your `dbt run`s by leveraging the [`meta` config](https://docs.getdbt.com/reference/resource-configs/meta).
@@ -96,7 +95,7 @@ By default, the `fal run` command runs the Python scripts as a post-hook, **only
 
 # Concepts
 ## profile.yml and Credentials
-`fal` integrates with `dbt`'s `profile.yml` file to access and read data from the data warehouse. Once you setup credentials in your `profile.yml` file for your existing `dbt` workflows anytime you use `ref` or `source` to create a dataframe `fal` authenticates using the credentials specified in the `profile.yml` file. 
+`fal` integrates with `dbt`'s `profile.yml` file to access and read data from the data warehouse. Once you setup credentials in your `profile.yml` file for your existing `dbt` workflows anytime you use `ref` or `source` to create a dataframe `fal` authenticates using the credentials specified in the `profile.yml` file.
 
 ## `meta` Syntax
 ```yaml
@@ -104,36 +103,59 @@ models:
   - name: historical_ozone_levels
     ...
     meta:
+      owner: "@me"
       fal:
         scripts:
           - send_slack_message.py
-          - another_python_script.py # will be ran sequentially
+          - another_python_script.py # will be run sequentially
 ```
 Use the `fal` and `scripts` keys underneath the `meta` config to let `fal` CLI know where to look for the Python scripts. You can pass a list of scripts as shown above to run one or more scripts as a post-hook operation after a `dbt run`.
 
-## Variables
-Inside a Python script, you get access to some useful variables:
+## Variables and functions
+Inside a Python script, you get access to some useful variables and functions
 
+### Variables
+
+A `context` object with information relevant to the model through which the script was run. For the [`meta` Syntax](#meta-syntax) example, we would get the following:
 ```python
-# send_slack_message.py
+context.current_model.name
+#= historical_ozone_levels
 
-# Refer to dbt models or sources by name. Returns a pandas.DataFrame.
+context.current_model.meta
+#= {'owner': '@me'}
+
+context.current_model.meta.get("owner")
+#= '@me'
+
+context.current_model.status
+# Could be one of
+#= 'success'
+#= 'error'
+#= 'skipped'
+```
+
+### `ref` and `source` functions
+There are also available some familiar functions from `dbt`
+```python
+# Refer to dbt models or sources by name and returns it as `pandas.DataFrame`
 ref('model_name')
 source('source_name', 'table_name')
 
-# Refer to a fal Context, which provides useful attributes about the dbt model in context.
-context.current_model.name # Returns the current model name
+# You can use it to get the running model data
+ref(context.current_model.name)
+```
 
-context.current_model.meta # Returns the meta config of the current model as a Python dict
-context.current_model.meta["owner"] # will return the "owner" key in the meta config
+### `write_to_source` function
+It is also possible to send data back to your datawarehouse. This makes it easy to get the data, process it and upload it back into dbt territory.
 
-context.current_model.status # Returns the status of the last dbt run
-
-ref(context.current_model.name) # Returns a pandas.DataFrame for the current model in context
+All you have to do is define the target source in your schema and use it in fal.
+```python
+# Upload a `pandas.DataFrame` back to the datawarehouse
+write_to_source(df, 'source_name', 'table_name2')
 ```
 
 ## Lifecycle and State Management
-By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run` (So if you are using model selectors, `fal` will only run on the selected models). 
+By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run` (So if you are using model selectors, `fal` will only run on the selected models).
 
 If you want to run all Python scripts regardless, you can do so by using the `--all` flag with the `fal` CLI:
 
@@ -142,7 +164,7 @@ $ fal run --all
 ```
 
 # Why are we building this?
-We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with. 
+We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with.
 
 `dbt`'s SQL only design is powerful, but if you ever want to get out of SQL-land and connect to external services or get into Python-land for any reason, you will have a hard time. We built `fal` to enable Python workloads (sending alerts to Slack, building predictive models, pushing data to non-data warehose destinations and more) **right within `dbt`**.
 
