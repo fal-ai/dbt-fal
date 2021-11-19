@@ -43,7 +43,7 @@ configuration.api_key['apiKeyAuth'] = os.getenv("DD_API_KEY")
 configuration.api_key['appKeyAuth'] = os.getenv("DD_APP_KEY")
 ```
 
-Get you model as a pandas DataFrame by using the `ref` function and `context` variable:
+Get you model as a pandas DataFrame by using the `ref` function and the `context` variable:
 
 ```python
 df = ref(context.current_model.name)
