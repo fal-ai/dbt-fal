@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union, Dict, Any, List
 
 import faldbt.lib as lib
 
@@ -12,7 +12,7 @@ from faldbt.project import DbtModel
 
 import pandas as pd
 from dataclasses import dataclass
-
+from fal.dag import FalScript
 
 @dataclass
 class CurrentModel:
@@ -50,6 +50,22 @@ def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str)
                 },
             )
 
+def run_ordered_scripts(list: List[FalScript], keyword: str, manifest: Manifest, dbt_dir: str):
+    for script in list:
+        model = script.model
+        meta = model.meta
+        _del_key(meta, keyword)
+
+        current_model = CurrentModel(
+            name=model.name, status=model.status, columns=model.columns, meta=meta
+        )
+        context = Context(current_model=current_model)
+
+        ref = _get_ref_resolver(model.node, manifest, dbt_dir)
+        source = _get_source_resolver(model.node, manifest, dbt_dir)
+        write = _write_to_source(model.node, manifest, dbt_dir)
+
+        script.exec(ref, context, source, write)
 
 def _del_key(dict: Dict[str, Any], key: str):
     try:
