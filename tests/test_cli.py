@@ -10,10 +10,16 @@ import pytest
 
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 
-def test_run_error():
+def test_run():
     runner = CliRunner()
     result = runner.invoke(cli, ["run", "--profiles-dir", profiles_dir])
     assert "no dbt_project.yml found at expected path" in str(result.exception)
+
+def test_no_arg():
+    runner = CliRunner()
+    result = runner.invoke(cli, [])
+    assert result.exit_code == 0
+    assert "Usage: cli [OPTIONS] COMMAND [ARGS]..." in result.output
 
 def test_run_with_project_dir():
     runner = CliRunner()
