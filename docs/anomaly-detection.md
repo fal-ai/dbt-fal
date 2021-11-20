@@ -34,19 +34,22 @@ We first create a function called `anomaly_detection`, which will take the colum
 
 ```python
 def anomaly_detection(X: np.array, eps: float, min_samples: int, window_size: int):
-    # Here we take the given column of values, apply sliding windows, save the number of how many windows we have, and initialize the anomalies list, where we will record the indices of our anomalies.
+    # Here we take the given column of values, apply sliding windows, save the number of how many windows we have,
+    # and initialize the anomalies list, where we will record the indices of our anomalies.
     X_windowed = np.lib.stride_tricks.sliding_window_view(x=X, window_shape=window_size, axis=0)
     (size_0, _, _) = X_windowed.shape
     anomalies = []
 
-    # For each window, we use DBSCAN and take note of the locations of the anomalous data points, or noises to use the right term, which are noted with the value -1 in the labels array.
+    # For each window, we use DBSCAN and take note of the locations of the anomalous data points, or noises to use
+    # the right term, which are noted with the value -1 in the labels array.
     for window in range(size_0):
         clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(X_windowed[window][0][:].reshape(-1,1))
         labels = clustering.labels_
         location = np.where(labels == -1)
         location = location[0]
         size = location.size
-        # If there are anomalies in our current window, we append their indices with respect to the input dataset, not the current window.
+        # If there are anomalies in our current window, we append their indices with respect to the input dataset,
+        # not the current window.
         if size != 0:
             if size == 1:
                 anomalies.append(location[0] + window)
@@ -56,7 +59,8 @@ def anomaly_detection(X: np.array, eps: float, min_samples: int, window_size: in
         else:
             continue
     
-    # We find the unique values in the anomalies list and convert them to a numpy array, as the window slides by 1 index, the indices of the anomalies have been repeated in the list many times.
+    # We find the unique values in the anomalies list and convert them to a numpy array, as the window slides by
+    # 1 index, the indices of the anomalies have been repeated in the list many times.
     anomalies = np.unique(np.array(anomalies))
     
     # And finally, we return the numpy array of indices of the anomalous data points.
@@ -71,7 +75,9 @@ First hyperparameter to tune is `min_samples`. To accomplish our goal, we write 
 
 ```python
 def find_ideal_min_samples(X: np.array, range_min_samples: list):
-    # We apply sliding windows to our column of values, as we will be using DBSCAN in each window. We also save the number of windows and initialize min_sample_scores, a numpy array in which we will add the silhouette score for each window for each min_sample values in separate columns.
+    # We apply sliding windows to our column of values, as we will be using DBSCAN in each window. We also save
+    # the number of windows and initialize min_sample_scores, a numpy array in which we will add the silhouette
+    # score for each window for each min_sample values in separate columns.
     X_windowed = np.lib.stride_tricks.sliding_window_view(x=X, window_shape=window_size, axis=0)
     (size_0, _, _) = X_windowed.shape
 
@@ -85,7 +91,8 @@ def find_ideal_min_samples(X: np.array, range_min_samples: list):
             silhouette_avg = silhouette_score(X_windowed[window][0][:].reshape(-1,1), cluster_labels)
             min_sample_scores[0][i] = min_sample_scores[0][i]+silhouette_avg
     
-    # Here, we divide the total scores for all min_samples values to find and average for each. From those, we select the min_samples value with the highest score, which is our ideal min sample, and we return it.
+    # Here, we divide the total scores for all min_samples values to find and average for each. From those, we
+    # select the min_samples value with the highest score, which is our ideal min sample, and we return it.
     min_sample_scores = min_sample_scores / size_0
     ideal_min_sample = range_min_samples[np.where(min_sample_scores.max)[0][0]]
 
@@ -96,15 +103,17 @@ Next is `eps`. To find the ideal `eps` value, we have two stages; first we find 
 
 ```python
 def find_eps_range(X: np.array, range_const: int):
-    # The first thing we need to do is to calculate the distances between each consecutive sample, store them in a numpy array and sort them. 
+    # The first thing we need to do is to calculate the distances between each consecutive sample, store them
+    # in a numpy array and sort them. 
     dists = np.zeros_like(X)
     for i in range(X.size-1):
         dist = np.linalg.norm(X[i]-X[i+1])
         dists[i] = dist
     dists = np.sort(dists, axis=0)
 
-    # Below, we have two Matplotlib figures; one is the entire set of distances and the other one is the same as the other, but its distance value axis is bounded.
-    # The PATH_PREFIX is a global constant that you need to set beforehand, which is the path of the fal_dbt_exams repo on your local machine.
+    # Below, we have two Matplotlib figures; one is the entire set of distances and the other one is the same
+    # as the other, but its distance value axis is bounded. The PATH_PREFIX is a global constant that you need
+    # to set beforehand, which is the path of the fal_dbt_exams repo on your local machine.
     plt.plot([i for i in range(dists.size)], dists, 'b.', markersize=4)
     plt.xlabel('Time')
     plt.ylabel('Value')
@@ -148,13 +157,16 @@ Now that we have a range of `eps` values to test, it is time to see how they far
 
 ```python
 def find_ideal_eps(X: np.array, min_samples: int, window_size: int, range_eps: list):
-    # Again, we apply sliding windows to our column of values, take note of the number of windows, and initialize an array that is esentiallt same as min_sample_scores, but for epsilon values.
+    # Again, we apply sliding windows to our column of values, take note of the number of windows, and
+    # initialize an array that is esentiallt same as min_sample_scores, but for epsilon values.
     X_windowed = np.lib.stride_tricks.sliding_window_view(x=X, window_shape=window_size, axis=0)
     (size_0, _, _) = X_windowed.shape
 
     eps_scores = np.zeros(shape=(1, len(range_eps)))
 
-    # Here, we compute silhouette scores of each eps value and get a sum for all the windows. For the clustering we use DBSCAN, which means that we will be using our recently found ideal min_samples value, as the two hyperparameters affect each other.
+    # Here, we compute silhouette scores of each eps value and get a sum for all the windows. For the
+    # clustering we use DBSCAN, which means that we will be using our recently found ideal min_samples value,
+    # as the two hyperparameters affect each other.
     for window in range(size_0):
         for i in range(len(range_eps)):
             clustering = DBSCAN(eps=range_eps[i], min_samples=min_samples).fit(X_windowed[window][0][:].reshape(-1,1))
@@ -178,7 +190,9 @@ The two functions we need are `plot_anomalies` and `send_slack_file`, which is p
 
 ```python
 def plot_anomalies(column_y: np.array, column_date: np.array, anomalies: np.array):
-    # Below, we plot the data and note tha anomalies in a Matplotlib figure. Then, we save the figure with a name that is the timestamp of the time which the anomalies was computed. Then, we return the path of the figure for the Slack function.
+    # Below, we plot the data and note tha anomalies in a Matplotlib figure. Then, we save the figure with
+    # a name that is the timestamp of the time which the anomalies was computed. Then, we return the path
+    # of the figure for the Slack function.
     plt.plot([column_date[i] for i in range(column_y.size)], column_y, 'b.', markersize=4)
     plt.plot([column_date[i] for i in anomalies], [column_y[i] for i in anomalies], 'r^', markersize=4)
     plt.xlabel('Time')
@@ -219,14 +233,18 @@ model_df = ref(context.current_model.name).sort_values(by='ds')
 Now that we have all our functions and our model, we can write the following that ties everything together for our script:
 
 ```python
-# Then, we separate the DataFrame by columns into the values, 'y', and dates, 'ds'. Then we reshape them to fit our functions.
+# Then, we separate the DataFrame by columns into the values, 'y', and dates, 'ds'. Then we reshape them
+# to fit our functions.
 column_y = model_df['y'].to_numpy(dtype=np.float).reshape(-1,1)
 column_date = model_df['ds'].to_numpy(dtype=datetime.datetime).reshape(-1,1)
 
-# Here, we set the arbitrarily chosen window size for the sliding windows application. For the size of our model, 100 is a good window size.
+# Here, we set the arbitrarily chosen window size for the sliding windows application. For the size of
+# our model, 100 is a good window size.
 window_size = 100
 
-# Here, we set and arbitrary list of min_samples values, for numerical time-series data, the list below is good. With the range of possible min_samples values, we use our find_ideal_min_samples to find the min_samples for our system.
+# Here, we set and arbitrary list of min_samples values, for numerical time-series data, the list below is good.
+# With the range of possible min_samples values, we use our find_ideal_min_samples to find the min_samples for
+# our system.
 range_min_samples = [2,3,4,5]
 min_samples = find_ideal_min_samples(column_y, range_min_samples)
 
@@ -237,7 +255,8 @@ range_eps = range(range_const, (range_const*5)+1, range_const)
 
 eps = find_ideal_eps(column_y, min_samples, window_size, range_eps)
 
-# Finally, we find the anomalies using our anomaly_detection function, and send them via Slack, while also sending a handy command line message.
+# Finally, we find the anomalies using our anomaly_detection function, and send them via Slack, while also sending
+# a handy command line message.
 anomalies = anomaly_detection(column_y, eps, min_samples, window_size)
 fpath = plot_anomalies(column_y, column_date, anomalies)
 now = str(datetime.datetime.now())
@@ -250,7 +269,8 @@ print(f'anomalies: {anomalies.size}\ndata: {column_y.size}\npercentage: {(anomal
 ssl._create_default_https_context = ssl._create_unverified_context
 
 message = f'fal.ai anomaly detection.\nFound {anomalies.size} anomalies.\nModel: {context.current_model.name}\nDate: {date}\nTime: {hour}-{TIMEZONE}\neps: {eps}, min_samples: {min_samples}, window_size: {window_size}'
-# The CHANNEL_ID and SLACK_TOKEN are global variables that have been set beforehand to the Slack bot and channel that we are using.
+# The CHANNEL_ID and SLACK_TOKEN are global variables that have been set beforehand to the Slack bot and channel
+# that we are using.
 send_slack_file(fpath, message, CHANNEL_ID, SLACK_TOKEN)
 ```
 
