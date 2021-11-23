@@ -1,11 +1,9 @@
 # NOTE: COPIED FROM https://github.com/dbt-labs/dbt-core/blob/40ae6b6bc860a30fa383756b7cdb63709ce829a8/core/dbt/lib.py
-import os
 import six
 
 from datetime import datetime
 from uuid import uuid4
-from collections import namedtuple
-from typing import List, Tuple, Type, Union
+from typing import List, Tuple, Union
 
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
@@ -18,29 +16,12 @@ import pandas as pd
 from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 
+from faldbt.parse import get_dbt_config
 from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
 
 import agatesql
 import agatesql.table
-
-# from sqlalchemy.engine import Connection as SQLAlchemyConnection
-
-RuntimeArgs = namedtuple("RuntimeArgs", "project_dir profiles_dir single_threaded")
-
-
-def get_dbt_config(project_dir: str, single_threaded=False):
-    from dbt.config.runtime import RuntimeConfig
-
-    if os.getenv("DBT_PROFILES_DIR"):
-        profiles_dir = os.getenv("DBT_PROFILES_DIR")
-    else:
-        profiles_dir = os.path.expanduser("~/.dbt")
-
-    # Construct a phony config
-    return RuntimeConfig.from_args(
-        RuntimeArgs(project_dir, profiles_dir, single_threaded)
-    )
 
 
 def register_adapters(config: RuntimeConfig):
@@ -176,9 +157,3 @@ def write_target(
 
     _, result = _execute_sql(manifest, project_path, six.text_type(insert_stmt).strip())
     return result
-
-
-def parse_to_manifest(config):
-    from dbt.parser.manifest import ManifestLoader
-
-    return ManifestLoader.get_full_manifest(config)
