@@ -108,8 +108,8 @@ class ScriptGraph:
         self.incoming: Dict[FalScript, List[FalScript]] = {}
         self.ordered_list: List[FalScript] = []
 
-        if graph:
-            self.graph = graph
+        if _graph:
+            self.graph = _graph
         else:
             self.graph = ScriptGraphBuilder(models, keyword, root).get_values()
         self.incoming = dict(
