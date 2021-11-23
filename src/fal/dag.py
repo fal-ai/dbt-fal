@@ -72,9 +72,11 @@ class ScriptGraphBuilder:
     modelToScriptLookup: Dict[str, List[Path]] = {}
     falScripts: Dict[UniqueKey, FalScript] = {}
 
-    def __init__(self, models: List[DbtModel], keyword: str, root: str):
+    def __init__(self, models: List[DbtModel], keyword: str, project_dir: str):
         for model in models:
-            self.modelToScriptLookup[model.name] = model.get_scripts(keyword, root)
+            self.modelToScriptLookup[model.name] = model.get_scripts(
+                keyword, project_dir
+            )
             self.modelNameToModelLookup[model.name] = model
         for model_name, script_list in self.modelToScriptLookup.items():
             for script in script_list:
@@ -108,11 +110,13 @@ class ScriptGraph:
     incoming: Dict[FalScript, List[FalScript]] = {}
     ordered_list: List[FalScript] = []
 
-    def __init__(self, models: List[DbtModel], keyword: str, root: str, graph=[]):
-        if graph:
-            self.graph = graph
+    def __init__(
+        self, models: List[DbtModel], keyword: str, project_dir: str, _graph: List[FalScript]=[]
+    ):
+        if _graph:
+            self.graph = _graph
         else:
-            self.graph = ScriptGraphBuilder(models, keyword, root).get_values()
+            self.graph = ScriptGraphBuilder(models, keyword, project_dir).get_values()
         self.incoming = dict(
             map(lambda script: [script, script.dependencies], self.graph)
         )
