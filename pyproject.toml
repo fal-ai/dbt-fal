@@ -26,6 +26,7 @@ ninja = "^1.10.2"
 Jinja2 = "^2.11.3"
 dbt = "^0.21.0"
 agate-sql = "^0.5.8"
+firebase-admin = "^5.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
