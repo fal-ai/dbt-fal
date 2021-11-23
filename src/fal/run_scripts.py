@@ -25,6 +25,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 
+
 @dataclass
 class CurrentModel:
     name: str
@@ -38,7 +39,9 @@ class Context:
     current_model: CurrentModel
 
 
-def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str):
+def run_scripts(
+    model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str, profiles_dir: str
+):
     for script in model.meta.get(keyword, {}).get("scripts", []):
         meta = model.meta
         _del_key(meta, keyword)
@@ -54,15 +57,29 @@ def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str)
             exec(
                 a_script,
                 {
-                    "ref": _get_ref_resolver(model.node, manifest, dbt_dir),
+                    "ref": _get_ref_resolver(
+                        model.node, manifest, dbt_dir, profiles_dir
+                    ),
                     "context": context,
-                    "source": _get_source_resolver(model.node, manifest, dbt_dir),
-                    "write_to_source": _write_to_source(model.node, manifest, dbt_dir),
+
+                    "source": _get_source_resolver(
+                        model.node, manifest, dbt_dir, profiles_dir
+                    ),
+                    "write_to_source": _write_to_source(
+                        model.node, manifest, dbt_dir, profiles_dir
+                    ),
                     "write_to_firestore": _get_firestore_writer(model.node, manifest)
                 },
             )
 
-def run_ordered_scripts(list: List[FalScript], keyword: str, manifest: Manifest, dbt_dir: str):
+
+def run_ordered_scripts(
+    list: List[FalScript],
+    keyword: str,
+    manifest: Manifest,
+    dbt_dir: str,
+    profiles_dir: str,
+):
     for script in list:
         model = script.model
         meta = model.meta
@@ -73,11 +90,12 @@ def run_ordered_scripts(list: List[FalScript], keyword: str, manifest: Manifest,
         )
         context = Context(current_model=current_model)
 
-        ref = _get_ref_resolver(model.node, manifest, dbt_dir)
-        source = _get_source_resolver(model.node, manifest, dbt_dir)
-        write = _write_to_source(model.node, manifest, dbt_dir)
+        ref = _get_ref_resolver(model.node, manifest, dbt_dir, profiles_dir)
+        source = _get_source_resolver(model.node, manifest, dbt_dir, profiles_dir)
+        write = _write_to_source(model.node, manifest, dbt_dir, profiles_dir)
 
         script.exec(ref, context, source, write)
+
 
 def _del_key(dict: Dict[str, Any], key: str):
     try:
@@ -87,9 +105,7 @@ def _del_key(dict: Dict[str, Any], key: str):
 
 
 def _get_ref_resolver(
-    model: ParsedModelNode,
-    manifest: Manifest,
-    dbt_dir: str,
+    model: ParsedModelNode, manifest: Manifest, dbt_dir: str, profiles_dir: str
 ):
     def ref_resolver(target_model_name: str, target_package_name: Optional[str] = None):
         target_model: MaybeNonSource = manifest.resolve_ref(
@@ -100,7 +116,7 @@ def _get_ref_resolver(
                 f"Could not find model {target_model_name}{target_package_name or ''}"
             )
 
-        result = lib.fetch_target(manifest, dbt_dir, target_model)
+        result = lib.fetch_target(manifest, dbt_dir, profiles_dir, target_model)
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
         )
@@ -146,9 +162,7 @@ def _get_firestore_writer(model: ParsedModelNode, manifest: Manifest):
 
 
 def _get_source_resolver(
-    model: ParsedModelNode,
-    manifest: Manifest,
-    dbt_dir: str,
+    model: ParsedModelNode, manifest: Manifest, dbt_dir: str, profiles_dir: str
 ):
     def source_resolver(target_source_name: str, target_table_name: str):
         target_source: MaybeParsedSource = manifest.resolve_source(
@@ -159,7 +173,7 @@ def _get_source_resolver(
             raise Exception(
                 f"Could not find source {target_source_name}.{target_table_name}"
             )
-        result = lib.fetch_target(manifest, dbt_dir, target_source)
+        result = lib.fetch_target(manifest, dbt_dir, profiles_dir, target_source)
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
         )
@@ -168,9 +182,7 @@ def _get_source_resolver(
 
 
 def _write_to_source(
-    model: ParsedModelNode,
-    manifest: Manifest,
-    dbt_dir: str,
+    model: ParsedModelNode, manifest: Manifest, dbt_dir: str, profiles_dir: str
 ):
     def source_writer(
         data: pd.DataFrame, target_source_name: str, target_table_name: str
@@ -184,6 +196,6 @@ def _write_to_source(
                 f"Could not find source '{target_source_name}'.'{target_table_name}'"
             )
 
-        lib.write_target(data, manifest, dbt_dir, target_source)
+        lib.write_target(data, manifest, dbt_dir, profiles_dir, target_source)
 
     return source_writer

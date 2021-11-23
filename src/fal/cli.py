@@ -25,7 +25,7 @@ def cli():
 )
 @click.option(
     "--profiles-dir",
-    default=DEFAULT_PROFILES_DIR,
+    default=None,
     help="Directory to look for profiles.yml.",
     type=click.Path(exists=True),
 )
@@ -56,21 +56,30 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
             log_manager.set_debug()
 
         real_project_dir = os.path.realpath(os.path.normpath(project_dir))
-        real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
+        real_profiles_dir = None
+        if profiles_dir is not None:
+            real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
+        elif os.getenv("DBT_PROFILES_DIR"):
+            real_profiles_dir = os.path.realpath(os.getenv("DBT_PROFILES_DIR"))
+        else:
+            real_profiles_dir = DEFAULT_PROFILES_DIR
 
         project = parse_project(real_project_dir, real_profiles_dir, keyword)
         models = project.get_filtered_models(all)
         manifest = project.manifest.nativeManifest
         print_run_info(models)
-        
+
         if experimental_ordering:
             ordered_scripts = ScriptGraph(models, keyword, project_dir).sort()
-            run_ordered_scripts(ordered_scripts, keyword, manifest, real_project_dir)
+            run_ordered_scripts(
+                ordered_scripts, keyword, manifest, real_project_dir, real_profiles_dir
+            )
         else:
             for model in models:
                 run_scripts(
-                    model, keyword, project.manifest.nativeManifest, real_project_dir
+                    model,
+                    keyword,
+                    project.manifest.nativeManifest,
+                    real_project_dir,
+                    real_profiles_dir,
                 )
-
-
-
