@@ -1,6 +1,10 @@
 # fal: do more with dbt
 fal allows you to run python scripts directly from your [dbt](https://www.getdbt.com/) project.
 
+[![Downloads](https://static.pepy.tech/personalized-badge/fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads)](https://pepy.tech/project/fal)
+
+[![Join Us on Discord](https://badgen.net/badge/icon/Join%20Us%20On%20Discord/red?icon=discord&label)](https://discord.gg/ABbMkuBpNY)
+
 With fal, you can:
 - Send Slack notifications upon dbt model success or failure.
 - Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`
