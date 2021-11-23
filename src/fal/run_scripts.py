@@ -1,12 +1,11 @@
 import os
 from typing import Union, Dict, Any, List
-from fal.fal import FalDbt
 
 
 from dbt.contracts.results import RunStatus, TestStatus, FreshnessStatus
 
 from faldbt.cp.contracts.graph.parsed import ColumnInfo
-from faldbt.project import DbtModel
+from faldbt.project import FalProject, FalDbt, DbtModel
 
 from dataclasses import dataclass
 from fal.dag import FalScript
@@ -27,13 +26,17 @@ class Context:
 
 # TODO: deprecate this and use `run_orderd_scripts` only.
 # Order the passed in list according to the flag.
-def run_scripts(model: DbtModel, faldbt: FalDbt):
-    for script in model.meta.get(faldbt.keyword, {}).get("scripts", []):
+def run_scripts(model: DbtModel, project: FalProject):
+    faldbt: FalDbt = project._faldbt
+    for script in model.meta.get(project.keyword, {}).get("scripts", []):
         meta = model.meta
-        _del_key(meta, faldbt.keyword)
+        _del_key(meta, project.keyword)
 
         current_model = CurrentModel(
-            name=model.name, status=model.status, columns=model.columns, meta=meta
+            name=model.name,
+            status=project.get_model_status(model.name),
+            columns=model.columns,
+            meta=meta,
         )
 
         context = Context(current_model=current_model)
@@ -51,14 +54,18 @@ def run_scripts(model: DbtModel, faldbt: FalDbt):
             )
 
 
-def run_ordered_scripts(list: List[FalScript], faldbt: FalDbt):
+def run_ordered_scripts(list: List[FalScript], project: FalProject):
+    faldbt: FalDbt = project._faldbt
     for script in list:
         model = script.model
         meta = model.meta
-        _del_key(meta, faldbt.keyword)
+        _del_key(meta, project.keyword)
 
         current_model = CurrentModel(
-            name=model.name, status=model.status, columns=model.columns, meta=meta
+            name=model.name,
+            status=project.get_model_status(model.name),
+            columns=model.columns,
+            meta=meta,
         )
         context = Context(current_model=current_model)
 

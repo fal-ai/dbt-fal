@@ -1,1 +1,1 @@
-from .fal import *
+from faldbt.project import FalDbt

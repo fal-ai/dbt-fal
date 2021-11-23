@@ -3,12 +3,11 @@ import os
 
 from dbt.logger import log_manager
 from dbt.config.profile import DEFAULT_PROFILES_DIR
-from fal.fal import FalDbt
 
 from fal.run_scripts import run_ordered_scripts, run_scripts
-from faldbt.parse import parse_project
 from fal.dag import ScriptGraph
 from fal.utils import print_run_info
+from faldbt.project import FalDbt, FalProject
 
 
 @click.group()
@@ -59,13 +58,14 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         real_project_dir = os.path.realpath(os.path.normpath(project_dir))
         real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
 
-        faldbt = FalDbt(real_project_dir, real_profiles_dir, keyword)
-        models = faldbt.get_filtered_models(all)
+        faldbt = FalDbt(real_project_dir, real_profiles_dir)
+        project = FalProject(faldbt, keyword)
+        models = project.get_filtered_models(all)
         print_run_info(models)
 
         if experimental_ordering:
             ordered_scripts = ScriptGraph(models, keyword, project_dir).sort()
-            run_ordered_scripts(ordered_scripts, faldbt)
+            run_ordered_scripts(ordered_scripts, project)
         else:
             for model in models:
-                run_scripts(model, faldbt)
+                run_scripts(model, project)
