@@ -25,7 +25,6 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 
-
 @dataclass
 class CurrentModel:
     name: str
@@ -61,14 +60,13 @@ def run_scripts(
                         model.node, manifest, dbt_dir, profiles_dir
                     ),
                     "context": context,
-
                     "source": _get_source_resolver(
                         model.node, manifest, dbt_dir, profiles_dir
                     ),
                     "write_to_source": _write_to_source(
                         model.node, manifest, dbt_dir, profiles_dir
                     ),
-                    "write_to_firestore": _get_firestore_writer(model.node, manifest)
+                    "write_to_firestore": _get_firestore_writer(model.node, manifest),
                 },
             )
 
@@ -130,15 +128,19 @@ def _get_firestore_writer(model: ParsedModelNode, manifest: Manifest):
     cred = credentials.ApplicationDefault()
     app_name = str(uuid.uuid4())
 
-    app = firebase_admin.initialize_app(cred, {
-        'projectId': model.database,
-    }, name=app_name)
+    app = firebase_admin.initialize_app(
+        cred,
+        {
+            "projectId": model.database,
+        },
+        name=app_name,
+    )
 
     db = firestore.client(app=app)
 
     def _dict_to_document(data: Dict, key_column: str):
         output = {}
-        for (k,v) in data.items():
+        for (k, v) in data.items():
             if k == key_column:
                 continue
             # Add more type conversions here
@@ -148,11 +150,8 @@ def _get_firestore_writer(model: ParsedModelNode, manifest: Manifest):
                 output[k] = v
         return output
 
-    def firestore_writer(
-            df: pd.DataFrame,
-            collection: str,
-            key_column: str):
-        df_arr = df.to_dict('records')
+    def firestore_writer(df: pd.DataFrame, collection: str, key_column: str):
+        df_arr = df.to_dict("records")
         for item in df_arr:
             key = item[key_column]
             data = _dict_to_document(data=item, key_column=key_column)
