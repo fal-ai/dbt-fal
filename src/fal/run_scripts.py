@@ -18,6 +18,7 @@ from faldbt.cp.contracts.graph.parsed import ColumnInfo
 from faldbt.project import DbtModel
 
 import pandas as pd
+from decimal import Decimal
 from dataclasses import dataclass
 from fal.dag import FalScript
 import firebase_admin
@@ -57,7 +58,7 @@ def run_scripts(model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str)
                     "context": context,
                     "source": _get_source_resolver(model.node, manifest, dbt_dir),
                     "write_to_source": _write_to_source(model.node, manifest, dbt_dir),
-                    "write_firestore": _get_firestore_writer(model.node, manifest)
+                    "write_to_firestore": _get_firestore_writer(model.node, manifest)
                 },
             )
 
@@ -109,6 +110,7 @@ def _get_ref_resolver(
 
 def _get_firestore_writer(model: ParsedModelNode, manifest: Manifest):
     # Use the application default credentials
+    # TODO: Use credentials set in profiles.yml
     cred = credentials.ApplicationDefault()
     app_name = str(uuid.uuid4())
 
@@ -118,22 +120,27 @@ def _get_firestore_writer(model: ParsedModelNode, manifest: Manifest):
 
     db = firestore.client(app=app)
 
+    def _dict_to_document(data: Dict, key_column: str):
+        output = {}
+        for (k,v) in data.items():
+            if k == key_column:
+                continue
+            # Add more type conversions here
+            if isinstance(v, Decimal):
+                output[k] = str(v)
+            else:
+                output[k] = v
+        return output
+
     def firestore_writer(
             df: pd.DataFrame,
             collection: str,
-            document: str,
-            key_column: str = None,
-            merge=True):
-        doc_ref = db.collection(collection).document(document)
-        data = {}
-        df_dict = df.to_dict('records')
-        for i in range(len(df_dict)):
-            if key_column is not None:
-                key = df_dict[i][key_column]
-            else:
-                key = str(i+1)
-            data[key] = df_dict[i]
-        doc_ref.set(data, merge=merge)
+            key_column: str):
+        df_arr = df.to_dict('records')
+        for item in df_arr:
+            key = item[key_column]
+            data = _dict_to_document(data=item, key_column=key_column)
+            db.collection(collection).document(str(key)).set(data)
 
     return firestore_writer
 
