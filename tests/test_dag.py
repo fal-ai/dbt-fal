@@ -16,7 +16,7 @@ def test_simple_dag():
     scriptC = FalScript(MockDbtModel("C"), "/scriptC", dependencies=[])
 
     graph = ScriptGraph(
-        models=[], keyword="test", root="test", graph=[scriptA, scriptB, scriptC]
+        models=[], keyword="test", root="test", _graph=[scriptA, scriptB, scriptC]
     )
     sorted = graph.sort()
     assert sorted == [scriptA, scriptB, scriptC]
@@ -33,7 +33,7 @@ def test_dag_with_dependencies():
         models=[],
         keyword="test",
         root="test",
-        graph=[scriptAA, scriptBB, scriptCC, scriptDD],
+        _graph=[scriptAA, scriptBB, scriptCC, scriptDD],
     )
     sorted = script_graph.sort()
     assert sorted == [scriptAA, scriptDD, scriptBB, scriptCC]
@@ -46,7 +46,7 @@ def test_with_cycle():
     scriptC.add_dependency(scriptB)
 
     script_graph = ScriptGraph(
-        models=[], keyword="test", root="test", graph=[scriptA, scriptB, scriptC]
+        models=[], keyword="test", root="test", _graph=[scriptA, scriptB, scriptC]
     )
     with pytest.raises(FalDagCycle):
         script_graph.sort()
