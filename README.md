@@ -3,7 +3,7 @@ fal allows you to run python scripts directly from your [dbt](https://www.getdbt
 
 [![Downloads](https://static.pepy.tech/personalized-badge/fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads)](https://pepy.tech/project/fal)
 
-[![Join Us on Discord](https://badgen.net/badge/icon/Join%20Us%20On%20Discord/red?icon=discord&label)](https://discord.gg/ABbMkuBpNY)
+[![Join Us on Discord](https://badgen.net/badge/icon/Join%20Us%20On%20Discord/red?icon=discord&label)](https://discord.com/invite/Fyc9PwrccF)
 
 With fal, you can:
 - Send Slack notifications upon dbt model success or failure.
@@ -180,4 +180,4 @@ This library will form the basis of our attempt to more comprehensively enable *
 
 
 # Have feedback or need help?
-[Join us in #fal on Discord](https://discord.gg/ABbMkuBpNY)
+[Join us in #fal on Discord](https://discord.com/invite/Fyc9PwrccF)
