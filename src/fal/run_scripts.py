@@ -125,18 +125,22 @@ def _get_ref_resolver(
 def _get_firestore_writer(model: ParsedModelNode, manifest: Manifest):
     # Use the application default credentials
     # TODO: Use credentials set in profiles.yml
-    cred = credentials.ApplicationDefault()
-    app_name = str(uuid.uuid4())
+    try:
+        cred = credentials.ApplicationDefault()
+        app_name = str(uuid.uuid4())
 
-    app = firebase_admin.initialize_app(
-        cred,
-        {
-            "projectId": model.database,
-        },
-        name=app_name,
-    )
+        app = firebase_admin.initialize_app(
+            cred,
+            {
+                "projectId": model.database,
+            },
+            name=app_name,
+        )
+        db = firestore.client(app=app)
 
-    db = firestore.client(app=app)
+    except Exception:
+        message = "GCP credentials not found. Firestore writer not available."
+        return lambda x: print(message)
 
     def _dict_to_document(data: Dict, key_column: str):
         output = {}
