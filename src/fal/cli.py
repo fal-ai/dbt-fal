@@ -5,9 +5,9 @@ from dbt.logger import log_manager
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import run_scripts
-from faldbt.parse import parse_project
 from fal.dag import FalScript, ScriptGraph
 from fal.utils import print_run_info
+from faldbt.project import FalDbt, FalProject
 
 
 @click.group()
@@ -66,7 +66,8 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         else:
             real_profiles_dir = DEFAULT_PROFILES_DIR
 
-        project = parse_project(real_project_dir, real_profiles_dir, keyword)
+        faldbt = FalDbt(real_project_dir, real_profiles_dir)
+        project = FalProject(faldbt, keyword)
         models = project.get_filtered_models(all)
         manifest = project.manifest.nativeManifest
         print_run_info(models)
