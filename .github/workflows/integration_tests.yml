@@ -1,0 +1,52 @@
+name: Run Integration Tests
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8.x"
+
+      - uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: '1.1.4'
+
+      - name: Get test project
+        run: |
+          git clone https://github.com/fal-ai/fal_dbt_test.git
+
+      - name: Start db
+        run: |
+          cd fal_dbt_test
+          docker-compose up -d
+
+      - name: Install dependencies
+        run: |
+          poetry build
+          pip install dist/fal-0.1.0-py3-none-any.whl
+          cd fal_dbt_test
+          pip install -r requirements.txt
+          mkdir ~/.dbt
+          cp profiles.yml ~/.dbt/
+
+      - name: Run dbt and fal
+        run: |
+          cd fal_dbt_test
+          echo "*** Seeding database ***"
+          dbt seed
+          echo "*** Starting dbt run ***"
+          dbt run
+          echo "*** Starting fal run ***"
+          fal run
+          echo "*** Checking fal output files ***"
+          python check_outputs.py
