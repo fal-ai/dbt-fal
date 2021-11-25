@@ -4,9 +4,9 @@ import os
 from dbt.logger import log_manager
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
-from fal.run_scripts import run_ordered_scripts, run_scripts
+from fal.run_scripts import run_scripts
 from faldbt.parse import parse_project
-from fal.dag import ScriptGraph
+from fal.dag import FalScript, ScriptGraph
 from fal.utils import print_run_info
 
 
@@ -70,16 +70,11 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         print_run_info(models)
 
         if experimental_ordering:
-            ordered_scripts = ScriptGraph(models, keyword, project_dir).sort()
-            run_ordered_scripts(
-                ordered_scripts, keyword, manifest, real_project_dir, real_profiles_dir
-            )
+            scripts = ScriptGraph(models, keyword, project_dir).sort()
         else:
+            scripts = []
             for model in models:
-                run_scripts(
-                    model,
-                    keyword,
-                    project.manifest.nativeManifest,
-                    real_project_dir,
-                    real_profiles_dir,
-                )
+                for path in model.get_scripts(keyword, real_project_dir):
+                    scripts.append(FalScript(model, path))
+
+        run_scripts(scripts, keyword, manifest, real_project_dir, real_profiles_dir)

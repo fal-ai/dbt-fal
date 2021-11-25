@@ -39,43 +39,10 @@ class Context:
 
 
 def run_scripts(
-    model: DbtModel, keyword: str, manifest: Manifest, dbt_dir: str, profiles_dir: str
-):
-    for script in model.meta.get(keyword, {}).get("scripts", []):
-        meta = model.meta
-        _del_key(meta, keyword)
-
-        current_model = CurrentModel(
-            name=model.name, status=model.status, columns=model.columns, meta=meta
-        )
-
-        context = Context(current_model=current_model)
-        real_script = os.path.join(dbt_dir, script)
-        with open(real_script) as file:
-            a_script = file.read()
-            exec(
-                a_script,
-                {
-                    "ref": _get_ref_resolver(
-                        model.node, manifest, dbt_dir, profiles_dir
-                    ),
-                    "context": context,
-                    "source": _get_source_resolver(
-                        model.node, manifest, dbt_dir, profiles_dir
-                    ),
-                    "write_to_source": _write_to_source(
-                        model.node, manifest, dbt_dir, profiles_dir
-                    ),
-                    "write_to_firestore": _get_firestore_writer(model.node, manifest),
-                },
-            )
-
-
-def run_ordered_scripts(
     list: List[FalScript],
     keyword: str,
     manifest: Manifest,
-    dbt_dir: str,
+    project_dir: str,
     profiles_dir: str,
 ):
     for script in list:
@@ -88,11 +55,14 @@ def run_ordered_scripts(
         )
         context = Context(current_model=current_model)
 
-        ref = _get_ref_resolver(model.node, manifest, dbt_dir, profiles_dir)
-        source = _get_source_resolver(model.node, manifest, dbt_dir, profiles_dir)
-        write = _write_to_source(model.node, manifest, dbt_dir, profiles_dir)
+        ref = _get_ref_resolver(model.node, manifest, project_dir, profiles_dir)
+        source = _get_source_resolver(model.node, manifest, project_dir, profiles_dir)
+        write_to_source = _write_to_source(
+            model.node, manifest, project_dir, profiles_dir
+        )
+        write_to_firestore = _get_firestore_writer(model.node, manifest)
 
-        script.exec(ref, context, source, write)
+        script.exec(context, ref, source, write_to_source, write_to_firestore)
 
 
 def _del_key(dict: Dict[str, Any], key: str):
