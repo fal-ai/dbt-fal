@@ -1,18 +1,58 @@
 import os
+from collections import namedtuple
 import json
 import glob
-from typing import Dict, Any
+from pathlib import Path
+from typing import Dict, Any, List
 
 import dbt.tracking
+from dbt.config import RuntimeConfig
+from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.results import RunResultsArtifact
 
-import faldbt.lib as lib
-from faldbt.utils.yaml_helper import load_yaml_text
-from faldbt.project import FalProject, DbtManifest, DbtRunResult
+from . import lib
+from .utils.yaml_helper import load_yaml_text
+from .project import FalProject, DbtManifest, DbtRunResult
 
 
 class FalParseError(Exception):
     pass
+
+
+RuntimeArgs = namedtuple("RuntimeArgs", "project_dir profiles_dir single_threaded")
+
+
+def get_dbt_config(
+    project_dir: str, profiles_dir: str, single_threaded=False
+) -> RuntimeConfig:
+
+    # Construct a phony config
+    return RuntimeConfig.from_args(
+        RuntimeArgs(project_dir, profiles_dir, single_threaded)
+    )
+
+
+def get_dbt_manifest(config) -> Manifest:
+    from dbt.parser.manifest import ManifestLoader
+
+    return ManifestLoader.get_full_manifest(config)
+
+
+def get_dbt_results(project_dir: str, config: RuntimeConfig) -> RunResultsArtifact:
+    from dbt.exceptions import IncompatibleSchemaException, RuntimeException
+
+    results_path = os.path.join(project_dir, config.target_path, "run_results.json")
+    try:
+        return RunResultsArtifact.read(results_path)
+    except IncompatibleSchemaException as exc:
+        exc.add_filename(results_path)
+        raise
+    except RuntimeException as exc:
+        raise FalParseError("Did you forget to run dbt run?") from exc
+
+
+def get_scripts_list(project_dir: str) -> List[Path]:
+    return glob.glob(os.path.join(project_dir, "**.py"), recursive=True)
 
 
 def _load_file_contents(path: str, strip: bool = True) -> str:
@@ -65,13 +105,13 @@ def parse_project(project_dir: str, profiles_dir: str, keyword: str):
     except IOError as e:
         raise FalParseError("Did you forget to run dbt run?") from e
 
-    config = lib.get_dbt_config(project_dir, profiles_dir)
+    config = get_dbt_config(project_dir, profiles_dir)
     lib.register_adapters(config)
 
     # Necessary for parse_to_manifest to not fail
     dbt.tracking.initialize_tracking(profiles_dir)
 
-    manifest = lib.parse_to_manifest(config)
+    manifest = get_dbt_manifest(config)
     run_result_artifact = RunResultsArtifact(**run_results)
     dbtmanifest = DbtManifest(nativeManifest=manifest)
 
