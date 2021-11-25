@@ -60,7 +60,9 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         if profiles_dir is not None:
             real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
         elif os.getenv("DBT_PROFILES_DIR"):
-            real_profiles_dir = os.path.realpath(os.getenv("DBT_PROFILES_DIR"))
+            real_profiles_dir = os.path.realpath(
+                os.path.normpath(os.getenv("DBT_PROFILES_DIR"))
+            )
         else:
             real_profiles_dir = DEFAULT_PROFILES_DIR
 

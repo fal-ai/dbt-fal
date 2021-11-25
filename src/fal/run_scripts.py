@@ -73,18 +73,18 @@ def _del_key(dict: Dict[str, Any], key: str):
 
 
 def _get_ref_resolver(
-    model: ParsedModelNode, manifest: Manifest, dbt_dir: str, profiles_dir: str
+    model: ParsedModelNode, manifest: Manifest, project_dir: str, profiles_dir: str
 ):
     def ref_resolver(target_model_name: str, target_package_name: Optional[str] = None):
         target_model: MaybeNonSource = manifest.resolve_ref(
-            target_model_name, target_package_name, dbt_dir, model.package_name
+            target_model_name, target_package_name, project_dir, model.package_name
         )
         if target_model is None:
             raise Exception(
                 f"Could not find model {target_model_name}{target_package_name or ''}"
             )
 
-        result = lib.fetch_target(manifest, dbt_dir, profiles_dir, target_model)
+        result = lib.fetch_target(manifest, project_dir, profiles_dir, target_model)
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
         )
@@ -135,18 +135,18 @@ def _get_firestore_writer(model: ParsedModelNode, manifest: Manifest):
 
 
 def _get_source_resolver(
-    model: ParsedModelNode, manifest: Manifest, dbt_dir: str, profiles_dir: str
+    model: ParsedModelNode, manifest: Manifest, project_dir: str, profiles_dir: str
 ):
     def source_resolver(target_source_name: str, target_table_name: str):
         target_source: MaybeParsedSource = manifest.resolve_source(
-            target_source_name, target_table_name, dbt_dir, model.package_name
+            target_source_name, target_table_name, project_dir, model.package_name
         )
 
         if target_source is None:
             raise Exception(
                 f"Could not find source {target_source_name}.{target_table_name}"
             )
-        result = lib.fetch_target(manifest, dbt_dir, profiles_dir, target_source)
+        result = lib.fetch_target(manifest, project_dir, profiles_dir, target_source)
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
         )
@@ -155,13 +155,13 @@ def _get_source_resolver(
 
 
 def _write_to_source(
-    model: ParsedModelNode, manifest: Manifest, dbt_dir: str, profiles_dir: str
+    model: ParsedModelNode, manifest: Manifest, project_dir: str, profiles_dir: str
 ):
     def source_writer(
         data: pd.DataFrame, target_source_name: str, target_table_name: str
     ):
         target_source: MaybeParsedSource = manifest.resolve_source(
-            target_source_name, target_table_name, dbt_dir, model.package_name
+            target_source_name, target_table_name, project_dir, model.package_name
         )
 
         if target_source is None:
@@ -169,6 +169,6 @@ def _write_to_source(
                 f"Could not find source '{target_source_name}'.'{target_table_name}'"
             )
 
-        lib.write_target(data, manifest, dbt_dir, profiles_dir, target_source)
+        lib.write_target(data, manifest, project_dir, profiles_dir, target_source)
 
     return source_writer

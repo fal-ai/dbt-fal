@@ -72,9 +72,11 @@ class ScriptGraphBuilder:
     modelToScriptLookup: Dict[str, List[Path]] = {}
     falScripts: Dict[UniqueKey, FalScript] = {}
 
-    def __init__(self, models: List[DbtModel], keyword: str, root: str):
+    def __init__(self, models: List[DbtModel], keyword: str, project_dir: str):
         for model in models:
-            self.modelToScriptLookup[model.name] = model.get_scripts(keyword, root)
+            self.modelToScriptLookup[model.name] = model.get_scripts(
+                keyword, project_dir
+            )
             self.modelNameToModelLookup[model.name] = model
         for model_name, script_list in self.modelToScriptLookup.items():
             for script in script_list:
@@ -90,11 +92,11 @@ class ScriptGraphBuilder:
         dependency_models = current_script.parse()
 
         for model_name in dependency_models:
-            model = self.modelNameToModelLookup[model_name]
+            dependency_model = self.modelNameToModelLookup[model_name]
             dependency_scripts = self.modelToScriptLookup.get(model_name, [])
 
             for dependency_script in dependency_scripts:
-                dependency_key = UniqueKey(model, dependency_script)
+                dependency_key = UniqueKey(dependency_model, dependency_script)
                 self.recursively_set_dependencies(dependency_key)
                 current_script.add_dependency(self.falScripts.get(dependency_key))
 
@@ -103,7 +105,13 @@ class ScriptGraphBuilder:
 
 
 class ScriptGraph:
-    def __init__(self, models: List[DbtModel], keyword: str, root: str, _graph=[]):
+    def __init__(
+        self,
+        models: List[DbtModel],
+        keyword: str,
+        project_dir: str,
+        _graph: List[FalScript] = [],
+    ):
         self.outgoing: Dict[FalScript, List[FalScript]] = {}
         self.incoming: Dict[FalScript, List[FalScript]] = {}
         self.ordered_list: List[FalScript] = []
@@ -111,7 +119,7 @@ class ScriptGraph:
         if _graph:
             self.graph = _graph
         else:
-            self.graph = ScriptGraphBuilder(models, keyword, root).get_values()
+            self.graph = ScriptGraphBuilder(models, keyword, project_dir).get_values()
         self.incoming = dict(
             map(lambda script: [script, script.dependencies], self.graph)
         )
@@ -146,5 +154,5 @@ class ScriptGraph:
         return self.ordered_list
 
 
-def _flatten(t):
-    return [item for sublist in t for item in sublist]
+def _flatten(forest):
+    return [leaf for tree in forest for leaf in tree]
