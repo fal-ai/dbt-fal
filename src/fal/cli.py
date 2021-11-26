@@ -69,7 +69,6 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         faldbt = FalDbt(real_project_dir, real_profiles_dir)
         project = FalProject(faldbt, keyword)
         models = project.get_filtered_models(all)
-        manifest = project.manifest.nativeManifest
         print_run_info(models)
 
         if experimental_ordering:
@@ -80,4 +79,4 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
                 for path in model.get_scripts(keyword, real_project_dir):
                     scripts.append(FalScript(model, path))
 
-        run_scripts(scripts, keyword, manifest, real_project_dir, real_profiles_dir)
+        run_scripts(scripts, project)
