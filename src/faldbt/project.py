@@ -29,12 +29,12 @@ class DbtModel:
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
 
-    def get_scripts(self, keyword, dbt_root) -> List[Path]:
+    def get_scripts(self, keyword, project_dir) -> List[Path]:
         scripts = self.node.config.meta[keyword]["scripts"]
         return list(
             map(
                 lambda script: Path(
-                    os.path.realpath(os.path.normpath(dbt_root + "/" + script))
+                    os.path.realpath(os.path.normpath(project_dir + "/" + script))
                 ),
                 scripts,
             )
@@ -65,11 +65,11 @@ class DbtRunResult:
         self.results = self.nativeRunResult.results
 
 
-T = TypeVar("T", bound="DbtProject")
+T = TypeVar("T", bound="FalProject")
 
 
 @dataclass
-class DbtProject:
+class FalProject:
     name: str
     model_config_paths: List[str]
     models: List[DbtModel]

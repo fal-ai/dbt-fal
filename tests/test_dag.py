@@ -10,13 +10,23 @@ class MockDbtModel:
     name: str
 
 
+def prepare_scripts():
+    scriptA = FalScript(MockDbtModel("A"), "/A")
+    scriptB = FalScript(MockDbtModel("B"), "/B")
+    scriptC = FalScript(MockDbtModel("C"), "/C")
+    scriptD = FalScript(MockDbtModel("D"), "/D")
+
+    return [scriptA, scriptB, scriptC, scriptD]
+
+
 def test_simple_dag():
-    scriptA = FalScript(MockDbtModel("A"), "/scriptA", dependencies=[])
-    scriptB = FalScript(MockDbtModel("B"), "/scriptB", dependencies=[])
-    scriptC = FalScript(MockDbtModel("C"), "/scriptC", dependencies=[])
+    [scriptA, scriptB, scriptC, _] = prepare_scripts()
 
     graph = ScriptGraph(
-        models=[], keyword="test", root="test", _graph=[scriptA, scriptB, scriptC]
+        models=[],
+        keyword="test",
+        project_dir="test",
+        _graph=[scriptA, scriptB, scriptC],
     )
     sorted = graph.sort()
     assert sorted == [scriptA, scriptB, scriptC]
@@ -24,29 +34,30 @@ def test_simple_dag():
 
 def test_dag_with_dependencies():
 
-    scriptAA = FalScript(MockDbtModel("A"), "/A", dependencies=[])
-    scriptBB = FalScript(MockDbtModel("B"), "/B", dependencies=[scriptAA])
-    scriptCC = FalScript(MockDbtModel("C"), "/C", dependencies=[scriptBB])
-    scriptDD = FalScript(MockDbtModel("D"), "/D", dependencies=[])
+    [scriptA, scriptB, scriptC, scriptD] = prepare_scripts()
+    scriptB.add_dependency(scriptA)
+    scriptC.add_dependency(scriptB)
 
     script_graph = ScriptGraph(
         models=[],
         keyword="test",
-        root="test",
-        _graph=[scriptAA, scriptBB, scriptCC, scriptDD],
+        project_dir="test",
+        _graph=[scriptA, scriptB, scriptC, scriptD],
     )
     sorted = script_graph.sort()
-    assert sorted == [scriptAA, scriptDD, scriptBB, scriptCC]
+    assert sorted == [scriptA, scriptD, scriptB, scriptC]
 
 
 def test_with_cycle():
-    scriptC = FalScript(MockDbtModel("C"), "/scriptC", dependencies=[])
-    scriptA = FalScript(MockDbtModel("A"), "/scriptA", dependencies=[])
-    scriptB = FalScript(MockDbtModel("B"), "/scriptB", dependencies=[scriptC])
+    [scriptA, scriptB, scriptC, _] = prepare_scripts()
+    scriptB.add_dependency(scriptC)
     scriptC.add_dependency(scriptB)
 
     script_graph = ScriptGraph(
-        models=[], keyword="test", root="test", _graph=[scriptA, scriptB, scriptC]
+        models=[],
+        keyword="test",
+        project_dir="test",
+        _graph=[scriptA, scriptB, scriptC],
     )
     with pytest.raises(FalDagCycle):
         script_graph.sort()

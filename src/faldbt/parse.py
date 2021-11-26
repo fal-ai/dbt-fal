@@ -8,7 +8,7 @@ from dbt.contracts.results import RunResultsArtifact
 
 import faldbt.lib as lib
 from faldbt.utils.yaml_helper import load_yaml_text
-from faldbt.project import DbtProject, DbtManifest, DbtRunResult
+from faldbt.project import FalProject, DbtManifest, DbtRunResult
 
 
 class FalParseError(Exception):
@@ -38,14 +38,14 @@ def _flatten(t):
     return [item for sublist in t for item in sublist]
 
 
-def _get_all_model_config(project_root, project_dict):
+def _get_all_model_config(project_dir, project_dict):
     return _flatten(
         map(
             ## find one with any kind yml this doesnt need to schema
             ## look at all of them find the ones that has model in them
             ## and keep remembering it
             lambda model_path: glob.glob(
-                os.path.join(project_root, model_path, "**.yml"),
+                os.path.join(project_dir, model_path, "**.yml"),
                 recursive=True,
             ),
             project_dict["source-paths"],
@@ -83,7 +83,7 @@ def parse_project(project_dir: str, profiles_dir: str, keyword: str):
         # Default to `skipped` status if not ran
         model.status = status_map.get(model.unique_id, "skipped")
 
-    return DbtProject(
+    return FalProject(
         name=project_dict["name"],
         model_config_paths=list(model_config_paths),
         models=models,

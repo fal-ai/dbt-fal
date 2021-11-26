@@ -148,7 +148,7 @@ def write_target(
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
 ) -> RemoteRunResult:
-    relation = _get_target_relation(target, project_path)
+    relation = _get_target_relation(target, project_path, profiles_dir)
 
     column_names: List[str] = list(data.columns)
     rows = data.to_records(index=False)
