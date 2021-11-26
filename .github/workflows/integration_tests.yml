@@ -36,17 +36,15 @@ jobs:
           pip install dist/fal-0.1.0-py3-none-any.whl
           cd fal_dbt_test
           pip install -r requirements.txt
-          mkdir ~/.dbt
-          cp profiles.yml ~/.dbt/
 
       - name: Run dbt and fal
         run: |
           cd fal_dbt_test
           echo "*** Seeding database ***"
-          dbt seed
+          dbt seed --profiles-dir .
           echo "*** Starting dbt run ***"
-          dbt run
+          dbt run --profiles-dir .
           echo "*** Starting fal run ***"
-          fal run
+          fal run --profiles-dir .
           echo "*** Checking fal output files ***"
           python check_outputs.py
