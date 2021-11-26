@@ -8,10 +8,19 @@ from dbt.config import RuntimeConfig
 from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput
+from dbt.logger import GLOBAL_LOGGER as logger
+from dbt.adapters.bigquery.connections import BigQueryConnectionManager
+import dbt.tracking
 
 from . import parse
 from . import lib
 
+import google.auth.exceptions
+import firebase_admin
+from firebase_admin import credentials, firestore
+import uuid
+
+from decimal import Decimal
 import pandas as pd
 
 
@@ -80,7 +89,7 @@ class FalDbt:
     project_dir: str
     profiles_dir: str
 
-    _config = RuntimeConfig
+    _config: RuntimeConfig
     _manifest: DbtManifest
     _run_results: DbtRunResult
 
@@ -90,12 +99,13 @@ class FalDbt:
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
 
-        self._config = parse.get_dbt_config(project_dir)
+        self._config = parse.get_dbt_config(project_dir, profiles_dir)
         lib.register_adapters(self._config)
 
-        self._manifest = DbtManifest(
-            parse.get_dbt_manifest(self.profiles_dir, self._config)
-        )
+        # Necessary for parse_to_manifest to not fail
+        dbt.tracking.initialize_tracking(profiles_dir)
+
+        self._manifest = DbtManifest(parse.get_dbt_manifest(self._config))
 
         self._run_results = DbtRunResult(
             parse.get_dbt_results(self.project_dir, self._config)
@@ -111,6 +121,8 @@ class FalDbt:
             if model.name not in self._model_status_map:
                 # Default to `skipped` status if not ran
                 self._model_status_map[model.name] = "skipped"
+
+        self._setup_firestore()
 
     def list_sources(self):
         """
@@ -193,8 +205,71 @@ class FalDbt:
             )
 
         lib.write_target(
-            data, self._manifest.nativeManifest, self.project_dir, target_source
+            data,
+            self._manifest.nativeManifest,
+            self.project_dir,
+            self.profiles_dir,
+            target_source,
         )
+
+    def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):
+        df_arr = df.to_dict("records")
+        for item in df_arr:
+            key = item[key_column]
+            data = _firestore_dict_to_document(data=item, key_column=key_column)
+            self.firestore_client.collection(collection).document(str(key)).set(data)
+
+    def _setup_firestore(self):
+        app_name = f"fal-{uuid.uuid4()}"
+        profile_cred = self._config.credentials
+        # Setting projectId from the profiles.yml
+        options = {"projectId": profile_cred.database}
+
+        try:
+            # Use the application default credentials
+            cred = credentials.ApplicationDefault()
+
+            app = firebase_admin.initialize_app(cred, options, name=app_name)
+
+            self.firestore_client = firestore.client(app=app)
+
+        except Exception:
+            logger.warn(
+                "Default GCP Application credentials not found, trying profiles.yml"
+            )
+
+            if app:
+                firebase_admin.delete_app(app)
+
+            # Try with the profiles.yml credentials
+            if profile_cred.type != "bigquery":
+                raise FalGeneralException(
+                    "Could not find GCP credentials in profiles.yml"
+                )
+
+            # HACK: using internal method of Bigquery adapter to mock a Firebase credential
+            cred = credentials.ApplicationDefault()
+            cred._g_credential = BigQueryConnectionManager.get_bigquery_credentials(
+                profile_cred
+            )
+
+            logger.info("{}", cred)
+            app = firebase_admin.initialize_app(cred, options, name=app_name)
+
+            self.firestore_client = firestore.client(app=app)
+
+
+def _firestore_dict_to_document(data: Dict, key_column: str):
+    output = {}
+    for (k, v) in data.items():
+        if k == key_column:
+            continue
+        # TODO: Add more type conversions here
+        if isinstance(v, Decimal):
+            output[k] = str(v)
+        else:
+            output[k] = v
+    return output
 
 
 T = TypeVar("T", bound="FalProject")
