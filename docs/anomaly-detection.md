@@ -15,9 +15,9 @@ In a `schema.yml` file, within a target model, a meta tag should be added in ord
 ```
 
 ## Finding anomalies on a model using DBSCAN
-Our model for this example is from [a dataset of Covid-19 cases in Italy](https://www.kaggle.com/sudalairajkumar/covid19-in-italy?select=covid19_italy_region.csv) which includes the number of daily new Covid-19 cases in the region of Lombardia, the most populous and richest region in Italy. This kind of dataset is great for our example, as the Covid-19 cases shot up in forms resembling a wave. Having a system that notices these abnormal trends in data is crucial for any use case, including our current fight against Covid-19.
+Our model for this example is from [a dataset of Covid-19 cases in Italy](https://www.kaggle.com/sudalairajkumar/covid19-in-italy?select=covid19_italy_region.csv). This kind of dataset is great for anomaly detection, as the Covid-19 cases shot up in forms resembling waves. Having a system that notices such abnormal trends in data is crucial for any use case, including our current fight against Covid-19.
 
-However, in the dataset the TestsPerformed column has 19% of its rows empty, which causes problems when using seeds for dbt. So, for a quick fix, we get rid of the last column with a quick Python script using Pandas:
+Since the TestsPerformed column has 19% of its rows empty, we get rid of it with a quick Python script using Pandas:
 ```python
 import pandas as pd
 
@@ -26,7 +26,12 @@ df.drop('TestsPerformed', axis=1, inplace=True)
 df.to_csv('covid19_italy_region.csv')
 ```
 
-Now, for us to find anomalies, we need to write our Python script that will take our model, tune the hyperparameters for `DBSCAN` with a little help from our side, feed it to `DBSCAN`, plot the anomalies with the data on a Matplotlib figure and save it, then finally send the figure to a Slack channel using a bot with a message.
+Now, for us to find anomalies we need to write our Python script that will:
+1. Take our model
+2. Tune the hyperparameters for `DBSCAN` with a little help from our side
+3. Feed it to `DBSCAN`
+4. Plot the anomalies with the data on a Matplotlib figure and save it
+5. Send the figure to a Slack channel using a bot with a message
 
 For the entire Python script, you can use this [link](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/anomaly_detection.py)).
 
@@ -130,7 +135,7 @@ def find_eps_range(X: np.array, range_const: int):
 
 This is where our system needs some supervision. However, please note that this can also be automated for a fully unsupervised anomaly detection system, but requires more dedication. For our example, the extra work can't be justified, also it provides a visual insight to how the `eps` is selected.
 
-We need a curve with an elbow, or a knee, as the exact elbow, or knee, will be the `eps`. However, also we need the smallest value possible. Thus we have a constant, namely the `range_conts`, to create a range and bound the `dists` array. Here we have the first figure:
+To find the ideal `eps`, we first need to plot the distance between each consecutive data point. For our case, the distance between the points is the difference of number of daily positive Covid-19 cases between each time index. In this plot, we are looking for a curve with an elbow, or a knee, as the exact elbow point is the ideal `eps`. Also, we need the smallest value possible, which means that we need the curve in the smallest range posssible. To bound the range, we create a constant, namely the `range_conts`, for convenience, as the constant is a fraction of the maximum of the range of our data. We use this constant to bound our range now and also create our `eps` range in increments of it. We have to try values for `range_const` and find an elbow curve in our plot with the smallest constant value. Here we have the first figure, which has not been bounded yet:
 
 ![Plot of distances](distance_between_samples.jpg)
 
@@ -183,10 +188,10 @@ def find_ideal_eps(X: np.array, min_samples: int, window_size: int, range_eps: l
     return ideal_eps
 ```
 
-This is what is needed to find anomalies on a given model. Now we need to set up two more functions to get a Slack bot to message us some information and a plot of the anomalies in our model.
+In this section, we first created the `anomaly_detection` function which takes the model, `min_samples` and `eps` hyperparameters, then returns the indices of the anomalous points. Then we created the `find_ideal_min_samples` function which finds the ideal `min_samples` value for `anomaly_detection`. After that, we created the two functions `find_eps_range` and `find_ideal_eps`, which are used to first find the range which has the ideal `eps` value, then find it based on the `min_samples` value we have found before. This is what is needed to find anomalies on a given model. However, we want our script to also plot the anomalies and send them to us via Slack. So, we need to set up two more functions to get a Slack bot to message us some information and a plot of the anomalies in our model.
 
 ## Sending results via Slack
-The two functions we need are `plot_anomalies` and `send_slack_file`, which is present in [metric forecast](metric-forecast.d) and [slack bot](slack-example.md) examples.
+The two functions we need are `plot_anomalies` and `send_slack_file`. The `send_slack_file` function is present in both the [metric forecast](metric-forecast.md) and [slack bot](slack-example.md) examples.
 
 ```python
 def plot_anomalies(column_y: np.array, column_date: np.array, anomalies: np.array):
@@ -224,7 +229,7 @@ def send_slack_file(file_path: str, message_text: str, channel_id: str, slack_to
 ```
 
 ## Finding anomalies on a dbt model with fal
-At last, we have all the functions needed for anomaly detection. However, there is a very important thing missing: Our model. Using fal we can load our model in the form of a DataFrame with ease using the extrmely handy `ref()` function and the `context` object.
+At last, we have all the functions needed for anomaly detection. However, there is a very important thing missing: Our model. Using fal we can load our model in the form of a DataFrame with ease using the extremely handy `ref()` function and the `context` object.
 
 ```python
 model_df = ref(context.current_model.name).sort_values(by='ds')
