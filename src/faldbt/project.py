@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, List, Any, Optional, TypeVar, Sequence
+from typing import Dict, List, List, Any, Optional, TypeVar, Sequence, Union
 from pathlib import Path
 
 from dbt.node_types import NodeType
@@ -15,9 +15,9 @@ import dbt.tracking
 from . import parse
 from . import lib
 
-import google.auth.exceptions
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import firestore
+from google.cloud.firestore import Client as FirestoreClient
 import uuid
 
 from decimal import Decimal
@@ -94,6 +94,8 @@ class FalDbt:
     _run_results: DbtRunResult
 
     _model_status_map: Dict[str, str]
+
+    _firestore_client: Union[FirestoreClient, None]
 
     def __init__(self, project_dir: str, profiles_dir: str):
         self.project_dir = project_dir
@@ -213,11 +215,16 @@ class FalDbt:
         )
 
     def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):
+        if self._firestore_client is None:
+            raise FalGeneralException(
+                "GCP credentials not setup correctly. Check warnings during initialization."
+            )
+
         df_arr = df.to_dict("records")
         for item in df_arr:
             key = item[key_column]
             data = _firestore_dict_to_document(data=item, key_column=key_column)
-            self.firestore_client.collection(collection).document(str(key)).set(data)
+            self._firestore_client.collection(collection).document(str(key)).set(data)
 
     def _setup_firestore(self):
         app_name = f"fal-{uuid.uuid4()}"
@@ -227,11 +234,11 @@ class FalDbt:
 
         try:
             # Use the application default credentials
-            cred = credentials.ApplicationDefault()
+            cred = firebase_admin.credentials.ApplicationDefault()
 
             app = firebase_admin.initialize_app(cred, options, name=app_name)
 
-            self.firestore_client = firestore.client(app=app)
+            self._firestore_client = firestore.client(app=app)
 
         except Exception:
             logger.warn(
@@ -243,12 +250,12 @@ class FalDbt:
 
             # Try with the profiles.yml credentials
             if profile_cred.type != "bigquery":
-                raise FalGeneralException(
-                    "Could not find GCP credentials in profiles.yml"
-                )
+                logger.warn("Could not find GCP credentials in profiles.yml")
+                # Do not raise because user may not use Firstore at all
+                return
 
             # HACK: using internal method of Bigquery adapter to mock a Firebase credential
-            cred = credentials.ApplicationDefault()
+            cred = firebase_admin.credentials.ApplicationDefault()
             cred._g_credential = BigQueryConnectionManager.get_bigquery_credentials(
                 profile_cred
             )
@@ -256,7 +263,7 @@ class FalDbt:
             logger.info("{}", cred)
             app = firebase_admin.initialize_app(cred, options, name=app_name)
 
-            self.firestore_client = firestore.client(app=app)
+            self._firestore_client = firestore.client(app=app)
 
 
 def _firestore_dict_to_document(data: Dict, key_column: str):
