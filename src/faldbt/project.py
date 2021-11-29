@@ -200,7 +200,7 @@ class FalDbt:
         self, data: pd.DataFrame, target_source_name: str, target_table_name: str
     ):
         """
-        Write a pandas.DataGrame to a dbt source automagically.
+        Write a pandas.DataFrame to a dbt source automagically.
         """
 
         target_source: MaybeParsedSource = self._manifest.nativeManifest.resolve_source(
@@ -221,6 +221,10 @@ class FalDbt:
         )
 
     def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):
+        """
+        Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
+        """
+
         if self._firestore_client is None:
             raise FalGeneralException(
                 "GCP credentials not setup correctly. Check warnings during initialization."
