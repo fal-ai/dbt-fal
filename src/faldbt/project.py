@@ -119,12 +119,12 @@ class FalDbt:
                 self._run_results.results,
             )
         )
-        for model in self._manifest.get_models():
-            if model.name not in self._model_status_map:
-                # Default to `skipped` status if not ran
-                self._model_status_map[model.name] = "skipped"
 
         self._setup_firestore()
+
+    def get_model_status(self, model: DbtModel):
+        # Default to `skipped` status if not found, it means it did not run
+        return self._model_status_map.get(model.unique_id, "skipped")
 
     def list_sources(self):
         """
@@ -312,8 +312,8 @@ class FalProject:
         self.keyword = keyword
         self.scripts = parse.get_scripts_list(faldbt.project_dir)
 
-    def get_model_status(self, model_name):
-        return self._faldbt._model_status_map[model_name]
+    def get_model_status(self, model: DbtModel):
+        return self._faldbt.get_model_status(model)
 
     def _result_model_ids(self) -> List[str]:
         return list(map(lambda r: r.unique_id, self._faldbt._run_results.results))

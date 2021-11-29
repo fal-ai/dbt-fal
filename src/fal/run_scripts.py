@@ -32,7 +32,7 @@ def run_scripts(list: List[FalScript], project: FalProject):
 
         current_model = CurrentModel(
             name=model.name,
-            status=project.get_model_status(model.name),
+            status=project.get_model_status(model),
             columns=model.columns,
             meta=meta,
         )
