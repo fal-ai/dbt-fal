@@ -1,17 +1,17 @@
 # NOTE: COPIED FROM https://github.com/dbt-labs/dbt-core/blob/40ae6b6bc860a30fa383756b7cdb63709ce829a8/core/dbt/lib.py
-import os
 import six
 
 from datetime import datetime
 from uuid import uuid4
-from collections import namedtuple
-from typing import List, Tuple, Type, Union
+from typing import List, Tuple, Union
 
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.graph.manifest import Manifest
 import dbt.clients.agate_helper as agate_helper
 import dbt.adapters.factory as adapters_factory
+
+from . import parse
 
 import pandas as pd
 
@@ -26,17 +26,6 @@ import agatesql.table
 
 # from sqlalchemy.engine import Connection as SQLAlchemyConnection
 
-RuntimeArgs = namedtuple("RuntimeArgs", "project_dir profiles_dir single_threaded")
-
-
-def get_dbt_config(project_dir: str, profiles_dir: str, single_threaded=False):
-    from dbt.config.runtime import RuntimeConfig
-
-    # Construct a phony config
-    return RuntimeConfig.from_args(
-        RuntimeArgs(project_dir, profiles_dir, single_threaded)
-    )
-
 
 def register_adapters(config: RuntimeConfig):
     # Clear previously registered adapters. This fixes cacheing behavior on the dbt-server
@@ -49,7 +38,7 @@ def _get_operation_node(manifest: Manifest, project_path, profiles_dir, sql):
     from dbt.parser.manifest import process_node
     from faldbt.cp.parser.sql import SqlBlockParser
 
-    config = get_dbt_config(project_path, profiles_dir)
+    config = parse.get_dbt_config(project_path, profiles_dir)
     block_parser = SqlBlockParser(
         project=config,
         manifest=manifest,
@@ -66,7 +55,7 @@ def _get_operation_node(manifest: Manifest, project_path, profiles_dir, sql):
 
 # NOTE: Once we get an adapter, we must call `connection_for` or `connection_named` to use it
 def _get_adapter(project_path: str, profiles_dir: str):
-    config = get_dbt_config(project_path, profiles_dir)
+    config = parse.get_dbt_config(project_path, profiles_dir)
 
     adapters_factory.cleanup_connections()
     return adapters_factory.get_adapter(config)
@@ -181,9 +170,3 @@ def write_target(
         manifest, project_path, profiles_dir, six.text_type(insert_stmt).strip()
     )
     return result
-
-
-def parse_to_manifest(config):
-    from dbt.parser.manifest import ManifestLoader
-
-    return ManifestLoader.get_full_manifest(config)
