@@ -163,7 +163,10 @@ class FalDbt:
             )
 
         result = lib.fetch_target(
-            self._manifest.nativeManifest, self.project_dir, target_model
+            self._manifest.nativeManifest,
+            self.project_dir,
+            self.profiles_dir,
+            target_model,
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
@@ -184,7 +187,10 @@ class FalDbt:
             )
 
         result = lib.fetch_target(
-            self._manifest.nativeManifest, self.project_dir, target_source
+            self._manifest.nativeManifest,
+            self.project_dir,
+            self.profiles_dir,
+            target_source,
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
