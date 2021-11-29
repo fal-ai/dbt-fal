@@ -1,8 +1,8 @@
 """Run fal scripts."""
-from typing import Union, Dict, Any, List
+from typing import Dict, Any, List
 from dataclasses import dataclass
 
-from dbt.contracts.results import RunStatus, TestStatus, FreshnessStatus
+from dbt.contracts.results import NodeStatus
 
 from faldbt.cp.contracts.graph.parsed import ColumnInfo
 from faldbt.cp.contracts.graph.parsed import ColumnInfo
@@ -13,7 +13,7 @@ from fal.dag import FalScript
 @dataclass
 class CurrentModel:
     name: str
-    status: Union[RunStatus, TestStatus, FreshnessStatus]
+    status: NodeStatus
     columns: Dict[str, ColumnInfo]
     meta: Dict[Any, Any]
 
