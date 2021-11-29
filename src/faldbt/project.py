@@ -239,30 +239,15 @@ class FalDbt:
     def _setup_firestore(self):
         app_name = f"fal-{uuid.uuid4()}"
         profile_cred = self._config.credentials
+
         # Setting projectId from the profiles.yml
         options = {"projectId": profile_cred.database}
+        app = None
 
         try:
-            # Use the application default credentials
-            cred = firebase_admin.credentials.ApplicationDefault()
-
-            app = firebase_admin.initialize_app(cred, options, name=app_name)
-
-            self._firestore_client = firestore.client(app=app)
-
-        except Exception:
-            logger.warn(
-                "Default GCP Application credentials not found, trying profiles.yml"
-            )
-
-            if app:
-                firebase_admin.delete_app(app)
-
             # Try with the profiles.yml credentials
             if profile_cred.type != "bigquery":
-                logger.warn("Could not find GCP credentials in profiles.yml")
-                # Do not raise because user may not use Firstore at all
-                return
+                raise Exception("To be caught")
 
             # HACK: using internal method of Bigquery adapter to mock a Firebase credential
             cred = firebase_admin.credentials.ApplicationDefault()
@@ -270,10 +255,29 @@ class FalDbt:
                 profile_cred
             )
 
-            logger.info("{}", cred)
             app = firebase_admin.initialize_app(cred, options, name=app_name)
 
             self._firestore_client = firestore.client(app=app)
+
+        except Exception:
+            logger.warn(
+                "Could not find acceptable GCP credentials in profiles.yml, trying default GCP Application"
+            )
+
+            if app:
+                firebase_admin.delete_app(app)
+
+            try:
+                # Use the application default credentials
+                cred = firebase_admin.credentials.ApplicationDefault()
+
+                app = firebase_admin.initialize_app(cred, options, name=app_name)
+
+                self._firestore_client = firestore.client(app=app)
+            except Exception:
+                logger.warn(
+                    "Could not find acceptable Default GCP Application credentials"
+                )
 
 
 def _firestore_dict_to_document(data: Dict, key_column: str):
