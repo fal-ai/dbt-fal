@@ -49,6 +49,7 @@ try:
 except SlackApiError as e:
     assert e.response["error"]
 ```
+
 ## 4. Add a `meta` section in your `schema.yml`
 ```yaml
 models:
@@ -66,6 +67,7 @@ models:
         scripts:
           - send_slack_message.py
 ```
+
 ## 5. Run `dbt` and `fal` consecutively
 ```bash
 $ dbt run
@@ -157,7 +159,8 @@ ref(context.current_model.name)
 ### `write_to_source` function
 It is also possible to send data back to your datawarehouse. This makes it easy to get the data, process it and upload it back into dbt territory.
 
-All you have to do is define the target source in your schema and use it in fal.
+All you have to do is define the target source in your schema and use it in fal. 
+This operation appends to the existing source by default and should only be used targetting tables, not views.
 ```python
 # Upload a `pandas.DataFrame` back to the datawarehouse
 write_to_source(df, 'source_name', 'table_name2')
