@@ -8,23 +8,20 @@ from typing import List, Tuple, Union
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.graph.manifest import Manifest
-import dbt.clients.agate_helper as agate_helper
 import dbt.adapters.factory as adapters_factory
 
 from . import parse
 
 import pandas as pd
+from pandas.io import sql as pdsql
 
+import sqlalchemy
 from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
+from sqlalchemy.sql.schema import MetaData
 
 from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
-
-import agatesql
-import agatesql.table
-
-# from sqlalchemy.engine import Connection as SQLAlchemyConnection
 
 
 def register_adapters(config: RuntimeConfig):
@@ -137,23 +134,25 @@ def write_target(
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
 ) -> RemoteRunResult:
+    adapter = _get_adapter(project_path, profiles_dir)
+
     relation = _get_target_relation(target, project_path, profiles_dir)
+
+    engine = _alchemy_engine(adapter, target)
+    pddb = pdsql.SQLDatabase(
+        engine,
+        meta=MetaData(engine, schema=target.schema),
+    )
+    pdtable = pdsql.SQLTable(target.name, pddb, data, index=False)
+    alchemy_table: sqlalchemy.Table = pdtable.table.to_metadata(pdtable.pd_sql.meta)
 
     column_names: List[str] = list(data.columns)
     rows = data.to_records(index=False)
     row_dicts = list(map(lambda row: dict(zip(column_names, row)), rows))
 
-    agate_table = agate_helper.table_from_data(row_dicts, column_names=column_names)
-
-    # We are using the SQLAlchemy table to generate the SQL, but it targeting sqlite
-    # This may bite us later for other adapters
-    alchemy_table = agatesql.table.make_sql_table(
-        agate_table, table_name=target.identifier, db_schema=target.schema
-    )
-
     if relation is None:
         create_stmt = CreateTable(alchemy_table).compile(
-            compile_kwargs={"literal_binds": True}
+            bind=engine, compile_kwargs={"literal_binds": True}
         )
 
         _execute_sql(
@@ -163,10 +162,23 @@ def write_target(
     insert_stmt = (
         Insert(alchemy_table)
         .values(row_dicts)
-        .compile(compile_kwargs={"literal_binds": True})
+        .compile(bind=engine, compile_kwargs={"literal_binds": True})
     )
 
     _, result = _execute_sql(
         manifest, project_path, profiles_dir, six.text_type(insert_stmt).strip()
     )
     return result
+
+
+def _alchemy_engine(
+    adapter: adapters_factory.Adapter,
+    target: Union[ParsedModelNode, ParsedSourceDefinition],
+):
+    if adapter.type() == "bigquery":
+        return sqlalchemy.create_engine(f"bigquery://{target.database}")
+    if adapter.type() == "postgres":
+        return sqlalchemy.create_engine("postgresql://")
+    else:
+        # TODO: add special cases as needed
+        return sqlalchemy.create_engine(f"{adapter.type()}://")
