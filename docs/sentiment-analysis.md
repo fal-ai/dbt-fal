@@ -10,14 +10,14 @@ In a `schema.yml` file, within a target model, a meta tag should be added in ord
 
 ```yaml
 models:
-- name: stg_zendesk_ticket_data
+  - name: stg_zendesk_ticket_data
     description: zendesk ticket data
     config:
     materialized: table
     meta:
-        fal:
-            scripts:
-                - "models/zendesk_sentiment_analysis.py"
+      fal:
+        scripts:
+          - "models/zendesk_sentiment_analysis.py"
 ```
 
 ## Seeding data to the warehouse
@@ -31,24 +31,49 @@ Alternatively you can load this data to your warehouse with in any way as you li
 Let's first install the transformer library from hugging face. Head to your terminal and the python environment that you have installed `fal` and run:
 
 ```
-pip install transformers
+pip install transformers pandas numpy
 ```
 
 (We are working on better dependency managment, head over to this [github issue](https://github.com/fal-ai/fal/issues/10) if you run into any problems with this step)
 
 Once the transformer dependency is installed create a python file in the location that is specified above in your `schema.yml` file, `models/zendesk_sentiment_analysis.py`.
 
-```
+```py
 from transformers import pipeline
 
-ticket_descriptions = list(ref("stg_zendesk_ticket_data").description)
+ticket_data = ref("stg_zendesk_ticket_data")
+ticket_descriptions = list(ticket_data.description)
 classifier = pipeline("sentiment-analysis")
-
-results = classifier(ticket_descriptions), "sentiment_analysis")
+description_sentimet_analysis = classifier(ticket_descriptions)
 ```
 
 ## Writing the analysis results back to your warehouse
 
+To upload data back to the warehouse, we define a source where we will be uploading it to.
+We upload to a source because it may need more dbt transformations afterwards, and a source is the perfect place for that.
+
+```yaml
+sources:
+  - name: results
+    tables:
+      - name: ticket_data_sentiment_analysis
 ```
-TODO
+
+Then let's organize the resulting data frame before uploading it
+
+```py
+rows = []
+for id, sentiment in zip(ticket_data.id, description_sentimet_analysis):
+    rows.append((int(id), sentiment["label"], sentiment["score"]))
+
+records = np.array(rows, dtype=[("id", int), ("label", "U8"), ("score", float)])
+
+sentiment_df = pd.DataFrame.from_records(records)
+```
+
+And finally, upload it with the handy `write_to_source` function
+
+```py
+print("Uploading\n", sentiment_df)
+write_to_source(sentiment_df, "results", "ticket_data_sentiment_analysis")
 ```
