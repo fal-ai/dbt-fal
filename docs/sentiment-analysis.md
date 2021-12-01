@@ -9,6 +9,8 @@ We are going to use sample data from the [Fivetran dbt-zendesk](https://github.c
 In a `schema.yml` file, within a target model, a meta tag should be added in order to connect the model to fal:
 
 ```yaml
+# models/shema.yml
+
 models:
   - name: stg_zendesk_ticket_data
     description: zendesk ticket data
@@ -39,6 +41,8 @@ pip install transformers pandas numpy
 Once the transformer dependency is installed create a python file in the location that is specified above in your `schema.yml` file, `models/zendesk_sentiment_analysis.py`.
 
 ```py
+# models/zendesk_sentiment_analysis.py
+
 from transformers import pipeline
 
 ticket_data = ref("stg_zendesk_ticket_data")
@@ -53,6 +57,8 @@ To upload data back to the warehouse, we define a source where we will be upload
 We upload to a source because it may need more dbt transformations afterwards, and a source is the perfect place for that.
 
 ```yaml
+# models/shema.yml [continuation]
+
 sources:
   - name: results
     tables:
@@ -62,6 +68,8 @@ sources:
 Then let's organize the resulting data frame before uploading it
 
 ```py
+# models/zendesk_sentiment_analysis.py [continuation]
+
 rows = []
 for id, sentiment in zip(ticket_data.id, description_sentimet_analysis):
     rows.append((int(id), sentiment["label"], sentiment["score"]))
@@ -74,6 +82,8 @@ sentiment_df = pd.DataFrame.from_records(records)
 And finally, upload it with the handy `write_to_source` function
 
 ```py
+# models/zendesk_sentiment_analysis.py [continuation]
+
 print("Uploading\n", sentiment_df)
 write_to_source(sentiment_df, "results", "ticket_data_sentiment_analysis")
 ```
