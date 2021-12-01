@@ -17,7 +17,7 @@ In a `schema.yml` file, within a target model, a meta tag should be added in ord
 ## Finding anomalies on a model using DBSCAN
 Our model for this example is from [a dataset of Covid-19 cases in Italy](https://www.kaggle.com/sudalairajkumar/covid19-in-italy?select=covid19_italy_region.csv). This kind of dataset is great for anomaly detection, as the Covid-19 cases shot up in forms resembling waves. Having a system that notices such abnormal trends in data is crucial for any use case, including our current fight against Covid-19.
 
-Since the TestsPerformed column has 19% of its rows empty, we get rid of it with a quick Python script using Pandas:
+TestsPerformed column in our dataset has 19% of its rows empty, so we get rid of it with a quick Python script using Pandas:
 ```python
 import pandas as pd
 
@@ -32,6 +32,8 @@ Now, for us to find anomalies we need to write our Python script that will:
 3. Feed it to `DBSCAN`
 4. Plot the anomalies with the data on a Matplotlib figure and save it
 5. Send the figure to a Slack channel using a bot with a message
+
+The `DBSCAN` cluster that we are using for this example is a data clustering algorithm that groups together points that are close to each other. The groups are defined by the two hyperparameters `eps` for neighbourhood size and `min_samples` for minimum number of points reqiured in a cluster. After forming the groups, or the clusters, it labels the points that are in low density areas defined by the hyperparameters as noise, which are the anomalous data points for our case.
 
 For the entire Python script, you can use this [link](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/anomaly_detection.py)).
 
@@ -135,7 +137,11 @@ def find_eps_range(X: np.array, range_const: int):
 
 This is where our system needs some supervision. However, please note that this can also be automated for a fully unsupervised anomaly detection system, but requires more dedication. For our example, the extra work can't be justified, also it provides a visual insight to how the `eps` is selected.
 
-To find the ideal `eps`, we first need to plot the distance between each consecutive data point. For our case, the distance between the points is the difference of number of daily positive Covid-19 cases between each time index. In this plot, we are looking for a curve with an elbow, or a knee, as the exact elbow point is the ideal `eps`. Also, we need the smallest value possible, which means that we need the curve in the smallest range posssible. To bound the range, we create a constant, namely the `range_conts`, for convenience, as the constant is a fraction of the maximum of the range of our data. We use this constant to bound our range now and also create our `eps` range in increments of it. We have to try values for `range_const` and find an elbow curve in our plot with the smallest constant value. Here we have the first figure, which has not been bounded yet:
+To find the ideal `eps`, we first need to plot the distance between each consecutive data point. For our case, the distance between the points is the difference of number of daily positive Covid-19 cases between each time index. In this plot, we are looking for a curve with an elbow, or a knee, as the exact elbow point is the ideal `eps`.
+
+![An example elbow curve, credit https://en.wikipedia.org/wiki/File:DataClustering_ElbowCriterion.JPG](https://upload.wikimedia.org/wikipedia/commons/c/cd/DataClustering_ElbowCriterion.JPG)
+
+Also, we need the smallest value possible, which means that we need the curve in the smallest range posssible. To bound the range, we create a constant, namely the `range_conts`, for convenience, as the constant is a fraction of the maximum of the range of our data. We use this constant to bound our range now and also create our `eps` range in increments of it. We have to try values for `range_const` and find an elbow curve in our plot with the smallest constant value. Here we have the first figure, which has not been bounded yet:
 
 ![Plot of distances](distance_between_samples.jpg)
 
@@ -288,3 +294,6 @@ And, that's it. We have our Slack bot notifying us about the anomalous data poin
 As we can see, the system finds 3 anomalies in the first wave and 1 while the wave flattens. This behaviour is unexpected, however it is insignificant enough that only the extreme outliers are reported as anomalous. In this second wave, we can observe a much, much more sharp upwards trend that the system classifies most of the wave as anomalous.
 
 In this example, we can see the power of fal, as we can have an extremely vital and time sensitive system directly from your dbt project. 
+
+## Moving further
+The next step for this example would be to get the system production ready by implementing it into your existing dbt based pipeline. But, for the example to be a pipeline ready system, the main bottleneck is finding the range for the ideal `eps`. A system can be implemented to detect the elbow curve using [mathematical analysis](https://en.wikipedia.org/wiki/Mathematical_analysis) to solve this issue. Other than that, the system is a modular block so, the connections of your pipeline can be configured for your specific needs. I.e. our example with the Covid-19 data can be used to trigger a PSA or manage social distancing rules.
