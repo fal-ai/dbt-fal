@@ -3,6 +3,7 @@ from typing import Dict, Any, List
 from dataclasses import dataclass
 
 from dbt.contracts.results import NodeStatus
+from dbt.logger import GLOBAL_LOGGER as logger
 
 from faldbt.cp.contracts.graph.parsed import ColumnInfo
 from faldbt.cp.contracts.graph.parsed import ColumnInfo
@@ -37,6 +38,8 @@ def run_scripts(list: List[FalScript], project: FalProject):
             meta=meta,
         )
         context = Context(current_model=current_model)
+
+        logger.info("Running script {} for model {}", script.path, model.name)
 
         script.exec(
             context,

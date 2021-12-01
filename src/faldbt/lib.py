@@ -10,6 +10,7 @@ from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.graph.manifest import Manifest
 import dbt.clients.agate_helper as agate_helper
 import dbt.adapters.factory as adapters_factory
+from dbt.logger import GLOBAL_LOGGER as logger
 
 from . import parse
 
@@ -66,6 +67,8 @@ def _execute_sql(
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
     node = _get_operation_node(manifest, project_path, profiles_dir, sql)
     adapter = _get_adapter(project_path, profiles_dir)
+
+    logger.info("Running query\n{}", sql)
 
     result = None
     with adapter.connection_for(node):
