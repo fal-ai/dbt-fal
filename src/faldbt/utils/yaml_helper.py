@@ -63,3 +63,18 @@ def load_yaml_text(contents):
             error = str(e)
 
         raise Exception(error)
+
+
+def _load_file_contents(path: str, strip: bool = True) -> str:
+    with open(path, "rb") as handle:
+        to_return = handle.read().decode("utf-8")
+
+    if strip:
+        to_return = to_return.strip()
+
+    return to_return
+
+
+def load_yaml(path):
+    contents = _load_file_contents(path)
+    return load_yaml_text(contents)

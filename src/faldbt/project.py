@@ -28,6 +28,15 @@ class FalGeneralException(Exception):
     pass
 
 
+def normalize_directories(base: str, dirs: List[str]) -> List[Path]:
+    return list(
+        map(
+            lambda dir: Path(os.path.realpath(os.path.join(base, dir))),
+            dirs,
+        )
+    )
+
+
 @dataclass
 class DbtModel:
     node: ParsedModelNode
@@ -47,14 +56,7 @@ class DbtModel:
 
     def get_scripts(self, keyword, project_dir) -> List[Path]:
         scripts = self.node.config.meta[keyword]["scripts"]
-        return list(
-            map(
-                lambda script: Path(
-                    os.path.realpath(os.path.join(project_dir, script))
-                ),
-                scripts,
-            )
-        )
+        return normalize_directories(project_dir, scripts)
 
 
 @dataclass
@@ -95,6 +97,8 @@ class FalDbt:
 
     _model_status_map: Dict[str, str]
 
+    _global_script_paths = List[str]
+
     _firestore_client: Union[FirestoreClient, None]
 
     def __init__(self, project_dir: str, profiles_dir: str):
@@ -111,6 +115,14 @@ class FalDbt:
 
         self._run_results = DbtRunResult(
             parse.get_dbt_results(self.project_dir, self._config)
+        )
+
+        normalized_source_paths = normalize_directories(
+            project_dir, self._config.source_paths
+        )
+
+        self._global_script_paths = parse.get_global_script_configs(
+            normalized_source_paths
         )
 
         self._model_status_map = dict(

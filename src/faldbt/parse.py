@@ -8,6 +8,7 @@ from typing import List
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.results import RunResultsArtifact
+from faldbt.utils.yaml_helper import load_yaml
 
 
 class FalParseError(Exception):
@@ -46,5 +47,24 @@ def get_dbt_results(project_dir: str, config: RuntimeConfig) -> RunResultsArtifa
         raise FalParseError("Did you forget to run dbt run?") from exc
 
 
-def get_scripts_list(project_dir: str) -> List[Path]:
+def get_scripts_list(project_dir: str) -> List[str]:
     return glob.glob(os.path.join(project_dir, "**.py"), recursive=True)
+
+
+def get_global_script_configs(source_dirs: List[Path]) -> List[str]:
+    global_scripts = []
+    for source_dir in source_dirs:
+        schema_files = glob.glob(os.path.join(source_dir, "**.yml"), recursive=True)
+        global_scripts = []
+        for file in schema_files:
+            schema_yml = load_yaml(file)
+            if schema_yml is not None:
+                fal_config = schema_yml.get("fal", None)
+                if fal_config is not None:
+                    script_paths = fal_config.get("scripts", [])
+                    global_scripts.append(script_paths)
+    return _flatten(global_scripts)
+
+
+def _flatten(forest):
+    return [leaf for tree in forest for leaf in tree]
