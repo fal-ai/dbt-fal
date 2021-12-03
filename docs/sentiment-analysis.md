@@ -87,3 +87,8 @@ And finally, upload it with the handy `write_to_source` function
 print("Uploading\n", sentiment_df)
 write_to_source(sentiment_df, "results", "ticket_data_sentiment_analysis")
 ```
+
+The table `ticket_data_sentiment_analysis` will be created if it's not already present, and in case
+it existed and there was data already, data will be appended to it.
+
+It can be used from dbt as a regular source with the usual `{{ source('results', 'ticket_data_sentiment_analysis') }}` syntax.
