@@ -50,6 +50,18 @@ def run_scripts(list: List[FalScript], project: FalProject):
         )
 
 
+def run_global_scripts(list: List[FalScript], project: FalProject):
+    faldbt = project._faldbt
+    for script in list:
+        script.exec(
+            None,
+            faldbt.ref,
+            faldbt.source,
+            faldbt.write_to_source,
+            faldbt.write_to_firestore,
+        )
+
+
 def _del_key(dict: Dict[str, Any], key: str):
     try:
         del dict[key]

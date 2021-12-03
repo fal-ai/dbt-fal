@@ -4,7 +4,7 @@ import os
 from dbt.logger import log_manager
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
-from fal.run_scripts import run_scripts
+from fal.run_scripts import run_global_scripts, run_scripts
 from fal.dag import FalScript, ScriptGraph
 from fal.utils import print_run_info
 from faldbt.project import FalDbt, FalProject
@@ -79,4 +79,15 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
                 for path in model.get_scripts(keyword, real_project_dir):
                     scripts.append(FalScript(model, path))
 
+        # run model specific scripts first
         run_scripts(scripts, project)
+
+        # then run global scripts
+        global_scripts = list(
+            map(
+                lambda path: FalScript(None, path, []),
+                faldbt._global_script_paths,
+            )
+        )
+
+        run_global_scripts(global_scripts, project)
