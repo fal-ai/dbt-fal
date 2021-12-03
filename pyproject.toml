@@ -24,10 +24,10 @@ pydantic = "^1.8.2"
 PyYAML = "^6.0"
 ninja = "^1.10.2"
 Jinja2 = "^2.11.3"
-dbt = "^0.21.0"
+dbt = "^0.21.1"
 agate-sql = "^0.5.8"
 firebase-admin = "^5.1.0"
-dbt-bigquery = "^0.21.0"
+dbt-bigquery = "^0.21.1"
 sqlalchemy-bigquery = "^1.2.2"
 
 [tool.poetry.dev-dependencies]
