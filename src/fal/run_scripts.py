@@ -50,9 +50,6 @@ def run_scripts(list: List[FalScript], project: FalProject):
         context_config = ContextConfig(_get_target_path(faldbt._config))
         context = Context(current_model=current_model, config=context_config)
 
-        context_config = ContextConfig(_get_target_path(faldbt._config))
-        context = Context(current_model=current_model, config=context_config)
-
         logger.info("Running script {} for model {}", script.path, model.name)
 
         script.exec(
@@ -63,7 +60,6 @@ def run_scripts(list: List[FalScript], project: FalProject):
             faldbt.write_to_firestore,
         )
 
-
 def run_global_scripts(list: List[FalScript], project: FalProject):
     faldbt = project._faldbt
     for script in list:
@@ -76,21 +72,6 @@ def run_global_scripts(list: List[FalScript], project: FalProject):
             faldbt.write_to_source,
             faldbt.write_to_firestore,
         )
-
-
-def run_global_scripts(list: List[FalScript], project: FalProject):
-    faldbt = project._faldbt
-    for script in list:
-        context_config = ContextConfig(_get_target_path(faldbt._config))
-        context = Context(current_model=None, config=context_config)
-        script.exec(
-            context,
-            faldbt.ref,
-            faldbt.source,
-            faldbt.write_to_source,
-            faldbt.write_to_firestore,
-        )
-
 
 def _del_key(dict: Dict[str, Any], key: str):
     try:
