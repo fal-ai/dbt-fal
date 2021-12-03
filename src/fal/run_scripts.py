@@ -6,6 +6,7 @@ from dbt.config.runtime import RuntimeConfig
 from pathlib import Path
 
 from dbt.contracts.results import NodeStatus
+from dbt.logger import GLOBAL_LOGGER as logger
 
 from faldbt.cp.contracts.graph.parsed import ColumnInfo
 from faldbt.cp.contracts.graph.parsed import ColumnInfo
@@ -48,6 +49,8 @@ def run_scripts(list: List[FalScript], project: FalProject):
 
         context_config = ContextConfig(_get_target_path(faldbt._config))
         context = Context(current_model=current_model, config=context_config)
+
+        logger.info("Running script {} for model {}", script.path, model.name)
 
         script.exec(
             context,
