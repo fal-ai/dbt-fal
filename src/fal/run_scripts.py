@@ -1,6 +1,9 @@
 """Run fal scripts."""
-from typing import Dict, Any, List
+import os
+from typing import Dict, Any, List, Union
 from dataclasses import dataclass
+from dbt.config.runtime import RuntimeConfig
+from pathlib import Path
 
 from dbt.contracts.results import NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -20,8 +23,14 @@ class CurrentModel:
 
 
 @dataclass
+class ContextConfig:
+    target_path: Path
+
+
+@dataclass
 class Context:
-    current_model: CurrentModel
+    current_model: Union[CurrentModel, None]
+    config: ContextConfig
 
 
 def run_scripts(list: List[FalScript], project: FalProject):
@@ -37,7 +46,9 @@ def run_scripts(list: List[FalScript], project: FalProject):
             columns=model.columns,
             meta=meta,
         )
-        context = Context(current_model=current_model)
+
+        context_config = ContextConfig(_get_target_path(faldbt._config))
+        context = Context(current_model=current_model, config=context_config)
 
         logger.info("Running script {} for model {}", script.path, model.name)
 
@@ -53,8 +64,10 @@ def run_scripts(list: List[FalScript], project: FalProject):
 def run_global_scripts(list: List[FalScript], project: FalProject):
     faldbt = project._faldbt
     for script in list:
+        context_config = ContextConfig(_get_target_path(faldbt._config))
+        context = Context(current_model=None, config=context_config)
         script.exec(
-            None,
+            context,
             faldbt.ref,
             faldbt.source,
             faldbt.write_to_source,
@@ -67,3 +80,7 @@ def _del_key(dict: Dict[str, Any], key: str):
         del dict[key]
     except KeyError:
         pass
+
+
+def _get_target_path(config: RuntimeConfig) -> Path:
+    return Path(os.path.realpath(os.path.join(config.project_root, config.target_path)))
