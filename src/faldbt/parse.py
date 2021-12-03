@@ -55,16 +55,14 @@ def get_global_script_configs(source_dirs: List[Path]) -> List[str]:
     global_scripts = []
     for source_dir in source_dirs:
         schema_files = glob.glob(os.path.join(source_dir, "**.yml"), recursive=True)
-        global_scripts = []
         for file in schema_files:
             schema_yml = load_yaml(file)
             if schema_yml is not None:
                 fal_config = schema_yml.get("fal", None)
                 if fal_config is not None:
                     script_paths = fal_config.get("scripts", [])
-                    global_scripts.append(script_paths)
-    return _flatten(global_scripts)
+                    global_scripts += script_paths
+            else:
+                raise FalParseError("Error pasing the schema file " + file)
 
-
-def _flatten(forest):
-    return [leaf for tree in forest for leaf in tree]
+    return global_scripts
