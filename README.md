@@ -85,8 +85,8 @@ To explore what is possible with fal, take a look at the in-depth examples below
 - [Example 4: Send event to Datadog](docs/datadog_event.md)
 - [Example 5: Incorporate fal in CI/CD workflow](docs/ci_example.md)
 - [Example 6: Send data to Firestore](docs/write_to_firestore.md)
-- [Example 7: Write dbt Artifacts to GCS](docs/write_to_gcs.md)
-- [Example 8: Write dbt Artifacts to AWS S3](docs/write_to_aws.md)
+- [Example 7: Write dbt artifacts to GCS](docs/write_to_gcs.md)
+- [Example 8: Write dbt artifacts to AWS S3](docs/write_to_aws.md)
 
 # How it works?
 `fal` is a command line tool that can read the state of your `dbt` project and help you run Python scripts after your `dbt run`s by leveraging the [`meta` config](https://docs.getdbt.com/reference/resource-configs/meta).
