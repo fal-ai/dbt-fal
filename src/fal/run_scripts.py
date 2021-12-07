@@ -58,7 +58,7 @@ def run_scripts(list: List[FalScript], project: FalProject):
             faldbt.source,
             faldbt.write_to_source,
             faldbt.write_to_firestore,
-            faldbt._manifest.get_models,
+            faldbt.list_models,
         )
 
 
@@ -73,7 +73,7 @@ def run_global_scripts(list: List[FalScript], project: FalProject):
             faldbt.source,
             faldbt.write_to_source,
             faldbt.write_to_firestore,
-            faldbt._manifest.get_models,
+            faldbt.list_models,
         )
 
 

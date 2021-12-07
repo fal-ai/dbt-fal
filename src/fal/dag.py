@@ -43,7 +43,7 @@ class FalScript:
             self.dependencies.append(dependency)
 
     def exec(
-        self, context, ref, source, write_to_source, write_to_firestore, get_models
+        self, context, ref, source, write_to_source, write_to_firestore, list_models
     ):
 
         """
@@ -59,7 +59,7 @@ class FalScript:
                     "source": source,
                     "write_to_source": write_to_source,
                     "write_to_firestore": write_to_firestore,
-                    "get_models": get_models,
+                    "list_models": list_models,
                 },
             )
 
