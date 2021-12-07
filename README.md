@@ -87,6 +87,7 @@ To explore what is possible with fal, take a look at the in-depth examples below
 - [Example 6: Send data to Firestore](docs/write_to_firestore.md)
 - [Example 7: Write dbt artifacts to GCS](docs/write_to_gcs.md)
 - [Example 8: Write dbt artifacts to AWS S3](docs/write_to_aws.md)
+- [Example 9: Use dbt from a Jupyter Notebook](docs/write_jupyter_notebook.md)
 
 # How it works?
 `fal` is a command line tool that can read the state of your `dbt` project and help you run Python scripts after your `dbt run`s by leveraging the [`meta` config](https://docs.getdbt.com/reference/resource-configs/meta).
@@ -175,6 +176,31 @@ If you want to run all Python scripts regardless, you can do so by using the `--
 
 ```bash
 $ fal run --all
+```
+
+## Importing fal as a Python package
+You may be interested in accessing dbt models and sources easily from a Jupyter Notebook or another Python script.
+For that, just import the fal package and intantiate a FalDbt project:
+
+```py
+from fal import FalDbt
+faldbt = FalDbt(profiles_dir="~/.dbt", project_dir="../my_project")
+
+faldbt.list_sources()
+# [['results', 'ticket_data_sentiment_analysis']]
+
+faldbt.list_models()
+# {
+#   'zendesk_ticket_metrics': <RunStatus.Success: 'success'>,
+#   'stg_o3values': <RunStatus.Success: 'success'>,
+#   'stg_zendesk_ticket_data': <RunStatus.Success: 'success'>,
+#   'stg_counties': <RunStatus.Success: 'success'>
+# }
+
+sentiments = faldbt.source('results', 'ticket_data_sentiment_analysis')
+# pandas.DataFrame
+tickets = faldbt.ref('stg_zendesk_ticket_data')
+# pandas.DataFrame
 ```
 
 # Why are we building this?
