@@ -42,7 +42,6 @@ class DbtModel:
     node: ParsedModelNode
     name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
-    status: str = field(init=False)
     columns: Dict[str, Any] = field(init=False)
 
     def __post_init__(self):
@@ -337,7 +336,7 @@ class FalProject:
             )
         )
 
-    def get_filtered_models(self, all):
+    def get_filtered_models(self, all) -> List[DbtModel]:
         models_ids = self._result_model_ids()
         filtered_models: List[DbtModel] = []
 
