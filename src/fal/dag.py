@@ -42,7 +42,9 @@ class FalScript:
         if dependency not in self.dependencies and dependency != self:
             self.dependencies.append(dependency)
 
-    def exec(self, context, ref, source, write_to_source, write_to_firestore):
+    def exec(
+        self, context, ref, source, write_to_source, write_to_firestore, list_models
+    ):
 
         """
         Executes the script
@@ -57,6 +59,7 @@ class FalScript:
                     "source": source,
                     "write_to_source": write_to_source,
                     "write_to_firestore": write_to_firestore,
+                    "list_models": list_models,
                 },
             )
 

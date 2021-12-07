@@ -58,9 +58,10 @@ def run_scripts(list: List[FalScript], project: FalProject):
             faldbt.source,
             faldbt.write_to_source,
             faldbt.write_to_firestore,
+            faldbt.list_models,
         )
 
-        
+
 def run_global_scripts(list: List[FalScript], project: FalProject):
     faldbt = project._faldbt
     for script in list:
@@ -72,7 +73,9 @@ def run_global_scripts(list: List[FalScript], project: FalProject):
             faldbt.source,
             faldbt.write_to_source,
             faldbt.write_to_firestore,
+            faldbt.list_models,
         )
+
 
 def _del_key(dict: Dict[str, Any], key: str):
     try:
