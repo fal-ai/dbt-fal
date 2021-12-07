@@ -30,7 +30,7 @@ Now navigate to your dbt to project, create a directory for your fal scripts and
 In your python file you'll write the script that will parse the `meta` for all the models and print the owners to the console.
 
 ```
-models = get_models()
+models = list_models()
 for model in models:
     if model.meta:
         print(model.meta["owner"])
