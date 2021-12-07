@@ -58,6 +58,9 @@ class DbtModel:
         scripts = self.node.config.meta[keyword]["scripts"]
         return normalize_directories(project_dir, scripts)
 
+    def set_status(self, status: str):
+        self.status = status
+
 
 @dataclass
 class DbtManifest:
@@ -148,15 +151,26 @@ class FalDbt:
 
         return res
 
-    def list_models(self):
+    def list_models_ids(self) -> Dict[str, str]:
         """
-        List models available for `ref` usage, formatting like `[ref_name, ...]`
+        List model ids available for `ref` usage, formatting like `[ref_name, ...]`
         """
         res = {}
         for model in self._manifest.get_models():
+            model.set_status(self.get_model_status(model.unique_id))
             res[model.unique_id] = self.get_model_status(model.unique_id)
 
         return res
+
+    def list_models(self) -> List[DbtModel]:
+        """
+        List models
+        """
+        models = []
+        for model in self._manifest.get_models():
+            model.set_status(self.get_model_status(model.unique_id))
+            models.append(model)
+        return models
 
     def ref(
         self, target_model_name: str, target_package_name: Optional[str] = None
