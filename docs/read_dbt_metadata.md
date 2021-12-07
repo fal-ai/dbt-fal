@@ -13,7 +13,7 @@ models:
       owner: "@alice"
 ```
 
-Dbt users can take advantage of `fal-dbt` to parse the configuration under the `meta` tag and use this data for other purposes. For example; to send slack notification to owners of models after their model completes a dbt run.
+Dbt users can take advantage of `fal-dbt` to parse the configuration under the `meta` tag and use this data for other purposes. For example; to send a slack  to owners of models after their model completes a dbt run.
 
 In this example we'll leave what to do with this data to the imagination of the reader, but go through how to parse the `meta` tag in a fal script.
 
