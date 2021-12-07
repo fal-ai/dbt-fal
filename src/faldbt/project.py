@@ -42,7 +42,6 @@ class DbtModel:
     node: ParsedModelNode
     name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
-    status: str = field(init=False)
     columns: Dict[str, Any] = field(init=False)
 
     def __post_init__(self):
