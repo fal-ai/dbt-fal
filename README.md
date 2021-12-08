@@ -88,8 +88,8 @@ To explore what is possible with fal, take a look at the in-depth examples below
 - [Example 7: Write dbt artifacts to GCS](docs/write_to_gcs.md)
 - [Example 8: Write dbt artifacts to AWS S3](docs/write_to_aws.md)
 - [Example 9: Use dbt from a Jupyter Notebook](docs/write_jupyter_notebook.md)
-- [Example 10: Read and parse dbt metadata] (docs/read_dbt_metadata.md)
-- [Example 11: Anomaly Detection] (docs/anomaly-detection.md)
+- [Example 10: Read and parse dbt metadata](docs/read_dbt_metadata.md)
+- [Example 11: Anomaly Detection](docs/anomaly-detection.md)
 
 # How it works?
 `fal` is a command line tool that can read the state of your `dbt` project and help you run Python scripts after your `dbt run`s by leveraging the [`meta` config](https://docs.getdbt.com/reference/resource-configs/meta).
