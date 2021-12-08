@@ -14,7 +14,7 @@ This example assumes you have GCS (Google Cloud Storage) enabled in your project
 
 Navigate the [GCS console](https://console.cloud.google.com/storage/browser) and create a bucket. In the screenshot below I named the my bucket `fal_example_dbt_artifacts_bucket`, pick a unique name for yourself and complete the next steps as you see fit.
 
-![GCS bucket creation](gcs_bucket.png)
+<img width="300" alt="portfolio_view" src="https://github.com/fal-ai/fal/blob/main/docs/gcs_bucket.png">
 
 ## Fal Script
 
