@@ -50,7 +50,21 @@ def cli():
     help="Display debug logging during execution.",
     is_flag=True,
 )
-def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
+@click.option(
+    "--model_name",
+    "-m",
+    default=None,
+    help="[Optional] Name of a single model to run a script on. Disregards model YAML definitions. Requires --script_path.",
+    type=click.STRING,
+)
+@click.option(
+    "--script_path",
+    "-s",
+    default=None,
+    help="[Optional] Name of a single script to run on a specific model. Disregards model YAML definitions. Requires --model_name.",
+    type=click.STRING,
+)
+def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug, model_name, script_path):
     with log_manager.applicationbound():
         if debug:
             log_manager.set_debug()
@@ -68,26 +82,34 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
 
         faldbt = FalDbt(real_project_dir, real_profiles_dir, keyword)
         project = FalProject(faldbt)
-        models = project.get_filtered_models(all)
-        print_run_info(models, keyword)
-
-        if experimental_ordering:
-            scripts = ScriptGraph(models, keyword, project_dir).sort()
+        if model_name is not None:
+            if script_path is None:
+                raise Exception("--model_name (-m) requires --script_path (-s)")
+            models = project.get_all_models()
+            model = next(x for x in models if x.name == model_name)
+            run_scripts([FalScript(model, script_path)], project)
         else:
-            scripts = []
-            for model in models:
-                for path in model.get_script_paths(keyword, real_project_dir):
-                    scripts.append(FalScript(model, path))
 
-        # run model specific scripts first
-        run_scripts(scripts, project)
+            models = project.get_filtered_models(all)
+            print_run_info(models, keyword)
 
-        # then run global scripts
-        global_scripts = list(
-            map(
-                lambda path: FalScript(None, path, []),
-                faldbt._global_script_paths,
+            if experimental_ordering:
+                scripts = ScriptGraph(models, keyword, project_dir).sort()
+            else:
+                scripts = []
+                for model in models:
+                    for path in model.get_script_paths(keyword, real_project_dir):
+                        scripts.append(FalScript(model, path))
+
+            # run model specific scripts first
+            run_scripts(scripts, project)
+
+            # then run global scripts
+            global_scripts = list(
+                map(
+                    lambda path: FalScript(None, path, []),
+                    faldbt._global_script_paths,
+                )
             )
-        )
 
-        run_global_scripts(global_scripts, project)
+            run_global_scripts(global_scripts, project)

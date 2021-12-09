@@ -402,3 +402,6 @@ class FalProject:
                 filtered_models.append(node)
 
         return filtered_models
+
+    def get_all_models(self) -> List[DbtModel]:
+        return self._faldbt._manifest.get_models()
