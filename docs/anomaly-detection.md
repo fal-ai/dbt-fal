@@ -1,4 +1,4 @@
-# Example 3: Run anomaly detection on metrics and send to Slack if there are any issues
+# Example 11: Run anomaly detection on metrics and send to Slack if there are any issues
 In this example we will use [sklearn](https://scikit-learn.org/stable/index.html) and [slack_sdk](https://slack.dev/python-slack-sdk/) to find anomalies on a time-series numerical dataset.
 
 See [slack example](slack-example.md), for instructions on how to set up a minimal Slack bot.
