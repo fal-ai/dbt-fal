@@ -67,6 +67,9 @@ def run_global_scripts(list: List[FalScript], project: FalProject):
     for script in list:
         context_config = ContextConfig(_get_target_path(faldbt._config))
         context = Context(current_model=None, config=context_config)
+
+        logger.info("Running global script {}", script.path)
+
         script.exec(
             context,
             faldbt.ref,
