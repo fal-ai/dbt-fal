@@ -27,34 +27,42 @@ jobs:
           poetry-version: "1.1.4"
 
       - name: Get test project
-        run: |
-          git clone https://github.com/fal-ai/fal_dbt_test.git
+        uses: actions/checkout@v2
+        with:
+          repository: fal-ai/fal_dbt_test
+          path: integration_test
 
-      - name: Start db
-        run: |
-          cd fal_dbt_test
-          docker-compose up -d
+      - name: Start test Docker database
+        working-directory: integration_test
+        run: docker-compose up -d
 
-      - name: Install dependencies
+      - name: Install dbt and fal
         run: |
           poetry build
           pip install dist/fal-0.1.0-py3-none-any.whl
-          cd fal_dbt_test
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install dbt==${{ matrix.dbt }}
 
+      - name: Install test dependencies
+        working-directory: integration_test
+        run: (test -f requirements.txt && pip install -r requirements.txt) || echo "No requirements.txt"
+
       - name: Run dbt and fal
+        working-directory: integration_test
         run: |
-          cd fal_dbt_test
           echo "*** Seeding database ***"
           dbt seed --profiles-dir .
+
           echo "*** Starting dbt run ***"
           dbt run --profiles-dir .
+
           echo "*** Starting fal run ***"
           fal run --profiles-dir .
+
           echo "*** Checking fal output files ***"
           python check_outputs.py
+
           echo "*** Starting fal run with experimental ordering ***"
           fal run --experimental-ordering --profiles-dir .
+
           echo "*** Checking fal output files ***"
           python check_outputs.py
