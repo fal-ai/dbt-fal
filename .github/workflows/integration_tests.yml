@@ -48,3 +48,7 @@ jobs:
           fal run --profiles-dir .
           echo "*** Checking fal output files ***"
           python check_outputs.py
+          echo "*** Starting fal run with experimental ordering ***"
+          fal run --experimental-ordering --profiles-dir .
+          echo "*** Checking fal output files ***"
+          python check_outputs.py
