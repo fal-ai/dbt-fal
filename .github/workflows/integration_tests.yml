@@ -10,16 +10,21 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.8.x"]
+        dbt: ["0.20.1", "0.21.1"]
+
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions/setup-python@v2
         with:
-          python-version: "3.8.x"
+          python-version: ${{ matrix.python }}
 
       - uses: abatilo/actions-poetry@v2.0.0
         with:
-          poetry-version: '1.1.4'
+          poetry-version: "1.1.4"
 
       - name: Get test project
         run: |
@@ -35,7 +40,8 @@ jobs:
           poetry build
           pip install dist/fal-0.1.0-py3-none-any.whl
           cd fal_dbt_test
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install dbt==${{ matrix.dbt }}
 
       - name: Run dbt and fal
         run: |

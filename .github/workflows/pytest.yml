@@ -8,6 +8,10 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.8.x"]
+        dbt: ["0.20.1", "0.21.1"]
 
     steps:
       - uses: actions/checkout@v2
@@ -20,13 +24,16 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: "3.8.x"
+          python-version: ${{ matrix.python }}
 
       - uses: abatilo/actions-poetry@v2.0.0
         with:
           poetry-version: "1.1.4"
 
-      - name: Test
+      - name: Install packages
         run: |
           poetry install
-          poetry run pytest -s
+          poetry run pip install dbt==${{ matrix.dbt }}
+
+      - name: Test
+        run: poetry run pytest -s
