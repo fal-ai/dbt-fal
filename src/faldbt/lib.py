@@ -178,10 +178,14 @@ def _alchemy_engine(
     adapter: adapters_factory.Adapter,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
 ):
+    url_string = f"{adapter.type()}://"
     if adapter.type() == "bigquery":
-        return sqlalchemy.create_engine(f"bigquery://{target.database}")
+        url_string = f"bigquery://{target.database}"
     if adapter.type() == "postgres":
-        return sqlalchemy.create_engine("postgresql://")
-    else:
-        # TODO: add special cases as needed
-        return sqlalchemy.create_engine(f"{adapter.type()}://")
+        url_string = "postgresql://"
+    # TODO: add special cases as needed
+
+    def null_dump(sql, *multiparams, **params):
+        pass
+
+    return sqlalchemy.create_mock_engine(url_string, executor=null_dump)
