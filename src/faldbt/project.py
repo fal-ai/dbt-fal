@@ -46,16 +46,20 @@ class DbtModel:
     columns: Dict[str, Any] = field(init=False)
 
     def __post_init__(self):
-        self.name = self.node.name
-        self.meta = self.node.config.meta
-        self.columns = self.node.columns
-        self.unique_id = self.node.unique_id
+        node = self.node
+        self.name = node.name
+        if hasattr(node.config, "meta"):
+            self.meta = node.config.meta
+        elif hasattr(node, "meta"):
+            self.meta = node.meta
+        self.columns = node.columns
+        self.unique_id = node.unique_id
 
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
 
     def get_scripts(self, keyword, project_dir) -> List[Path]:
-        scripts = self.node.config.meta[keyword]["scripts"]
+        scripts = self.meta[keyword]["scripts"]
         return normalize_directories(project_dir, scripts)
 
     def set_status(self, status: str):
@@ -157,7 +161,6 @@ class FalDbt:
         """
         res = {}
         for model in self._manifest.get_models():
-            model.set_status(self.get_model_status(model.unique_id))
             res[model.unique_id] = self.get_model_status(model.unique_id)
 
         return res
@@ -346,9 +349,7 @@ class FalProject:
 
     def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(
-            filter(
-                lambda model: keyword in model.meta, self._faldbt._manifest.get_models()
-            )
+            filter(lambda model: keyword in model.meta, self._faldbt.list_models())
         )
 
     def get_filtered_models(self, all) -> List[DbtModel]:
