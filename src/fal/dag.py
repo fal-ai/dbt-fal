@@ -77,7 +77,7 @@ class ScriptGraphBuilder:
 
     def __init__(self, models: List[DbtModel], keyword: str, project_dir: str):
         for model in models:
-            self.modelToScriptLookup[model.name] = model.get_scripts(
+            self.modelToScriptLookup[model.name] = model.get_script_paths(
                 keyword, project_dir
             )
             self.modelNameToModelLookup[model.name] = model
