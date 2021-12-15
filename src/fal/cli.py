@@ -69,14 +69,14 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         faldbt = FalDbt(real_project_dir, real_profiles_dir)
         project = FalProject(faldbt, keyword)
         models = project.get_filtered_models(all)
-        print_run_info(models)
+        print_run_info(models, keyword)
 
         if experimental_ordering:
             scripts = ScriptGraph(models, keyword, project_dir).sort()
         else:
             scripts = []
             for model in models:
-                for path in model.get_scripts(keyword, real_project_dir):
+                for path in model.get_script_paths(keyword, real_project_dir):
                     scripts.append(FalScript(model, path))
 
         # run model specific scripts first

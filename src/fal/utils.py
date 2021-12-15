@@ -4,11 +4,12 @@ from faldbt.project import DbtModel
 from typing import List
 
 
-def print_run_info(models: List[DbtModel]):
+def print_run_info(models: List[DbtModel], keyword: str):
     """Print information on the current fal run."""
-    models_arr = map(
-        lambda model: f"{model.name}: {', '.join(model.meta['fal']['scripts'])}", models
-    )
+    models_arr = []
+    for model in models:
+        models_arr.append(f"{model.name}: {', '.join(model.get_scripts(keyword))}")
+
     models_str = "\n".join(models_arr)
     print_timestamped_line(
         f"Starting FAL run for following models (model_name: scripts): \n{models_str}"

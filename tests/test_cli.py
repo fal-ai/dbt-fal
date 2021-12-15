@@ -8,10 +8,12 @@ import pytest
 
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 
+
 def test_run():
     runner = CliRunner()
     result = runner.invoke(cli, ["run", "--profiles-dir", profiles_dir])
     assert "no dbt_project.yml found at expected path" in str(result.exception)
+
 
 def test_no_arg():
     runner = CliRunner()
@@ -19,13 +21,16 @@ def test_no_arg():
     assert result.exit_code == 0
     assert "Usage: cli [OPTIONS] COMMAND [ARGS]..." in result.output
 
+
 def test_run_with_project_dir():
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(
             os.path.join(Path.cwd(), "tests/mock"), tmp_dir, dirs_exist_ok=True
         )
-        result = runner.invoke(cli, ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
+        result = runner.invoke(
+            cli, ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir]
+        )
     assert result.exit_code == 0
 
 

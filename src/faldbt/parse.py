@@ -60,7 +60,8 @@ def get_global_script_configs(source_dirs: List[Path]) -> List[str]:
             if schema_yml is not None:
                 fal_config = schema_yml.get("fal", None)
                 if fal_config is not None:
-                    script_paths = fal_config.get("scripts", [])
+                    # sometimes `scripts` can *be* there and still be None
+                    script_paths = fal_config.get("scripts") or []
                     global_scripts += script_paths
             else:
                 raise FalParseError("Error pasing the schema file " + file)

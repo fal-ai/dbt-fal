@@ -58,9 +58,12 @@ class DbtModel:
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
 
-    def get_scripts(self, keyword, project_dir) -> List[Path]:
-        scripts = self.meta[keyword]["scripts"]
-        return normalize_directories(project_dir, scripts)
+    def get_script_paths(self, keyword, project_dir) -> List[Path]:
+        return normalize_directories(project_dir, self.get_scripts(keyword))
+
+    def get_scripts(self, keyword) -> List[Path]:
+        # sometimes `scripts` can *be* there and still be None
+        return self.meta[keyword].get("scripts") or []
 
     def set_status(self, status: str):
         self.status = status
