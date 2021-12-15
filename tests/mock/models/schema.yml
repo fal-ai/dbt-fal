@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: zendesk_ticket_data
+    description: zendesk ticket data
+    config:
+      materialized: table
+    meta:
+      fal:
+        scripts:
+          - fal_scripts/test.py
+  - name: agent_wait_time
+    description: Agent wait time series
+    config:
+      materialized: table
+    meta:
+      fal:
+        scripts:
+          # - fal_scripts/test.py
+
+fal:
+  scripts:
