@@ -2,6 +2,7 @@
 name = "fal"
 version = "0.1.0"
 description = "fal allows you to run python scripts directly from your dbt project."
+readme = "README.md"
 authors = [
         "Meder Kamalov <meder@fal.ai>",
         "Matteo Ferrando <matteo@fal.ai>",
@@ -11,6 +12,11 @@ authors = [
 packages = [
         { include = "fal", from = "src" },
         { include = "faldbt", from = "src" }
+]
+
+keywords = [ "dbt", "pandas" ]
+classifiers = [
+    "Development Status :: 4 - Beta"
 ]
 
 [tool.poetry.dependencies]
