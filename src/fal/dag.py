@@ -65,15 +65,15 @@ class FalScript:
 
 
 @dataclass(frozen=True)
-class UniqueKey:
+class _ScriptUniqueKey:
     model: DbtModel
     script_path: Path
 
 
-class ScriptGraphBuilder:
+class _ScriptGraphBuilder:
     modelNameToModelLookup: Dict[str, DbtModel] = {}
     modelToScriptLookup: Dict[str, List[Path]] = {}
-    falScripts: Dict[UniqueKey, FalScript] = {}
+    falScripts: Dict[_ScriptUniqueKey, FalScript] = {}
 
     def __init__(self, models: List[DbtModel], keyword: str, project_dir: str):
         for model in models:
@@ -84,10 +84,10 @@ class ScriptGraphBuilder:
         for model_name, script_list in self.modelToScriptLookup.items():
             for script in script_list:
                 self.recursively_set_dependencies(
-                    UniqueKey(self.modelNameToModelLookup[model_name], script)
+                    _ScriptUniqueKey(self.modelNameToModelLookup[model_name], script)
                 )
 
-    def recursively_set_dependencies(self, key: UniqueKey):
+    def recursively_set_dependencies(self, key: _ScriptUniqueKey):
         if key in self.falScripts:
             return
         self.falScripts[key] = FalScript(key.model, key.script_path)
@@ -99,7 +99,7 @@ class ScriptGraphBuilder:
             dependency_scripts = self.modelToScriptLookup.get(model_name, [])
 
             for dependency_script in dependency_scripts:
-                dependency_key = UniqueKey(dependency_model, dependency_script)
+                dependency_key = _ScriptUniqueKey(dependency_model, dependency_script)
                 self.recursively_set_dependencies(dependency_key)
                 current_script.add_dependency(self.falScripts.get(dependency_key))
 
@@ -122,7 +122,7 @@ class ScriptGraph:
         if _graph:
             self.graph = _graph
         else:
-            self.graph = ScriptGraphBuilder(models, keyword, project_dir).get_values()
+            self.graph = _ScriptGraphBuilder(models, keyword, project_dir).get_values()
         self.incoming = dict(
             map(lambda script: [script, script.dependencies], self.graph)
         )
