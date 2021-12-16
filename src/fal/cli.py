@@ -37,7 +37,7 @@ def cli():
 )
 @click.option(
     "--all",
-    help="Only run models that ran in the last dbt run.",
+    help="Run scripts for all models. By default, fal runs scripts for models that ran in the last dbt run.",
     is_flag=True,
 )
 @click.option(
