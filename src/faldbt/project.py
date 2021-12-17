@@ -14,6 +14,7 @@ import dbt.tracking
 
 from . import parse
 from . import lib
+from feature_store.feature_helper import Feature
 
 import firebase_admin
 from firebase_admin import firestore
@@ -368,3 +369,24 @@ class FalProject:
                 filtered_models.append(node)
 
         return filtered_models
+
+    def get_features(self) -> List[Feature]:
+        """Get features defined in project."""
+        keyword = self.keyword
+        models = self._get_models_with_keyword(keyword)
+        models = list(filter(
+            # Find models that have both feature store and column defs
+            lambda model: 'feature_store' in model.meta[keyword]
+            and len(list(model.columns.keys())) > 0, models))
+        features = []
+        for model in models:
+            model_features = list(map(
+                lambda column_name: Feature(
+                    model=model.name,
+                    column=column_name,
+                    description=model.columns[column_name].description,
+                    entity_id=model.meta[keyword]['feature_store']['entity'],
+                    timestamp=model.meta[keyword]['feature_store']['timestamp']
+                ), model.columns.keys()))
+            features += model_features
+        return features
