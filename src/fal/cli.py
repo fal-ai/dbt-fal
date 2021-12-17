@@ -66,8 +66,8 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         else:
             real_profiles_dir = DEFAULT_PROFILES_DIR
 
-        faldbt = FalDbt(real_project_dir, real_profiles_dir)
-        project = FalProject(faldbt, keyword)
+        faldbt = FalDbt(real_project_dir, real_profiles_dir, keyword)
+        project = FalProject(faldbt)
         models = project.get_filtered_models(all)
         print_run_info(models, keyword)
 
