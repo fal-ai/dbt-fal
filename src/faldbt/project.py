@@ -14,7 +14,7 @@ import dbt.tracking
 
 from . import parse
 from . import lib
-from ..feature_store.feature_helper import Feature
+from fal.feature_store.feature_helper import Feature
 
 import firebase_admin
 from firebase_admin import firestore
