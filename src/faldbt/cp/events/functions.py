@@ -19,7 +19,7 @@ from faldbt.cp.events.types import (
 import dbt.flags as flags
 
 # TODO this will need to move eventually
-from dbt.logger import SECRET_ENV_PREFIX, make_log_dir_if_missing, GLOBAL_LOGGER
+from dbt.logger import make_log_dir_if_missing, GLOBAL_LOGGER
 import json
 import io
 from io import StringIO, TextIOWrapper
@@ -134,7 +134,7 @@ def stop_capture_stdout_logs() -> None:
 
 
 def env_secrets() -> List[str]:
-    return [v for k, v in os.environ.items() if k.startswith(SECRET_ENV_PREFIX)]
+    return [v for k, v in os.environ.items() if k.startswith("DBT_ENV_SECRET_")]
 
 
 def scrub_secrets(msg: str, secrets: List[str]) -> str:
