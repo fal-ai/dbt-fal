@@ -9,9 +9,10 @@ jobs:
   run:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python: ["3.8.x"]
-        dbt: ["0.20.1", "0.21.1"]
+        dbt: ["0.20.1", "0.21.1", "1.0.0"]
 
     steps:
       - uses: actions/checkout@v2
@@ -30,10 +31,19 @@ jobs:
         with:
           poetry-version: "1.1.4"
 
-      - name: Install packages
+      - name: Install fal
         run: |
           poetry install
-          poetry run pip install dbt==${{ matrix.dbt }}
+
+      - name: Install dbt
+        run: |
+          if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
+          then
+            poetry run pip install dbt==${{ matrix.dbt }}
+          else
+            poetry run pip install dbt-bigquery==${{ matrix.dbt }}
+          fi
+
 
       - name: Test
         run: poetry run pytest -s
