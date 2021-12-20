@@ -114,12 +114,13 @@ class FalDbt:
 
     _firestore_client: Union[FirestoreClient, None]
 
-    def __init__(self, project_dir: str,
-                 profiles_dir: str,
-                 keyword: str = 'fal'):
+    def __init__(self, project_dir: str, profiles_dir: str, keyword: str = "fal"):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
         self.keyword = keyword
+
+        lib.initialize_dbt_flags(profiles_dir=profiles_dir)
+
         self._config = parse.get_dbt_config(project_dir, profiles_dir)
         lib.register_adapters(self._config)
 

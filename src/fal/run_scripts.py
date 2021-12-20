@@ -9,7 +9,6 @@ from dbt.contracts.results import NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
 
 from faldbt.cp.contracts.graph.parsed import ColumnInfo
-from faldbt.cp.contracts.graph.parsed import ColumnInfo
 from faldbt.project import FalProject
 from fal.dag import FalScript
 

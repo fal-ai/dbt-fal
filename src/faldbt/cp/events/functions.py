@@ -40,7 +40,10 @@ from collections import deque
 # python 3.7 doesn't support type hints on globals, but mypy requires them. hence the ignore.
 # TODO the flags module has not yet been resolved when this is created
 global EVENT_HISTORY
-EVENT_HISTORY = deque(maxlen=flags.EVENT_BUFFER_SIZE)  # type: ignore
+if hasattr(flags, "EVENT_BUFFER_SIZE"):
+    EVENT_HISTORY = deque(maxlen=flags.EVENT_BUFFER_SIZE)  # type: ignore
+else:
+    EVENT_HISTORY = deque()
 
 # create the global file logger with no configuration
 global FILE_LOG

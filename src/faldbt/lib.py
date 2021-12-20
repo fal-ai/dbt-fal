@@ -1,14 +1,17 @@
-# NOTE: COPIED FROM https://github.com/dbt-labs/dbt-core/blob/40ae6b6bc860a30fa383756b7cdb63709ce829a8/core/dbt/lib.py
+# NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
 import six
 
 from datetime import datetime
+from collections import namedtuple
 from uuid import uuid4
 from typing import List, Tuple, Union
 
+import dbt.flags as flags
+import dbt.adapters.factory as adapters_factory
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.graph.manifest import Manifest
-import dbt.adapters.factory as adapters_factory
+from dbt.parser.manifest import process_node
 from dbt.logger import GLOBAL_LOGGER as logger
 
 from . import parse
@@ -21,8 +24,25 @@ from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 from sqlalchemy.sql.schema import MetaData
 
+import faldbt.cp.events.functions as events_functions
+from faldbt.cp.parser.sql import SqlBlockParser
 from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
+
+
+FlagsArgs = namedtuple("FlagsArgs", "profiles_dir use_colors")
+
+
+def initialize_dbt_flags(profiles_dir: str):
+    """
+    Initializes the flags module from dbt, since it's accessed from around their code.
+    """
+    args = FlagsArgs(profiles_dir, None)
+    user_config = parse.get_dbt_user_config(profiles_dir)
+    try:
+        flags.set_from_args(args, user_config)
+    except TypeError:
+        flags.set_from_args(args)
 
 
 def register_adapters(config: RuntimeConfig):
@@ -30,11 +50,11 @@ def register_adapters(config: RuntimeConfig):
     adapters_factory.reset_adapters()
     # Load the relevant adapter
     adapters_factory.register_adapter(config)
+    # Set invocation id
+    events_functions.set_invocation_id()
 
 
 def _get_operation_node(manifest: Manifest, project_path, profiles_dir, sql):
-    from dbt.parser.manifest import process_node
-    from faldbt.cp.parser.sql import SqlBlockParser
 
     config = parse.get_dbt_config(project_path, profiles_dir)
     block_parser = SqlBlockParser(
