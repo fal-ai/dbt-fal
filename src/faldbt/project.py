@@ -102,6 +102,7 @@ class FalDbt:
     project_dir: str
     profiles_dir: str
     keyword: str
+    features: List[Feature]
 
     _config: RuntimeConfig
     _manifest: DbtManifest
@@ -148,6 +149,8 @@ class FalDbt:
 
         self._setup_firestore()
 
+        self.features = self._find_features()
+
     def get_model_status(self, unique_id: str):
         # Default to `skipped` status if not found, it means it did not run
         return self._model_status_map.get(unique_id, "skipped")
@@ -181,6 +184,31 @@ class FalDbt:
             model.set_status(self.get_model_status(model.unique_id))
             models.append(model)
         return models
+
+    def list_features(self) -> List[Feature]:
+        return self.features
+
+    def _find_features(self) -> List[Feature]:
+        """List features defined in schema.yml files."""
+        keyword = self.keyword
+        models = self.list_models()
+        models = list(filter(
+            # Find models that have both feature store and column defs
+            lambda model: keyword in model.meta
+            and 'feature_store' in model.meta[keyword]
+            and len(list(model.columns.keys())) > 0, models))
+        features = []
+        for model in models:
+            model_features = list(map(
+                lambda column_name: Feature(
+                    model=model.name,
+                    column=column_name,
+                    description=model.columns[column_name].description,
+                    entity_id=model.meta[keyword]['feature_store']['entity'],
+                    timestamp=model.meta[keyword]['feature_store']['timestamp']
+                ), model.columns.keys()))
+            features += model_features
+        return features
 
     def ref(
         self, target_model_name: str, target_package_name: Optional[str] = None
@@ -369,24 +397,3 @@ class FalProject:
                 filtered_models.append(node)
 
         return filtered_models
-
-    def get_features(self) -> List[Feature]:
-        """Get features defined in project."""
-        keyword = self.keyword
-        models = self._get_models_with_keyword(keyword)
-        models = list(filter(
-            # Find models that have both feature store and column defs
-            lambda model: 'feature_store' in model.meta[keyword]
-            and len(list(model.columns.keys())) > 0, models))
-        features = []
-        for model in models:
-            model_features = list(map(
-                lambda column_name: Feature(
-                    model=model.name,
-                    column=column_name,
-                    description=model.columns[column_name].description,
-                    entity_id=model.meta[keyword]['feature_store']['entity'],
-                    timestamp=model.meta[keyword]['feature_store']['timestamp']
-                ), model.columns.keys()))
-            features += model_features
-        return features
