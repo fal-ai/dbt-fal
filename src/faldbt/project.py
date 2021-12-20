@@ -133,12 +133,14 @@ class FalDbt:
             parse.get_dbt_results(self.project_dir, self._config)
         )
 
-        normalized_source_paths = normalize_directories(
-            project_dir, self._config.source_paths
-        )
+        if hasattr(self._config, "model_paths"):
+            model_paths = self._config.model_paths
+        elif hasattr(self._config, "source_paths"):
+            model_paths = self._config.source_paths
+        normalized_model_paths = normalize_directories(project_dir, model_paths)
 
         self._global_script_paths = parse.get_global_script_configs(
-            normalized_source_paths
+            normalized_model_paths
         )
 
         self._model_status_map = dict(
