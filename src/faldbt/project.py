@@ -9,7 +9,6 @@ from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput
 from dbt.logger import GLOBAL_LOGGER as logger
-from dbt.adapters.bigquery.connections import BigQueryConnectionManager
 import dbt.tracking
 
 from . import parse
@@ -110,7 +109,7 @@ class FalDbt:
 
     _model_status_map: Dict[str, str]
 
-    _global_script_paths = List[str]
+    _global_script_paths: List[str]
 
     _firestore_client: Union[FirestoreClient, None]
 
@@ -118,6 +117,7 @@ class FalDbt:
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
         self.keyword = keyword
+        self._firestore_client = None
 
         lib.initialize_dbt_flags(profiles_dir=profiles_dir)
 
@@ -149,8 +149,6 @@ class FalDbt:
                 self._run_results.results,
             )
         )
-
-        self._setup_firestore()
 
         self.features = self._find_features()
 
@@ -297,6 +295,9 @@ class FalDbt:
         Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
         """
 
+        # Lazily setup Firestore
+        self._lazy_setup_firestore()
+
         if self._firestore_client is None:
             raise FalGeneralException(
                 "GCP credentials not setup correctly. Check warnings during initialization."
@@ -308,7 +309,17 @@ class FalDbt:
             data = _firestore_dict_to_document(data=item, key_column=key_column)
             self._firestore_client.collection(collection).document(str(key)).set(data)
 
-    def _setup_firestore(self):
+    def _lazy_setup_firestore(self):
+        if self._firestore_client is not None:
+            return
+
+        try:
+            from dbt.adapters.bigquery.connections import BigQueryConnectionManager
+        except ModuleNotFoundError as not_found:
+            raise FalGeneralException(
+                "To use firestore, please `pip install dbt-bigquery`"
+            ) from not_found
+
         app_name = f"fal-{uuid.uuid4()}"
         profile_cred = self._config.credentials
 
