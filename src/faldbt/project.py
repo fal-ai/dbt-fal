@@ -100,6 +100,7 @@ class DbtRunResult:
 class FalDbt:
     project_dir: str
     profiles_dir: str
+    keyword: str
 
     _config: RuntimeConfig
     _manifest: DbtManifest
@@ -111,10 +112,12 @@ class FalDbt:
 
     _firestore_client: Union[FirestoreClient, None]
 
-    def __init__(self, project_dir: str, profiles_dir: str):
+    def __init__(self, project_dir: str,
+                 profiles_dir: str,
+                 keyword: str = 'fal'):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
-
+        self.keyword = keyword
         self._config = parse.get_dbt_config(project_dir, profiles_dir)
         lib.register_adapters(self._config)
 
@@ -338,10 +341,9 @@ class FalProject:
     def __init__(
         self,
         faldbt: FalDbt,
-        keyword: str,
     ):
         self._faldbt = faldbt
-        self.keyword = keyword
+        self.keyword = faldbt.keyword
         self.scripts = parse.get_scripts_list(faldbt.project_dir)
 
     def get_model_status(self, model: DbtModel):
