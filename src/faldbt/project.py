@@ -199,15 +199,20 @@ class FalDbt:
             and len(list(model.columns.keys())) > 0, models))
         features = []
         for model in models:
-            model_features = list(map(
-                lambda column_name: Feature(
-                    model=model.name,
-                    column=column_name,
-                    description=model.columns[column_name].description,
-                    entity_id=model.meta[keyword]['feature_store']['entity'],
-                    timestamp=model.meta[keyword]['feature_store']['timestamp']
-                ), model.columns.keys()))
-            features += model_features
+            for column_name in model.columns.keys():
+                if column_name == model.meta[keyword]['feature_store']['entity_id']:
+                    continue
+                if column_name == model.meta[keyword]['feature_store']['timestamp']:
+                    continue
+                features.append(
+                    Feature(
+                        model=model.name,
+                        column=column_name,
+                        description=model.columns[column_name].description,
+                        entity_id=model.meta[keyword]['feature_store']['entity_id'],
+                        timestamp=model.meta[keyword]['feature_store']['timestamp']
+                    )
+                )
         return features
 
     def ref(
