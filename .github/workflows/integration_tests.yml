@@ -14,7 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.8.x"]
-        dbt: ["0.20.1", "0.21.1", "1.0.0"]
+        # TODO: change to 1.0.1 when available
+        dbt: ["0.20.1", "0.21.1", "1.0.1rc1"]
 
     steps:
       - uses: actions/checkout@v2
