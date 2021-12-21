@@ -1,7 +1,6 @@
 """Classes and functions for managing features."""
 from dataclasses import dataclass
-# from typing import List
-# from faldbt.project import DbtMadel
+
 
 @dataclass
 class Feature:
