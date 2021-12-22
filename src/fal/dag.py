@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, TypeVar, Dict
-from faldbt.project import DbtModel
+from faldbt.project import DbtModel, FalDbt
 from pathlib import Path
 import re
 
@@ -42,10 +42,7 @@ class FalScript:
         if dependency not in self.dependencies and dependency != self:
             self.dependencies.append(dependency)
 
-    def exec(
-        self, context, ref, source, write_to_source, write_to_firestore, list_models
-    ):
-
+    def exec(self, context, faldbt: FalDbt):
         """
         Executes the script
         """
@@ -55,11 +52,13 @@ class FalScript:
                 a_script,
                 {
                     "context": context,
-                    "ref": ref,
-                    "source": source,
-                    "write_to_source": write_to_source,
-                    "write_to_firestore": write_to_firestore,
-                    "list_models": list_models,
+                    "ref": faldbt.ref,
+                    "source": faldbt.source,
+                    "write_to_source": faldbt.write_to_source,
+                    "write_to_firestore": faldbt.write_to_firestore,
+                    "list_models": faldbt.list_models,
+                    "list_models_ids": faldbt.list_models_ids,
+                    "list_sources": faldbt.list_sources,
                 },
             )
 

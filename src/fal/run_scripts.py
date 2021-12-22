@@ -52,14 +52,7 @@ def run_scripts(list: List[FalScript], project: FalProject):
 
         logger.info("Running script {} for model {}", script.path, model.name)
 
-        script.exec(
-            context,
-            faldbt.ref,
-            faldbt.source,
-            faldbt.write_to_source,
-            faldbt.write_to_firestore,
-            faldbt.list_models,
-        )
+        script.exec(context, faldbt)
 
 
 def run_global_scripts(list: List[FalScript], project: FalProject):
@@ -70,14 +63,7 @@ def run_global_scripts(list: List[FalScript], project: FalProject):
 
         logger.info("Running global script {}", script.path)
 
-        script.exec(
-            context,
-            faldbt.ref,
-            faldbt.source,
-            faldbt.write_to_source,
-            faldbt.write_to_firestore,
-            faldbt.list_models,
-        )
+        script.exec(context, faldbt)
 
 
 def _del_key(dict: Dict[str, Any], key: str):
