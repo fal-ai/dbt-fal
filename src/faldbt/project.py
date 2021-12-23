@@ -48,10 +48,14 @@ class DbtModel:
     def __post_init__(self):
         node = self.node
         self.name = node.name
+
+        # BACKWARDS: Change intorduced in XXX (0.20?)
+        # TODO: specify which version is for this
         if hasattr(node.config, "meta"):
             self.meta = node.config.meta
         elif hasattr(node, "meta"):
             self.meta = node.meta
+
         self.columns = node.columns
         self.unique_id = node.unique_id
 
@@ -133,6 +137,7 @@ class FalDbt:
             parse.get_dbt_results(self.project_dir, self._config)
         )
 
+        # BACKWARDS: Change intorduced in 1.0.0
         if hasattr(self._config, "model_paths"):
             model_paths = self._config.model_paths
         elif hasattr(self._config, "source_paths"):

@@ -6,6 +6,8 @@ from collections import namedtuple
 from uuid import uuid4
 from typing import List, Tuple, Union
 
+import dbt.version
+import dbt.semver
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
 from dbt.config.runtime import RuntimeConfig
@@ -24,10 +26,15 @@ from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 from sqlalchemy.sql.schema import MetaData
 
-import faldbt.cp.events.functions as events_functions
 from faldbt.cp.parser.sql import SqlBlockParser
 from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
+
+import faldbt
+
+
+DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
+DBT_VCURRENT = dbt.version.get_installed_version()
 
 
 FlagsArgs = namedtuple("FlagsArgs", "profiles_dir use_colors")
@@ -44,14 +51,25 @@ def initialize_dbt_flags(profiles_dir: str):
     except TypeError:
         flags.set_from_args(args)
 
+    # Set invocation id
+    if DBT_VCURRENT.compare(DBT_V1) >= 0:
+        import dbt.events.functions as events_functions
+
+        events_functions.set_invocation_id()
+
+    # Re-enable logging for 1.0.0 through old API of logger
+    # TODO: migrate for 1.0.0 code to new event system
+    if DBT_VCURRENT.compare(DBT_V1) >= 0:
+        flags.ENABLE_LEGACY_LOGGER = "1"
+        if logger.disabled:
+            logger.enable()
+
 
 def register_adapters(config: RuntimeConfig):
     # Clear previously registered adapters. This fixes cacheing behavior on the dbt-server
     adapters_factory.reset_adapters()
     # Load the relevant adapter
     adapters_factory.register_adapter(config)
-    # Set invocation id
-    events_functions.set_invocation_id()
 
 
 def _get_operation_node(manifest: Manifest, project_path, profiles_dir, sql):
