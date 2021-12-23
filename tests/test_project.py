@@ -24,3 +24,10 @@ def test_scripts():
             assert 0 == len(model.get_scripts("fal"))
         if model.name == "zendesk_ticket_data":
             assert 1 == len(model.get_scripts("fal"))
+
+    # Feature definitions
+    features = faldbt.list_features()
+
+    assert 1 == len(features)
+    assert "a" == features[0].entity_id
+    assert "agent_wait_time" == features[0].model

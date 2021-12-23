@@ -11,10 +11,17 @@ models:
           - fal_scripts/test.py
   - name: agent_wait_time
     description: Agent wait time series
+    columns:
+      - name: a
+      - name: b
+      - name: c
     config:
       materialized: table
     meta:
       fal:
+        feature_store:
+          entity_id: a
+          timestamp: b
         scripts:
           # - fal_scripts/test.py
 

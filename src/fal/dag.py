@@ -59,6 +59,7 @@ class FalScript:
                     "list_models": faldbt.list_models,
                     "list_models_ids": faldbt.list_models_ids,
                     "list_sources": faldbt.list_sources,
+                    "list_features": faldbt.list_features
                 },
             )
 
