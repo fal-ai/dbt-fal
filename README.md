@@ -17,6 +17,8 @@ Check out our [Getting Started](#getting-started) guide to get a quickstart or p
 [<img src="https://cdn.loom.com/sessions/thumbnails/bb49fffaa6f74e90b91d26c77f35ecdc-1637262660876-with-play.gif">](https://www.loom.com/share/bb49fffaa6f74e90b91d26c77f35ecdc)
 
 
+See [here](#working-with-dbt-100) if you are using dbt 1.0.
+
 # Getting Started
 
 ## 1. Install fal
@@ -204,6 +206,9 @@ sentiments = faldbt.source('results', 'ticket_data_sentiment_analysis')
 tickets = faldbt.ref('stg_zendesk_ticket_data')
 # pandas.DataFrame
 ```
+
+## Working with dbt 1.0.0
+Support for dbt 1.0 is work in progress. If you want to try out an alpha version of `fal` with support for dbt 1.0, see [here](https://github.com/fal-ai/fal/releases/tag/v.0.2.0-alpha).
 
 # Why are we building this?
 We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with.
