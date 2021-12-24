@@ -11,9 +11,11 @@ jobs:
   run:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python: ["3.8.x"]
-        dbt: ["0.20.1", "0.21.1"]
+        # TODO: change to 1.0.1 when available
+        dbt: ["0.20.1", "0.21.1", "1.0.1rc1"]
 
     steps:
       - uses: actions/checkout@v2
@@ -36,11 +38,19 @@ jobs:
         working-directory: integration_test
         run: docker-compose up -d
 
-      - name: Install dbt and fal
+      - name: Install fal
         run: |
           poetry build
           pip install dist/fal-0.1.0-py3-none-any.whl
-          pip install dbt==${{ matrix.dbt }}
+
+      - name: Install dbt
+        run: |
+          if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
+          then
+            pip install dbt==${{ matrix.dbt }}
+          else
+            pip install dbt-postgres==${{ matrix.dbt }}
+          fi
 
       - name: Install test dependencies
         working-directory: integration_test

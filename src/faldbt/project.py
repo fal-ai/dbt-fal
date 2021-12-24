@@ -9,7 +9,6 @@ from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput
 from dbt.logger import GLOBAL_LOGGER as logger
-from dbt.adapters.bigquery.connections import BigQueryConnectionManager
 import dbt.tracking
 
 from . import parse
@@ -49,10 +48,14 @@ class DbtModel:
     def __post_init__(self):
         node = self.node
         self.name = node.name
+
+        # BACKWARDS: Change intorduced in XXX (0.20?)
+        # TODO: specify which version is for this
         if hasattr(node.config, "meta"):
             self.meta = node.config.meta
         elif hasattr(node, "meta"):
             self.meta = node.meta
+
         self.columns = node.columns
         self.unique_id = node.unique_id
 
@@ -110,16 +113,18 @@ class FalDbt:
 
     _model_status_map: Dict[str, str]
 
-    _global_script_paths = List[str]
+    _global_script_paths: List[str]
 
     _firestore_client: Union[FirestoreClient, None]
 
-    def __init__(self, project_dir: str,
-                 profiles_dir: str,
-                 keyword: str = 'fal'):
+    def __init__(self, project_dir: str, profiles_dir: str, keyword: str = "fal"):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
         self.keyword = keyword
+        self._firestore_client = None
+
+        lib.initialize_dbt_flags(profiles_dir=profiles_dir)
+
         self._config = parse.get_dbt_config(project_dir, profiles_dir)
         lib.register_adapters(self._config)
 
@@ -132,12 +137,15 @@ class FalDbt:
             parse.get_dbt_results(self.project_dir, self._config)
         )
 
-        normalized_source_paths = normalize_directories(
-            project_dir, self._config.source_paths
-        )
+        # BACKWARDS: Change intorduced in 1.0.0
+        if hasattr(self._config, "model_paths"):
+            model_paths = self._config.model_paths
+        elif hasattr(self._config, "source_paths"):
+            model_paths = self._config.source_paths
+        normalized_model_paths = normalize_directories(project_dir, model_paths)
 
         self._global_script_paths = parse.get_global_script_configs(
-            normalized_source_paths
+            normalized_model_paths
         )
 
         self._model_status_map = dict(
@@ -146,8 +154,6 @@ class FalDbt:
                 self._run_results.results,
             )
         )
-
-        self._setup_firestore()
 
         self.features = self._find_features()
 
@@ -294,6 +300,9 @@ class FalDbt:
         Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
         """
 
+        # Lazily setup Firestore
+        self._lazy_setup_firestore()
+
         if self._firestore_client is None:
             raise FalGeneralException(
                 "GCP credentials not setup correctly. Check warnings during initialization."
@@ -305,7 +314,17 @@ class FalDbt:
             data = _firestore_dict_to_document(data=item, key_column=key_column)
             self._firestore_client.collection(collection).document(str(key)).set(data)
 
-    def _setup_firestore(self):
+    def _lazy_setup_firestore(self):
+        if self._firestore_client is not None:
+            return
+
+        try:
+            from dbt.adapters.bigquery.connections import BigQueryConnectionManager
+        except ModuleNotFoundError as not_found:
+            raise FalGeneralException(
+                "To use firestore, please `pip install dbt-bigquery`"
+            ) from not_found
+
         app_name = f"fal-{uuid.uuid4()}"
         profile_cred = self._config.credentials
 

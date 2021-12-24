@@ -1,6 +1,5 @@
 import os
 from collections import namedtuple
-import json
 import glob
 from pathlib import Path
 from typing import List
@@ -8,11 +7,19 @@ from typing import List
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.results import RunResultsArtifact
+from dbt.contracts.project import UserConfig
+from dbt.config.profile import read_user_config
+from dbt.exceptions import IncompatibleSchemaException, RuntimeException
+
 from faldbt.utils.yaml_helper import load_yaml
 
 
 class FalParseError(Exception):
     pass
+
+
+def get_dbt_user_config(profiles_dir: str) -> UserConfig:
+    return read_user_config(profiles_dir)
 
 
 RuntimeArgs = namedtuple("RuntimeArgs", "project_dir profiles_dir single_threaded")
@@ -21,11 +28,9 @@ RuntimeArgs = namedtuple("RuntimeArgs", "project_dir profiles_dir single_threade
 def get_dbt_config(
     project_dir: str, profiles_dir: str, single_threaded=False
 ) -> RuntimeConfig:
-
     # Construct a phony config
-    return RuntimeConfig.from_args(
-        RuntimeArgs(project_dir, profiles_dir, single_threaded)
-    )
+    args = RuntimeArgs(project_dir, profiles_dir, single_threaded)
+    return RuntimeConfig.from_args(args)
 
 
 def get_dbt_manifest(config) -> Manifest:
@@ -35,8 +40,6 @@ def get_dbt_manifest(config) -> Manifest:
 
 
 def get_dbt_results(project_dir: str, config: RuntimeConfig) -> RunResultsArtifact:
-    from dbt.exceptions import IncompatibleSchemaException, RuntimeException
-
     results_path = os.path.join(project_dir, config.target_path, "run_results.json")
     try:
         return RunResultsArtifact.read(results_path)
