@@ -207,8 +207,15 @@ tickets = faldbt.ref('stg_zendesk_ticket_data')
 # pandas.DataFrame
 ```
 
-## Working with dbt 1.0.0
-Support for dbt 1.0 is work in progress. If you want to try out an alpha version of `fal` with support for dbt 1.0, see [here](https://github.com/fal-ai/fal/releases/tag/v.0.2.0-alpha).
+# Versions of dbt we support
+
+We currently offer _official_ support the following versions, all in the same codebase:
+
+- 0.20.*
+- 0.21.*
+- 1.0.*
+
+If you need another version, [open an issue](https://github.com/fal-ai/fal/issues/new) and we will take a look!
 
 # Why are we building this?
 We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with.
