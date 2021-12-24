@@ -154,21 +154,21 @@ models:
 
 For finding data drift in our dbt models, this is all we need. Get your model and set the time window length, and you are ready to go.
 
-However, some might question the existence of a separate system for detecting data drift, as we had an anomaly detection system with DBSCAN in a (previous example)[https://blog.fal.ai/building-a-data-anomaly-detection-system-with-fal-dbt/]. In the next section, we will see why using a separate system for data drift is justified.
+However, some might question the existence of a separate system for detecting data drift, as we had an anomaly detection system with DBSCAN in a [previous example](https://blog.fal.ai/building-a-data-anomaly-detection-system-with-fal-dbt/). In the next section, we will see why using a separate system for data drift is justified.
 
 ## Data drift vs Anomaly detection
 
 The first point to look at is what problems do these systems solve? Simply put, anomaly detection detects anomalous data points, whereas data drift detects anomalous time windows. Thus, anomaly detection gives us the data points that are out of place and data drift notifies us that there is a change in the overall data distribution. For these specific insights, we employ different methods to find the solution; for anomaly detection we use DBSCAN, and for data drift we use the Kolmogorov-Smirnov test. DBSCAN is a clustering algorithm; simply put, it find an anomalous point by clustering it with neighbouring data points with two hyperparameters, epsilon and number of minimum samples (n). These two hyperparameters define the cluster, which is made up core points where each point has at least n number of points inside a circle with radius epsilon centered on the point, i.e A; and edge points which do not satisfy the conditions of being a core point but is part of a core point's circle, i.e B and C. The points which are not core or edge points are called noised points (N), the anomalous data points.
 
-!(From: (Wikipedia)[https://en.wikipedia.org/wiki/File:DBSCAN-Illustration.svg].)[DBSCAN-illustration.png]
+![From: [Wikipedia](https://en.wikipedia.org/wiki/File:DBSCAN-Illustration.svg).](DBSCAN-illustration.png)
 
 This clustering ability makes DBSCAN the go to anomaly detection algorithm. It can group the closely packed normal data, which represents the normal behaviour of the data, and detect the anomalies which are far away from the normal. However, it is not that good at detecting data drift. As in the case of data drift, the anomaly is not a single point but rather a group of points. Using a clustering algorithm like DBSCAN where the closely packed data is grouped and accepted as normal, continous movement of a group from those neighbouring it cannot be detected. Below, we have a part of our data from our example, years 4 and 5, where there is a continous drift from one to the other, anomaly detection fails to identify the change in behaviour of the dataset, but it notifies us of the extreme data points.
 
-!(Years 4 and 5 from our example model.)[2021-12-22-2233-CET.jpg]
+![Years 4 and 5 from our example model.](2021-12-22-2233-CET.jpg)
 
 Data drift also cannot do the work of the other system. Kolmogorov-Smirnov test is a statistical test where two samples of empirical data is checked to see if they are from the same distribution. This gives us the ability to see if a change in the distribution of numerical data exists, which for time-series numerical data is the definition of data drift. For big time windows, such as a year, anomalous data points does not affect the test, as their effect is negligible to the result because the test uses a confidence level, set to 95% for this example. The only way that anomalous data points can influence the result is that they have to be a sizeable chunk of the data window. Below, again from the example model, we have the years 1 and 2, where there is no data drift but anomalous data points are present. We can see that data drift cannot even give us an insight to whether anomalous data points exist, let alone their location.
 
-!(Years 1 and 2 from our example model.)[2021-12-24-1340-CET.jpg]
+![Years 1 and 2 from our example model.](2021-12-24-1340-CET.jpg)
 
 ## Moving further
 
