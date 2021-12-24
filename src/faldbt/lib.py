@@ -26,16 +26,18 @@ from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 from sqlalchemy.sql.schema import MetaData
 
-from faldbt.cp.parser.sql import SqlBlockParser
-from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
-from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
-
-import faldbt
-
 
 DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.get_installed_version()
 
+if DBT_VCURRENT.compare(DBT_V1) >= 0:
+    from dbt.parser.sql import SqlBlockParser
+    from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
+    from dbt.contracts.sql import ResultTable, RemoteRunResult
+else:
+    from faldbt.cp.parser.sql import SqlBlockParser
+    from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
+    from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
 
 FlagsArgs = namedtuple("FlagsArgs", "profiles_dir use_colors")
 
