@@ -182,9 +182,9 @@ If you want to run all Python scripts regardless, you can do so by using the `--
 $ fal run --all
 ```
 
-## Importing fal as a Python package
+## Importing `fal` as a Python package
 You may be interested in accessing dbt models and sources easily from a Jupyter Notebook or another Python script.
-For that, just import the fal package and intantiate a FalDbt project:
+For that, just import the `fal` package and intantiate a FalDbt project:
 
 ```py
 from fal import FalDbt
@@ -207,9 +207,9 @@ tickets = faldbt.ref('stg_zendesk_ticket_data')
 # pandas.DataFrame
 ```
 
-# Versions of dbt we support
+# Supported `dbt` versions
 
-We currently offer _official_ support the following versions, all in the same codebase:
+Any extra configuration to work with different `dbt` versions is not needed, latest `fal` version currently supports:
 
 - 0.20.*
 - 0.21.*
