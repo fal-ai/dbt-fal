@@ -17,8 +17,6 @@ Check out our [Getting Started](#getting-started) guide to get a quickstart or p
 [<img src="https://cdn.loom.com/sessions/thumbnails/bb49fffaa6f74e90b91d26c77f35ecdc-1637262660876-with-play.gif">](https://www.loom.com/share/bb49fffaa6f74e90b91d26c77f35ecdc)
 
 
-See [here](#working-with-dbt-100) if you are using dbt 1.0.
-
 # Getting Started
 
 ## 1. Install fal
