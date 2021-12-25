@@ -17,8 +17,6 @@ Check out our [Getting Started](#getting-started) guide to get a quickstart or p
 [<img src="https://cdn.loom.com/sessions/thumbnails/bb49fffaa6f74e90b91d26c77f35ecdc-1637262660876-with-play.gif">](https://www.loom.com/share/bb49fffaa6f74e90b91d26c77f35ecdc)
 
 
-See [here](#working-with-dbt-100) if you are using dbt 1.0.
-
 # Getting Started
 
 ## 1. Install fal
@@ -182,9 +180,9 @@ If you want to run all Python scripts regardless, you can do so by using the `--
 $ fal run --all
 ```
 
-## Importing fal as a Python package
+## Importing `fal` as a Python package
 You may be interested in accessing dbt models and sources easily from a Jupyter Notebook or another Python script.
-For that, just import the fal package and intantiate a FalDbt project:
+For that, just import the `fal` package and intantiate a FalDbt project:
 
 ```py
 from fal import FalDbt
@@ -207,8 +205,15 @@ tickets = faldbt.ref('stg_zendesk_ticket_data')
 # pandas.DataFrame
 ```
 
-## Working with dbt 1.0.0
-Support for dbt 1.0 is work in progress. If you want to try out an alpha version of `fal` with support for dbt 1.0, see [here](https://github.com/fal-ai/fal/releases/tag/v.0.2.0-alpha).
+# Supported `dbt` versions
+
+Any extra configuration to work with different `dbt` versions is not needed, latest `fal` version currently supports:
+
+- 0.20.*
+- 0.21.*
+- 1.0.*
+
+If you need another version, [open an issue](https://github.com/fal-ai/fal/issues/new) and we will take a look!
 
 # Why are we building this?
 We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with.
