@@ -35,7 +35,7 @@ Now, for us to find anomalies we need to write our Python script that will:
 
 The `DBSCAN` cluster that we are using for this example is a data clustering algorithm that groups together points that are close to each other. The groups are defined by the two hyperparameters `eps` for neighbourhood size and `min_samples` for minimum number of points reqiured in a cluster. After forming the groups, or the clusters, it labels the points that are in low density areas defined by the hyperparameters as noise, which are the anomalous data points for our case.
 
-For the entire Python script, you can use this [link](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/anomaly_detection.py)).
+For the Python scripts, you can use these links; [main script](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/anomaly_detection.py)), [functions](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/anomaly_detection_functions.py).
 
 We first create a function called `anomaly_detection`, which will take the column of metric values of our model, apply sliding windows, find anomalies and return them in a numpy array:
 
