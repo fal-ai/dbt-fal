@@ -248,7 +248,7 @@ class FalDbt:
             target_model,
         )
         return pd.DataFrame.from_records(
-            result.table.rows, columns=result.table.column_names
+            result.table.rows, columns=result.table.column_names, coerce_float=True
         )
 
     def source(self, target_source_name: str, target_table_name: str) -> pd.DataFrame:
