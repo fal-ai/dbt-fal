@@ -198,25 +198,29 @@ class FalDbt:
         """List features defined in schema.yml files."""
         keyword = self.keyword
         models = self.list_models()
-        models = list(filter(
-            # Find models that have both feature store and column defs
-            lambda model: keyword in model.meta
-            and 'feature_store' in model.meta[keyword]
-            and len(list(model.columns.keys())) > 0, models))
+        models = list(
+            filter(
+                # Find models that have both feature store and column defs
+                lambda model: keyword in model.meta
+                and "feature_store" in model.meta[keyword]
+                and len(list(model.columns.keys())) > 0,
+                models,
+            )
+        )
         features = []
         for model in models:
             for column_name in model.columns.keys():
-                if column_name == model.meta[keyword]['feature_store']['entity_id']:
+                if column_name == model.meta[keyword]["feature_store"]["entity_id"]:
                     continue
-                if column_name == model.meta[keyword]['feature_store']['timestamp']:
+                if column_name == model.meta[keyword]["feature_store"]["timestamp"]:
                     continue
                 features.append(
                     Feature(
                         model=model.name,
                         column=column_name,
                         description=model.columns[column_name].description,
-                        entity_id=model.meta[keyword]['feature_store']['entity_id'],
-                        timestamp=model.meta[keyword]['feature_store']['timestamp']
+                        entity_id=model.meta[keyword]["feature_store"]["entity_id"],
+                        timestamp=model.meta[keyword]["feature_store"]["timestamp"],
                     )
                 )
         return features
@@ -244,7 +248,7 @@ class FalDbt:
             target_model,
         )
         return pd.DataFrame.from_records(
-            result.table.rows, columns=result.table.column_names
+            result.table.rows, columns=result.table.column_names, coerce_float=True
         )
 
     def source(self, target_source_name: str, target_table_name: str) -> pd.DataFrame:
