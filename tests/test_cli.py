@@ -42,3 +42,28 @@ def test_version():
     runner = CliRunner()
     result = runner.invoke(cli, ["--version"])
     assert f"cli, version {version}" in result.output
+
+
+def test_selection(capfd):
+    runner = CliRunner()
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        shutil.copytree(
+            os.path.join(Path.cwd(), "tests/mock"), tmp_dir, dirs_exist_ok=True
+        )
+        result = runner.invoke(
+            cli,
+            [
+                "run",
+                "--project-dir",
+                tmp_dir,
+                "--profiles-dir",
+                profiles_dir,
+                "--select",
+                "agent_wait_time",
+            ],
+        )
+
+    captured = capfd.readouterr()
+    assert result.exit_code == 0
+    assert "agent_wait_time: " in captured.out
+    assert "zendesk_ticket_data" not in captured.out
