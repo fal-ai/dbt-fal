@@ -7,7 +7,7 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 from fal.run_scripts import run_global_scripts, run_scripts
 from fal.dag import FalScript, ScriptGraph
 from fal.utils import print_run_info
-from faldbt.project import FalDbt, FalProject
+from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 
 @click.group()
@@ -41,6 +41,39 @@ def cli():
     is_flag=True,
 )
 @click.option(
+    "--select",
+    "-s",
+    multiple=True,
+    default=tuple(),
+    nargs=1,
+    help="Specify the nodes to include.",
+    type=click.STRING,
+)
+@click.option(
+    "--models",
+    "-m",
+    nargs=1,
+    multiple=True,
+    default=tuple(),
+    help="Specify the nodes to include.",
+    type=click.STRING,
+)
+@click.option(
+    "--exclude",
+    nargs=1,
+    multiple=True,
+    default=tuple(),
+    help="Specify the models to exclude.",
+    type=click.STRING,
+)
+@click.option(
+    "--selector",
+    nargs=1,
+    default=None,
+    help="The selector name to use, as defined in selectors.yml",
+    type=click.STRING,
+)
+@click.option(
     "--experimental-ordering",
     help="Turns on ordering of the fal scripts.",
     is_flag=True,
@@ -50,7 +83,18 @@ def cli():
     help="Display debug logging during execution.",
     is_flag=True,
 )
-def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
+def run(
+    project_dir,
+    profiles_dir,
+    keyword,
+    all,
+    select,
+    models,
+    exclude,
+    selector,
+    experimental_ordering,
+    debug,
+):
     with log_manager.applicationbound():
         if debug:
             log_manager.set_debug()
@@ -66,9 +110,20 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         else:
             real_profiles_dir = DEFAULT_PROFILES_DIR
 
-        faldbt = FalDbt(real_project_dir, real_profiles_dir, keyword)
+        if not select and models:
+            select = models
+
+        selector_flags = select or exclude or selector
+        if all and selector_flags:
+            raise FalGeneralException(
+                "Cannot pass --all flag alongside selection flags (--select/--models, --exclude, --selector)"
+            )
+
+        faldbt = FalDbt(
+            real_project_dir, real_profiles_dir, select, exclude, selector, keyword
+        )
         project = FalProject(faldbt)
-        models = project.get_filtered_models(all)
+        models = project.get_filtered_models(all, selector_flags)
         print_run_info(models, keyword)
 
         if experimental_ordering:

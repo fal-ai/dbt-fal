@@ -12,5 +12,5 @@ def print_run_info(models: List[DbtModel], keyword: str):
 
     models_str = "\n".join(models_arr)
     print_timestamped_line(
-        f"Starting FAL run for following models (model_name: scripts): \n{models_str}"
+        f"Starting fal run for following models and scripts: \n{models_str}\n"
     )
