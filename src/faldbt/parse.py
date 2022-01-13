@@ -1,5 +1,5 @@
 import os
-from collections import namedtuple
+from dataclasses import dataclass, field
 import glob
 from pathlib import Path
 from typing import List
@@ -22,7 +22,11 @@ def get_dbt_user_config(profiles_dir: str) -> UserConfig:
     return read_user_config(profiles_dir)
 
 
-RuntimeArgs = namedtuple("RuntimeArgs", "project_dir profiles_dir single_threaded")
+@dataclass
+class RuntimeArgs:
+    project_dir: str
+    profiles_dir: str
+    single_threaded: bool
 
 
 def get_dbt_config(

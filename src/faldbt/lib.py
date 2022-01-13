@@ -1,8 +1,7 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
 import six
-
 from datetime import datetime
-from collections import namedtuple
+from dataclasses import dataclass
 from uuid import uuid4
 from typing import List, Tuple, Union
 
@@ -39,7 +38,11 @@ else:
     from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
     from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
 
-FlagsArgs = namedtuple("FlagsArgs", "profiles_dir use_colors")
+
+@dataclass
+class FlagsArgs:
+    profiles_dir: str
+    use_colors: bool
 
 
 def initialize_dbt_flags(profiles_dir: str):

@@ -1,8 +1,7 @@
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, List, Any, Optional, TypeVar, Sequence, Union
+from typing import Dict, List, List, Any, Optional, Tuple, TypeVar, Sequence, Union
 from pathlib import Path
-from recordtype import recordtype
 
 from dbt.node_types import NodeType
 from dbt.config import RuntimeConfig
@@ -102,9 +101,14 @@ class DbtRunResult:
         self.results = self.nativeRunResult.results
 
 
-CompileArgs = recordtype(
-    "CompileArgs", "selector_name select models exclude state single_threaded"
-)
+@dataclass
+class CompileArgs:
+    selector_name: str
+    select: Tuple[str]
+    models: Tuple[str]
+    exclude: Tuple[str]
+    state: any
+    single_threaded: bool
 
 
 @dataclass(init=False)
