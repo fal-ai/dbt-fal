@@ -47,7 +47,11 @@ def get_dbt_manifest(config) -> Manifest:
 def get_dbt_results(project_dir: str, config: RuntimeConfig) -> RunResultsArtifact:
     results_path = os.path.join(project_dir, config.target_path, "run_results.json")
     try:
-        return RunResultsArtifact.read_and_check_versions(results_path)
+        # BACKWARDS: Change intorduced in 1.0.0
+        if hasattr(RunResultsArtifact, "read_and_check_versions"):
+            return RunResultsArtifact.read_and_check_versions(results_path)
+        else:
+            return RunResultsArtifact.read(results_path)
     except IncompatibleSchemaException as exc:
         exc.add_filename(results_path)
         raise
