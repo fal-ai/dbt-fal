@@ -103,7 +103,7 @@ class DbtRunResult:
 
 
 CompileArgs = recordtype(
-    "CompileArgs", "selector_name select exclude state single_threaded"
+    "CompileArgs", "selector_name select models exclude state single_threaded"
 )
 
 
@@ -147,7 +147,7 @@ class FalDbt:
         # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(profiles_dir)
 
-        args = CompileArgs(selector_name, select, exclude, None, None)
+        args = CompileArgs(selector_name, select, select, exclude, None, None)
         self._compile_task = CompileTask(args, self._config)
         self._compile_task._runtime_initialize()
 
