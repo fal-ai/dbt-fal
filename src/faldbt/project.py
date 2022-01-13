@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Dict, List, List, Any, Optional, TypeVar, Sequence, Union
 from pathlib import Path
+from recordtype import recordtype
 
 from dbt.node_types import NodeType
 from dbt.config import RuntimeConfig
@@ -9,6 +10,7 @@ from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput
 from dbt.logger import GLOBAL_LOGGER as logger
+from dbt.task.compile import CompileTask
 import dbt.tracking
 
 from . import parse
@@ -100,6 +102,11 @@ class DbtRunResult:
         self.results = self.nativeRunResult.results
 
 
+CompileArgs = recordtype(
+    "CompileArgs", "selector_name select exclude state single_threaded"
+)
+
+
 @dataclass(init=False)
 class FalDbt:
     project_dir: str
@@ -110,6 +117,8 @@ class FalDbt:
     _config: RuntimeConfig
     _manifest: DbtManifest
     _run_results: DbtRunResult
+    # Could we instead extend it and create a FalRunTak?
+    _compile_task: CompileTask
 
     _model_status_map: Dict[str, str]
 
@@ -117,7 +126,15 @@ class FalDbt:
 
     _firestore_client: Union[FirestoreClient, None]
 
-    def __init__(self, project_dir: str, profiles_dir: str, keyword: str = "fal"):
+    def __init__(
+        self,
+        project_dir: str,
+        profiles_dir: str,
+        select: List[str] = tuple(),
+        exclude: List[str] = tuple(),
+        selector_name: str = None,
+        keyword: str = "fal",
+    ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
         self.keyword = keyword
@@ -126,15 +143,24 @@ class FalDbt:
         lib.initialize_dbt_flags(profiles_dir=profiles_dir)
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir)
-        lib.register_adapters(self._config)
 
-        # Necessary for parse_to_manifest to not fail
+        # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(profiles_dir)
 
-        self._manifest = DbtManifest(parse.get_dbt_manifest(self._config))
+        args = CompileArgs(selector_name, select, exclude, None, None)
+        self._compile_task = CompileTask(args, self._config)
+        self._compile_task._runtime_initialize()
+
+        self._manifest = DbtManifest(self._compile_task.manifest)
 
         self._run_results = DbtRunResult(
             parse.get_dbt_results(self.project_dir, self._config)
+        )
+        self._model_status_map = dict(
+            map(
+                lambda res: [res.unique_id, res.status],
+                self._run_results.results,
+            )
         )
 
         # BACKWARDS: Change intorduced in 1.0.0
@@ -146,13 +172,6 @@ class FalDbt:
 
         self._global_script_paths = parse.get_global_script_configs(
             normalized_model_paths
-        )
-
-        self._model_status_map = dict(
-            map(
-                lambda res: [res.unique_id, res.status],
-                self._run_results.results,
-            )
         )
 
         self.features = self._find_features()
@@ -406,22 +425,27 @@ class FalProject:
     def get_model_status(self, model: DbtModel):
         return self._faldbt.get_model_status(model.unique_id)
 
-    def _result_model_ids(self) -> List[str]:
-        return list(map(lambda r: r.unique_id, self._faldbt._run_results.results))
-
     def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(
             filter(lambda model: keyword in model.meta, self._faldbt.list_models())
         )
 
-    def get_filtered_models(self, all) -> List[DbtModel]:
-        models_ids = self._result_model_ids()
+    def get_filtered_models(self, all, selected) -> List[DbtModel]:
+        selected_ids = _models_ids(self._faldbt._compile_task._flattened_nodes)
+        models_ids = _models_ids(self._faldbt._run_results.results)
         filtered_models: List[DbtModel] = []
 
         for node in self._get_models_with_keyword(self.keyword):
-            if all:
+            if selected:
+                if node.unique_id in selected_ids:
+                    filtered_models.append(node)
+            elif all:
                 filtered_models.append(node)
             elif node.unique_id in models_ids:
                 filtered_models.append(node)
 
         return filtered_models
+
+
+def _models_ids(models):
+    return list(map(lambda r: r.unique_id, models))
