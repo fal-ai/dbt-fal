@@ -20,14 +20,22 @@ def test_scripts():
 
     # Find the correct one
     for model in models:
-        if model.name == "agent_wait_time":
+        if model.name == "model_feature_store":
             assert 0 == len(model.get_scripts("fal"))
-        if model.name == "zendesk_ticket_data":
+        if model.name == "model_with_scripts":
             assert 1 == len(model.get_scripts("fal"))
+
+
+def test_features():
+    faldbt = FalDbt(
+        profiles_dir=profiles_dir,
+        project_dir=project_dir,
+    )
 
     # Feature definitions
     features = faldbt.list_features()
 
     assert 1 == len(features)
-    assert "a" == features[0].entity_id
-    assert "agent_wait_time" == features[0].model
+    fs_def = features[0]
+    assert "a" == fs_def.entity_id
+    assert "model_feature_store" == fs_def.model

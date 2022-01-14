@@ -60,11 +60,34 @@ def test_selection(capfd):
                 "--profiles-dir",
                 profiles_dir,
                 "--select",
-                "agent_wait_time",
+                "model_feature_store",
+                "--select",
+                "model_empty_scripts",
             ],
         )
+        captured = capfd.readouterr()
+        assert result.exit_code == 0
+        assert "model_with_scripts" not in captured.out
+        assert "model_feature_store" in captured.out
+        assert "model_empty_scripts" in captured.out
+        assert "model_no_fal" not in captured.out
 
-    captured = capfd.readouterr()
-    assert result.exit_code == 0
-    assert "agent_wait_time: " in captured.out
-    assert "zendesk_ticket_data" not in captured.out
+        result = runner.invoke(
+            cli,
+            [
+                "run",
+                "--project-dir",
+                tmp_dir,
+                "--profiles-dir",
+                profiles_dir,
+                "--select",
+                "model_no_fal",
+            ],
+        )
+        captured = capfd.readouterr()
+        assert result.exit_code == 0
+        assert "model_with_scripts" not in captured.out
+        assert "model_feature_store" not in captured.out
+        assert "model_empty_scripts" not in captured.out
+        # It has no keyword in meta
+        assert "model_no_fal" not in captured.out
