@@ -1,21 +1,130 @@
 {
   "metadata": {
     "dbt_schema_version": "https://schemas.getdbt.com/dbt/run-results/v4.json",
-    "dbt_version": "0.21.0",
-    "generated_at": "2021-11-17T04:21:18.728667Z",
-    "invocation_id": "d50bc489-e0d0-4ec0-978c-c57af9c6fded",
+    "dbt_version": "1.0.1",
+    "generated_at": "2022-01-14T15:29:48.070127Z",
+    "invocation_id": "871cb628-c132-4ba7-bef8-a3a601850df9",
     "env": {}
   },
-  "results": [],
-  "elapsed_time": 13.19086217880249,
+  "results": [
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2022-01-14T15:29:45.235525Z",
+          "completed_at": "2022-01-14T15:29:45.251591Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2022-01-14T15:29:45.284245Z",
+          "completed_at": "2022-01-14T15:29:47.919396Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 2.6867101192474365,
+      "adapter_response": {
+        "_message": "CREATE TABLE (1.0 rows, 0 processed)",
+        "code": "CREATE TABLE",
+        "rows_affected": 1,
+        "bytes_processed": 0
+      },
+      "message": "CREATE TABLE (1.0 rows, 0 processed)",
+      "failures": null,
+      "unique_id": "model.fal_dbt_examples.model_with_scripts"
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2022-01-14T15:29:45.235327Z",
+          "completed_at": "2022-01-14T15:29:45.251302Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2022-01-14T15:29:45.281147Z",
+          "completed_at": "2022-01-14T15:29:47.984279Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 2.7524781227111816,
+      "adapter_response": {
+        "_message": "CREATE TABLE (1.0 rows, 0 processed)",
+        "code": "CREATE TABLE",
+        "rows_affected": 1,
+        "bytes_processed": 0
+      },
+      "message": "CREATE TABLE (1.0 rows, 0 processed)",
+      "failures": null,
+      "unique_id": "model.fal_dbt_examples.model_no_fal"
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2022-01-14T15:29:45.235048Z",
+          "completed_at": "2022-01-14T15:29:45.250698Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2022-01-14T15:29:45.278270Z",
+          "completed_at": "2022-01-14T15:29:48.011613Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 2.780636787414551,
+      "adapter_response": {
+        "_message": "CREATE TABLE (1.0 rows, 0 processed)",
+        "code": "CREATE TABLE",
+        "rows_affected": 1,
+        "bytes_processed": 0
+      },
+      "message": "CREATE TABLE (1.0 rows, 0 processed)",
+      "failures": null,
+      "unique_id": "model.fal_dbt_examples.model_feature_store"
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2022-01-14T15:29:45.234789Z",
+          "completed_at": "2022-01-14T15:29:45.250321Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2022-01-14T15:29:45.252038Z",
+          "completed_at": "2022-01-14T15:29:48.063244Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 2.8326809406280518,
+      "adapter_response": {
+        "_message": "CREATE TABLE (1.0 rows, 0 processed)",
+        "code": "CREATE TABLE",
+        "rows_affected": 1,
+        "bytes_processed": 0
+      },
+      "message": "CREATE TABLE (1.0 rows, 0 processed)",
+      "failures": null,
+      "unique_id": "model.fal_dbt_examples.model_empty_scripts"
+    }
+  ],
+  "elapsed_time": 5.633408069610596,
   "args": {
-    "log_format": "default",
     "write_json": true,
-    "use_experimental_parser": false,
-    "profiles_dir": "",
-    "use_cache": true,
+    "use_colors": true,
+    "printer_width": 80,
     "version_check": true,
+    "partial_parse": true,
+    "static_parser": true,
+    "profiles_dir": "/Users/matteo/Projects/fal/fal_cli/tests/mock/mockProfile",
+    "send_anonymous_usage_stats": true,
+    "event_buffer_size": 100000,
     "which": "run",
-    "rpc_method": "run"
+    "rpc_method": "run",
+    "indirect_selection": "eager"
   }
 }

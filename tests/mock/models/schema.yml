@@ -1,29 +1,29 @@
 version: 2
 
 models:
-  - name: zendesk_ticket_data
-    description: zendesk ticket data
-    config:
-      materialized: table
+  - name: model_with_scripts
     meta:
       fal:
         scripts:
           - fal_scripts/test.py
-  - name: agent_wait_time
-    description: Agent wait time series
+  - name: model_feature_store
     columns:
       - name: a
       - name: b
       - name: c
-    config:
-      materialized: table
     meta:
       fal:
         feature_store:
           entity_id: a
           timestamp: b
+  - name: model_empty_scripts
+    meta: 
+      fal: 
         scripts:
-          # - fal_scripts/test.py
+  - name: model_no_fal
+    meta:
+      other: things
 
+# global
 fal:
   scripts:

@@ -50,6 +50,7 @@ def test_selection(capfd):
         shutil.copytree(
             os.path.join(Path.cwd(), "tests/mock"), tmp_dir, dirs_exist_ok=True
         )
+
         result = runner.invoke(
             cli,
             [
