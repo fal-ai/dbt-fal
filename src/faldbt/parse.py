@@ -10,6 +10,7 @@ from dbt.contracts.results import RunResultsArtifact
 from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
 from dbt.exceptions import IncompatibleSchemaException, RuntimeException
+from dbt.logger import GLOBAL_LOGGER as logger
 
 from faldbt.utils.yaml_helper import load_yaml
 
@@ -46,12 +47,17 @@ def get_dbt_manifest(config) -> Manifest:
 def get_dbt_results(project_dir: str, config: RuntimeConfig) -> RunResultsArtifact:
     results_path = os.path.join(project_dir, config.target_path, "run_results.json")
     try:
-        return RunResultsArtifact.read(results_path)
+        # BACKWARDS: Change intorduced in 1.0.0
+        if hasattr(RunResultsArtifact, "read_and_check_versions"):
+            return RunResultsArtifact.read_and_check_versions(results_path)
+        else:
+            return RunResultsArtifact.read(results_path)
     except IncompatibleSchemaException as exc:
         exc.add_filename(results_path)
         raise
     except RuntimeException as exc:
-        raise FalParseError("Did you forget to run dbt run?") from exc
+        logger.warn("Could not read dbt run_results artifact")
+        return None
 
 
 def get_scripts_list(project_dir: str) -> List[str]:
