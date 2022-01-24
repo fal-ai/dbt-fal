@@ -47,7 +47,6 @@ def test_selection(capfd):
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
-
         result = runner.invoke(
             cli,
             [
@@ -88,7 +87,6 @@ def test_selection(capfd):
         assert "model_empty_scripts" not in captured.out
         # It has no keyword in meta
         assert "model_no_fal" not in captured.out
-
 
 def test_no_run_results(capfd):
     runner = CliRunner()
