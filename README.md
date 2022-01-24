@@ -113,28 +113,7 @@ models:
           - another_python_script.py # will be ran after the first script
 ```
 
-## Model scripts selection
-
-By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run`; that means that if you are using model selectors, `fal` will only run on the models `dbt` ran. To achieve this, fal needs the dbt-generated file `run_results.json` available.
-
-If you are running `fal` in a clean environment (no `run_results.json` available) or just want to specify which models you want to run the scripts for, `fal` handles [dbt's selection flags](https://docs.getdbt.com/reference/node-selection/syntax) for `dbt run` as well as offering an extra flag for just running _all_ models:
-
-```
---all                    Run scripts for all models.
--s, --select TEXT        Specify the nodes to include.
--m, --models TEXT        Specify the nodes to include. (Deprecated)
---exclude TEXT           Specify the models to exclude.
---selector TEXT          The selector name to use, as defined in selectors.yml
-```
-
-For passing more than one selection or exlusion, you must specify the flag multiple times:
-
-```bash
-$ fal run -s model_alpha -s model_beta
-... | Starting fal run for following models and scripts:
-model_alpha: script.py
-model_beta: script.py, other.py
-```
+By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run` (So if you are using model selectors, `fal` will only run on the selected models). If you want to run all scripts associated with models, you can do so by using the `--all` flag with the fal CLI.
 
 `fal` also provides useful helpers within the Python context to seamlessly interact with dbt models: `ref("my_dbt_model_name")` will pull a dbt model into your Python script as a [`pandas.DataFrame`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html).
 
