@@ -461,8 +461,5 @@ class FalProject:
         return filtered_models
 
 
-def 
-
-
-(models):
+def _models_ids(models):
     return list(map(lambda r: r.unique_id, models))
