@@ -113,17 +113,6 @@ class CompileArgs:
     state: any
     single_threaded: bool
 
-
-@dataclass
-class CompileArgs:
-    selector_name: str
-    select: Tuple[str]
-    models: Tuple[str]
-    exclude: Tuple[str]
-    state: any
-    single_threaded: bool
-
-
 @dataclass(init=False)
 class FalDbt:
     project_dir: str
