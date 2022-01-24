@@ -3,6 +3,10 @@ name: Run Integration Tests
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'LICENSE'
   push:
     branches: [ main ]
   workflow_dispatch:
