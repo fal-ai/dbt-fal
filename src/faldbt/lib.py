@@ -185,10 +185,7 @@ def write_target(
     relation = _get_target_relation(target, project_path, profiles_dir)
 
     engine = _alchemy_engine(adapter, target)
-    pddb = pdsql.SQLDatabase(
-        engine,
-        meta=MetaData(engine, schema=target.schema),
-    )
+    pddb = pdsql.SQLDatabase(engine, schema=target.schema)
     pdtable = pdsql.SQLTable(target.name, pddb, data, index=False)
     alchemy_table: sqlalchemy.Table = pdtable.table.to_metadata(pdtable.pd_sql.meta)
 
