@@ -46,10 +46,7 @@ def test_version():
 def test_selection(capfd):
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(
-            os.path.join(Path.cwd(), "tests/mock"), tmp_dir, dirs_exist_ok=True
-        )
-
+        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
         result = runner.invoke(
             cli,
             [
