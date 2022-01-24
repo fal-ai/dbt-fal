@@ -92,16 +92,13 @@ class DbtManifest:
         return list(self.nativeManifest.sources.values())
 
 
-@dataclass(init=False)
+@dataclass
 class DbtRunResult:
     nativeRunResult: RunResultsArtifact
-    results: Sequence[RunResultOutput]
+    results: Sequence[RunResultOutput] = field(init=False)
 
-    def __init__(self, nativeRunResult: RunResultsArtifact):
-        self.results = []
-        self.nativeRunResult = nativeRunResult
-        if self.nativeRunResult:
-            self.results = nativeRunResult.results
+    def __post_init__(self):
+        self.results = self.nativeRunResult.results
 
 
 @dataclass
@@ -439,16 +436,8 @@ class FalProject:
 
     def get_filtered_models(self, all, selected) -> List[DbtModel]:
         selected_ids = _models_ids(self._faldbt._compile_task._flattened_nodes)
+        models_ids = _models_ids(self._faldbt._run_results.results)
         filtered_models: List[DbtModel] = []
-
-        if (
-            not all
-            and not selected
-            and self._faldbt._run_results.nativeRunResult is None
-        ):
-            raise parse.FalParseError(
-                "Cannot define models to run without selection flags or dbt run_results artifact"
-            )
 
         for node in self._get_models_with_keyword(self.keyword):
             if selected:
@@ -456,7 +445,7 @@ class FalProject:
                     filtered_models.append(node)
             elif all:
                 filtered_models.append(node)
-            elif self.get_model_status(node) != "skipped":
+            elif node.unique_id in models_ids:
                 filtered_models.append(node)
 
         return filtered_models
