@@ -44,11 +44,13 @@ Once the transformer dependency is installed create a python file in the locatio
 # models/zendesk_sentiment_analysis.py
 
 from transformers import pipeline
+import pandas as pd
+import numpy as np
 
 ticket_data = ref("stg_zendesk_ticket_data")
 ticket_descriptions = list(ticket_data.description)
 classifier = pipeline("sentiment-analysis")
-description_sentimet_analysis = classifier(ticket_descriptions)
+description_sentiment_analysis = classifier(ticket_descriptions)
 ```
 
 ## Writing the analysis results back to your warehouse
@@ -71,7 +73,7 @@ Then let's organize the resulting data frame before uploading it
 # models/zendesk_sentiment_analysis.py [continuation]
 
 rows = []
-for id, sentiment in zip(ticket_data.id, description_sentimet_analysis):
+for id, sentiment in zip(ticket_data.id, description_sentiment_analysis):
     rows.append((int(id), sentiment["label"], sentiment["score"]))
 
 records = np.array(rows, dtype=[("id", int), ("label", "U8"), ("score", float)])
