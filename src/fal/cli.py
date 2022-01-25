@@ -77,7 +77,8 @@ def cli():
     "--script",
     nargs=1,
     default=None,
-    help="Specify script to run, overrides schema.yml",
+    multiple=True,
+    help="Specify scripts to run, overrides schema.yml",
     type=click.STRING,
 )
 @click.option(
@@ -137,7 +138,8 @@ def run(
         if script:
             scripts = []
             for model in models:
-                scripts.append(FalScript(model, script))
+                for el in script:
+                    scripts.append(FalScript(model, el))
             return run_scripts(scripts, project)
 
         if experimental_ordering:
