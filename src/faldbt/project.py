@@ -113,7 +113,6 @@ class CompileArgs:
     state: any
     single_threaded: bool
 
-
 @dataclass(init=False)
 class FalDbt:
     project_dir: str
