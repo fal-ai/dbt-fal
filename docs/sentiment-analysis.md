@@ -33,7 +33,7 @@ Alternatively you can load this data to your warehouse with in any way as you li
 Let's first install the transformer library from hugging face. Head to your terminal and the python environment that you have installed `fal` and run:
 
 ```
-pip install transformers pandas numpy
+pip install transformers pandas numpy tensorflow
 ```
 
 (We are working on better dependency managment, head over to this [github issue](https://github.com/fal-ai/fal/issues/10) if you run into any problems with this step)
