@@ -111,6 +111,16 @@ class DbtManifest:
             )
         )
 
+    def get_tests(self):
+        return list(
+            filter(
+                lambda test: test.node.resource_type == NodeType.Test,
+                map(
+                    lambda node: DbtTest(node=node), self.nativeManifest.nodes.values()
+                ),
+            )
+        )
+
     def get_sources(self) -> List[ParsedSourceDefinition]:
         return list(self.nativeManifest.sources.values())
 
@@ -242,6 +252,17 @@ class FalDbt:
             model.set_status(self.get_model_status(model.unique_id))
             models.append(model)
         return models
+
+    def list_tests(self) -> List[DbtTest]:
+        """
+        List tests
+        """
+        tests = []
+        for test in self._manifest.get_tests():
+            test.set_status(self.get_model_status(test.unique_id))
+            tests.append(test)
+
+        return tests
 
     def list_features(self) -> List[Feature]:
         return self.features
