@@ -49,9 +49,9 @@ class DbtTest:
 
     def __post_init__(self):
         node = self.node
-        self.name = node.name
         self.unique_id = node.unique_id
         if node.resource_type == NodeType.Test:
+            self.name = node.test_metadata.name
             self.model = re.findall(r"'([^']+)'", node.test_metadata.kwargs['model'])[0]
             self.column = node.test_metadata.kwargs['column_name']
 

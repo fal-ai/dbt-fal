@@ -24,7 +24,16 @@ class CurrentModel:
     name: str
     status: NodeStatus
     columns: Dict[str, ColumnInfo]
+    tests: List[Any]
     meta: Dict[Any, Any]
+
+
+@dataclass
+class CurrentTest:
+    name: str
+    modelname: str
+    column: str
+    status: str
 
 
 @dataclass
@@ -45,10 +54,13 @@ def run_scripts(list: List[FalScript], project: FalProject):
         meta = model.meta
         _del_key(meta, project.keyword)
 
+        tests = _process_tests(model.tests)
+
         current_model = CurrentModel(
             name=model.name,
             status=project.get_model_status(model),
             columns=model.columns,
+            tests=tests,
             meta=meta,
         )
 
@@ -80,3 +92,11 @@ def _del_key(dict: Dict[str, Any], key: str):
 
 def _get_target_path(config: RuntimeConfig) -> Path:
     return Path(os.path.realpath(os.path.join(config.project_root, config.target_path)))
+
+
+def _process_tests(tests: List[Any]):
+    return list(map(
+        lambda test: CurrentTest(name=test.name,
+                                 column=test.column,
+                                 status=test.status.name,
+                                 modelname=test.model), tests))
