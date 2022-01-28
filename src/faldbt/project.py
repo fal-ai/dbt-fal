@@ -1,11 +1,12 @@
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Dict, List, List, Any, Optional, Tuple, TypeVar, Sequence, Union
 from pathlib import Path
 
 from dbt.node_types import NodeType
 from dbt.config import RuntimeConfig
-from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
+from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition, ParsedGenericTestNode
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -39,12 +40,33 @@ def normalize_directories(base: str, dirs: List[str]) -> List[Path]:
 
 
 @dataclass
+class DbtTest:
+    node: ParsedGenericTestNode
+    name: str = field(init=False)
+    model: str = field(init=False)
+    column: str = field(init=False)
+    status: str = field(init=False)
+
+    def __post_init__(self):
+        node = self.node
+        self.name = node.name
+        self.unique_id = node.unique_id
+        if node.resource_type == NodeType.Test:
+            self.model = re.findall(r"'([^']+)'", node.test_metadata.kwargs['model'])[0]
+            self.column = node.test_metadata.kwargs['column_name']
+
+    def set_status(self, status: str):
+        self.status = status
+
+
+@dataclass
 class DbtModel:
     node: ParsedModelNode
     name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
     status: str = field(init=False)
     columns: Dict[str, Any] = field(init=False)
+    tests: List[DbtTest] = field(init=False)
 
     def __post_init__(self):
         node = self.node
@@ -59,6 +81,7 @@ class DbtModel:
 
         self.columns = node.columns
         self.unique_id = node.unique_id
+        self.tests = []
 
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
