@@ -119,6 +119,7 @@ class FalDbt:
     profiles_dir: str
     keyword: str
     features: List[Feature]
+    method: str
 
     _config: RuntimeConfig
     _manifest: DbtManifest
@@ -162,6 +163,9 @@ class FalDbt:
         self._run_results = DbtRunResult(
             parse.get_dbt_results(self.project_dir, self._config)
         )
+
+        self.method = self._run_results.nativeRunResult.args['rpc_method']
+
         self._model_status_map = dict(
             map(
                 lambda res: [res.unique_id, res.status],
