@@ -484,6 +484,15 @@ class FalProject:
             filter(lambda model: keyword in model.meta, self._faldbt.list_models())
         )
 
+    def _map_tests_to_models(self, models: List[DbtModel], tests: List[DbtTest]) -> List[DbtModel]:
+        for model in models:
+            for test in tests:
+                if test.model == model.name:
+                    model.tests.append(test)
+                    if test.status != 'skipped':
+                        model.set_status('tested')
+        return models
+
     def get_filtered_models(self, all, selected) -> List[DbtModel]:
         selected_ids = _models_ids(self._faldbt._compile_task._flattened_nodes)
         filtered_models: List[DbtModel] = []
@@ -497,11 +506,18 @@ class FalProject:
                 "Cannot define models to run without selection flags or dbt run_results artifact"
             )
 
-        for node in self._get_models_with_keyword(self.keyword):
+        models = self._get_models_with_keyword(self.keyword)
+        if self._faldbt.method == 'test':
+            tests = self._faldbt.list_tests()
+            models = self._map_tests_to_models(models, tests)
+
+        for node in models:
             if selected:
                 if node.unique_id in selected_ids:
                     filtered_models.append(node)
             elif all:
+                filtered_models.append(node)
+            elif self._faldbt.method == 'test' and node.status == 'tested':
                 filtered_models.append(node)
             elif self.get_model_status(node) != "skipped":
                 filtered_models.append(node)
