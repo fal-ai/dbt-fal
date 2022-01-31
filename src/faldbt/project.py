@@ -6,7 +6,7 @@ from pathlib import Path
 
 from dbt.node_types import NodeType
 from dbt.config import RuntimeConfig
-from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition, ParsedGenericTestNode
+from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -41,7 +41,7 @@ def normalize_directories(base: str, dirs: List[str]) -> List[Path]:
 
 @dataclass
 class DbtTest:
-    node: ParsedGenericTestNode
+    node: Any
     name: str = field(init=False)
     model: str = field(init=False)
     column: str = field(init=False)
