@@ -197,7 +197,10 @@ class FalDbt:
             parse.get_dbt_results(self.project_dir, self._config)
         )
 
-        self.method = self._run_results.nativeRunResult.args['rpc_method']
+        self.method = 'run'
+
+        if self._run_results.nativeRunResult:
+            self.method = self._run_results.nativeRunResult.args['rpc_method']
 
         self._model_status_map = dict(
             map(
