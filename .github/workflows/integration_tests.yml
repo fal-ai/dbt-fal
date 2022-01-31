@@ -80,3 +80,12 @@ jobs:
 
           echo "*** Checking fal output files ***"
           python check_outputs.py
+
+          echo "*** Starting dbt test run ***"
+          dbt test --profiles-dir . --model agent_wait_time
+
+          echo "*** Starting fal run ***"
+          fal run --profiles-dir .
+
+          echo "*** Checking fal output files ***"
+          python check_outputs.py test
