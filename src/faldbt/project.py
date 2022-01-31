@@ -510,7 +510,7 @@ class FalProject:
             )
 
         models = self._get_models_with_keyword(self.keyword)
-        if self._faldbt.method == 'test':
+        if self._faldbt.method in ['test', 'build']:
             tests = self._faldbt.list_tests()
             models = self._map_tests_to_models(models, tests)
 
@@ -520,7 +520,7 @@ class FalProject:
                     filtered_models.append(node)
             elif all:
                 filtered_models.append(node)
-            elif self._faldbt.method == 'test' and node.status == 'tested':
+            elif self._faldbt.method in ['test', 'build'] and node.status == 'tested':
                 filtered_models.append(node)
             elif self.get_model_status(node) != "skipped":
                 filtered_models.append(node)
