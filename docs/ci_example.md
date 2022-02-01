@@ -2,11 +2,11 @@
 You can use fal as part of your CI/CD pipeline. In this example we use [Github Actions](https://github.com/features/actions).
 
 ## Environment variables
-Environemt variables need to be provided as [repository secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) These will be different depending on which sources and outputs your project uses. In this example we use [BigQuery](https://cloud.google.com/bigquery/) both as a source and as an output, and so we need to provide BigQuery-specific environment variables:
+Environment variables need to be provided as [repository secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) These will be different depending on which sources and outputs your project uses. In this example we use [BigQuery](https://cloud.google.com/bigquery/) both as a source and as an output, and so we need to provide BigQuery-specific environment variables:
 
 - `SERVICE_ACCOUNT_KEY`: contents of a `keyfile.json`. For more information see [here](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
-- `GCLOUD_PROJECT`: your Google Cloud project ID.
-- `BQ_DATASET`: name of the BigQuery dataset
+- `GCLOUD_PROJECT`: your Google Cloud project ID, necessary for seeding
+- `BQ_DATASET`: name of the BigQuery dataset, necessary for seeding
 
 If your fal scripts require environment variables, these should also be provided as repository secrets.
 
@@ -38,9 +38,9 @@ All the packages that are necessary to run dbt and fal should be put in `require
 
 ```
 # Core dependencies
-dbt-core==0.21.0
-dbt-bigquery==0.21.0
-fal==0.1.26
+dbt-core
+dbt-bigquery
+fal
 
 # Script dependencies
 slack_sdk
@@ -60,18 +60,6 @@ The first step in our workflow is to setup python and install the dependencies f
 - name: Install dependencies
   run: |
     pip install --upgrade --upgrade-strategy eager -r requirements.txt
-```
-
-### Setup dbt profile
-Next, we setup `profiles.yml`:
-
-```yaml
-- name: Setup dbt profile
-  run: |
-    mkdir $HOME/.dbt
-    cp profiles.yml $HOME/.dbt/
-    ls -la $HOME/.dbt/
-    echo 'dbt profile is ready'
 ```
 
 ### Make secret key available
@@ -103,8 +91,8 @@ Finally, we setup the necessary environment variables and trigger dbt and fal ru
   run: |
     export KEYFILE_DIR=$HOME
     dbt seed
-    dbt run
-    fal run
+    dbt run --profiles-dir .
+    fal run --profiles-dir .
 ```
 
 ## Full example
