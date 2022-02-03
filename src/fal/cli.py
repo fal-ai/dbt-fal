@@ -82,6 +82,11 @@ def cli():
     type=click.STRING,
 )
 @click.option(
+    "--no-logging",
+    help="Disable run info logging (will not affect logging from scripts)",
+    is_flag=True
+)
+@click.option(
     "--experimental-ordering",
     help="Turns on ordering of the fal scripts.",
     is_flag=True,
@@ -101,6 +106,7 @@ def run(
     exclude,
     selector,
     script,
+    no_logging,
     experimental_ordering,
     debug,
 ):
@@ -129,11 +135,12 @@ def run(
             )
 
         faldbt = FalDbt(
-            real_project_dir, real_profiles_dir, select, exclude, selector, keyword
+            real_project_dir, real_profiles_dir, select, exclude, selector, keyword, no_logging
         )
         project = FalProject(faldbt)
         models = project.get_filtered_models(all, selector_flags)
-        print_run_info(models, keyword)
+        if not no_logging:
+            print_run_info(models, keyword)
 
         if script:
             scripts = []
@@ -151,7 +158,7 @@ def run(
                     scripts.append(FalScript(model, path))
 
         # run model specific scripts first
-        run_scripts(scripts, project)
+        run_scripts(scripts, project, no_logging)
 
         # then run global scripts
         global_scripts = list(
@@ -161,4 +168,4 @@ def run(
             )
         )
 
-        run_global_scripts(global_scripts, project)
+        run_global_scripts(global_scripts, project, no_logging)

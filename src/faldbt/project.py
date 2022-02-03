@@ -118,6 +118,7 @@ class FalDbt:
     project_dir: str
     profiles_dir: str
     keyword: str
+    no_logging: bool
     features: List[Feature]
 
     _config: RuntimeConfig
@@ -140,13 +141,15 @@ class FalDbt:
         exclude: List[str] = tuple(),
         selector_name: str = None,
         keyword: str = "fal",
+        no_logging: bool = False
     ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
         self.keyword = keyword
+        self.no_logging = no_logging
         self._firestore_client = None
 
-        lib.initialize_dbt_flags(profiles_dir=profiles_dir)
+        lib.initialize_dbt_flags(profiles_dir=profiles_dir, no_logging=no_logging)
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir)
 

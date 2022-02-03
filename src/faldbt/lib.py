@@ -45,7 +45,7 @@ class FlagsArgs:
     use_colors: bool
 
 
-def initialize_dbt_flags(profiles_dir: str):
+def initialize_dbt_flags(profiles_dir: str, no_logging: bool):
     """
     Initializes the flags module from dbt, since it's accessed from around their code.
     """
@@ -64,7 +64,7 @@ def initialize_dbt_flags(profiles_dir: str):
 
     # Re-enable logging for 1.0.0 through old API of logger
     # TODO: migrate for 1.0.0 code to new event system
-    if DBT_VCURRENT.compare(DBT_V1) >= 0:
+    if DBT_VCURRENT.compare(DBT_V1) >= 0 and not no_logging:
         flags.ENABLE_LEGACY_LOGGER = "1"
         if logger.disabled:
             logger.enable()

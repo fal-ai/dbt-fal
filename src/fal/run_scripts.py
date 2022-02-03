@@ -38,7 +38,7 @@ class Context:
     config: ContextConfig
 
 
-def run_scripts(list: List[FalScript], project: FalProject):
+def run_scripts(list: List[FalScript], project: FalProject, no_logging: bool):
     faldbt = project._faldbt
     for script in list:
         model = script.model
@@ -55,18 +55,20 @@ def run_scripts(list: List[FalScript], project: FalProject):
         context_config = ContextConfig(_get_target_path(faldbt._config))
         context = Context(current_model=current_model, config=context_config)
 
-        logger.info("Running script {} for model {}", script.path, model.name)
+        if not no_logging:
+            logger.info("Running script {} for model {}", script.path, model.name)
 
         script.exec(context, faldbt)
 
 
-def run_global_scripts(list: List[FalScript], project: FalProject):
+def run_global_scripts(list: List[FalScript], project: FalProject, no_logging: bool):
     faldbt = project._faldbt
     for script in list:
         context_config = ContextConfig(_get_target_path(faldbt._config))
         context = Context(current_model=None, config=context_config)
 
-        logger.info("Running global script {}", script.path)
+        if not no_logging:
+            logger.info("Running global script {}", script.path)
 
         script.exec(context, faldbt)
 
