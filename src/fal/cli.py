@@ -74,6 +74,14 @@ def cli():
     type=click.STRING,
 )
 @click.option(
+    "--script",
+    nargs=1,
+    default=None,
+    multiple=True,
+    help="Specify scripts to run, overrides schema.yml",
+    type=click.STRING,
+)
+@click.option(
     "--experimental-ordering",
     help="Turns on ordering of the fal scripts.",
     is_flag=True,
@@ -92,6 +100,7 @@ def run(
     models,
     exclude,
     selector,
+    script,
     experimental_ordering,
     debug,
 ):
@@ -125,6 +134,13 @@ def run(
         project = FalProject(faldbt)
         models = project.get_filtered_models(all, selector_flags)
         print_run_info(models, keyword)
+
+        if script:
+            scripts = []
+            for model in models:
+                for el in script:
+                    scripts.append(FalScript(model, el))
+            return run_scripts(scripts, project)
 
         if experimental_ordering:
             scripts = ScriptGraph(models, keyword, project_dir).sort()
