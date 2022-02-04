@@ -52,6 +52,10 @@ class DbtTest:
         self.unique_id = node.unique_id
         if node.resource_type == NodeType.Test:
             self.name = node.test_metadata.name
+
+            # node.test_metadata.kwargs looks like this:
+            # kwargs={'column_name': 'y', 'model': "{{ get_where_subquery(ref('boston')) }}"}
+            # and we want to get 'boston' is the model name that we want extract
             self.model = re.findall(r"'([^']+)'", node.test_metadata.kwargs['model'])[0]
             self.column = node.test_metadata.kwargs['column_name']
 
