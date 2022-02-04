@@ -489,10 +489,11 @@ class FalProject:
 
     def _map_tests_to_models(self, models: List[DbtModel], tests: List[DbtTest]) -> List[DbtModel]:
         for model in models:
+            model_status = self.get_model_status(model)
             for test in tests:
                 if test.model == model.name:
                     model.tests.append(test)
-                    if test.status != 'skipped':
+                    if test.status != 'skipped' and model_status == 'skipped':
                         model.set_status('tested')
         return models
 
@@ -519,8 +520,6 @@ class FalProject:
                 if node.unique_id in selected_ids:
                     filtered_models.append(node)
             elif all:
-                filtered_models.append(node)
-            elif self._faldbt.method in ['test', 'build'] and node.status == 'tested':
                 filtered_models.append(node)
             elif self.get_model_status(node) != "skipped":
                 filtered_models.append(node)
