@@ -82,6 +82,11 @@ def cli():
     type=click.STRING,
 )
 @click.option(
+    "--before",
+    help="Run scripts specified in model `before` tag",
+    is_flag=True
+)
+@click.option(
     "--experimental-ordering",
     help="Turns on ordering of the fal scripts.",
     is_flag=True,
@@ -101,6 +106,7 @@ def run(
     exclude,
     selector,
     script,
+    before,
     experimental_ordering,
     debug,
 ):
@@ -132,8 +138,8 @@ def run(
             real_project_dir, real_profiles_dir, select, exclude, selector, keyword
         )
         project = FalProject(faldbt)
-        models = project.get_filtered_models(all, selector_flags)
-        print_run_info(models, keyword)
+        models = project.get_filtered_models(all, selector_flags, before)
+        print_run_info(models, keyword, before)
 
         if script:
             scripts = []
@@ -147,7 +153,7 @@ def run(
         else:
             scripts = []
             for model in models:
-                for path in model.get_script_paths(keyword, real_project_dir):
+                for path in model.get_script_paths(keyword, real_project_dir, before):
                     scripts.append(FalScript(model, path))
 
         # run model specific scripts first

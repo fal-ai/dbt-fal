@@ -5,7 +5,8 @@ models:
     meta:
       fal:
         scripts:
-          - fal_scripts/test.py
+          after:
+            - fal_scripts/test.py
   - name: model_feature_store
     columns:
       - name: a
