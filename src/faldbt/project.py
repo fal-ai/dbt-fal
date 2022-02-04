@@ -1,4 +1,5 @@
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Dict, List, List, Any, Optional, Tuple, TypeVar, Sequence, Union
 from pathlib import Path
@@ -39,12 +40,37 @@ def normalize_directories(base: str, dirs: List[str]) -> List[Path]:
 
 
 @dataclass
+class DbtTest:
+    node: Any
+    name: str = field(init=False)
+    model: str = field(init=False)
+    column: str = field(init=False)
+    status: str = field(init=False)
+
+    def __post_init__(self):
+        node = self.node
+        self.unique_id = node.unique_id
+        if node.resource_type == NodeType.Test:
+            self.name = node.test_metadata.name
+
+            # node.test_metadata.kwargs looks like this:
+            # kwargs={'column_name': 'y', 'model': "{{ get_where_subquery(ref('boston')) }}"}
+            # and we want to get 'boston' is the model name that we want extract
+            self.model = re.findall(r"'([^']+)'", node.test_metadata.kwargs['model'])[0]
+            self.column = node.test_metadata.kwargs['column_name']
+
+    def set_status(self, status: str):
+        self.status = status
+
+
+@dataclass
 class DbtModel:
     node: ParsedModelNode
     name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
     status: str = field(init=False)
     columns: Dict[str, Any] = field(init=False)
+    tests: List[DbtTest] = field(init=False)
 
     def __post_init__(self):
         node = self.node
@@ -59,6 +85,7 @@ class DbtModel:
 
         self.columns = node.columns
         self.unique_id = node.unique_id
+        self.tests = []
 
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
@@ -84,6 +111,16 @@ class DbtManifest:
                 lambda model: model.node.resource_type == NodeType.Model,
                 map(
                     lambda node: DbtModel(node=node), self.nativeManifest.nodes.values()
+                ),
+            )
+        )
+
+    def get_tests(self):
+        return list(
+            filter(
+                lambda test: test.node.resource_type == NodeType.Test,
+                map(
+                    lambda node: DbtTest(node=node), self.nativeManifest.nodes.values()
                 ),
             )
         )
@@ -119,6 +156,7 @@ class FalDbt:
     profiles_dir: str
     keyword: str
     features: List[Feature]
+    method: str
 
     _config: RuntimeConfig
     _manifest: DbtManifest
@@ -162,6 +200,12 @@ class FalDbt:
         self._run_results = DbtRunResult(
             parse.get_dbt_results(self.project_dir, self._config)
         )
+
+        self.method = 'run'
+
+        if self._run_results.nativeRunResult:
+            self.method = self._run_results.nativeRunResult.args['rpc_method']
+
         self._model_status_map = dict(
             map(
                 lambda res: [res.unique_id, res.status],
@@ -215,6 +259,17 @@ class FalDbt:
             model.set_status(self.get_model_status(model.unique_id))
             models.append(model)
         return models
+
+    def list_tests(self) -> List[DbtTest]:
+        """
+        List tests
+        """
+        tests = []
+        for test in self._manifest.get_tests():
+            test.set_status(self.get_model_status(test.unique_id))
+            tests.append(test)
+
+        return tests
 
     def list_features(self) -> List[Feature]:
         return self.features
@@ -436,6 +491,16 @@ class FalProject:
             filter(lambda model: keyword in model.meta, self._faldbt.list_models())
         )
 
+    def _map_tests_to_models(self, models: List[DbtModel], tests: List[DbtTest]) -> List[DbtModel]:
+        for model in models:
+            model_status = self.get_model_status(model)
+            for test in tests:
+                if test.model == model.name:
+                    model.tests.append(test)
+                    if test.status != 'skipped' and model_status == 'skipped':
+                        model.set_status('tested')
+        return models
+
     def get_filtered_models(self, all, selected) -> List[DbtModel]:
         selected_ids = _models_ids(self._faldbt._compile_task._flattened_nodes)
         filtered_models: List[DbtModel] = []
@@ -449,7 +514,12 @@ class FalProject:
                 "Cannot define models to run without selection flags or dbt run_results artifact"
             )
 
-        for node in self._get_models_with_keyword(self.keyword):
+        models = self._get_models_with_keyword(self.keyword)
+        if self._faldbt.method in ['test', 'build']:
+            tests = self._faldbt.list_tests()
+            models = self._map_tests_to_models(models, tests)
+
+        for node in models:
             if selected:
                 if node.unique_id in selected_ids:
                     filtered_models.append(node)

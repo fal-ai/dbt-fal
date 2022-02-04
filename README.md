@@ -179,6 +179,12 @@ context.current_model.status
 #= 'skipped'
 ```
 
+`context` object also has access to test information related to the current model. If the previous dbt command was either `test` or `build`, the `context.current_model.test` property is populated with a list of tests:
+```python
+context.current_model.tests
+#= [CurrentTest(name='not_null', modelname='historical_ozone_levels, column='ds', status='Pass')]
+```
+
 ### `ref` and `source` functions
 There are also available some familiar functions from `dbt`
 ```python
