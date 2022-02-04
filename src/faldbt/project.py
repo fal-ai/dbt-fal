@@ -525,6 +525,8 @@ class FalProject:
                     filtered_models.append(node)
             elif all:
                 filtered_models.append(node)
+            elif self._faldbt.method in ['test', 'build'] and node.status == 'tested':
+                filtered_models.append(node)
             elif self.get_model_status(node) != "skipped":
                 filtered_models.append(node)
 
