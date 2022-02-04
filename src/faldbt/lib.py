@@ -13,9 +13,9 @@ from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.graph.manifest import Manifest
 from dbt.parser.manifest import process_node
-from dbt.logger import GLOBAL_LOGGER as logger
 
 from . import parse
+from fal.utils import FalLogger
 
 import pandas as pd
 from pandas.io import sql as pdsql
@@ -45,7 +45,7 @@ class FlagsArgs:
     use_colors: bool
 
 
-def initialize_dbt_flags(profiles_dir: str, no_logging: bool):
+def initialize_dbt_flags(profiles_dir: str, fal_logger: FalLogger):
     """
     Initializes the flags module from dbt, since it's accessed from around their code.
     """
@@ -64,10 +64,9 @@ def initialize_dbt_flags(profiles_dir: str, no_logging: bool):
 
     # Re-enable logging for 1.0.0 through old API of logger
     # TODO: migrate for 1.0.0 code to new event system
-    if DBT_VCURRENT.compare(DBT_V1) >= 0 and not no_logging:
+    if DBT_VCURRENT.compare(DBT_V1) >= 0:
         flags.ENABLE_LEGACY_LOGGER = "1"
-        if logger.disabled:
-            logger.enable()
+        fal_logger.re_enable()
 
 
 def register_adapters(config: RuntimeConfig):
@@ -103,12 +102,13 @@ def _get_adapter(project_path: str, profiles_dir: str):
 
 
 def _execute_sql(
-    manifest: Manifest, project_path: str, profiles_dir: str, sql: str
+    manifest: Manifest, project_path: str, profiles_dir: str, sql: str, logger: FalLogger
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
     node = _get_operation_node(manifest, project_path, profiles_dir, sql)
     adapter = _get_adapter(project_path, profiles_dir)
 
-    logger.info("Running query\n{}", sql)
+    if logger:
+        logger.info("Running query\n{}", sql)
 
     result = None
     with adapter.connection_for(node):
@@ -153,7 +153,7 @@ def _get_target_relation(
 def execute_sql(
     manifest: Manifest, project_path: str, profiles_dir: str, sql: str
 ) -> RemoteRunResult:
-    _, result = _execute_sql(manifest, project_path, profiles_dir, sql)
+    _, result = _execute_sql(manifest, project_path, profiles_dir, sql, logger=None)
     return result
 
 
@@ -162,6 +162,7 @@ def fetch_target(
     project_path: str,
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
+    logger: FalLogger
 ) -> RemoteRunResult:
     relation = _get_target_relation(target, project_path, profiles_dir)
 
@@ -169,7 +170,7 @@ def fetch_target(
         raise Exception(f"Could not get relation for '{target.unique_id}'")
 
     query = f"SELECT * FROM {relation}"
-    _, result = _execute_sql(manifest, project_path, profiles_dir, query)
+    _, result = _execute_sql(manifest, project_path, profiles_dir, query, logger)
     return result
 
 
@@ -179,6 +180,7 @@ def write_target(
     project_path: str,
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
+    logger: FalLogger
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_path, profiles_dir)
 
@@ -199,7 +201,7 @@ def write_target(
         )
 
         _execute_sql(
-            manifest, project_path, profiles_dir, six.text_type(create_stmt).strip()
+            manifest, project_path, profiles_dir, six.text_type(create_stmt).strip(), logger
         )
 
     insert_stmt = (
@@ -209,7 +211,7 @@ def write_target(
     )
 
     _, result = _execute_sql(
-        manifest, project_path, profiles_dir, six.text_type(insert_stmt).strip()
+        manifest, project_path, profiles_dir, six.text_type(insert_stmt).strip(), logger
     )
     return result
 

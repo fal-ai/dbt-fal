@@ -8,13 +8,13 @@ from dbt.config import RuntimeConfig
 from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput
-from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.task.compile import CompileTask
 import dbt.tracking
 
 from . import parse
 from . import lib
 from fal.feature_store.feature import Feature
+from fal.utils import FalLogger
 
 import firebase_admin
 from firebase_admin import firestore
@@ -118,7 +118,7 @@ class FalDbt:
     project_dir: str
     profiles_dir: str
     keyword: str
-    no_logging: bool
+    logger: FalLogger
     features: List[Feature]
 
     _config: RuntimeConfig
@@ -137,19 +137,19 @@ class FalDbt:
         self,
         project_dir: str,
         profiles_dir: str,
+        logger: FalLogger,
         select: List[str] = tuple(),
         exclude: List[str] = tuple(),
         selector_name: str = None,
         keyword: str = "fal",
-        no_logging: bool = False
     ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
         self.keyword = keyword
-        self.no_logging = no_logging
+        self.logger = logger
         self._firestore_client = None
 
-        lib.initialize_dbt_flags(profiles_dir=profiles_dir, no_logging=no_logging)
+        lib.initialize_dbt_flags(profiles_dir=profiles_dir, fal_logger=logger)
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir)
 
@@ -274,6 +274,7 @@ class FalDbt:
             self.project_dir,
             self.profiles_dir,
             target_model,
+            self.logger
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names, coerce_float=True
@@ -298,6 +299,7 @@ class FalDbt:
             self.project_dir,
             self.profiles_dir,
             target_source,
+            self.logger
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
@@ -325,6 +327,7 @@ class FalDbt:
             self.project_dir,
             self.profiles_dir,
             target_source,
+            self.logger
         )
 
     def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):
@@ -380,7 +383,7 @@ class FalDbt:
             self._firestore_client = firestore.client(app=app)
 
         except Exception:
-            logger.warn(
+            self.logger.warn(
                 "Could not find acceptable GCP credentials in profiles.yml, trying default GCP Application"
             )
 
@@ -395,7 +398,7 @@ class FalDbt:
 
                 self._firestore_client = firestore.client(app=app)
             except Exception:
-                logger.warn(
+                self.logger.warn(
                     "Could not find acceptable Default GCP Application credentials"
                 )
 

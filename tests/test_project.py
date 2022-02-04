@@ -2,15 +2,18 @@ import os
 from pathlib import Path
 
 from fal import FalDbt
+from fal.utils import FalLogger
 
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 project_dir = os.path.join(Path.cwd(), "tests/mock")
+logger = FalLogger(disabled=False)
 
 
 def test_scripts():
     faldbt = FalDbt(
         profiles_dir=profiles_dir,
         project_dir=project_dir,
+        logger=logger
     )
 
     assert 0 == len(faldbt._global_script_paths)
@@ -30,6 +33,7 @@ def test_features():
     faldbt = FalDbt(
         profiles_dir=profiles_dir,
         project_dir=project_dir,
+        logger=logger
     )
 
     # Feature definitions

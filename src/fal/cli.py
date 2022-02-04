@@ -6,7 +6,7 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import run_global_scripts, run_scripts
 from fal.dag import FalScript, ScriptGraph
-from fal.utils import print_run_info
+from fal.utils import FalLogger
 from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 
@@ -82,7 +82,7 @@ def cli():
     type=click.STRING,
 )
 @click.option(
-    "--no-logging",
+    "--disable-logging",
     help="Disable run info logging (will not affect logging from scripts)",
     is_flag=True
 )
@@ -106,13 +106,15 @@ def run(
     exclude,
     selector,
     script,
-    no_logging,
+    disable_logging,
     experimental_ordering,
     debug,
 ):
     with log_manager.applicationbound():
         if debug:
             log_manager.set_debug()
+
+        logger = FalLogger(disabled=disable_logging)
 
         real_project_dir = os.path.realpath(os.path.normpath(project_dir))
         real_profiles_dir = None
@@ -135,12 +137,12 @@ def run(
             )
 
         faldbt = FalDbt(
-            real_project_dir, real_profiles_dir, select, exclude, selector, keyword, no_logging
+            real_project_dir, real_profiles_dir, logger, select, exclude, selector, keyword
         )
         project = FalProject(faldbt)
         models = project.get_filtered_models(all, selector_flags)
-        if not no_logging:
-            print_run_info(models, keyword)
+
+        logger.print_run_info(models, keyword)
 
         if script:
             scripts = []
@@ -158,7 +160,7 @@ def run(
                     scripts.append(FalScript(model, path))
 
         # run model specific scripts first
-        run_scripts(scripts, project, no_logging)
+        run_scripts(scripts, project, logger)
 
         # then run global scripts
         global_scripts = list(
@@ -168,4 +170,4 @@ def run(
             )
         )
 
-        run_global_scripts(global_scripts, project, no_logging)
+        run_global_scripts(global_scripts, project, logger)
