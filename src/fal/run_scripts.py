@@ -39,6 +39,7 @@ class CurrentTest:
 @dataclass
 class ContextConfig:
     target_path: Path
+    script_path: Path
 
 
 @dataclass
@@ -64,7 +65,7 @@ def run_scripts(list: List[FalScript], project: FalProject):
             meta=meta,
         )
 
-        context_config = ContextConfig(_get_target_path(faldbt._config))
+        context_config = ContextConfig(_get_target_path(faldbt._config), Path(script.path))
         context = Context(current_model=current_model, config=context_config)
 
         logger.info("Running script {} for model {}", script.path, model.name)
