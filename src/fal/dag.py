@@ -75,10 +75,10 @@ class _ScriptGraphBuilder:
     modelToScriptLookup: Dict[str, List[Path]] = {}
     falScripts: Dict[_ScriptUniqueKey, FalScript] = {}
 
-    def __init__(self, models: List[DbtModel], keyword: str, project_dir: str):
+    def __init__(self, models: List[DbtModel], keyword: str, project_dir: str, before: bool = False):
         for model in models:
             self.modelToScriptLookup[model.name] = model.get_script_paths(
-                keyword, project_dir
+                keyword, project_dir, before=before
             )
             self.modelNameToModelLookup[model.name] = model
         for model_name, script_list in self.modelToScriptLookup.items():

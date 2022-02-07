@@ -6,6 +6,14 @@ models:
       fal:
         scripts:
           - fal_scripts/test.py
+
+  - name: model_with_before_scripts
+    meta:
+      fal:
+        scripts:
+          before:
+            - fal_scripts/test.py
+
   - name: model_feature_store
     columns:
       - name: a
