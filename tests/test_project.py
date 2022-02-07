@@ -21,9 +21,13 @@ def test_scripts():
     # Find the correct one
     for model in models:
         if model.name == "model_feature_store":
-            assert 0 == len(model.get_scripts("fal", False))
+            assert 0 == len(model.get_scripts("fal", before=False))
         if model.name == "model_with_scripts":
-            assert 1 == len(model.get_scripts("fal", False))
+            assert 1 == len(model.get_scripts("fal", before=False))
+            assert 0 == len(model.get_scripts("fal", before=True))
+        if model.name == "model_with_before_scripts":
+            assert 1 == len(model.get_scripts("fal", before=True))
+            assert 0 == len(model.get_scripts("fal", before=False))
 
 
 def test_features():

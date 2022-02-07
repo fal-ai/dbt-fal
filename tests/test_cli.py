@@ -113,3 +113,50 @@ def test_no_run_results(capfd):
         assert result.exit_code == 0
         # Just as warning
         assert "Could not read dbt run_results artifact" in captured.out
+
+
+def test_before(capfd):
+    runner = CliRunner()
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+
+        result = runner.invoke(
+            cli,
+            [
+                "run",
+                "--project-dir",
+                tmp_dir,
+                "--profiles-dir",
+                profiles_dir,
+                "--select",
+                "model_with_scripts",
+                "--before"
+            ],
+        )
+        captured = capfd.readouterr()
+        assert result.exit_code == 0
+        assert "model_with_scripts" in captured.out
+        assert "test.py" not in captured.out
+        assert "model_with_before_scripts" not in captured.out
+        assert "model_feature_store" not in captured.out
+        assert "model_empty_scripts" not in captured.out
+        assert "model_no_fal" not in captured.out
+
+        result = runner.invoke(
+            cli,
+            [
+                "run",
+                "--project-dir",
+                tmp_dir,
+                "--profiles-dir",
+                profiles_dir,
+                "--before",
+            ],
+        )
+        captured = capfd.readouterr()
+        assert result.exit_code == 0
+        assert "model_with_scripts" not in captured.out
+        assert "model_feature_store" not in captured.out
+        assert "model_empty_scripts" not in captured.out
+        assert "model_no_fal" not in captured.out
+        assert "model_with_before_scripts" in captured.out
