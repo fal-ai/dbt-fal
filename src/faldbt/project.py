@@ -1,7 +1,7 @@
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, List, Any, Optional, Tuple, TypeVar, Sequence, Union
+from typing import Dict, List, Any, Optional, Tuple, TypeVar, Sequence, Union
 from pathlib import Path
 
 from dbt.node_types import NodeType
@@ -157,14 +157,14 @@ class FalDbt:
     keyword: str
     features: List[Feature]
     method: str
+    models: List[DbtModel]
+    tests: List[DbtTest]
 
     _config: RuntimeConfig
     _manifest: DbtManifest
     _run_results: DbtRunResult
     # Could we instead extend it and create a FalRunTak?
     _compile_task: CompileTask
-
-    _model_status_map: Dict[str, str]
 
     _global_script_paths: List[str]
 
@@ -206,12 +206,7 @@ class FalDbt:
         if self._run_results.nativeRunResult:
             self.method = self._run_results.nativeRunResult.args['rpc_method']
 
-        self._model_status_map = dict(
-            map(
-                lambda res: [res.unique_id, res.status],
-                self._run_results.results,
-            )
-        )
+        self.models, self.tests = _map_nodes_to_models(self._run_results, self._manifest)
 
         # BACKWARDS: Change intorduced in 1.0.0
         if hasattr(self._config, "model_paths"):
@@ -225,10 +220,6 @@ class FalDbt:
         )
 
         self.features = self._find_features()
-
-    def get_model_status(self, unique_id: str):
-        # Default to `skipped` status if not found, it means it did not run
-        return self._model_status_map.get(unique_id, "skipped")
 
     def list_sources(self):
         """
@@ -245,8 +236,8 @@ class FalDbt:
         List model ids available for `ref` usage, formatting like `[ref_name, ...]`
         """
         res = {}
-        for model in self._manifest.get_models():
-            res[model.unique_id] = self.get_model_status(model.unique_id)
+        for model in self.models:
+            res[model.unique_id] = model.status
 
         return res
 
@@ -254,22 +245,13 @@ class FalDbt:
         """
         List models
         """
-        models = []
-        for model in self._manifest.get_models():
-            model.set_status(self.get_model_status(model.unique_id))
-            models.append(model)
-        return models
+        return self.models
 
     def list_tests(self) -> List[DbtTest]:
         """
         List tests
         """
-        tests = []
-        for test in self._manifest.get_tests():
-            test.set_status(self.get_model_status(test.unique_id))
-            tests.append(test)
-
-        return tests
+        return self.tests
 
     def list_features(self) -> List[Feature]:
         return self.features
@@ -483,23 +465,10 @@ class FalProject:
         self.keyword = faldbt.keyword
         self.scripts = parse.get_scripts_list(faldbt.project_dir)
 
-    def get_model_status(self, model: DbtModel):
-        return self._faldbt.get_model_status(model.unique_id)
-
     def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(
             filter(lambda model: keyword in model.meta, self._faldbt.list_models())
         )
-
-    def _map_tests_to_models(self, models: List[DbtModel], tests: List[DbtTest]) -> List[DbtModel]:
-        for model in models:
-            model_status = self.get_model_status(model)
-            for test in tests:
-                if test.model == model.name:
-                    model.tests.append(test)
-                    if test.status != 'skipped' and model_status == 'skipped':
-                        model.set_status('tested')
-        return models
 
     def get_filtered_models(self, all, selected) -> List[DbtModel]:
         selected_ids = _models_ids(self._faldbt._compile_task._flattened_nodes)
@@ -515,9 +484,6 @@ class FalProject:
             )
 
         models = self._get_models_with_keyword(self.keyword)
-        if self._faldbt.method in ['test', 'build']:
-            tests = self._faldbt.list_tests()
-            models = self._map_tests_to_models(models, tests)
 
         for node in models:
             if selected:
@@ -525,9 +491,7 @@ class FalProject:
                     filtered_models.append(node)
             elif all:
                 filtered_models.append(node)
-            elif self._faldbt.method in ['test', 'build'] and node.status == 'tested':
-                filtered_models.append(node)
-            elif self.get_model_status(node) != "skipped":
+            elif node.status != "skipped":
                 filtered_models.append(node)
 
         return filtered_models
@@ -535,3 +499,23 @@ class FalProject:
 
 def _models_ids(models):
     return list(map(lambda r: r.unique_id, models))
+
+
+def _map_nodes_to_models(run_results, manifest):
+    models = manifest.get_models()
+    tests = manifest.get_tests()
+    status_map = dict(
+        map(
+            lambda res: [res.unique_id, res.status],
+            run_results.results,
+        )
+    )
+    for model in models:
+        model.set_status(status_map.get(model.unique_id, 'skipped'))
+        for test in tests:
+            if test.model == model.name:
+                model.tests.append(test)
+                test.set_status(status_map.get(test.unique_id, 'skipped'))
+                if test.status != 'skipped' and model.status == 'skipped':
+                    model.set_status('tested')
+    return (models, tests)

@@ -58,7 +58,7 @@ def run_scripts(list: List[FalScript], project: FalProject):
 
         current_model = CurrentModel(
             name=model.name,
-            status=project.get_model_status(model),
+            status=model.status,
             columns=model.columns,
             tests=tests,
             meta=meta,
@@ -98,5 +98,5 @@ def _process_tests(tests: List[Any]):
     return list(map(
         lambda test: CurrentTest(name=test.name,
                                  column=test.column,
-                                 status=test.status.name,
+                                 status=test.status,
                                  modelname=test.model), tests))
