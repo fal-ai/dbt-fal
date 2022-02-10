@@ -1,6 +1,8 @@
 # fal: do more with dbt
 fal allows you to run python scripts directly from your [dbt](https://www.getdbt.com/) project.
 
+[February Roadmap](https://www.notion.so/featuresandlabels/February-Roadmap-e6521e39514a4ed598745aa71167de6b)
+
 <p align="center">
   <a href="https://pepy.tech/project/fal">
     <img src="https://static.pepy.tech/personalized-badge/fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads" alt="Total downloads" />
