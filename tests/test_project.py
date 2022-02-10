@@ -41,5 +41,5 @@ def test_features():
 
     assert 1 == len(features)
     fs_def = features[0]
-    assert "a" == fs_def.entity_id
+    assert "a" == fs_def.entity_column
     assert "model_feature_store" == fs_def.model

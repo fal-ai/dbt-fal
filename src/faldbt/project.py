@@ -281,17 +281,17 @@ class FalDbt:
         features = []
         for model in models:
             for column_name in model.columns.keys():
-                if column_name == model.meta[keyword]["feature_store"]["entity_id"]:
+                if column_name == model.meta[keyword]["feature_store"]["entity_column"]:
                     continue
-                if column_name == model.meta[keyword]["feature_store"]["timestamp"]:
+                if column_name == model.meta[keyword]["feature_store"]["timestamp_column"]:
                     continue
                 features.append(
                     Feature(
                         model=model.name,
                         column=column_name,
                         description=model.columns[column_name].description,
-                        entity_id=model.meta[keyword]["feature_store"]["entity_id"],
-                        timestamp=model.meta[keyword]["feature_store"]["timestamp"],
+                        entity_column=model.meta[keyword]["feature_store"]["entity_column"],
+                        timestamp_column=model.meta[keyword]["feature_store"]["timestamp_column"],
                     )
                 )
         return features

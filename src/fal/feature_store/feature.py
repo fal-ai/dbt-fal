@@ -8,8 +8,8 @@ class Feature:
 
     model: str
     column: str
-    entity_id: str
-    timestamp: str
+    entity_column: str
+    timestamp_column: str
     description: str
 
     def get_name(self) -> str:
