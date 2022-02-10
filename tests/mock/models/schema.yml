@@ -22,8 +22,8 @@ models:
     meta:
       fal:
         feature_store:
-          entity_id: a
-          timestamp: b
+          entity_column: a
+          timestamp_column: b
   - name: model_empty_scripts
     meta: 
       fal: 
