@@ -1,5 +1,6 @@
 ---
 sidebar_position: 1
+slug: /
 ---
 
 # Getting Started
@@ -48,6 +49,8 @@ try:
 except SlackApiError as e:
     assert e.response["error"]
 ```
+
+fal makes certain variables and functions avaliable in this script, [checkout the fal scripts section for more details](fal%20scripts/functions-and-variables)
 
 ## 4. Add a `meta` section in your `schema.yml`
 
@@ -117,25 +120,3 @@ model_beta: script.py, other.py
 ```
 
 `fal` also provides useful helpers within the Python context to seamlessly interact with dbt models: `ref("my_dbt_model_name")` will pull a dbt model into your Python script as a [`pandas.DataFrame`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html).
-
-# Concepts
-
-## profile.yml and Credentials
-
-`fal` integrates with `dbt`'s `profile.yml` file to access and read data from the data warehouse. Once you setup credentials in your `profile.yml` file for your existing `dbt` workflows anytime you use `ref` or `source` to create a dataframe `fal` authenticates using the credentials specified in the `profile.yml` file.
-
-## `meta` Syntax
-
-```yaml
-models:
-  - name: historical_ozone_levels
-    ...
-    meta:
-      owner: "@me"
-      fal:
-        scripts:
-          - send_slack_message.py
-          - another_python_script.py # will be run sequentially
-```
-
-Use the `fal` and `scripts` keys underneath the `meta` config to let `fal` CLI know where to look for the Python scripts. You can pass a list of scripts as shown above to run one or more scripts as a post-hook operation after a `dbt run`.

@@ -6,15 +6,15 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
-  url: 'https://your-docusaurus-test-site.com',
+  title: 'Features & Labels',
+  tagline: 'fal: run python with dbt',
+  url: 'https://docs.fal.ai',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  favicon: 'img/fal-logo.svg',
+  organizationName: 'fal-ai', // Usually your GitHub org/user name.
+  projectName: 'fal', // Usually your repo name.
 
   presets: [
     [
@@ -22,15 +22,16 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          editUrl: 'https://github.com/fal-ai/fal/tree/main/docs',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/fal-ai/fal/tree/main/docs',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -46,17 +47,22 @@ const config = {
         title: 'Features and Labels',
         logo: {
           alt: 'My Site Logo',
-          src: 'img/fal-logo.png',
+          src: 'img/fal-logo.svg',
         },
         items: [
           {
-            type: 'doc',
-            docId: 'getting-started',
+            type: 'docSidebar',
             position: 'left',
-            label: 'Documentation',
+            sidebarId: 'cli',
+            label: 'fal CLI',
           },
-          {to: 'https://www.notion.so/featuresandlabels/February-Roadmap-e6521e39514a4ed598745aa71167de6b', label: 'Roadmap', position: 'left'},
+          {
+            type: 'doc',
+            docId: 'Feature Store/overview',
+            label: 'Feature Store',
+          },
           {to: 'https://blog.fal.ai', label: 'Blog', position: 'left'},
+          {to: 'https://www.notion.so/featuresandlabels/February-Roadmap-e6521e39514a4ed598745aa71167de6b', label: 'Roadmap', position: 'left'},
           {
             href: 'https://github.com/fal-ai/fal',
             label: 'GitHub',

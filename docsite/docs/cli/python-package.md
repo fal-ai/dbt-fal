@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # Importing `fal` as a Python package
 
 You may be interested in accessing dbt models and sources easily from a Jupyter Notebook or another Python script.
