@@ -89,17 +89,17 @@ $ fal run
 
 # Examples
 To explore what is possible with fal, take a look at the in-depth examples below. We will be adding more examples here over time:
-- [Example 1: Send Slack notifications](docs/slack-example.md)
-- [Example 2: Metric forecasting](docs/metric-forecast.md)
-- [Example 3: Sentiment analysis on support tickets](docs/sentiment-analysis.md)
-- [Example 4: Send event to Datadog](docs/datadog_event.md)
-- [Example 5: Incorporate fal in CI/CD workflow](docs/ci_example.md)
-- [Example 6: Send data to Firestore](docs/write_to_firestore.md)
-- [Example 7: Write dbt artifacts to GCS](docs/write_to_gcs.md)
-- [Example 8: Write dbt artifacts to AWS S3](docs/write_to_aws.md)
-- [Example 9: Use dbt from a Jupyter Notebook](docs/write_jupyter_notebook.md)
-- [Example 10: Read and parse dbt metadata](docs/read_dbt_metadata.md)
-- [Example 11: Anomaly Detection](docs/anomaly-detection.md)
+- [Example 1: Send Slack notifications](examples/slack-example.md)
+- [Example 2: Metric forecasting](examples/metric-forecast.md)
+- [Example 3: Sentiment analysis on support tickets](examples/sentiment-analysis.md)
+- [Example 4: Send event to Datadog](examples/datadog_event.md)
+- [Example 5: Incorporate fal in CI/CD workflow](examples/ci_example.md)
+- [Example 6: Send data to Firestore](examples/write_to_firestore.md)
+- [Example 7: Write dbt artifacts to GCS](examples/write_to_gcs.md)
+- [Example 8: Write dbt artifacts to AWS S3](examples/write_to_aws.md)
+- [Example 9: Use dbt from a Jupyter Notebook](examples/write_jupyter_notebook.md)
+- [Example 10: Read and parse dbt metadata](examples/read_dbt_metadata.md)
+- [Example 11: Anomaly Detection](examples/anomaly-detection.md)
 
 # How it works?
 `fal` is a command line tool that can read the state of your `dbt` project and help you run Python scripts after your `dbt run`s by leveraging the [`meta` config](https://docs.getdbt.com/reference/resource-configs/meta).
