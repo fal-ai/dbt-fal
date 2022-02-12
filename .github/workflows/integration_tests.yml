@@ -4,11 +4,12 @@ on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
+      - "examples/**"
+      - "docsite/**"
+      - "README.md"
+      - "LICENSE"
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
