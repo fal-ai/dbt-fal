@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import pkg_resources
 
 from dbt.logger import log_manager
 from dbt.config.profile import DEFAULT_PROFILES_DIR
@@ -13,11 +14,18 @@ from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 class FalCli(object):
 
-
     def __init__(self, argv):
         parser = argparse.ArgumentParser(
             description="Run Python scripts on dbt models",
             usage='''fal run [<args>]''')
+
+        # Handle version checking
+        version = pkg_resources.get_distribution('fal').version
+        parser.add_argument("-v",
+                            "--version",
+                            action="version",
+                            version=f"fal {version}",
+                            help="show fal version")
 
         # Handle commands
         parser.add_argument("command", help="Subcommand to run")
