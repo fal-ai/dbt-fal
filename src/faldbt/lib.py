@@ -108,7 +108,7 @@ def _execute_sql(
     node = _get_operation_node(manifest, project_path, profiles_dir, sql)
     adapter = _get_adapter(project_path, profiles_dir)
 
-    logger.info("Running query\n{}", sql)
+    logger.debug("Running query\n{}", sql)
 
     result = None
     with adapter.connection_for(node):
