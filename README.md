@@ -252,6 +252,47 @@ Any extra configuration to work with different `dbt` versions is not needed, lat
 
 If you need another version, [open an issue](https://github.com/fal-ai/fal/issues/new) and we will take a look!
 
+# Contributing / Development
+
+We use Poetry for dependency management and easy development testing.
+
+Use Poetry shell to trying your changes right away:
+
+```sh
+~ $ cd fal
+
+~/fal $ poetry install
+
+~/fal $ poetry shell
+Spawning shell within [...]/fal-eFX98vrn-py3.8
+
+~/fal fal-eFX98vrn-py3.8 $ cd ../dbt_project
+
+~/dbt_project fal-eFX98vrn-py3.8 $ fal run
+19:27:30  Found 5 models, 0 tests, 0 snapshots, 0 analyses, 165 macros, 0 operations, 0 seed files, 1 source, 0 exposures, 0 metrics
+19:27:30 | Starting fal run for following models and scripts:
+[...]
+```
+
+## Running tests
+
+Tests rely on a Postgres database to be present, this can be achieved with docker-compose:
+
+```sh
+~/fal $ docker-compose -f tests/docker-compose.yml up -d
+Creating network "tests_default" with the default driver
+Creating fal_db ... done
+
+# Necessary for the import test
+~/fal $ dbt run --profiles-dir tests/mock/mockProfile --project-dir tests/mock
+Running with dbt=1.0.1
+[...]
+Completed successfully
+Done. PASS=5 WARN=0 ERROR=0 SKIP=0 TOTAL=5
+
+~/fal $ pytest -s
+```
+
 # Why are we building this?
 We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with.
 
