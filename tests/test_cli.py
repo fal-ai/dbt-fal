@@ -1,4 +1,4 @@
-from fal.cli import FalCli
+from fal.cli import run_fal
 import tempfile
 import os
 from pathlib import Path
@@ -11,7 +11,7 @@ project_dir = os.path.join(Path.cwd(), "tests/mock")
 
 def test_run():
     try:
-        FalCli(["fal", "run", "--profiles-dir", profiles_dir])
+        run_fal(["fal", "run", "--profiles-dir", profiles_dir])
         assert True is False    # This line isn't reached
     except DbtProjectError as e:
         assert "no dbt_project.yml found at expected path" in str(e.msg)
@@ -19,13 +19,13 @@ def test_run():
 
 def test_no_arg(capfd):
     captured = _run_fal([], capfd)
-    assert "usage: fal run [<args>]" in captured.err
+    assert "usage: fal COMMAND [<args>]" in captured.out
 
 
 def test_run_with_project_dir():
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
-        FalCli(["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
+        run_fal(["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
     assert True is True
 
 
@@ -141,7 +141,7 @@ def test_before(capfd):
 def _run_fal(args, capfd):
     # Given fal arguments, runs fal and returns capfd output
     try:
-        FalCli(["fal"] + args)
+        run_fal(["fal"] + args)
     except SystemExit:
         pass
     except Exception as e:

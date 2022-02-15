@@ -12,100 +12,99 @@ from fal.utils import print_run_info
 from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 
-class FalCli(object):
+def run_fal(argv):
 
-    def __init__(self, argv):
-        parser = argparse.ArgumentParser(
-            description="Run Python scripts on dbt models",
-            usage='''fal run [<args>]''')
+    parser = argparse.ArgumentParser(
+        description="Run Python scripts on dbt models",
+        usage='''fal COMMAND [<args>]''',
+        prog='fal')
 
-        # Handle version checking
-        version = pkg_resources.get_distribution('fal').version
-        parser.add_argument("-v",
-                            "--version",
-                            action="version",
-                            version=f"fal {version}",
-                            help="show fal version")
+    if len(argv) < 2:
+        print("No command supplied\n")
+        parser.print_help()
+        exit(1)
 
-        # Handle commands
-        parser.add_argument("command", help="Subcommand to run")
+    # Handle version checking
+    version = pkg_resources.get_distribution('fal').version
+    parser.add_argument("-v",
+                        "--version",
+                        action="version",
+                        version=f"fal {version}",
+                        help="show fal version")
 
-        args = parser.parse_args(argv[1:2])
-        if not hasattr(self, args.command):
-            print("Unrecognized command")
-            parser.print_help()
-            exit(1)
+    # Handle commands
+    command_parsers = parser.add_subparsers(title="commands",
+                                            dest="command_parsers")
+    run_parser = command_parsers.add_parser(
+        'run',
+        help='Run Python scripts as final nodes'
+    )
 
-        getattr(self, args.command)(argv)
-
-
-    def run(self, argv):
-        parser = argparse.ArgumentParser(description="Run Python scripts as final nodes")
-        parser.add_argument("--project-dir",
+    run_parser.add_argument("--project-dir",
                             default=os.getcwd(),
                             help="Directory to look for dbt_project.yml.")
-        parser.add_argument("--profiles-dir",
+    run_parser.add_argument("--profiles-dir",
                             default=None,
                             help="Directory to look for profiles.yml.")
-        parser.add_argument("--keyword",
+    run_parser.add_argument("--keyword",
                             default="fal",
                             help="Property in meta to look for fal configurations.")
-        parser.add_argument("--all",
+    run_parser.add_argument("--all",
                             default=False,
                             action='store_true',
                             help="Run scripts for all models. By default, fal runs scripts for models that ran in the last dbt run.")
-        parser.add_argument("-s", "--select",
+    run_parser.add_argument("-s", "--select",
                             default=tuple(),
                             nargs="+",
                             help="Specify the nodes to include.")
-        parser.add_argument("-m", "--models",
+    run_parser.add_argument("-m", "--models",
                             default=tuple(),
                             nargs="+",
                             help="Specify the nodes to include.")
-        parser.add_argument("--exclude",
+    run_parser.add_argument("--exclude",
                             default=tuple(),
                             nargs="+",
                             help="Specify the nodes to exclude.")
-        parser.add_argument("--selector",
+    run_parser.add_argument("--selector",
                             default=None,
                             action='store_true',
                             help="The selector name to use, as defined in selectors.yml",)
-        parser.add_argument("--scripts",
+    run_parser.add_argument("--scripts",
                             default=None,
                             nargs="+",
                             help="Specify scripts to run, overrides schema.yml",)
-        parser.add_argument("--before",
+    run_parser.add_argument("--before",
                             action='store_true',
                             help="Run scripts specified in model `before` tag",
                             default=False)
-        parser.add_argument("--experimental-ordering",
+    run_parser.add_argument("--experimental-ordering",
                             action='store_true',
                             help="Turns on ordering of the fal scripts.",
                             default=False)
-        parser.add_argument("--debug",
+    run_parser.add_argument("--debug",
                             action='store_true',
                             help="Display debug logging during execution.",
                             default=False)
 
-        args = parser.parse_args(argv[2:])
+    args = parser.parse_args(argv[1:])
 
-        _run(
-            project_dir=args.project_dir,
-            profiles_dir=args.profiles_dir,
-            keyword=args.keyword,
-            all=args.all,
-            select=args.select,
-            models=args.models,
-            exclude=args.exclude,
-            selector=args.selector,
-            script=args.scripts,
-            before=args.before,
-            experimental_ordering=args.experimental_ordering,
-            debug=args.debug)
+    _run(
+        project_dir=args.project_dir,
+        profiles_dir=args.profiles_dir,
+        keyword=args.keyword,
+        all=args.all,
+        select=args.select,
+        models=args.models,
+        exclude=args.exclude,
+        selector=args.selector,
+        script=args.scripts,
+        before=args.before,
+        experimental_ordering=args.experimental_ordering,
+        debug=args.debug)
 
 
 def cli():
-    FalCli(sys.argv)
+    run_fal(sys.argv)
 
 
 def _run(
