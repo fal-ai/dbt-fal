@@ -1,75 +1,62 @@
-from click.testing import CliRunner
-from fal.cli import cli
+from fal.cli import FalCli
 import tempfile
 import os
 from pathlib import Path
 import shutil
-import pytest
+from dbt.exceptions import DbtProjectError
 
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 project_dir = os.path.join(Path.cwd(), "tests/mock")
 
 
 def test_run():
-    runner = CliRunner()
-    result = runner.invoke(cli, ["run", "--profiles-dir", profiles_dir])
-    assert "no dbt_project.yml found at expected path" in str(result.exception)
+    try:
+        FalCli(["fal", "run", "--profiles-dir", profiles_dir])
+        assert True is False    # This line isn't reached
+    except DbtProjectError as e:
+        assert "no dbt_project.yml found at expected path" in str(e.msg)
 
 
-def test_no_arg():
-    runner = CliRunner()
-    result = runner.invoke(cli, [])
-    assert result.exit_code == 0
-    assert "Usage: cli [OPTIONS] COMMAND [ARGS]..." in result.output
+def test_no_arg(capfd):
+    captured = _run_fal([], capfd)
+    assert "usage: fal run [<args>]" in captured.err
 
 
 def test_run_with_project_dir():
-    runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
-        result = runner.invoke(
-            cli, ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir]
-        )
-    assert result.exit_code == 0
+        FalCli(["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
+    assert True is True
 
 
-def test_version():
+def test_version(capfd):
     import importlib.metadata
 
     version = importlib.metadata.version("fal")
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ["--version"])
-    assert f"cli, version {version}" in result.output
+    captured = _run_fal(["--version"], capfd)
+    assert f"fal {version}" in captured.out
 
 
 def test_selection(capfd):
-    runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
-        result = runner.invoke(
-            cli,
-            [
-                "run",
-                "--project-dir",
-                tmp_dir,
-                "--profiles-dir",
-                profiles_dir,
-                "--select",
-                "model_feature_store",
-                "--select",
-                "model_empty_scripts",
-            ],
-        )
-        captured = capfd.readouterr()
-        assert result.exit_code == 0
+        captured = _run_fal([
+            "run",
+            "--project-dir",
+            tmp_dir,
+            "--profiles-dir",
+            profiles_dir,
+            "--select",
+            "model_feature_store",
+            "model_empty_scripts",
+        ], capfd)
+
         assert "model_with_scripts" not in captured.out
         assert "model_feature_store" in captured.out
         assert "model_empty_scripts" in captured.out
         assert "model_no_fal" not in captured.out
 
-        result = runner.invoke(
-            cli,
+        captured = _run_fal(
             [
                 "run",
                 "--project-dir",
@@ -78,10 +65,8 @@ def test_selection(capfd):
                 profiles_dir,
                 "--select",
                 "model_no_fal",
-            ],
+            ], capfd
         )
-        captured = capfd.readouterr()
-        assert result.exit_code == 0
         assert "model_with_scripts" not in captured.out
         assert "model_feature_store" not in captured.out
         assert "model_empty_scripts" not in captured.out
@@ -89,39 +74,35 @@ def test_selection(capfd):
         assert "model_no_fal" not in captured.out
 
 def test_no_run_results(capfd):
-    runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
         shutil.rmtree(os.path.join(tmp_dir, "mockTarget"))
 
         # Without selection flag
-        result = runner.invoke(
-            cli, ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir]
+        captured = _run_fal(
+            ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir],
+            capfd
         )
-        assert result.exit_code == 1
         assert (
             "Cannot define models to run without selection flags or dbt run_results artifact"
-            in str(result.exception)
+            in str(captured.out)
         )
 
         # With selection flag
-        result = runner.invoke(
-            cli,
+        captured = _run_fal(
             ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir, "--all"],
+            capfd
         )
-        captured = capfd.readouterr()
-        assert result.exit_code == 0
+
         # Just as warning
         assert "Could not read dbt run_results artifact" in captured.out
 
 
 def test_before(capfd):
-    runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
 
-        result = runner.invoke(
-            cli,
+        captured = _run_fal(
             [
                 "run",
                 "--project-dir",
@@ -131,10 +112,8 @@ def test_before(capfd):
                 "--select",
                 "model_with_scripts",
                 "--before"
-            ],
+            ], capfd
         )
-        captured = capfd.readouterr()
-        assert result.exit_code == 0
         assert "model_with_scripts" in captured.out
         assert "test.py" not in captured.out
         assert "model_with_before_scripts" not in captured.out
@@ -142,8 +121,7 @@ def test_before(capfd):
         assert "model_empty_scripts" not in captured.out
         assert "model_no_fal" not in captured.out
 
-        result = runner.invoke(
-            cli,
+        captured = _run_fal(
             [
                 "run",
                 "--project-dir",
@@ -151,12 +129,21 @@ def test_before(capfd):
                 "--profiles-dir",
                 profiles_dir,
                 "--before",
-            ],
+            ], capfd
         )
-        captured = capfd.readouterr()
-        assert result.exit_code == 0
         assert "model_with_scripts" not in captured.out
         assert "model_feature_store" not in captured.out
         assert "model_empty_scripts" not in captured.out
         assert "model_no_fal" not in captured.out
         assert "model_with_before_scripts" in captured.out
+
+
+def _run_fal(args, capfd):
+    # Given fal arguments, runs fal and returns capfd output
+    try:
+        FalCli(["fal"] + args)
+    except SystemExit:
+        pass
+    except Exception as e:
+        print(e)
+    return capfd.readouterr()

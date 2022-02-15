@@ -54,11 +54,11 @@ class FalCli(object):
                             default=False,
                             action='store_true',
                             help="Run scripts for all models. By default, fal runs scripts for models that ran in the last dbt run.")
-        parser.add_argument("--select",
+        parser.add_argument("-s", "--select",
                             default=tuple(),
                             nargs="+",
                             help="Specify the nodes to include.")
-        parser.add_argument("--models",
+        parser.add_argument("-m", "--models",
                             default=tuple(),
                             nargs="+",
                             help="Specify the nodes to include.")
