@@ -21,14 +21,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: google-github-actions/auth@v0
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
+
+      - name: Start test Docker database
+        working-directory: tests
+        run: docker-compose up -d
 
       - uses: abatilo/actions-poetry@v2.0.0
         with:
@@ -44,9 +43,12 @@ jobs:
           then
             poetry run pip install dbt==${{ matrix.dbt }}
           else
-            poetry run pip install dbt-bigquery==${{ matrix.dbt }}
+            poetry run pip install dbt-postgres==${{ matrix.dbt }}
           fi
 
+      - name: Run dbt
+        run: |
+          poetry run dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
 
       - name: Test
         run: poetry run pytest -s
