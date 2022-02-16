@@ -3,7 +3,10 @@ import os
 import sys
 import pkg_resources
 
-from dbt.logger import log_manager
+import dbt.exceptions
+import dbt.ui
+
+from dbt.logger import log_manager, GLOBAL_LOGGER as logger
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import run_global_scripts, run_scripts
@@ -14,10 +17,12 @@ from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 def run_fal(argv):
 
+    # fmt: off
     parser = argparse.ArgumentParser(
         description="Run Python scripts on dbt models",
-        usage='''fal COMMAND [<args>]''',
-        prog='fal')
+        usage="""fal COMMAND [<args>]""",
+        prog="fal",
+    )
 
     if len(argv) < 2:
         print("No command supplied\n")
@@ -25,68 +30,99 @@ def run_fal(argv):
         exit(1)
 
     # Handle version checking
-    version = pkg_resources.get_distribution('fal').version
-    parser.add_argument("-v",
-                        "--version",
-                        action="version",
-                        version=f"fal {version}",
-                        help="show fal version")
-
-    # Handle commands
-    command_parsers = parser.add_subparsers(title="commands",
-                                            dest="command_parsers")
-    run_parser = command_parsers.add_parser(
-        'run',
-        help='Run Python scripts as final nodes'
+    version = pkg_resources.get_distribution("fal").version
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"fal {version}",
+        help="show fal version",
     )
 
-    run_parser.add_argument("--project-dir",
-                            default=os.getcwd(),
-                            help="Directory to look for dbt_project.yml.")
-    run_parser.add_argument("--profiles-dir",
-                            default=None,
-                            help="Directory to look for profiles.yml.")
-    run_parser.add_argument("--keyword",
-                            default="fal",
-                            help="Property in meta to look for fal configurations.")
-    run_parser.add_argument("--all",
-                            default=False,
-                            action='store_true',
-                            help="Run scripts for all models. By default, fal runs scripts for models that ran in the last dbt run.")
-    run_parser.add_argument("-s", "--select",
-                            default=tuple(),
-                            nargs="+",
-                            help="Specify the nodes to include.")
-    run_parser.add_argument("-m", "--models",
-                            default=tuple(),
-                            nargs="+",
-                            help="Specify the nodes to include.")
-    run_parser.add_argument("--exclude",
-                            default=tuple(),
-                            nargs="+",
-                            help="Specify the nodes to exclude.")
-    run_parser.add_argument("--selector",
-                            default=None,
-                            action='store_true',
-                            help="The selector name to use, as defined in selectors.yml",)
-    run_parser.add_argument("--scripts",
-                            default=None,
-                            nargs="+",
-                            help="Specify scripts to run, overrides schema.yml",)
-    run_parser.add_argument("--before",
-                            action='store_true',
-                            help="Run scripts specified in model `before` tag",
-                            default=False)
-    run_parser.add_argument("--experimental-ordering",
-                            action='store_true',
-                            help="Turns on ordering of the fal scripts.",
-                            default=False)
-    run_parser.add_argument("--debug",
-                            action='store_true',
-                            help="Display debug logging during execution.",
-                            default=False)
+    # Handle commands
+    command_parsers = parser.add_subparsers(title="commands", dest="command_parsers")
+    run_parser = command_parsers.add_parser(
+        "run",
+        help="Run Python scripts as final nodes",
+    )
+
+    run_parser.add_argument(
+        "--project-dir",
+        default=os.getcwd(),
+        help="Directory to look for dbt_project.yml.",
+    )
+    run_parser.add_argument(
+        "--profiles-dir",
+        default=None,
+        help="Directory to look for profiles.yml.",
+    )
+    run_parser.add_argument(
+        "--keyword",
+        default="fal",
+        help="Property in meta to look for fal configurations.",
+    )
+
+    run_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run scripts for all models. By default, fal runs scripts for models that ran in the last dbt run.",
+    )
+    # TODO: remove `action="extend"` to match exactly what dbt does
+    run_parser.add_argument(
+        "-s", "--select",
+        nargs="+",
+        action="extend", # For backwards compatibility with past fal version
+        dest="select",
+        help="Specify the nodes to include.",
+    )
+    run_parser.add_argument(
+        "-m", "--models",
+        nargs="+",
+        action="extend", # For backwards compatibility with past fal version
+        dest="select",
+        help="Specify the nodes to include.",
+    )
+    run_parser.add_argument(
+        "--exclude",
+        nargs="+",
+        help="Specify the nodes to exclude.",
+    )
+    run_parser.add_argument(
+        "--selector",
+        help="The selector name to use, as defined in selectors.yml",
+    )
+    run_parser.add_argument(
+        "--scripts",
+        nargs="+",
+        help="Specify scripts to run, overrides schema.yml",
+    )
+
+    run_parser.add_argument(
+        "--before",
+        action="store_true",
+        help="Run scripts specified in model `before` tag",
+    )
+    run_parser.add_argument(
+        "--experimental-ordering",
+        action="store_true",
+        help="Turns on ordering of the fal scripts.",
+    )
+    run_parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Display debug logging during execution.",
+    )
+    # fmt: on
 
     args = parser.parse_args(argv[1:])
+
+    # TODO: remove `action="extend"` to match exactly what dbt does
+    selects_count = (
+        argv.count("-s")
+        + argv.count("--select")
+        + argv.count("-m")
+        + argv.count("--model")
+    )
 
     _run(
         project_dir=args.project_dir,
@@ -94,13 +130,14 @@ def run_fal(argv):
         keyword=args.keyword,
         all=args.all,
         select=args.select,
-        models=args.models,
         exclude=args.exclude,
         selector=args.selector,
         script=args.scripts,
         before=args.before,
         experimental_ordering=args.experimental_ordering,
-        debug=args.debug)
+        debug=args.debug,
+        selects_count=selects_count,
+    )
 
 
 def cli():
@@ -113,13 +150,14 @@ def _run(
     keyword,
     all,
     select,
-    models,
     exclude,
     selector,
     script,
     before,
     experimental_ordering,
     debug,
+    # TODO: remove `action="extend"` to match exactly what dbt does
+    selects_count,
 ):
     with log_manager.applicationbound():
         if debug:
@@ -136,9 +174,6 @@ def _run(
         else:
             real_profiles_dir = DEFAULT_PROFILES_DIR
 
-        if not select and models:
-            select = models
-
         selector_flags = select or exclude or selector
         if all and selector_flags:
             raise FalGeneralException(
@@ -150,6 +185,14 @@ def _run(
         )
         project = FalProject(faldbt)
         models = project.get_filtered_models(all, selector_flags, before)
+
+        # TODO: remove `action="extend"` to match exactly what dbt does
+        if selects_count > 1:
+            dbt.exceptions.warn_or_error(
+                "Passing multiple --select/--model flags to fal is deprecatd. Please use model selection like dbt.",
+                log_fmt=dbt.ui.warning_tag("{}"),
+            )
+
         print_run_info(models, keyword, before)
 
         if script:
