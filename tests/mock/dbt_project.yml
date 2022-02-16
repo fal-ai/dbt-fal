@@ -1,7 +1,7 @@
-name: "fal_dbt_examples"
+name: "fal_test"
 version: "1.0.0"
 config-version: 2
-profile: "fal_dbt_examples"
+profile: "fal_test"
 source-paths: ["models"]
 analysis-paths: ["analysis"]
 test-paths: ["tests"]

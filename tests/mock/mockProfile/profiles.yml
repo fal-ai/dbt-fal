@@ -1,12 +1,12 @@
-fal_dbt_examples:
+fal_test:
+  target: dev
   outputs:
     dev:
-      type: bigquery
-      method: service-account
-      threads: 1
-      schema: example
-      timeout_seconds: 300
-      location: US
-      priority: interactive
-
-  target: dev
+      type: postgres
+      host: localhost
+      user: pguser
+      password: pass
+      port: 5432
+      dbname: test
+      schema: dbt_fal
+      threads: 4

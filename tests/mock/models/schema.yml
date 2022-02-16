@@ -1,5 +1,12 @@
 version: 2
 
+sources:
+  - name: test_sources
+    database: test
+    schema: public
+    tables:
+      - name: single_col
+
 models:
   - name: model_with_scripts
     meta:
