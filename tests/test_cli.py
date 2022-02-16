@@ -12,7 +12,7 @@ project_dir = os.path.join(Path.cwd(), "tests/mock")
 def test_run():
     try:
         run_fal(["fal", "run", "--profiles-dir", profiles_dir])
-        assert True is False    # This line isn't reached
+        assert True is False  # This line isn't reached
     except DbtProjectError as e:
         assert "no dbt_project.yml found at expected path" in str(e.msg)
 
@@ -25,7 +25,9 @@ def test_no_arg(capfd):
 def test_run_with_project_dir():
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
-        run_fal(["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
+        run_fal(
+            ["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir]
+        )
     assert True is True
 
 
@@ -40,16 +42,19 @@ def test_version(capfd):
 def test_selection(capfd):
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
-        captured = _run_fal([
-            "run",
-            "--project-dir",
-            tmp_dir,
-            "--profiles-dir",
-            profiles_dir,
-            "--select",
-            "model_feature_store",
-            "model_empty_scripts",
-        ], capfd)
+        captured = _run_fal(
+            [
+                "run",
+                "--project-dir",
+                tmp_dir,
+                "--profiles-dir",
+                profiles_dir,
+                "--select",
+                "model_feature_store",
+                "model_empty_scripts",
+            ],
+            capfd,
+        )
 
         assert "model_with_scripts" not in captured.out
         assert "model_feature_store" in captured.out
@@ -64,14 +69,40 @@ def test_selection(capfd):
                 "--profiles-dir",
                 profiles_dir,
                 "--select",
+                "model_feature_store",
+                "--select",
+                "model_empty_scripts",
+            ],
+            capfd,
+        )
+
+        assert "model_with_scripts" not in captured.out
+        assert "model_feature_store" in captured.out
+        assert "model_empty_scripts" in captured.out
+        assert "model_no_fal" not in captured.out
+        assert (
+            "Passing multiple --select/--model flags to fal is deprecatd"
+            in captured.out
+        )
+
+        captured = _run_fal(
+            [
+                "run",
+                "--project-dir",
+                tmp_dir,
+                "--profiles-dir",
+                profiles_dir,
+                "--select",
                 "model_no_fal",
-            ], capfd
+            ],
+            capfd,
         )
         assert "model_with_scripts" not in captured.out
         assert "model_feature_store" not in captured.out
         assert "model_empty_scripts" not in captured.out
         # It has no keyword in meta
         assert "model_no_fal" not in captured.out
+
 
 def test_no_run_results(capfd):
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -80,8 +111,7 @@ def test_no_run_results(capfd):
 
         # Without selection flag
         captured = _run_fal(
-            ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir],
-            capfd
+            ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir], capfd
         )
         assert (
             "Cannot define models to run without selection flags or dbt run_results artifact"
@@ -91,7 +121,7 @@ def test_no_run_results(capfd):
         # With selection flag
         captured = _run_fal(
             ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir, "--all"],
-            capfd
+            capfd,
         )
 
         # Just as warning
@@ -111,8 +141,9 @@ def test_before(capfd):
                 profiles_dir,
                 "--select",
                 "model_with_scripts",
-                "--before"
-            ], capfd
+                "--before",
+            ],
+            capfd,
         )
         assert "model_with_scripts" in captured.out
         assert "test.py" not in captured.out
@@ -129,7 +160,8 @@ def test_before(capfd):
                 "--profiles-dir",
                 profiles_dir,
                 "--before",
-            ], capfd
+            ],
+            capfd,
         )
         assert "model_with_scripts" not in captured.out
         assert "model_feature_store" not in captured.out
