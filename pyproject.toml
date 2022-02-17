@@ -4,12 +4,7 @@ version = "0.1.0"
 description = "fal allows you to run python scripts directly from your dbt project."
 homepage = "https://github.com/fal-ai/fal"
 readme = "README.md"
-authors = [
-        "Meder Kamalov <meder@fal.ai>",
-        "Matteo Ferrando <matteo@fal.ai>",
-        "Burkay Gur <burkay@fal.ai>",
-        "Gorkem Yurtseven <gorkem@fal.ai>"
-]
+authors = [ "Features & Labels <hello@fal.ai>" ]
 packages = [
         { include = "fal", from = "src" },
         { include = "faldbt", from = "src" }
