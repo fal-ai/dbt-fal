@@ -12,10 +12,8 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 from fal.run_scripts import run_global_scripts, run_scripts
 from fal.dag import FalScript, ScriptGraph
 from fal.utils import print_run_info
+from faldbt.lib import DBT_VCURRENT, DBT_V1
 from faldbt.project import FalDbt, FalGeneralException, FalProject
-
-DBT_VCURRENT = dbt.version.get_installed_version()
-DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
 
 
 def run_fal(argv):
@@ -120,7 +118,7 @@ def run_fal(argv):
     run_parser.add_argument(
         "--disable-logging",
         action="store_true",
-        help="Disable logging by fal.",
+        help="Disable logging.",
     )
 
     # fmt: on
