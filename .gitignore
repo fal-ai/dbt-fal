@@ -143,6 +143,6 @@ cython_debug/
 
 ### Tests
 mockTarget/
-e2e/logs/
-e2e/target/
-e2e/dbt_modules/
+integration_tests/logs/
+integration_tests/target/
+integration_tests/dbt_modules/
