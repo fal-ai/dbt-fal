@@ -209,7 +209,8 @@ def _run(
         # TODO: remove `action="extend"` to match exactly what dbt does
         if selects_count > 1:
             dbt.exceptions.warn_or_error(
-                "Passing multiple --select/--model flags to fal is deprecatd. Please use model selection like dbt.",
+                "Passing multiple --select/--model flags to fal is deprecatd.\n"
+                + f"Please use model selection like dbt. Use: --select {' '.join(select)}",
                 log_fmt=dbt.ui.warning_tag("{}"),
             )
 
