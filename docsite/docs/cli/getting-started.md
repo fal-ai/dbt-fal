@@ -75,10 +75,10 @@ models:
 
 ```bash
 $ dbt run
-# Your dbt models are ran
+# Your dbt models are run
 
 $ fal run
-# Your python scripts are ran
+# Your python scripts are run
 ```
 
 # How it works?
@@ -93,7 +93,7 @@ models:
       fal:
         scripts:
           - send_slack_message.py
-          - another_python_script.py # will be ran after the first script
+          - another_python_script.py # will be run after the first script
 ```
 
 `fal` also provides useful helpers within the Python context to seamlessly interact with dbt models: `ref("my_dbt_model_name")` will pull a dbt model into your Python script as a [`pandas.DataFrame`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html).

@@ -81,10 +81,10 @@ models:
 ## 5. Run `dbt` and `fal` consecutively
 ```bash
 $ dbt run
-# Your dbt models are ran
+# Your dbt models are run
 
 $ fal run
-# Your python scripts are ran
+# Your python scripts are run
 ```
 
 # Examples
@@ -113,14 +113,14 @@ models:
       fal:
         scripts:
           - send_slack_message.py
-          - another_python_script.py # will be ran after the first script
+          - another_python_script.py # will be run after the first script
 ```
 
 `fal` also provides useful helpers within the Python context to seamlessly interact with dbt models: `ref("my_dbt_model_name")` will pull a dbt model into your Python script as a [`pandas.DataFrame`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html).
 
 ## Model scripts selection
 
-By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run`; that means that if you are using model selectors, `fal` will only run on the models `dbt` ran. To achieve this, fal needs the dbt-generated file `run_results.json` available.
+By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were run on the last `dbt run`; that means that if you are using model selectors, `fal` will only run on the models `dbt` ran. To achieve this, fal needs the dbt-generated file `run_results.json` available.
 
 If you are running `fal` in a clean environment (no `run_results.json` available) or just want to specify which models you want to run the scripts for, `fal` handles [dbt's selection flags](https://docs.getdbt.com/reference/node-selection/syntax) for `dbt run` as well as offering an extra flag for just running _all_ models:
 
@@ -213,7 +213,7 @@ write_to_source(df, 'source_name', 'table_name2')
 ```
 
 ## Lifecycle and State Management
-By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run` (So if you are using model selectors, `fal` will only run on the selected models).
+By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were run on the last `dbt run` (So if you are using model selectors, `fal` will only run on the selected models).
 
 If you want to run all Python scripts regardless, you can do so by using the `--all` flag with the `fal` CLI:
 
