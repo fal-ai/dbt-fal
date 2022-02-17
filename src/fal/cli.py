@@ -12,6 +12,7 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 from fal.run_scripts import run_global_scripts, run_scripts
 from fal.dag import FalScript, ScriptGraph
 from fal.utils import print_run_info
+from faldbt.lib import DBT_VCURRENT, DBT_V1
 from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 
@@ -114,6 +115,12 @@ def run_fal(argv):
         action="store_true",
         help="Display debug logging during execution.",
     )
+    run_parser.add_argument(
+        "--disable-logging",
+        action="store_true",
+        help="Disable logging.",
+    )
+
     # fmt: on
 
     args = parser.parse_args(argv[1:])
@@ -138,6 +145,7 @@ def run_fal(argv):
         before=args.before,
         experimental_ordering=args.experimental_ordering,
         debug=args.debug,
+        disable_logging=args.disable_logging,
         selects_count=selects_count,
     )
 
@@ -158,9 +166,19 @@ def _run(
     before,
     experimental_ordering,
     debug,
+    disable_logging,
     # TODO: remove `action="extend"` to match exactly what dbt does
     selects_count,
 ):
+
+    if disable_logging:
+        logger.disable()
+
+    # Re-enable logging for 1.0.0 through old API of logger
+    elif DBT_VCURRENT.compare(DBT_V1) >= 0:
+        if logger.disabled:
+            logger.enable()
+
     with log_manager.applicationbound():
         if debug:
             log_manager.set_debug()

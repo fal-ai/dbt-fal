@@ -66,8 +66,6 @@ def initialize_dbt_flags(profiles_dir: str):
     # TODO: migrate for 1.0.0 code to new event system
     if DBT_VCURRENT.compare(DBT_V1) >= 0:
         flags.ENABLE_LEGACY_LOGGER = "1"
-        if logger.disabled:
-            logger.enable()
 
 
 def register_adapters(config: RuntimeConfig):
