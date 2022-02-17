@@ -85,6 +85,7 @@ def run_fal(argv):
     run_parser.add_argument(
         "--exclude",
         nargs="+",
+        action="extend", # For backwards compatibility with past fal version
         help="Specify the nodes to exclude.",
     )
     run_parser.add_argument(
@@ -94,6 +95,7 @@ def run_fal(argv):
     run_parser.add_argument(
         "--scripts",
         nargs="+",
+        action="extend", # For backwards compatibility with past fal version
         help="Specify scripts to run, overrides schema.yml",
     )
 
