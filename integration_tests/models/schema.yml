@@ -1,0 +1,44 @@
+version: 2
+
+sources:
+  - name: results
+    database: test
+    schema: dbt_fal
+    tables:
+      - name: john_source
+
+models:
+  - name: zendesk_ticket_data
+    description: zendesk ticket data
+    config:
+      materialized: table
+    meta:
+      fal:
+        scripts:
+          - fal_scripts/test.py
+  - name: agent_wait_time
+    description: Agent wait time series
+    config:
+      materialized: table
+    columns:
+      - name: y
+        tests:
+          - not_null
+      - name: ds
+        tests:
+          - not_null
+      - name: a
+        tests:
+          - unique
+    meta:
+      fal:
+        scripts:
+          - fal_scripts/test.py
+  - name: john_table
+    description: Test from Discord
+    config:
+      materialized: table
+    meta:
+      fal:
+        scripts:
+          - fal_scripts/john_test.py

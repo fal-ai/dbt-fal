@@ -1,0 +1,4 @@
+Model name: agent_wait_time
+Ran not_null for y, result: Pass
+Ran not_null for ds, result: Pass
+Ran unique for a, result: Pass
