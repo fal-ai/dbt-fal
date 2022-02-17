@@ -51,4 +51,4 @@ jobs:
           poetry run dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
 
       - name: Test
-        run: poetry run pytest -s
+        run: poetry run pytest tests -s
