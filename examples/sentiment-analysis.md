@@ -2,7 +2,7 @@
 
 Sentiment Analysis is a powerful technique that takes advantage of NLP to understand opinions based on text. It is usually used to identify customer satisfaction. For simplicity we are taking advantage of a pretrained model and going to use [HuggingFace transformers for sentiment analysis](https://huggingface.co/transformers/quicktour.html).
 
-We are going to use sample data from the [Fivetran dbt-zendesk](https://github.com/fivetran/dbt_zendesk/tree/main/integration_tests/data) repo to classify sentiment of fake customer support ticket reviews.
+We are going to use sample data from the [Fivetran dbt-zendesk](https://github.com/fivetran/dbt_zendesk/tree/main/integration_tests/seeds) repo to classify sentiment of fake customer support ticket reviews.
 
 ## Meta tag
 
