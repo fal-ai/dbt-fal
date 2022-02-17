@@ -1,0 +1,36 @@
+# This workflow will update the latest version with minor release and upload a package to PyPi
+
+name: Minor version release publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.8.x'
+
+      - uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: '1.1.4'
+
+      - name: Build and publish
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USER }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          pip install --upgrade pip
+          pip install fal
+          long_version=$(pip show fal | grep Version)
+          IFS=" " read -ra version_arr <<< $long_version
+          short_version=${version_arr[1]}
+          poetry version $short_version
+          poetry version minor
+          poetry publish --build -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
