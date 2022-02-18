@@ -529,7 +529,7 @@ def _map_nodes_to_models(run_results, manifest):
     for model in models:
         model.set_status(status_map.get(model.unique_id, 'skipped'))
         for test in tests:
-            if test.model == model.name:
+            if hasattr(test, 'model') and test.model == model.name:
                 model.tests.append(test)
                 test.set_status(status_map.get(test.unique_id, 'skipped'))
                 if test.status != 'skipped' and model.status == 'skipped':
