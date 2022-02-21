@@ -235,11 +235,12 @@ def _run(
         run_scripts(scripts, project)
 
         # then run global scripts
-        global_scripts = list(
-            map(
-                lambda path: FalScript(None, path, []),
-                faldbt._global_script_paths,
+        if selector_flags is None and before is False:
+            global_scripts = list(
+                map(
+                    lambda path: FalScript(None, path, []),
+                    faldbt._global_script_paths,
+                )
             )
-        )
 
-        run_global_scripts(global_scripts, project)
+            run_global_scripts(global_scripts, project)
