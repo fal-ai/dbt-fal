@@ -350,7 +350,11 @@ class FalDbt:
         )
 
     def write_to_source(
-        self, data: pd.DataFrame, target_source_name: str, target_table_name: str
+        self,
+        data: pd.DataFrame,
+        target_source_name: str,
+        target_table_name: str,
+        dtype: Any = None
     ):
         """
         Write a pandas.DataFrame to a dbt source automagically.
@@ -371,6 +375,7 @@ class FalDbt:
             self.project_dir,
             self.profiles_dir,
             target_source,
+            dtype
         )
 
     def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):
