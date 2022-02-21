@@ -133,45 +133,19 @@ def run_fal(argv):
         + argv.count("--model")
     )
 
-    _run(
-        project_dir=args.project_dir,
-        profiles_dir=args.profiles_dir,
-        keyword=args.keyword,
-        all=args.all,
-        select=args.select,
-        exclude=args.exclude,
-        selector=args.selector,
-        script=args.scripts,
-        before=args.before,
-        experimental_ordering=args.experimental_ordering,
-        debug=args.debug,
-        disable_logging=args.disable_logging,
-        selects_count=selects_count,
-    )
+    _fal_run(args, selects_count=selects_count)
 
 
 def cli():
     run_fal(sys.argv)
 
 
-def _run(
-    project_dir,
-    profiles_dir,
-    keyword,
-    all,
-    select,
-    exclude,
-    selector,
-    script,
-    before,
-    experimental_ordering,
-    debug,
-    disable_logging,
-    # TODO: remove `action="extend"` to match exactly what dbt does
-    selects_count,
+def _fal_run(
+    args,
+    selects_count,  # TODO: remove `action="extend"` to match exactly what dbt does
 ):
 
-    if disable_logging:
+    if args.disable_logging:
         logger.disable()
 
     # Re-enable logging for 1.0.0 through old API of logger
@@ -180,13 +154,13 @@ def _run(
             logger.enable()
 
     with log_manager.applicationbound():
-        if debug:
+        if args.debug:
             log_manager.set_debug()
 
-        real_project_dir = os.path.realpath(os.path.normpath(project_dir))
+        real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
         real_profiles_dir = None
-        if profiles_dir is not None:
-            real_profiles_dir = os.path.realpath(os.path.normpath(profiles_dir))
+        if args.profiles_dir is not None:
+            real_profiles_dir = os.path.realpath(os.path.normpath(args.profiles_dir))
         elif os.getenv("DBT_PROFILES_DIR"):
             real_profiles_dir = os.path.realpath(
                 os.path.normpath(os.getenv("DBT_PROFILES_DIR"))
@@ -194,48 +168,55 @@ def _run(
         else:
             real_profiles_dir = DEFAULT_PROFILES_DIR
 
-        selector_flags = select or exclude or selector
-        if all and selector_flags:
+        selector_flags = args.select or args.exclude or args.selector
+        if args.all and selector_flags:
             raise FalGeneralException(
                 "Cannot pass --all flag alongside selection flags (--select/--models, --exclude, --selector)"
             )
 
         faldbt = FalDbt(
-            real_project_dir, real_profiles_dir, select, exclude, selector, keyword
+            real_project_dir,
+            real_profiles_dir,
+            args.select,
+            args.exclude,
+            args.selector,
+            args.keyword,
         )
         project = FalProject(faldbt)
-        models = project.get_filtered_models(all, selector_flags, before)
+        models = project.get_filtered_models(args.all, selector_flags, args.before)
 
         # TODO: remove `action="extend"` to match exactly what dbt does
         if selects_count > 1:
             dbt.exceptions.warn_or_error(
                 "Passing multiple --select/--model flags to fal is deprecatd.\n"
-                + f"Please use model selection like dbt. Use: --select {' '.join(select)}",
+                + f"Please use model selection like dbt. Use: --select {' '.join(args.select)}",
                 log_fmt=dbt.ui.warning_tag("{}"),
             )
 
-        print_run_info(models, keyword, before)
+        print_run_info(models, args.keyword, args.before)
 
-        if script:
+        if args.scripts:
             scripts = []
             for model in models:
-                for el in script:
+                for el in args.scripts:
                     scripts.append(FalScript(model, el))
             return run_scripts(scripts, project)
 
-        if experimental_ordering:
-            scripts = ScriptGraph(models, keyword, project_dir).sort()
+        if args.experimental_ordering:
+            scripts = ScriptGraph(models, args.keyword, args.project_dir).sort()
         else:
             scripts = []
             for model in models:
-                for path in model.get_script_paths(keyword, real_project_dir, before):
+                for path in model.get_script_paths(
+                    args.keyword, real_project_dir, args.before
+                ):
                     scripts.append(FalScript(model, path))
 
         # run model specific scripts first
         run_scripts(scripts, project)
 
         # then run global scripts
-        global_key = 'before' if before else 'after'
+        global_key = "before" if args.before else "after"
         global_scripts = list(
             map(
                 lambda path: FalScript(None, path, []),
