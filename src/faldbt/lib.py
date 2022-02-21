@@ -177,6 +177,7 @@ def write_target(
     project_path: str,
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
+    dtype=None
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_path, profiles_dir)
 
@@ -184,7 +185,7 @@ def write_target(
 
     engine = _alchemy_engine(adapter, target)
     pddb = pdsql.SQLDatabase(engine, schema=target.schema)
-    pdtable = pdsql.SQLTable(target.name, pddb, data, index=False)
+    pdtable = pdsql.SQLTable(target.name, pddb, data, index=False, dtype=dtype)
     alchemy_table: sqlalchemy.Table = pdtable.table.to_metadata(pdtable.pd_sql.meta)
 
     column_names: List[str] = list(data.columns)
