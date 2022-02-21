@@ -16,19 +16,104 @@ from faldbt.lib import DBT_VCURRENT, DBT_V1
 from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 
-def run_fal(argv):
+def _build_run_parser(sub: argparse.ArgumentParser):
 
     # fmt: off
-    parser = argparse.ArgumentParser(
-        description="Run Python scripts on dbt models",
-        usage="""fal COMMAND [<args>]""",
-        prog="fal",
+    sub.add_argument(
+        "--project-dir",
+        default=os.getcwd(),
+        help="Directory to look for dbt_project.yml.",
+    )
+    sub.add_argument(
+        "--profiles-dir",
+        default=None,
+        help="Directory to look for profiles.yml.",
+    )
+    sub.add_argument(
+        "--keyword",
+        default="fal",
+        help="Property in meta to look for fal configurations.",
     )
 
-    if len(argv) < 2:
-        print("No command supplied\n")
-        parser.print_help()
-        exit(1)
+    sub.add_argument(
+        "--all",
+        action="store_true",
+        help="Run scripts for all models. By default, fal runs scripts for models that ran in the last dbt run.",
+    )
+    # TODO: remove `action="extend"` to match exactly what dbt does
+    sub.add_argument(
+        "-s", "--select",
+        nargs="+",
+        action="extend", # For backwards compatibility with past fal version
+        dest="select",
+        help="Specify the nodes to include.",
+    )
+    sub.add_argument(
+        "-m", "--models",
+        nargs="+",
+        action="extend", # For backwards compatibility with past fal version
+        dest="select",
+        help="Specify the nodes to include.",
+    )
+    sub.add_argument(
+        "--exclude",
+        nargs="+",
+        action="extend", # For backwards compatibility with past fal version
+        help="Specify the nodes to exclude.",
+    )
+    sub.add_argument(
+        "--selector",
+        help="The selector name to use, as defined in selectors.yml",
+    )
+    sub.add_argument(
+        "--scripts",
+        nargs="+",
+        action="extend", # For backwards compatibility with past fal version
+        help="Specify scripts to run, overrides schema.yml",
+    )
+
+    sub.add_argument(
+        "--before",
+        action="store_true",
+        help="Run scripts specified in model `before` tag",
+    )
+    sub.add_argument(
+        "--experimental-ordering",
+        action="store_true",
+        help="Turns on ordering of the fal scripts.",
+    )
+    sub.add_argument(
+        "--debug",
+        action="store_true",
+        help="Display debug logging during execution.",
+    )
+    sub.add_argument(
+        "--disable-logging",
+        action="store_true",
+        help="Disable logging.",
+    )
+    # fmt: on
+
+
+def _build_flow_parser(sub: argparse.ArgumentParser):
+
+    flow_command_parsers = sub.add_subparsers(
+        title="flow commands",
+        dest="flow_command",
+        required=True,
+    )
+    flow_run_parser = flow_command_parsers.add_parser(
+        name="run",
+        help="Run dbt and fal in order",
+    )
+    _build_run_parser(flow_run_parser)
+
+
+def cli(argv=sys.argv):
+    parser = argparse.ArgumentParser(
+        prog="fal",
+        description="Run Python scripts on dbt models",
+    )
 
     # Handle version checking
     version = pkg_resources.get_distribution("fal").version
@@ -41,87 +126,23 @@ def run_fal(argv):
     )
 
     # Handle commands
-    command_parsers = parser.add_subparsers(title="commands", dest="command_parsers")
+    command_parsers = parser.add_subparsers(
+        title="commands",
+        dest="command",
+        required=True,
+    )
+
     run_parser = command_parsers.add_parser(
-        "run",
+        name="run",
         help="Run Python scripts as final nodes",
     )
+    _build_run_parser(run_parser)
 
-    run_parser.add_argument(
-        "--project-dir",
-        default=os.getcwd(),
-        help="Directory to look for dbt_project.yml.",
+    flow_parser = command_parsers.add_parser(
+        name="flow",
+        help="Flow between tools naturally",
     )
-    run_parser.add_argument(
-        "--profiles-dir",
-        default=None,
-        help="Directory to look for profiles.yml.",
-    )
-    run_parser.add_argument(
-        "--keyword",
-        default="fal",
-        help="Property in meta to look for fal configurations.",
-    )
-
-    run_parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Run scripts for all models. By default, fal runs scripts for models that ran in the last dbt run.",
-    )
-    # TODO: remove `action="extend"` to match exactly what dbt does
-    run_parser.add_argument(
-        "-s", "--select",
-        nargs="+",
-        action="extend", # For backwards compatibility with past fal version
-        dest="select",
-        help="Specify the nodes to include.",
-    )
-    run_parser.add_argument(
-        "-m", "--models",
-        nargs="+",
-        action="extend", # For backwards compatibility with past fal version
-        dest="select",
-        help="Specify the nodes to include.",
-    )
-    run_parser.add_argument(
-        "--exclude",
-        nargs="+",
-        action="extend", # For backwards compatibility with past fal version
-        help="Specify the nodes to exclude.",
-    )
-    run_parser.add_argument(
-        "--selector",
-        help="The selector name to use, as defined in selectors.yml",
-    )
-    run_parser.add_argument(
-        "--scripts",
-        nargs="+",
-        action="extend", # For backwards compatibility with past fal version
-        help="Specify scripts to run, overrides schema.yml",
-    )
-
-    run_parser.add_argument(
-        "--before",
-        action="store_true",
-        help="Run scripts specified in model `before` tag",
-    )
-    run_parser.add_argument(
-        "--experimental-ordering",
-        action="store_true",
-        help="Turns on ordering of the fal scripts.",
-    )
-    run_parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Display debug logging during execution.",
-    )
-    run_parser.add_argument(
-        "--disable-logging",
-        action="store_true",
-        help="Disable logging.",
-    )
-
-    # fmt: on
+    _build_flow_parser(flow_parser)
 
     args = parser.parse_args(argv[1:])
 
@@ -133,11 +154,18 @@ def run_fal(argv):
         + argv.count("--model")
     )
 
-    _fal_run(args, selects_count=selects_count)
+    if args.command == "flow":
+        if args.flow_command == "run":
+            _dbt_run(args)
+            _fal_run(args, selects_count=selects_count)
+
+    elif args.command == "run":
+        _fal_run(args, selects_count=selects_count)
 
 
-def cli():
-    run_fal(sys.argv)
+def _dbt_run(args):
+    # TODO: call dbt cli
+    pass
 
 
 def _fal_run(
