@@ -1,9 +1,10 @@
-from fal.cli import run_fal
+from fal.cli import cli
 import tempfile
 import os
 from pathlib import Path
 import shutil
 from dbt.exceptions import DbtProjectError
+import re
 
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 project_dir = os.path.join(Path.cwd(), "tests/mock")
@@ -11,24 +12,22 @@ project_dir = os.path.join(Path.cwd(), "tests/mock")
 
 def test_run():
     try:
-        run_fal(["fal", "run", "--profiles-dir", profiles_dir])
-        assert True is False  # This line isn't reached
+        cli(["fal", "run", "--profiles-dir", profiles_dir])
+        assert False, "Should not reach"
     except DbtProjectError as e:
         assert "no dbt_project.yml found at expected path" in str(e.msg)
 
 
 def test_no_arg(capfd):
     captured = _run_fal([], capfd)
-    assert "usage: fal COMMAND [<args>]" in captured.out
+    assert re.match("usage: fal (\[\-\-?\w+\] *)* COMMAND", captured.err)
+    assert "the following arguments are required: COMMAND" in captured.err
 
 
 def test_run_with_project_dir():
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
-        run_fal(
-            ["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir]
-        )
-    assert True is True
+        cli(["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
 
 
 def test_version(capfd):
@@ -173,7 +172,7 @@ def test_before(capfd):
 def _run_fal(args, capfd):
     # Given fal arguments, runs fal and returns capfd output
     try:
-        run_fal(["fal"] + args)
+        cli(["fal"] + args)
     except SystemExit:
         pass
     except Exception as e:

@@ -100,6 +100,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     flow_command_parsers = sub.add_subparsers(
         title="flow commands",
         dest="flow_command",
+        metavar="COMMAND",
         required=True,
     )
     flow_run_parser = flow_command_parsers.add_parser(
@@ -129,6 +130,7 @@ def cli(argv=sys.argv):
     command_parsers = parser.add_subparsers(
         title="commands",
         dest="command",
+        metavar="COMMAND",
         required=True,
     )
 
