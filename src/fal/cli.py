@@ -1,7 +1,10 @@
+from typing import Any, Dict, Optional, List
 import argparse
 import os
 import sys
 import pkg_resources
+import subprocess
+import json
 
 import dbt.exceptions
 import dbt.ui
@@ -14,6 +17,44 @@ from fal.dag import FalScript, ScriptGraph
 from fal.utils import print_run_info
 from faldbt.lib import DBT_VCURRENT, DBT_V1
 from faldbt.project import FalDbt, FalGeneralException, FalProject
+
+
+class DbtCliRuntimeError(Exception):
+    pass
+
+
+class DbtCliOutput:
+    def __init__(
+        self,
+        command: str,
+        return_code: int,
+        raw_output: str,
+        logs: List[Dict[str, Any]],
+    ):
+        self._command = command
+        self._return_code = return_code
+        self._raw_output = raw_output
+        self._logs = logs
+
+    @property
+    def docs_url(self) -> Optional[str]:
+        return None
+
+    @property
+    def command(self) -> str:
+        return self._command
+
+    @property
+    def return_code(self) -> int:
+        return self._return_code
+
+    @property
+    def raw_output(self) -> str:
+        return self._raw_output
+
+    @property
+    def logs(self) -> List[Dict[str, Any]]:
+        return self._logs
 
 
 def _build_run_parser(sub: argparse.ArgumentParser):
@@ -166,8 +207,68 @@ def cli(argv=sys.argv):
 
 
 def _dbt_run(args):
-    # TODO: call dbt cli
-    pass
+    command_list = ["dbt", "--log-format", "json"]
+
+    if args.debug:
+        command_list += ["--debug"]
+
+    command_list += ["run"]
+
+    if args.project_dir:
+        command_list += ["--project-dir", args.project_dir]
+    if args.profiles_dir:
+        command_list += ["--profiles-dir", args.profiles_dir]
+
+    if args.select:
+        command_list += ["--select"] + args.select
+    if args.exclude:
+        command_list += ["--exclude"] + args.exclude
+    if args.selector:
+        command_list += ["--selector"] + args.selector
+
+    # Execute the dbt CLI command in a subprocess.
+    full_command = " ".join(command_list)
+    print(f"Executing command: {full_command}")
+
+    return_code = 0
+    logs = []
+    output = []
+
+    process = subprocess.Popen(
+        command_list, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    )
+
+    for raw_line in process.stdout or []:
+        line = raw_line.decode("utf-8")
+        output.append(line)
+        try:
+            json_line = json.loads(line)
+        except json.JSONDecodeError:
+            print(line.rstrip())
+            pass
+        else:
+            logs.append(json_line)
+            print(json_line.get("message", json_line.get("msg", line.rstrip())))
+
+    process.wait()
+    return_code = process.returncode
+
+    print(f"dbt exited with return code {return_code}")
+
+    raw_output = "\n".join(output)
+
+    if return_code == 2:
+        raise DbtCliRuntimeError(raw_output)
+
+    if return_code == 1:
+        raise DbtCliRuntimeError(raw_output)
+
+    return DbtCliOutput(
+        command=full_command,
+        return_code=return_code,
+        raw_output=raw_output,
+        logs=logs,
+    )
 
 
 def _fal_run(
