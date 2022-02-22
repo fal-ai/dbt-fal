@@ -83,11 +83,6 @@ def _build_run_parser(sub: argparse.ArgumentParser):
         help="Turns on ordering of the fal scripts.",
     )
     sub.add_argument(
-        "--debug",
-        action="store_true",
-        help="Display debug logging during execution.",
-    )
-    sub.add_argument(
         "--disable-logging",
         action="store_true",
         help="Disable logging.",
@@ -116,7 +111,6 @@ def cli(argv=sys.argv):
         description="Run Python scripts on dbt models",
     )
 
-    # Handle version checking
     version = pkg_resources.get_distribution("fal").version
     parser.add_argument(
         "-v",
@@ -124,6 +118,12 @@ def cli(argv=sys.argv):
         action="version",
         version=f"fal {version}",
         help="show fal version",
+    )
+
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Display debug logging during execution.",
     )
 
     # Handle commands
