@@ -24,7 +24,7 @@ model_alpha: script.py
 model_beta: script.py, other.py
 ```
 
-### before flag
+### Running scripts before dbt runs
 
 The `--before` flag let's users run scripts before their dbt runs.
 
