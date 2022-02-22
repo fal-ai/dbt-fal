@@ -189,6 +189,11 @@ def write_target(
     alchemy_table: sqlalchemy.Table = pdtable.table.to_metadata(pdtable.pd_sql.meta)
 
     column_names: List[str] = list(data.columns)
+
+    # Escape { and } in row data
+    data = data.replace('{', r'\{', regex=True)
+    data = data.replace('}', r'\}', regex=True)
+
     rows = data.to_records(index=False)
     row_dicts = list(map(lambda row: dict(zip(column_names, row)), rows))
 
