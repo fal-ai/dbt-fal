@@ -13,7 +13,8 @@ def test_scripts():
         project_dir=project_dir,
     )
 
-    assert 0 == len(faldbt._global_script_paths)
+    assert isinstance(faldbt._global_script_paths, dict)
+    assert 0 == len(faldbt._global_script_paths['after'])
 
     faldbt._global_script_paths
     models = faldbt.list_models()

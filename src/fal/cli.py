@@ -235,10 +235,11 @@ def _run(
         run_scripts(scripts, project)
 
         # then run global scripts
+        global_key = 'before' if before else 'after'
         global_scripts = list(
             map(
                 lambda path: FalScript(None, path, []),
-                faldbt._global_script_paths,
+                faldbt._global_script_paths[global_key],
             )
         )
 
