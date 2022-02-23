@@ -207,11 +207,20 @@ It is also possible to send data back to your datawarehouse. This makes it easy 
 
 All you have to do is define the target source in your schema and use it in fal. 
 This operation appends to the existing source by default and should only be used targetting tables, not views.
+
 ```python
 # Upload a `pandas.DataFrame` back to the datawarehouse
 write_to_source(df, 'source_name', 'table_name2')
 ```
+
 `write_to_source` also accepts an optional `dtype` argument, which lets you specify datatypes of columns. It works the same way as `dtype` argument for [`DataFrame.to_sql` function](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html).
+
+```python
+from sqlalchemy.types import Integer
+# Upload but specifically create the `value` column with type `integer`
+# Can be useful if data has `None` values
+write_to_source(df, 'source', 'table', dtype={'value': Integer()})
+```
 
 ## Lifecycle and State Management
 By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were run on the last `dbt run` (So if you are using model selectors, `fal` will only run on the selected models).
