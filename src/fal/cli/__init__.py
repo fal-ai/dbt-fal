@@ -103,13 +103,12 @@ def _dbt_run(args):
     if args.debug:
         command_list += ["--debug"]
 
-    if args.profiles_dir:
-        command_list += ["--profiles-dir", args.profiles_dir]
-
     command_list += ["run"]
 
     if args.project_dir:
         command_list += ["--project-dir", args.project_dir]
+    if args.profiles_dir:
+        command_list += ["--profiles-dir", args.profiles_dir]
 
     if args.select:
         command_list += ["--select"] + args.select

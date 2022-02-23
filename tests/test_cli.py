@@ -61,7 +61,7 @@ def test_flow_run_with_project_dir(capfd):
         )
 
         assert re.match(
-            "Executing command: dbt --log-format json --profiles-dir [\w\/\-\_]+tests/mock/mockProfile run --project-dir",
+            "Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile",
             captured.out,
         )
 
