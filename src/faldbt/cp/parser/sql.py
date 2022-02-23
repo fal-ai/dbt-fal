@@ -6,7 +6,12 @@ from typing import Iterable
 from dbt.contracts.graph.manifest import SourceFile
 from dbt.contracts.graph.unparsed import UnparsedMacro
 from dbt.exceptions import InternalException
-from dbt.parser.base import SimpleSQLParser
+from dbt.parser.base import (
+    SimpleSQLParser,
+    ConfiguredBlockType,
+    ContextConfig,
+    FinalNode,
+)
 from dbt.parser.macros import MacroParser
 from dbt.parser.search import FileBlock
 
@@ -38,23 +43,41 @@ class SqlBlockParser(SimpleSQLParser[ParsedSqlNode]):
         # we do it this way to make mypy happy
         if not isinstance(block, SqlBlock):
             raise InternalException(
-                'While parsing SQL operation, got an actual file block instead of '
-                'an SQL block: {}'.format(block)
+                "While parsing SQL operation, got an actual file block instead of "
+                "an SQL block: {}".format(block)
             )
 
-        return os.path.join('sql', block.name)
+        return os.path.join("sql", block.name)
 
     def parse_remote(self, sql: str, name: str) -> ParsedSqlNode:
         source_file = SourceFile.remote(sql, self.project.project_name)
         contents = SqlBlock(block_name=name, file=source_file)
         return self.parse_node(contents)
 
+    def parse_node(self, block: ConfiguredBlockType) -> FinalNode:
+        compiled_path: str = self.get_compiled_path(block)
+        fqn = self.get_fqn(compiled_path, block.name)
+
+        config: ContextConfig = self.initial_config(fqn)
+
+        node = self._create_parsetime_node(
+            block=block,
+            path=compiled_path,
+            config=config,
+            fqn=fqn,
+        )
+        # HACK: Avoid rendering this node since the it is not really used
+        # self.render_update(node, config)
+        result = self.transform(node)
+        self.add_result_node(block, result)
+        return result
+
 
 class SqlMacroParser(MacroParser):
     def parse_remote(self, contents) -> Iterable[ParsedMacro]:
         base = UnparsedMacro(
-            path='from remote system',
-            original_file_path='from remote system',
+            path="from remote system",
+            original_file_path="from remote system",
             package_name=self.project.project_name,
             raw_sql=contents,
             root_path=self.project.project_root,
