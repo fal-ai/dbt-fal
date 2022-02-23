@@ -54,3 +54,12 @@ This operation appends to the existing source by default and should only be used
 # Upload a `pandas.DataFrame` back to the datawarehouse
 write_to_source(df, 'source_name', 'table_name2')
 ```
+
+`write_to_source` also accepts an optional `dtype` argument, which lets you specify datatypes of columns. It works the same way as `dtype` argument for [`DataFrame.to_sql` function](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html).
+
+```python
+from sqlalchemy.types import Integer
+# Upload but specifically create the `value` column with type `integer`
+# Can be useful if data has `None` values
+write_to_source(df, 'source', 'table', dtype={'value': Integer()})
+```
