@@ -25,13 +25,13 @@ const config = {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/fal-ai/fal/tree/main/docsite/docs',
+          editUrl: 'https://github.com/fal-ai/fal/tree/main/docsite',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/fal-ai/fal/tree/main/docsite/docs',
+            'https://github.com/fal-ai/fal/tree/main/docsite',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
