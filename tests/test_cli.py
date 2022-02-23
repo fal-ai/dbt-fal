@@ -1,4 +1,4 @@
-from fal.cli import cli
+from fal.cli import DbtCliRuntimeError, cli
 import tempfile
 import os
 from pathlib import Path
@@ -18,9 +18,17 @@ def test_run():
         assert "no dbt_project.yml found at expected path" in str(e.msg)
 
 
+def test_flow_run():
+    try:
+        cli(["fal", "flow", "run", "--profiles-dir", profiles_dir])
+        assert False, "Should not reach"
+    except DbtCliRuntimeError as e:
+        assert "Not a dbt project. Missing dbt_project.yml file" in str(e)
+
+
 def test_no_arg(capfd):
     captured = _run_fal([], capfd)
-    assert re.match("usage: fal (\[\-\-?\w+\] *)* COMMAND", captured.err)
+    assert re.match("usage: fal (.|\n)* COMMAND", captured.err)
     assert "the following arguments are required: COMMAND" in captured.err
 
 
@@ -38,6 +46,26 @@ def test_version(capfd):
     assert f"fal {version}" in captured.out
 
 
+def test_flow_run_with_project_dir(capfd):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        captured = _run_fal(
+            [
+                "flow",
+                "run",
+                "--project-dir",
+                tmp_dir,
+                "--profiles-dir",
+                profiles_dir,
+            ],
+            capfd,
+        )
+
+        assert re.match(
+            "Executing command: dbt --log-format json --profiles-dir [\w\/\-\_]+tests/mock/mockProfile run --project-dir",
+            captured.out,
+        )
+
+
 def test_selection(capfd):
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
@@ -51,25 +79,33 @@ def test_selection(capfd):
                 "--select",
                 "model_feature_store",
                 "model_empty_scripts",
+                "--select",
+                "model_with_scripts",  # included (extend)
             ],
             capfd,
         )
 
-        assert "model_with_scripts" not in captured.out
+        assert "model_with_scripts" in captured.out
         assert "model_feature_store" in captured.out
         assert "model_empty_scripts" in captured.out
         assert "model_no_fal" not in captured.out
+        assert (
+            "Passing multiple --select/--model flags to fal is deprecatd"
+            in captured.out
+        )
 
         captured = _run_fal(
             [
+                "flow",
                 "run",
                 "--project-dir",
                 tmp_dir,
                 "--profiles-dir",
                 profiles_dir,
                 "--select",
-                "model_feature_store",
+                "model_with_scripts",  # not included (overwrites)
                 "--select",
+                "model_feature_store",
                 "model_empty_scripts",
             ],
             capfd,
@@ -81,7 +117,7 @@ def test_selection(capfd):
         assert "model_no_fal" not in captured.out
         assert (
             "Passing multiple --select/--model flags to fal is deprecatd"
-            in captured.out
+            not in captured.out
         )
 
         captured = _run_fal(
