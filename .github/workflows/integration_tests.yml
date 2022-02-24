@@ -88,3 +88,30 @@ jobs:
 
           echo "*** Checking fal output files ***"
           python check_outputs.py test
+
+      - name: Run with fal flow run
+        working-directory: integration_tests
+        run: |
+          echo "*** Seeding database ***"
+          dbt seed --profiles-dir .
+
+          echo "*** Starting fal flow run ***"
+          fal flow run --profiles-dir .
+
+          echo "*** Checking fal output files ***"
+          python check_outputs.py
+
+          echo "*** Starting fal run with experimental ordering ***"
+          fal run --experimental-ordering --profiles-dir .
+
+          echo "*** Checking fal output files ***"
+          python check_outputs.py
+
+          echo "*** Starting dbt test run ***"
+          dbt test --profiles-dir . --model agent_wait_time
+
+          echo "*** Starting fal run ***"
+          fal run --profiles-dir .
+
+          echo "*** Checking fal output files ***"
+          python check_outputs.py test
