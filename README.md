@@ -9,7 +9,7 @@ fal allows you to run python scripts directly from your [dbt](https://www.getdbt
     <img src="https://static.pepy.tech/personalized-badge/fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads" alt="Total downloads" />
   </a>&nbsp;
   <a href="https://pypi.org/project/fal/">
-    <img src="https://badge.fury.io/py/fal.svg" alt="Angular on npm" />
+    <img src="https://badge.fury.io/py/fal.svg" alt="fal on PyPI" />
   </a>&nbsp;
   <a href="https://discord.com/invite/Fyc9PwrccF">
     <img src="https://badgen.net/badge/icon/Join%20Us%20On%20Discord/red?icon=discord&label" alt="Discord conversation" />
