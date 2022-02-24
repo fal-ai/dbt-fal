@@ -6,6 +6,7 @@ import os
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 project_dir = os.path.join(Path.cwd(), "tests/mock")
 
+
 def test_initialize():
     faldbt = FalDbt(
         profiles_dir=profiles_dir,
