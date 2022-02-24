@@ -9,7 +9,7 @@ from dbt.contracts.results import NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
 
 from faldbt.project import FalProject
-from fal.dag import FalScript
+from fal.fal_script import FalScript
 
 import faldbt.lib as lib
 
@@ -95,8 +95,14 @@ def _get_target_path(config: RuntimeConfig) -> Path:
 
 
 def _process_tests(tests: List[Any]):
-    return list(map(
-        lambda test: CurrentTest(name=test.name,
-                                 column=test.column,
-                                 status=test.status,
-                                 modelname=test.model), tests))
+    return list(
+        map(
+            lambda test: CurrentTest(
+                name=test.name,
+                column=test.column,
+                status=test.status,
+                modelname=test.model,
+            ),
+            tests,
+        )
+    )

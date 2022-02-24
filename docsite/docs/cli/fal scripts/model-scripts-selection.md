@@ -23,3 +23,34 @@ $ fal run --select model_alpha model_beta
 model_alpha: script.py
 model_beta: script.py, other.py
 ```
+
+### Running scripts before dbt runs
+
+The `--before` flag let's users run scripts before their dbt runs.
+
+Given the following schema.yml:
+
+```
+models:
+  - name: boston
+    description: Ozone levels
+    config:
+      materialized: table
+    meta:
+      owner: "@meder"
+      fal:
+      	scripts:
+          before:
+            - fal_scripts/postgres.py
+  	      after:
+            - fal_scripts/slack.py
+```
+
+`fal run --before` will run `fal_scripts/postgres.py` script regardless if dbt has calculated the boston model or not. `fal run` without the `--before` flag, will run `fal_scripts/slack.py`, but only if boston model is already calculated by dbt.
+
+A typical workflow involves running `dbt run` after invoking `fal run --before`.
+
+```bash
+$ fal run --before --select boston
+$ dbt run --select boston
+```

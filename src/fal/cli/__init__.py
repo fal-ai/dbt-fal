@@ -11,7 +11,7 @@ from dbt.logger import log_manager, GLOBAL_LOGGER as logger
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import run_global_scripts, run_scripts
-from fal.dag import FalScript, ScriptGraph
+from fal.fal_script import FalScript
 from fal.utils import print_run_info
 from faldbt.lib import DBT_VCURRENT, DBT_V1
 from faldbt.project import FalDbt, FalGeneralException, FalProject
@@ -222,33 +222,33 @@ def _fal_run(
 
     print_run_info(models, args_dict.get("keyword"), args_dict.get("before"))
 
+    scripts = []
+    # if --script selector is there only run selected scripts
+
     if args_dict.get("scripts"):
         scripts = []
         for model in models:
             for el in args.scripts:
                 scripts.append(FalScript(model, el))
-        return run_scripts(scripts, project)
+        run_scripts(scripts, project)
 
-    if args_dict.get("experimental_ordering"):
-        scripts = ScriptGraph(models, args_dict.get("keyword"), args.project_dir).sort()
     else:
-        scripts = []
         for model in models:
             for path in model.get_script_paths(
                 args_dict.get("keyword"), real_project_dir, args_dict.get("before")
             ):
                 scripts.append(FalScript(model, path))
 
-    # run model specific scripts first
-    run_scripts(scripts, project)
+        # run model specific scripts first
+        run_scripts(scripts, project)
 
-    # then run global scripts
-    global_key = "before" if args_dict.get("before") else "after"
-    global_scripts = list(
-        map(
-            lambda path: FalScript(None, path, []),
-            faldbt._global_script_paths[global_key],
+        # then run global scripts
+        global_key = "before" if args_dict.get("before") else "after"
+        global_scripts = list(
+            map(
+                lambda path: FalScript(None, path),
+                faldbt._global_script_paths[global_key],
+            )
         )
-    )
 
-    run_global_scripts(global_scripts, project)
+        run_global_scripts(global_scripts, project)
