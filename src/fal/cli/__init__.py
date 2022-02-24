@@ -193,7 +193,7 @@ def _fal_run(
         args.select,
         args.exclude,
         args.selector,
-        args_dict.get("keyword"),
+        args.keyword,
     )
     project = FalProject(faldbt)
     models = project.get_filtered_models(
@@ -220,7 +220,7 @@ def _fal_run(
             log_fmt=dbt.ui.warning_tag("{}"),
         )
 
-    print_run_info(models, args_dict.get("keyword"), args_dict.get("before"))
+    print_run_info(models, args.keyword, args_dict.get("before"))
 
     scripts = []
     # if --script selector is there only run selected scripts
@@ -235,7 +235,7 @@ def _fal_run(
     else:
         for model in models:
             for path in model.get_script_paths(
-                args_dict.get("keyword"), real_project_dir, args_dict.get("before")
+                args.keyword, real_project_dir, args_dict.get("before")
             ):
                 scripts.append(FalScript(model, path))
 

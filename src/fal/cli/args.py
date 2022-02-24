@@ -10,6 +10,12 @@ def _build_fal_common_options(parser: argparse.ArgumentParser):
         help="Disable logging.",
     )
 
+    parser.add_argument(
+        "--keyword",
+        default="fal",
+        help="Property in dbt relations meta to look for fal configurations.",
+    )
+
 
 def _build_dbt_common_options(parser: argparse.ArgumentParser):
     parser.add_argument(
@@ -73,12 +79,6 @@ def _build_run_parser(sub: argparse.ArgumentParser):
         nargs="+",
         action="extend", # For backwards compatibility with past fal version
         help="Specify scripts to run, overrides schema.yml",
-    )
-
-    sub.add_argument(
-        "--keyword",
-        default="fal",
-        help="Property in meta to look for fal configurations.",
     )
 
     sub.add_argument(
