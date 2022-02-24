@@ -12,7 +12,6 @@ import dbt.adapters.factory as adapters_factory
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.graph.manifest import Manifest
-from dbt.parser.manifest import process_node
 from dbt.logger import GLOBAL_LOGGER as logger
 
 from . import parse
@@ -23,18 +22,14 @@ from pandas.io import sql as pdsql
 import sqlalchemy
 from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
-from sqlalchemy.sql.schema import MetaData
-
 
 DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.get_installed_version()
 
 if DBT_VCURRENT.compare(DBT_V1) >= 0:
-    from dbt.parser.sql import SqlBlockParser
     from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
     from dbt.contracts.sql import ResultTable, RemoteRunResult
 else:
-    from faldbt.cp.parser.sql import SqlBlockParser
     from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
     from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
 
@@ -75,23 +70,6 @@ def register_adapters(config: RuntimeConfig):
     adapters_factory.register_adapter(config)
 
 
-def _get_operation_node(manifest: Manifest, project_path, profiles_dir, sql):
-
-    config = parse.get_dbt_config(project_path, profiles_dir)
-    block_parser = SqlBlockParser(
-        project=config,
-        manifest=manifest,
-        root_project=config,
-    )
-
-    # NOTE: nodes get registered to the manifest automatically,
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
-    sql_node = block_parser.parse_remote(sql, name)
-    process_node(config, manifest, sql_node)
-    return sql_node
-
-
 # NOTE: Once we get an adapter, we must call `connection_for` or `connection_named` to use it
 def _get_adapter(project_path: str, profiles_dir: str):
     config = parse.get_dbt_config(project_path, profiles_dir)
@@ -103,13 +81,14 @@ def _get_adapter(project_path: str, profiles_dir: str):
 def _execute_sql(
     manifest: Manifest, project_path: str, profiles_dir: str, sql: str
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
-    node = _get_operation_node(manifest, project_path, profiles_dir, sql)
     adapter = _get_adapter(project_path, profiles_dir)
 
     logger.debug("Running query\n{}", sql)
 
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
     result = None
-    with adapter.connection_for(node):
+    with adapter.connection_named(name, node=None):
         adapter.connections.begin()
         response, execute_result = adapter.execute(sql, fetch=True)
 
@@ -121,7 +100,7 @@ def _execute_sql(
         result = RemoteRunResult(
             raw_sql=sql,
             compiled_sql=sql,
-            node=node,
+            node=None,
             table=table,
             timing=[],
             logs=[],
@@ -177,7 +156,7 @@ def write_target(
     project_path: str,
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
-    dtype=None
+    dtype=None,
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_path, profiles_dir)
 
@@ -189,10 +168,6 @@ def write_target(
     alchemy_table: sqlalchemy.Table = pdtable.table.to_metadata(pdtable.pd_sql.meta)
 
     column_names: List[str] = list(data.columns)
-
-    # Escape { and } in row data
-    data = data.replace('{', r'\{', regex=True)
-    data = data.replace('}', r'\}', regex=True)
 
     rows = data.to_records(index=False)
     row_dicts = list(map(lambda row: dict(zip(column_names, row)), rows))

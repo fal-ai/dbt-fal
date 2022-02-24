@@ -6,6 +6,7 @@ sources:
     schema: public
     tables:
       - name: single_col
+      - name: sql_col
 
 models:
   - name: model_with_scripts
