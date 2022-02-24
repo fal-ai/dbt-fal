@@ -86,11 +86,6 @@ def _build_run_parser(sub: argparse.ArgumentParser):
         action="store_true",
         help="Run scripts specified in model `before` tag",
     )
-    sub.add_argument(
-        "--experimental-ordering",
-        action="store_true",
-        help="Turns on ordering of the fal scripts.",
-    )
     # fmt: on
 
 
