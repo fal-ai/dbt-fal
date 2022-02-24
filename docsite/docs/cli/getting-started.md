@@ -7,14 +7,15 @@ slug: /
 
 Let's discover `fal` **in less than 5 minutes**.
 
-`fal` allows you to run python scripts directly from your `dbt` project.
+`fal` allows you to run Python scripts directly from your `dbt` project.
 
 With `fal`, you can:
 
 - Send Slack notifications upon dbt model success or failure.
 - Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`.
-- Use python libraries such as sklearn or prophet to build more complex pipelines downstream of dbt models.
-  and more...
+- Use Python libraries such as sklearn or prophet to build more complex pipelines downstream of dbt models.
+
+and more...
 
 ## 1. Install fal
 
@@ -28,7 +29,7 @@ $ pip install fal
 $ cd ~/src/my_dbt_project
 ```
 
-## 3. Create a python script: `send_slack_message.py`
+## 3. Create a Python script: `send_slack_message.py`
 
 ```python
 import os
@@ -50,7 +51,7 @@ except SlackApiError as e:
     assert e.response["error"]
 ```
 
-fal makes certain variables and functions avaliable in this script, [checkout the fal scripts section for more details](fal%20scripts/functions-and-variables)
+fal makes certain variables and functions avaliable in this script. [Check out the fal scripts section for more details](cli/fal%20scripts/functions-and-variables)
 
 ## 4. Add a `meta` section in your `schema.yml`
 

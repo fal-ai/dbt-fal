@@ -25,13 +25,13 @@ const config = {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/fal-ai/fal/tree/main/docs',
+          editUrl: 'https://github.com/fal-ai/fal/tree/main/docsite',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/fal-ai/fal/tree/main/docs',
+            'https://github.com/fal-ai/fal/tree/main/docsite',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -70,6 +70,11 @@ const config = {
             to: 'https://www.notion.so/featuresandlabels/February-Roadmap-e6521e39514a4ed598745aa71167de6b',
             label: 'Roadmap',
             position: 'left'
+          },
+          {
+            to: 'https://fal.ai',
+            label: 'Home',
+            position: 'right'
           },
           {
             href: 'https://github.com/fal-ai/fal',
