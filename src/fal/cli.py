@@ -10,7 +10,7 @@ from dbt.logger import log_manager, GLOBAL_LOGGER as logger
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import run_global_scripts, run_scripts
-from fal.dag import FalScript, ScriptGraph
+from fal.fal_script import FalScript
 from fal.utils import print_run_info
 from faldbt.lib import DBT_VCURRENT, DBT_V1
 from faldbt.project import FalDbt, FalGeneralException, FalProject
@@ -216,31 +216,29 @@ def _run(
 
         print_run_info(models, keyword, before)
 
+        scripts = []
+        # if --script selector is there only run selected scripts
         if script:
             scripts = []
             for model in models:
                 for el in script:
                     scripts.append(FalScript(model, el))
-            return run_scripts(scripts, project)
-
-        if experimental_ordering:
-            scripts = ScriptGraph(models, keyword, project_dir).sort()
+            run_scripts(scripts, project)
         else:
-            scripts = []
             for model in models:
                 for path in model.get_script_paths(keyword, real_project_dir, before):
                     scripts.append(FalScript(model, path))
 
-        # run model specific scripts first
-        run_scripts(scripts, project)
+            # run model specific scripts first
+            run_scripts(scripts, project)
 
-        # then run global scripts
-        global_key = 'before' if before else 'after'
-        global_scripts = list(
-            map(
-                lambda path: FalScript(None, path, []),
-                faldbt._global_script_paths[global_key],
+            # then run global scripts
+            global_key = "before" if before else "after"
+            global_scripts = list(
+                map(
+                    lambda path: FalScript(None, path),
+                    faldbt._global_script_paths[global_key],
+                )
             )
-        )
 
-        run_global_scripts(global_scripts, project)
+            run_global_scripts(global_scripts, project)
