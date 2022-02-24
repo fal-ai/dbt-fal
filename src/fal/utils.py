@@ -1,14 +1,15 @@
 """Fal utilities."""
 from dbt.logger import print_timestamped_line
-from faldbt.project import DbtModel
+from fal.fal_script import FalScript
 from typing import List
 
 
-def print_run_info(models: List[DbtModel], keyword: str, before):
+def print_run_info(scripts: List[FalScript], keyword: str, before):
     """Print information on the current fal run."""
     models_arr = []
-    for model in models:
-        models_arr.append(f"{model.name}: {', '.join(model.get_scripts(keyword, before))}")
+    for script in scripts:
+        path = script.path if isinstance(script.path, str) else str(script.path)
+        models_arr.append(f"{script.model.name}: {path}")
 
     models_str = "\n".join(models_arr)
     print_timestamped_line(
