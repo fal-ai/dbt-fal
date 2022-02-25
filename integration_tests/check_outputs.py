@@ -1,7 +1,8 @@
 import sys
+
 models = ["agent_wait_time", "zendesk_ticket_data"]
 
-is_test = len(sys.argv) > 0 and sys.argv[0] == 'test'
+is_test = len(sys.argv) > 0 and sys.argv[0] == "test"
 
 is_selection = len(sys.argv) > 0 and sys.argv[0] == 'selection'
 
@@ -35,8 +36,8 @@ for model in models:
         assert expected == current
     except AssertionError:
         print(f"Error for {model}:")
-        print(f"Expected: {expected}")
-        print(f"Got: {current}")
+        print(f"\n*****\n\nExpected: \n{expected}")
+        print(f"\n*****\n\nGot: \n{current}")
         raise Exception("Did not get expected output")
 
 print("Success!")
