@@ -146,3 +146,6 @@ mockTarget/
 integration_tests/logs/
 integration_tests/target/
 integration_tests/dbt_modules/
+integration_tests/regular
+integration_tests/script_selected
+integration_tests/false_script_selected
