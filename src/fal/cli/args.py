@@ -1,6 +1,37 @@
+from dataclasses import dataclass
+from email.policy import default
+from uuid import uuid4
+from typing import List
 import os
 import argparse
 import pkg_resources
+
+
+LEVEL_FLAGS = {}
+
+
+@dataclass(init=False)
+class _LevelFlag:
+    levels: List[str]
+    default: any
+
+    def __init__(self, default):
+        self.levels = []
+        self.default = default
+
+
+def _flag_level(name: str, default=None):
+    level = uuid4()
+    LEVEL_FLAGS[name] = LEVEL_FLAGS.get(name, _LevelFlag(default))
+    level_flag = LEVEL_FLAGS[name]
+    level_flag.levels.append(level)
+
+    if default != level_flag.default:
+        print(
+            f"ERROR: different defaults {default} and {level_flag.default} for flag {name}"
+        )
+
+    return f"{name}_{level}"
 
 
 def _build_fal_common_options(parser: argparse.ArgumentParser):
@@ -8,25 +39,27 @@ def _build_fal_common_options(parser: argparse.ArgumentParser):
         "--disable-logging",
         action="store_true",
         help="Disable logging.",
+        dest=_flag_level("disable_logging"),
     )
 
     parser.add_argument(
         "--keyword",
-        default="fal",
         help="Property in dbt relations meta to look for fal configurations.",
+        dest=_flag_level("keyword", "fal"),
     )
 
 
 def _build_dbt_common_options(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--project-dir",
-        default=os.getcwd(),
         help="Directory to look for dbt_project.yml.",
+        dest=_flag_level("project_dir", os.getcwd()),
     )
+
     parser.add_argument(
         "--profiles-dir",
-        default=None,
         help="Directory to look for profiles.yml.",
+        dest=_flag_level("profiles_dir"),
     )
 
 
@@ -109,8 +142,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _build_fal_common_options(flow_run_parser)
 
 
-# TODO: add type of returned value
-def build_cli_parser():
+def _build_cli_parser():
     parser = argparse.ArgumentParser(
         prog="fal",
         description="Run Python scripts on dbt models",
@@ -155,3 +187,20 @@ def build_cli_parser():
     _build_flow_parser(flow_parser)
 
     return parser
+
+
+cli_parser = _build_cli_parser()
+
+
+def parse_args(argv: List[str]):
+    parsed = cli_parser.parse_args(argv)
+    parsed_dict = vars(parsed)
+
+    # Handle repeating args
+    for name, level_flag in LEVEL_FLAGS.items():
+        parsed_dict[name] = level_flag.default
+        for level in level_flag.levels:
+            current = parsed_dict.pop(f"{name}_{level}", None)
+            if current:
+                parsed_dict[name] = current
+    return argparse.Namespace(**parsed_dict)
