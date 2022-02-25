@@ -8,7 +8,7 @@ def print_run_info(scripts: List[FalScript], keyword: str, before):
     """Print information on the current fal run."""
     models_arr = []
     for script in scripts:
-        path = script.path if isinstance(script.path, str) else str(script.path)
+        path = str(script.path)
         models_arr.append(f"{script.model.name}: {path}")
 
     models_str = "\n".join(models_arr)
