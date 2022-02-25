@@ -83,9 +83,9 @@ def test_selection(capfd):
         )
 
         assert "model_with_scripts" in captured.out
+        assert "model_no_fal" not in captured.out
         assert "model_feature_store" in captured.out
         assert "model_empty_scripts" in captured.out
-        assert "model_no_fal" not in captured.out
         assert (
             "Passing multiple --select/--model flags to fal is deprecatd"
             in captured.out
@@ -105,9 +105,9 @@ def test_selection(capfd):
         )
 
         assert "model_with_scripts" not in captured.out
+        assert "model_no_fal" not in captured.out
         assert "model_feature_store" in captured.out
         assert "model_empty_scripts" in captured.out
-        assert "model_no_fal" not in captured.out
         assert (
             "Passing multiple --select/--model flags to fal is deprecatd"
             not in captured.out
@@ -119,12 +119,12 @@ def test_selection(capfd):
                 "run",
                 "--project-dir", tmp_dir,
                 "--profiles-dir", profiles_dir,
-                "--select", "model_no_fal",
+                "--select", "model_with_scripts",
                 # fmt: on
             ],
             capfd,
         )
-        assert "model_with_scripts" not in captured.out
+        assert "model_with_scripts" in captured.out
         assert "model_feature_store" not in captured.out
         assert "model_empty_scripts" not in captured.out
         # It has no keyword in meta
@@ -171,7 +171,7 @@ def test_before(capfd):
             ],
             capfd,
         )
-        assert "model_with_scripts" in captured.out
+        assert "model_with_scripts" not in captured.out
         assert "test.py" not in captured.out
         assert "model_with_before_scripts" not in captured.out
         assert "model_feature_store" not in captured.out

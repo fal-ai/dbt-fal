@@ -218,16 +218,19 @@ def _fal_run(
             log_fmt=dbt.ui.warning_tag("{}"),
         )
 
-    print_run_info(models, args.keyword, args_dict.get("before"))
-
     scripts = []
     # if --script selector is there only run selected scripts
 
     if args_dict.get("scripts"):
         scripts = []
         for model in models:
+            model_scripts = model.get_scripts(
+                args.keyword, args_dict.get("before"))
             for el in args.scripts:
-                scripts.append(FalScript(model, el))
+                if el in model_scripts:
+                    scripts.append(FalScript(model, el))
+
+        print_run_info(scripts, args.keyword, args_dict.get("before"))
         run_scripts(scripts, project)
 
     else:
@@ -236,6 +239,8 @@ def _fal_run(
                 args.keyword, real_project_dir, args_dict.get("before")
             ):
                 scripts.append(FalScript(model, path))
+
+        print_run_info(scripts, args.keyword, args_dict.get("before"))
 
         # run model specific scripts first
         run_scripts(scripts, project)
