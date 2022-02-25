@@ -73,7 +73,8 @@ jobs:
           echo "*** Starting dbt run ***"
           dbt run --profiles-dir .
           echo "*** Starting fal run ***"
-          fal run --profiles-dir .
+          fal run --profiles-dir . > regular_output
+
           echo "*** Checking fal output files ***"
           python check_outputs.py
 
@@ -83,3 +84,15 @@ jobs:
           fal run --profiles-dir .
           echo "*** Checking fal output files ***"
           python check_outputs.py test
+
+          echo "*** Starting dbt run ***"
+          dbt run --profiles-dir .
+
+          echo "*** Starting fal run ***"
+          fal run --profiles-dir . --script fal_scripts/test.py > script_selected
+
+          echo "*** Starting fal run ***"
+          fal run --profiles-dir . --script fal_scripts/notthere.py > false_script_selected
+
+          echo "*** Checking fal output files ***"
+          python check_outputs.py selection
