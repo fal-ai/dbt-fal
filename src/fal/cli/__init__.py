@@ -83,6 +83,8 @@ def cli(argv=sys.argv):
 
         if parsed.command == "flow":
             if parsed.flow_command == "run":
+                parsed_with_before = argparse.Namespace(**vars(parsed), before=True)
+                _fal_run(parsed_with_before)
                 _dbt_run(parsed)
                 _fal_run(parsed)
 
