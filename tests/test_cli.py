@@ -50,12 +50,11 @@ def test_flow_run_with_project_dir(capfd):
     with tempfile.TemporaryDirectory() as tmp_dir:
         captured = _run_fal(
             [
-                "flow",
-                "run",
-                "--project-dir",
-                tmp_dir,
-                "--profiles-dir",
-                profiles_dir,
+                # fmt: off
+                "flow", "run",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                # fmt: on
             ],
             capfd,
         )
@@ -71,16 +70,14 @@ def test_selection(capfd):
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
         captured = _run_fal(
             [
+                # fmt: off
                 "run",
-                "--project-dir",
-                tmp_dir,
-                "--profiles-dir",
-                profiles_dir,
-                "--select",
-                "model_feature_store",
-                "model_empty_scripts",
-                "--select",
-                "model_with_scripts",  # included (extend)
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                "--select", "model_feature_store", "model_empty_scripts",
+                "--select", "model_with_scripts",
+                # included (extend)
+                # fmt: on
             ],
             capfd,
         )
@@ -96,17 +93,13 @@ def test_selection(capfd):
 
         captured = _run_fal(
             [
-                "flow",
-                "run",
-                "--project-dir",
-                tmp_dir,
-                "--profiles-dir",
-                profiles_dir,
-                "--select",
-                "model_with_scripts",  # not included (overwrites)
-                "--select",
-                "model_feature_store",
-                "model_empty_scripts",
+                # fmt: off
+                "flow", "run",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                "--select", "model_with_scripts",  # not included (overwritten)
+                "--select", "model_feature_store", "model_empty_scripts",
+                # fmt: on
             ],
             capfd,
         )
@@ -122,13 +115,12 @@ def test_selection(capfd):
 
         captured = _run_fal(
             [
+                # fmt: off
                 "run",
-                "--project-dir",
-                tmp_dir,
-                "--profiles-dir",
-                profiles_dir,
-                "--select",
-                "model_no_fal",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                "--select", "model_no_fal",
+                # fmt: on
             ],
             capfd,
         )
@@ -169,14 +161,13 @@ def test_before(capfd):
 
         captured = _run_fal(
             [
+                # fmt: off
                 "run",
-                "--project-dir",
-                tmp_dir,
-                "--profiles-dir",
-                profiles_dir,
-                "--select",
-                "model_with_scripts",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                "--select", "model_with_scripts",
                 "--before",
+                # fmt: on
             ],
             capfd,
         )
@@ -189,12 +180,12 @@ def test_before(capfd):
 
         captured = _run_fal(
             [
+                # fmt: off
                 "run",
-                "--project-dir",
-                tmp_dir,
-                "--profiles-dir",
-                profiles_dir,
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
                 "--before",
+                # fmt: on
             ],
             capfd,
         )
@@ -203,6 +194,40 @@ def test_before(capfd):
         assert "model_empty_scripts" not in captured.out
         assert "model_no_fal" not in captured.out
         assert "model_with_before_scripts" in captured.out
+
+
+def test_flag_level(capfd):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+
+        captured = _run_fal(
+            [
+                # fmt: off
+                "--keyword", "wrong",
+                "run",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                "--select", "model_with_scripts",
+                # fmt: on
+            ],
+            capfd,
+        )
+        assert "model_with_scripts" not in captured.out
+
+        captured = _run_fal(
+            [
+                # fmt: off
+                "--keyword", "wrong",
+                "run",
+                "--keyword", "fal",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                "--select", "model_with_scripts",
+                # fmt: on
+            ],
+            capfd,
+        )
+        assert "model_with_scripts" in captured.out
 
 
 def _run_fal(args, capfd):
