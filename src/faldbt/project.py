@@ -57,8 +57,11 @@ class DbtTest:
                 # node.test_metadata.kwargs looks like this:
                 # kwargs={'column_name': 'y', 'model': "{{ get_where_subquery(ref('boston')) }}"}
                 # and we want to get 'boston' is the model name that we want extract
-                self.model = re.findall(r"'([^']+)'", node.test_metadata.kwargs['model'])[0]
-                self.column = node.test_metadata.kwargs.get('column_name', None)
+                self.model = re.findall(
+                    r"'([^']+)'", node.test_metadata.kwargs["model"]
+                )[0]
+                self.column = node.test_metadata.kwargs.get("column_name", None)
+
             else:
                 logger.debug(f"Non-generic test was not processed: {node.name}")
 
@@ -162,6 +165,7 @@ class CompileArgs:
     state: any
     single_threaded: bool
 
+
 @dataclass(init=False)
 class FalDbt:
     project_dir: str
@@ -213,12 +217,14 @@ class FalDbt:
             parse.get_dbt_results(self.project_dir, self._config)
         )
 
-        self.method = 'run'
+        self.method = "run"
 
         if self._run_results.nativeRunResult:
-            self.method = self._run_results.nativeRunResult.args['rpc_method']
+            self.method = self._run_results.nativeRunResult.args["rpc_method"]
 
-        self.models, self.tests = _map_nodes_to_models(self._run_results, self._manifest)
+        self.models, self.tests = _map_nodes_to_models(
+            self._run_results, self._manifest
+        )
 
         # BACKWARDS: Change intorduced in 1.0.0
         if hasattr(self._config, "model_paths"):
@@ -286,15 +292,22 @@ class FalDbt:
             for column_name in model.columns.keys():
                 if column_name == model.meta[keyword]["feature_store"]["entity_column"]:
                     continue
-                if column_name == model.meta[keyword]["feature_store"]["timestamp_column"]:
+                if (
+                    column_name
+                    == model.meta[keyword]["feature_store"]["timestamp_column"]
+                ):
                     continue
                 features.append(
                     Feature(
                         model=model.name,
                         column=column_name,
                         description=model.columns[column_name].description,
-                        entity_column=model.meta[keyword]["feature_store"]["entity_column"],
-                        timestamp_column=model.meta[keyword]["feature_store"]["timestamp_column"],
+                        entity_column=model.meta[keyword]["feature_store"][
+                            "entity_column"
+                        ],
+                        timestamp_column=model.meta[keyword]["feature_store"][
+                            "timestamp_column"
+                        ],
                     )
                 )
         return features
@@ -354,7 +367,7 @@ class FalDbt:
         data: pd.DataFrame,
         target_source_name: str,
         target_table_name: str,
-        dtype: Any = None
+        dtype: Any = None,
     ):
         """
         Write a pandas.DataFrame to a dbt source automagically.
@@ -375,7 +388,7 @@ class FalDbt:
             self.project_dir,
             self.profiles_dir,
             target_source,
-            dtype
+            dtype,
         )
 
     def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):
@@ -532,11 +545,11 @@ def _map_nodes_to_models(run_results, manifest):
         )
     )
     for model in models:
-        model.set_status(status_map.get(model.unique_id, 'skipped'))
+        model.set_status(status_map.get(model.unique_id, "skipped"))
         for test in tests:
-            if hasattr(test, 'model') and test.model == model.name:
+            if hasattr(test, "model") and test.model == model.name:
                 model.tests.append(test)
-                test.set_status(status_map.get(test.unique_id, 'skipped'))
-                if test.status != 'skipped' and model.status == 'skipped':
-                    model.set_status('tested')
+                test.set_status(status_map.get(test.unique_id, "skipped"))
+                if test.status != "skipped" and model.status == "skipped":
+                    model.set_status("tested")
     return (models, tests)

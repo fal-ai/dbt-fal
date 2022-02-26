@@ -65,7 +65,7 @@ def get_scripts_list(project_dir: str) -> List[str]:
 
 
 def get_global_script_configs(source_dirs: List[Path]) -> List[str]:
-    global_scripts = {'before': [], 'after': []}
+    global_scripts = {"before": [], "after": []}
     for source_dir in source_dirs:
         schema_files = glob.glob(os.path.join(source_dir, "**.yml"), recursive=True)
         for file in schema_files:
@@ -76,10 +76,10 @@ def get_global_script_configs(source_dirs: List[Path]) -> List[str]:
                     # sometimes `scripts` can *be* there and still be None
                     script_paths = fal_config.get("scripts") or []
                     if isinstance(script_paths, list):
-                        global_scripts['after'] += script_paths
+                        global_scripts["after"] += script_paths
                     else:
-                        global_scripts['before'] += script_paths.get('before') or []
-                        global_scripts['after'] += script_paths.get('after') or []
+                        global_scripts["before"] += script_paths.get("before") or []
+                        global_scripts["after"] += script_paths.get("after") or []
             else:
                 raise FalParseError("Error pasing the schema file " + file)
 
