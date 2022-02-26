@@ -96,21 +96,29 @@ class DbtModel:
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
 
-    def get_script_paths(self, keyword, project_dir, before) -> List[Path]:
-        return normalize_directories(project_dir, self.get_scripts(keyword, before))
+    def get_script_paths(
+        self, keyword: str, project_dir: str, before: bool
+    ) -> List[Path]:
+        if self.get_scripts(keyword, before):
+            return normalize_directories(project_dir, self.get_scripts(keyword, before))
+        else:
+            return []
 
-    def get_scripts(self, keyword, before) -> List[Path]:
+    def get_scripts(self, keyword: str, before: bool) -> List[Path]:
         # sometimes `scripts` can *be* there and still be None
-        scripts_node = self.meta[keyword].get("scripts")
-        if not scripts_node:
+        if self.meta.get(keyword):
+            scripts_node = self.meta[keyword].get("scripts")
+            if not scripts_node:
+                return []
+            if isinstance(scripts_node, list) and before:
+                return []
+            if before:
+                return scripts_node.get("before") or []
+            if isinstance(scripts_node, list):
+                return scripts_node
+            return scripts_node.get("after") or []
+        else:
             return []
-        if isinstance(scripts_node, list) and before:
-            return []
-        if before:
-            return scripts_node.get("before") or []
-        if isinstance(scripts_node, list):
-            return scripts_node
-        return scripts_node.get("after") or []
 
     def set_status(self, status: str):
         self.status = status
