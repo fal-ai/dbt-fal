@@ -61,7 +61,9 @@ class NodeGraph:
             lambda script_path: FalScript(model, script_path), after_scripts
         )
         after_fal_script_nodes = map(
-            lambda fal_script: FalFlowNode(_script_id_from_path(fal_script.path)),
+            lambda fal_script: FalFlowNode(
+                _script_id_from_path(fal_script.path, model.name)
+            ),
             after_fal_scripts,
         )
         for fal_script_node in after_fal_script_nodes:
@@ -79,7 +81,9 @@ class NodeGraph:
             lambda script_path: FalScript(model, script_path), before_scripts
         )
         before_fal_script_node = map(
-            lambda fal_script: FalFlowNode(_script_id_from_path(fal_script.path)),
+            lambda fal_script: FalFlowNode(
+                _script_id_from_path(fal_script.path, model.name)
+            ),
             before_fal_scripts,
         )
 
@@ -92,6 +96,6 @@ class NodeGraph:
             )
 
 
-def _script_id_from_path(scriptPath: Path):
+def _script_id_from_path(scriptPath: Path, modelName: str):
     script_file_name = os.path.basename(scriptPath)
-    return "script." + script_file_name
+    return f"script.{modelName}.{script_file_name}"
