@@ -16,7 +16,7 @@ from fal.utils import print_run_info
 from faldbt.lib import DBT_VCURRENT, DBT_V1
 from faldbt.project import FalDbt, FalGeneralException, FalProject
 
-from .args import build_cli_parser
+from .args import parse_args
 
 
 class DbtCliRuntimeError(Exception):
@@ -58,9 +58,7 @@ class DbtCliOutput:
 
 
 def cli(argv=sys.argv):
-    parser = build_cli_parser()
-
-    parsed = parser.parse_args(argv[1:])
+    parsed = parse_args(argv[1:])
 
     # TODO: remove `action="extend"` to match exactly what dbt does
     selects_count = (
