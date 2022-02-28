@@ -224,8 +224,7 @@ def _fal_run(
     if args_dict.get("scripts"):
         scripts = []
         for model in models:
-            model_scripts = model.get_scripts(
-                args.keyword, args_dict.get("before"))
+            model_scripts = model.get_scripts(args.keyword, args_dict.get("before"))
             for el in args.scripts:
                 if el in model_scripts:
                     scripts.append(FalScript(model, el))
