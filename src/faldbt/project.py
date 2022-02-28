@@ -30,7 +30,7 @@ class FalGeneralException(Exception):
     pass
 
 
-def normalize_directories(base: str, dirs: List[str]) -> List[Path]:
+def normalize_directories(base: str, dirs: List[Path]) -> List[Path]:
     return list(
         map(
             lambda dir: Path(os.path.realpath(os.path.join(base, dir))),
@@ -99,10 +99,7 @@ class DbtModel:
     def get_script_paths(
         self, keyword: str, project_dir: str, before: bool
     ) -> List[Path]:
-        if self.get_scripts(keyword, before):
-            return normalize_directories(project_dir, self.get_scripts(keyword, before))
-        else:
-            return []
+        return normalize_directories(project_dir, self.get_scripts(keyword, before))
 
     def get_scripts(self, keyword: str, before: bool) -> List[Path]:
         # sometimes `scripts` can *be* there and still be None
