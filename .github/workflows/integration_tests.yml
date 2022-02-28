@@ -52,7 +52,7 @@ jobs:
           fi
 
       - name: Start test Docker database
-        working-directory: integration_tests/mock
+        working-directory: integration_tests
         run: docker-compose up -d
 
       - name: Install test dependencies

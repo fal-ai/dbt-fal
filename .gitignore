@@ -143,9 +143,11 @@ cython_debug/
 
 ### Tests
 mockTarget/
-integration_tests/logs/
-integration_tests/target/
-integration_tests/dbt_modules/
-integration_tests/regular
-integration_tests/script_selected
-integration_tests/false_script_selected
+integration_tests/mock/logs/
+integration_tests/mock/target/
+integration_tests/mock/dbt_modules/
+integration_tests/mock/regular_output
+integration_tests/mock/fal_output/agent_wait_time_test
+integration_tests/mock/.user.yml
+integration_tests/mock/script_selected
+integration_tests/mock/false_script_selected

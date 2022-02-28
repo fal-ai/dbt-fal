@@ -57,11 +57,10 @@ class DbtTest:
                 # node.test_metadata.kwargs looks like this:
                 # kwargs={'column_name': 'y', 'model': "{{ get_where_subquery(ref('boston')) }}"}
                 # and we want to get 'boston' is the model name that we want extract
-                self.model = re.findall(
-                    r"'([^']+)'", node.test_metadata.kwargs["model"]
-                )[0]
+                # except in dbt v 0.20.1, where we need to filter 'where' string out
+                refs = re.findall(r"'([^']+)'", node.test_metadata.kwargs["model"])
+                self.model = [ref for ref in refs if ref != "where"][0]
                 self.column = node.test_metadata.kwargs.get("column_name", None)
-
             else:
                 logger.debug(f"Non-generic test was not processed: {node.name}")
 
