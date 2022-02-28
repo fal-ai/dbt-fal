@@ -22,8 +22,8 @@ def test_flow_run():
     try:
         cli(["fal", "flow", "run", "--profiles-dir", profiles_dir])
         assert False, "Should not reach"
-    except DbtCliRuntimeError as e:
-        assert "Not a dbt project. Missing dbt_project.yml file" in str(e)
+    except DbtProjectError as e:
+        assert "no dbt_project.yml found at expected path" in str(e)
 
 
 def test_no_arg(capfd):
@@ -48,6 +48,7 @@ def test_version(capfd):
 
 def test_flow_run_with_project_dir(capfd):
     with tempfile.TemporaryDirectory() as tmp_dir:
+        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
         captured = _run_fal(
             [
                 # fmt: off
@@ -59,10 +60,11 @@ def test_flow_run_with_project_dir(capfd):
             capfd,
         )
 
-        assert re.match(
-            "Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile",
-            captured.out,
+        executing_re = re.compile(
+            r"Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile"
         )
+        found = executing_re.findall(captured.out)
+        assert len(found) == 1
 
 
 def test_selection(capfd):
