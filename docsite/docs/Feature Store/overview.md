@@ -4,7 +4,7 @@
 
 A feature store is data system that facilitates managing the data transformations centrally for predictive analysis and ML models in production.
 
-fal-dbt feature store is a feature store implementation that consists of a dbt package and a python library.
+fal-dbt feature store is a feature store implementation that consists of a dbt package and a Python library.
 
 ## Why are we doing this?
 

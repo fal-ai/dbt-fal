@@ -79,7 +79,16 @@ $ dbt run
 # Your dbt models are run
 
 $ fal run
-# Your python scripts are run
+# Your Python scripts are run
+```
+
+### 5.1 Or use `fal flow` to run all in a single step
+
+```bash
+$ fal flow run
+# Your fal --before Python scripts are run
+# Your dbt models are run
+# Your fal Python scripts are run
 ```
 
 # How it works?
