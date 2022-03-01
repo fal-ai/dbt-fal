@@ -1,12 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from statistics import mode
 from typing import List, TypeVar, Dict
 from fal.fal_script import FalScript
 from faldbt.project import DbtModel, FalDbt
 from pathlib import Path
 import networkx as nx
-from dbt.contracts.graph.manifest import Manifest
 import os as os
 
 
@@ -18,7 +16,7 @@ class FalFlowNode:
 
 @dataclass
 class ScriptNode(FalFlowNode):
-    "Represents a .py"
+    "Represents a python script node"
     script: FalScript
 
 
@@ -33,12 +31,12 @@ class DbtModelNode(FalFlowNode):
 class NodeGraph:
     "Wrapper around networkx graph"
 
-    def __init__(self, falDbt: FalDbt):
-        self.falDbt = falDbt
+    def __init__(self, fal_dbt: FalDbt):
+        self.falDbt = fal_dbt
         self.graph = nx.DiGraph()
         self.nodeLookup: Dict[str, FalFlowNode] = {}
 
-        for model in falDbt.list_models():
+        for model in fal_dbt.list_models():
             model_fal_node = DbtModelNode(model.unique_id, model)
             self.nodeLookup[model_fal_node.unique_id] = model_fal_node
             self.graph.add_node(model_fal_node.unique_id)
