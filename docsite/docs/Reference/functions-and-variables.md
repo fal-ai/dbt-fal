@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Variables and functions
 
 Inside a Python script, you get access to some useful variables and functions

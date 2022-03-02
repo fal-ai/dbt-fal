@@ -3,7 +3,7 @@ sidebar_position: 1
 slug: /
 ---
 
-# Getting Started
+# Quickstart
 
 Let's discover `fal` **in less than 5 minutes**.
 
@@ -57,15 +57,7 @@ fal makes certain variables and functions avaliable in this script. [Check out t
 
 ```yaml
 models:
-  - name: historical_ozone_levels
-    description: Ozone levels
-    config:
-      materialized: table
-    columns:
-      - name: ozone_level
-        description: Ozone level
-      - name: ds
-        description: Date
+  - name: some_model
     meta:
       fal:
         scripts:
@@ -82,13 +74,12 @@ $ fal run
 # Your Python scripts are run
 ```
 
-### 5.1 Or use `fal flow` to run all in a single step
+### 5.1 Run `fal flow run` to run dbt and fal in the right order
 
 ```bash
 $ fal flow run
-# Your fal --before Python scripts are run
-# Your dbt models are run
-# Your fal Python scripts are run
+# 1. `some_model` is run
+# 2. slack message is sent with the run result
 ```
 
 # How it works?

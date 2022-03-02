@@ -1,12 +1,10 @@
-# Overview
-
-## What are we building?
+# What are we building?
 
 A feature store is data system that facilitates managing the data transformations centrally for predictive analysis and ML models in production.
 
 fal-dbt feature store is a feature store implementation that consists of a dbt package and a Python library.
 
-## Why are we doing this?
+# Why are we doing this?
 
 **Empower analytics engineer:** ML models and analytics operate on the same data. Analytics engineers know this data inside out. They are the ones setting up metrics, ensuring data quality and freshness. Why shouldn’t they be the ones responsible for the predictive analysis? With the rise of open source modelling libraries most of the work that goes into an ML model is done on the data processing side.
 

@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Importing `fal` as a Python package
+# Interacting with dbt from a Notebook
 
 You may be interested in accessing dbt models and sources easily from a Jupyter Notebook or another Python script.
 For that, just import the `fal` package and intantiate a FalDbt project:
@@ -27,3 +27,5 @@ sentiments = faldbt.source('results', 'ticket_data_sentiment_analysis')
 tickets = faldbt.ref('stg_zendesk_ticket_data')
 # pandas.DataFrame
 ```
+
+Check out the FalDbt class explanation [here](TODO: LINK TO REFERENCE)
