@@ -28,4 +28,4 @@ tickets = faldbt.ref('stg_zendesk_ticket_data')
 # pandas.DataFrame
 ```
 
-Check out the FalDbt class explanation [here](TODO: LINK TO REFERENCE)
+Check out the [FalDbt class explanation](../../Reference/faldbt-class-object.md) in the reference section.
