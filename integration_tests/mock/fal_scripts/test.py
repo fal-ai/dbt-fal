@@ -8,7 +8,7 @@ output = f"Model name: {model_name}"
 if context.current_model.status == "tested":
     for test in context.current_model.tests:
         output += f"\nRan {test.name} for {test.column}, result: {test.status}"
-    f = open(f"fal_output/{model_name}_test", "w")
+    f = open(f"temp/{model_name}_test", "w")
     f.write(output)
     f.close()
 
@@ -23,6 +23,6 @@ else:
 
     output = output + f"\nModel dataframe information:\n{info}"
 
-    f = open(f"fal_output/{model_name}", "w")
+    f = open(f"temp/{model_name}", "w")
     f.write(output)
     f.close()
