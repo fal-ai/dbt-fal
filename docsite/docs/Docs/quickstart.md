@@ -43,7 +43,7 @@ client = WebClient(token=SLACK_TOKEN)
 
 message_text = f"Model: {context.current_model.name}. Status: {context.current_model.status}."
 
-if context.current_model.status == 'success':
+if str(context.current_model.status) == 'success':
   # Read model as pandas.DataFrame
   df = ref(context.current_model.name)
   message_text += f" Size: {df.size}."
