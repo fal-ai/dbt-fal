@@ -8,9 +8,9 @@ MODELS = ["agent_wait_time", "zendesk_ticket_data"]
 @given("dbt {command} is finished on {model}")
 def run_dbt_step(context, command, model):
     if model == "all models":
-        _run_command(f"dbt {command} --profiles-dir .")
+        os.system(f"cd mock && dbt {command} --profiles-dir .")
     else:
-        _run_command(f"dbt {command} --profiles-dir . --select {model}")
+        os.system(f"cd mock && dbt {command} --profiles-dir . --models {model}")
 
 
 @when("we call `{command}`")
@@ -30,7 +30,7 @@ def check_run_step(context, model):
 
 
 @then("{model} scripts are skipped")
-def check_no_run_step(context, model=None):
+def check_no_run_step(context, model):
     output = open("mock/temp/output", "r").read()
     if model == "all model":
         for m in MODELS:

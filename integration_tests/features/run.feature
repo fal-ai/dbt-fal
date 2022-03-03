@@ -21,9 +21,8 @@ Feature: `run` command
 
   Scenario: fal run works with script selection
     Given dbt run is finished on all models
-    When we call `fal run --profiles-dir . --script fal_scripts/test.py`
-    Then scripts are run for agent_wait_time
-    And outputs for agent_wait_time contain run results
+    When we call `fal run --profiles-dir . --script fal_scripts/john_test.py`
+    Then scripts are run for john_table
     But zendesk_ticket_data scripts are skipped
 
   Scenario: when false script is selected, nothing runs
