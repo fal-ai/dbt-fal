@@ -53,13 +53,14 @@ const config = {
           {
             type: 'docSidebar',
             position: 'left',
-            sidebarId: 'cli',
-            label: 'fal CLI',
+            sidebarId: 'docs',
+            label: 'Docs',
           },
           {
-            type: 'doc',
-            docId: 'Feature Store/overview',
-            label: 'Feature Store',
+            type: 'docSidebar',
+            position: 'left',
+            sidebarId: 'reference',
+            label: 'Reference',
           },
           {
             to: 'https://blog.fal.ai',
