@@ -55,5 +55,5 @@ plt.show()
 
 ![GCS bucket creation](jupyter_notebook_weighted_label.png)
 
-
+## Full example
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/analyze_sentiment.ipynb).

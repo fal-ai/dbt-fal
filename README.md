@@ -26,7 +26,11 @@ and more...
 
 Check out our [Getting Started](#getting-started) guide to get a quickstart, head to our [documentation site](https://docs.fal.ai/) for a deeper dive or play with [in-depth examples](#examples) to see how fal can help you get more done with dbt.
 
-[<img src="https://cdn.loom.com/sessions/thumbnails/bb49fffaa6f74e90b91d26c77f35ecdc-1637262660876-with-play.gif">](https://www.loom.com/share/bb49fffaa6f74e90b91d26c77f35ecdc)
+<p align="center">
+  <a href="https://www.loom.com/share/bb49fffaa6f74e90b91d26c77f35ecdc">
+    <img src="https://cdn.loom.com/sessions/thumbnails/bb49fffaa6f74e90b91d26c77f35ecdc-1637262660876-with-play.gif">
+  </a>
+</p>
 
 # Getting Started
 
@@ -97,17 +101,19 @@ $ fal run
 
 To explore what is possible with fal, take a look at the in-depth examples below. We will be adding more examples here over time:
 
-- [Example 1: Send Slack notifications](examples/slack-example.md)
-- [Example 2: Metric forecasting](examples/metric-forecast.md)
-- [Example 3: Sentiment analysis on support tickets](examples/sentiment-analysis.md)
-- [Example 4: Send event to Datadog](examples/datadog_event.md)
-- [Example 5: Incorporate fal in CI/CD workflow](examples/ci_example.md)
-- [Example 6: Send data to Firestore](examples/write_to_firestore.md)
-- [Example 7: Write dbt artifacts to GCS](examples/write_to_gcs.md)
-- [Example 8: Write dbt artifacts to AWS S3](examples/write_to_aws.md)
-- [Example 9: Use dbt from a Jupyter Notebook](examples/write_jupyter_notebook.md)
-- [Example 10: Read and parse dbt metadata](examples/read_dbt_metadata.md)
-- [Example 11: Anomaly Detection](examples/anomaly-detection.md)
+- [Example 1: Send Slack notifications](examples/slack-example/README.md)
+- [Example 2: Metric forecasting](examples/metric-forecast/README.md)
+- [Example 3: Sentiment analysis on support tickets](examples/sentiment-analysis/README.md)
+- [Example 4: Send event to Datadog](examples/datadog_event/README.md)
+- [Example 5: Incorporate fal in CI/CD workflow](examples/ci_example/README.md)
+- [Example 6: Send data to Firestore](examples/write_to_firestore/README.md)
+- [Example 7: Write dbt artifacts to GCS](examples/write_to_gcs/README.md)
+- [Example 8: Write dbt artifacts to AWS S3](examples/write_to_aws/README.md)
+- [Example 9: Use dbt from a Jupyter Notebook](examples/write_jupyter_notebook/README.md)
+- [Example 10: Read and parse dbt metadata](examples/read_dbt_metadata/README.md)
+- [Example 11: Anomaly Detection](examples/anomaly-detection/README.md)
+
+[Check out the examples directory for more](examples/README.md)
 
 # How it works?
 

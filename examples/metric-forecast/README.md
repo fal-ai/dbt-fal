@@ -117,4 +117,6 @@ send_slack_file(
     slack_token=SLACK_TOKEN,
 )
 ```
+
+## Full example
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/forecast_slack.py).
