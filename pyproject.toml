@@ -33,6 +33,7 @@ sqlalchemy-bigquery = "^1.2.2"
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 black = "^21.12b0"
+behave = "^1.2.6"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
