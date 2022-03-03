@@ -1,10 +1,14 @@
 # fal: do more with dbt
 
-fal allows you to run python scripts directly from your [dbt](https://www.getdbt.com/) project.
+fal allows you to run Python scripts directly from your [dbt](https://www.getdbt.com/) project.
 
-[February Roadmap](https://www.notion.so/featuresandlabels/February-Roadmap-e6521e39514a4ed598745aa71167de6b)
-
+- Sign up for the private beta of [fal Cloud](https://fal.ai#signup)
+- See our [March Roadmap](https://www.notion.so/featuresandlabels/March-Roadmap-03-22-b6d7503254d34a71a62561e4fcf9a9b5) and give us feedback.
+  
 <p align="center">
+  <a href="https://fal.ai#signup">
+    <img src="https://badgen.net/badge/icon/Sign%20Up%20for%20fal%20Cloud/purple?icon=terminal&label" alt="fal Cloud" />
+  </a>&nbsp;
   <a href="https://pepy.tech/project/fal">
     <img src="https://static.pepy.tech/personalized-badge/fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads" alt="Total downloads" />
   </a>&nbsp;
@@ -20,7 +24,7 @@ With fal, you can:
 
 - Send Slack notifications upon dbt model success or failure.
 - Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`
-- Use python libraries such as [`sklearn`](https://scikit-learn.org/) or [`prophet`](https://facebook.github.io/prophet/) to build more complex pipelines downstream of `dbt` models.
+- Use Python libraries such as [`sklearn`](https://scikit-learn.org/) or [`prophet`](https://facebook.github.io/prophet/) to build more complex pipelines downstream of `dbt` models.
 
 and more...
 
@@ -42,7 +46,7 @@ $ pip install fal
 $ cd ~/src/my_dbt_project
 ```
 
-## 3. Create a python script: `send_slack_message.py`
+## 3. Create a Python script: `send_slack_message.py`
 
 ```python
 import os

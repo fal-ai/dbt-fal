@@ -5,7 +5,7 @@ model_name = context.current_model.name
 
 output = f"Model name: {model_name}"
 
-if context.current_model.status == 'tested':
+if context.current_model.status == "tested":
     for test in context.current_model.tests:
         output += f"\nRan {test.name} for {test.column}, result: {test.status}"
     f = open(f"fal_output/{model_name}_test", "w")
