@@ -3,3 +3,4 @@ Feature: `flow run` command
     Given dbt run is finished on all models
     When we call `fal flow run --profiles-dir .`
     Then scripts are run for all models
+    And outputs for all models contain run results

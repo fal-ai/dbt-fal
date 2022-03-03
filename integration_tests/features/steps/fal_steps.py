@@ -1,35 +1,56 @@
 import os
 from behave import *
 
-os.system("mkdir mock/temp")
 
 MODELS = ["agent_wait_time", "zendesk_ticket_data"]
 
 
-@given("dbt run is finished on {model}")
-def run_dbt_step(context, model):
-    _run_command("dbt seed --profiles-dir .")
+@given("dbt {command} is finished on {model}")
+def run_dbt_step(context, command, model):
     if model == "all models":
-        _run_command("dbt run --profiles-dir .")
+        _run_command(f"dbt {command} --profiles-dir .")
+    else:
+        _run_command(f"dbt {command} --profiles-dir . --select {model}")
 
 
 @when("we call `{command}`")
 def run_command_step(context, command):
-    print(command)
-    # _run_command(command)
-    _run_command("fal flow run --profiles-dir .")
+    _run_command(command)
 
 
 @then("scripts are run for {model}")
-def check_results_step(context, model):
+def check_run_step(context, model):
+    output = open("mock/temp/output", "r").read()
+
     if model == "all models":
-        for model in MODELS:
-            _check_output(model)
-    _clean_up()
+        for m in MODELS:
+            assert m in output
+    else:
+        assert model in output
+
+
+@then("{model} scripts are skipped")
+def check_no_run_step(context, model=None):
+    output = open("mock/temp/output", "r").read()
+    if model == "all model":
+        for m in MODELS:
+            assert m not in output
+    else:
+        assert model not in output
+
+
+@then("outputs for {model} contain {run_type} results")
+def check_outputs(context, model, run_type):
+    test_results = run_type == "test"
+    if model == "all models":
+        for m in MODELS:
+            _check_output(m, test_results)
+    else:
+        _check_output(model, test_results)
 
 
 def _run_command(command: str):
-    os.system(f"cd mock && {command}")
+    os.system(f"cd mock && {command} > temp/output")
 
 
 def _check_output(model, is_test=False):
@@ -47,7 +68,3 @@ def _check_output(model, is_test=False):
         print(f"Expected: {expected}", flush=True)
         print(f"Got: {current}", flush=True)
         raise Exception("Did not get expected output")
-
-
-def _clean_up():
-    os.system("rm -rf mock/temp/*")
