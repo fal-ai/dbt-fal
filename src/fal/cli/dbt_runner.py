@@ -3,8 +3,44 @@ import subprocess
 import json
 
 from dbt.logger import log_manager, GLOBAL_LOGGER as logger
-from . import DbtCliRuntimeError
-from . import DbtCliOutput
+
+
+class DbtCliRuntimeError(Exception):
+    pass
+
+
+class DbtCliOutput:
+    def __init__(
+        self,
+        command: str,
+        return_code: int,
+        raw_output: str,
+        logs: List[Dict[str, Any]],
+    ):
+        self._command = command
+        self._return_code = return_code
+        self._raw_output = raw_output
+        self._logs = logs
+
+    @property
+    def docs_url(self) -> Optional[str]:
+        return None
+
+    @property
+    def command(self) -> str:
+        return self._command
+
+    @property
+    def return_code(self) -> int:
+        return self._return_code
+
+    @property
+    def raw_output(self) -> str:
+        return self._raw_output
+
+    @property
+    def logs(self) -> List[Dict[str, Any]]:
+        return self._logs
 
 
 def dbt_run(args):

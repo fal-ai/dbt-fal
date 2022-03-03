@@ -1,4 +1,5 @@
-from fal.cli import DbtCliRuntimeError, cli
+from fal.cli.dbt_runner import DbtCliRuntimeError
+from fal.cli import cli
 import tempfile
 import os
 from pathlib import Path
