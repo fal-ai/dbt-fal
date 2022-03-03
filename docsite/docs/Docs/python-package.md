@@ -1,11 +1,11 @@
 ---
-sidebar_position: 2
+sidebar_position: 4
 ---
 
-# Interacting with dbt from a Notebook
+# Importing fal as a Python package
 
-You may be interested in accessing dbt models and sources easily from a Jupyter Notebook or another Python script.
-For that, just import the `fal` package and intantiate a FalDbt project:
+You may be interested in accessing dbt models and sources easily from a Python script.
+For that, just use the `fal` package and intantiate a FalDbt project:
 
 ```py
 from fal import FalDbt
@@ -28,4 +28,12 @@ tickets = faldbt.ref('stg_zendesk_ticket_data')
 # pandas.DataFrame
 ```
 
-Check out the [FalDbt class explanation](../../Reference/faldbt-class-object.md) in the reference section.
+##  Interacting with dbt from a Notebook
+
+It is also possible to import fal from a Notebook for rapid iteration on some ideas and to then make them scripts to [use as a pre-hook or post-hook of a dbt model](fal-cli/index.md).
+
+We recommend it as an experimentation phase.
+
+*****
+
+Check out the [FalDbt class explanation](../reference/faldbt-class-object.md) in the reference section.
