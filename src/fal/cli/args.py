@@ -1,5 +1,5 @@
 from uuid import uuid4
-from typing import List
+from typing import List, Any
 import os
 import argparse
 import pkg_resources
@@ -14,7 +14,7 @@ class FalArgsError(Exception):
 
 class _LevelFlag:
     levels: List[str]
-    default: any
+    default: Any
 
     def __init__(self, default):
         self.levels = []
@@ -51,6 +51,7 @@ def _build_fal_common_options(parser: argparse.ArgumentParser):
 
     parser.add_argument(
         "--keyword",
+        metavar="KEYWORD",
         help="Property in dbt relations meta to look for fal configurations.",
         dest=_flag_level("keyword", "fal"),
     )
@@ -60,12 +61,14 @@ def _build_fal_common_options(parser: argparse.ArgumentParser):
 def _build_dbt_common_options(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--project-dir",
+        metavar="PROJECT_DIR",
         help="Directory to look for dbt_project.yml.",
         dest=_flag_level("project_dir", os.getcwd()),
     )
 
     parser.add_argument(
         "--profiles-dir",
+        metavar="PROFILES_DIR",
         help="Directory to look for profiles.yml.",
         dest=_flag_level("profiles_dir"),
     )
@@ -143,7 +146,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
 
     flow_run_parser = flow_command_parsers.add_parser(
         name="run",
-        help="Run dbt and fal in order",
+        help="Execute fal and dbt run in correct order",
     )
     _build_dbt_selectors(flow_run_parser, extend=False)
     _build_dbt_common_options(flow_run_parser)
@@ -184,13 +187,13 @@ def _build_cli_parser():
 
     run_parser = command_parsers.add_parser(
         name="run",
-        help="Run Python scripts as final nodes",
+        help="Run Python scripts as post-hook nodes",
     )
     _build_run_parser(run_parser)
 
     flow_parser = command_parsers.add_parser(
         name="flow",
-        help="Flow between tools naturally",
+        help="Execute fal and dbt commands in correct order",
     )
     _build_flow_parser(flow_parser)
 
