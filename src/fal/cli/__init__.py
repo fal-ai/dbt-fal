@@ -1,3 +1,4 @@
+import argparse
 from typing import Any, Dict, Optional, List
 import sys
 from dbt.logger import log_manager, GLOBAL_LOGGER as logger
