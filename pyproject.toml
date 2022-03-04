@@ -29,6 +29,7 @@ PyYAML = "^6.0"
 agate-sql = "^0.5.8"
 firebase-admin = "^5.1.0"
 sqlalchemy-bigquery = "^1.2.2"
+requests = "^2.27.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
