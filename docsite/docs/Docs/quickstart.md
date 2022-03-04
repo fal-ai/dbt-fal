@@ -57,7 +57,7 @@ except SlackApiError as e:
     assert e.response["error"]
 ```
 
-As you can see from the `context` object, fal makes certain variables (and functions) avaliable in this script. [Check out the fal scripts section for more details](../reference/variables-and-functions.md)
+As you can see from the `context` object, fal makes certain variables (and functions) avaliable in this script. [Check out the fal scripts section for more details](../Reference/variables-and-functions.md)
 
 ## 4. Add a `meta` section in your `schema.yml`
 

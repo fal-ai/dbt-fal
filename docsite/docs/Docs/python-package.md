@@ -36,4 +36,4 @@ We recommend it as an experimentation phase.
 
 *****
 
-Check out the [FalDbt class explanation](../reference/faldbt-class-object.md) in the reference section.
+Check out the [FalDbt class explanation](../Reference/faldbt-class-object.md) in the reference section.
