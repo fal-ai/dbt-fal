@@ -1,6 +1,6 @@
 import pandas as pd
 
-df: pd.DataFrame = ref("john_table")
+df: pd.DataFrame = ref(context.current_model.name)
 print(df)
 print(df.dtypes)
 df.to_records()
