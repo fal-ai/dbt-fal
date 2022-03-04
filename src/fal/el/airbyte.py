@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 import requests
 import time
-import sys
 from requests.exceptions import RequestException
 from dbt.logger import GLOBAL_LOGGER as logger
 
@@ -21,17 +20,17 @@ class AirbyteJobState:
 
 
 @dataclass
-class AirbyteAPI:
+class AirbyteClient:
     """Airbyte REST API connector class."""
 
     host: str
-    max_retries: int = 10
-    retry_delay: float = 10
-    base_url: str = field(init=False)
+    max_retries: int = 5
+    retry_delay: float = 5
+    _base_url: str = field(init=False)
 
     def __post_init__(self):
         """Set variables."""
-        self.base_url = self.host + "/api/v1"
+        self._base_url = self.host + "/api/v1"
 
     def request(self, endpoint: str, data: Optional[Dict[str, Any]]):
         """Make a request to Airbyte REST API endpoint."""
@@ -42,7 +41,7 @@ class AirbyteAPI:
             try:
                 response = requests.request(
                     method="POST",
-                    url=self.base_url + endpoint,
+                    url=self._base_url + endpoint,
                     headers=headers,
                     json=data,
                     timeout=5,
@@ -51,7 +50,7 @@ class AirbyteAPI:
                 return response.json()
             except RequestException as e:
                 logger.warn("Airbyte API request failed: %s", e)
-                if num_retries == self._request_max_retries:
+                if num_retries == self.max_retries:
                     break
                 num_retries += 1
                 time.sleep(self.retry_delay)
@@ -122,8 +121,9 @@ def airbyte_sync(
     connection_id: str,
     interval: float = 10,
     timeout: float = None,
+    max_retries: int = 10,
 ):
     """Sync Airbyte connection."""
-    api = AirbyteAPI(host=host)
+    api = AirbyteClient(host=host, max_retries=max_retries)
 
     return api.sync_and_wait(connection_id, interval=interval, timeout=timeout)
