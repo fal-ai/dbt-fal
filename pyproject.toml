@@ -35,6 +35,7 @@ requests = "^2.27.1"
 pytest = "^5.2"
 black = "^21.12b0"
 behave = "^1.2.6"
+mock = "^4.0.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
