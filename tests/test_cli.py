@@ -89,7 +89,7 @@ def test_selection(capfd):
         assert "model_feature_store" in captured.out
         assert "model_empty_scripts" in captured.out
         assert (
-            "Passing multiple --select/--model flags to fal is deprecatd"
+            "Passing multiple --select/--model flags to fal is deprecated"
             in captured.out
         )
 
@@ -111,7 +111,7 @@ def test_selection(capfd):
         assert "model_feature_store" in captured.out
         assert "model_empty_scripts" in captured.out
         assert (
-            "Passing multiple --select/--model flags to fal is deprecatd"
+            "Passing multiple --select/--model flags to fal is deprecated"
             not in captured.out
         )
 
