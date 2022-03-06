@@ -76,19 +76,19 @@ def _handle_selector_warnings(selects_count, exclude_count, script_count, args):
     # TODO: remove `action="extend"` to match exactly what dbt does
     if selects_count > 1:
         dbt.exceptions.warn_or_error(
-            "Passing multiple --select/--model flags to fal is deprecated.\n"
+            "Passing multiple --select/--model flags to fal is deprecated and will be removed in fal version 0.4.\n"
             + f"Please use model selection like dbt. Use: --select {' '.join(args.select)}",
             log_fmt=dbt.ui.warning_tag("{}"),
         )
     if exclude_count > 1:
         dbt.exceptions.warn_or_error(
-            "Passing multiple --exclude flags to fal is deprecated.\n"
+            "Passing multiple --select/--model flags to fal is deprecated and will be removed in fal version 0.4.\n"
             + f"Please use model exclusion like dbt. Use: --exclude {' '.join(args.exclude)}",
             log_fmt=dbt.ui.warning_tag("{}"),
         )
     if script_count > 1:
         dbt.exceptions.warn_or_error(
-            "Passing multiple --script flags to fal is deprecated.\n"
+            "Passing multiple --select/--model flags to fal is deprecated and will be removed in fal version 0.4.\n"
             + f"Please use: --script {' '.join(args.scripts)}",
             log_fmt=dbt.ui.warning_tag("{}"),
         )
