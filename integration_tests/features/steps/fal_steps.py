@@ -5,16 +5,13 @@ from behave import *
 MODELS = ["agent_wait_time", "zendesk_ticket_data"]
 
 
-@given("dbt {command} is finished on {model}")
-def run_dbt_step(context, command, model):
-    if model == "all models":
-        os.system(f"cd mock && dbt {command} --profiles-dir .")
-    else:
-        os.system(f"cd mock && dbt {command} --profiles-dir . --models {model}")
-
-
-@when("we call `{command}`")
+@given("`{command}` is run")
 def run_command_step(context, command):
+    _run_command(command)
+
+
+@when("`{command}` is run")
+def run_command_step2(context, command):
     _run_command(command)
 
 
