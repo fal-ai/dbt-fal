@@ -5,7 +5,7 @@ import datetime
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List
 from urllib.parse import urljoin
 from dateutil import parser
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -23,13 +23,13 @@ class FivetranClient:
     disable_schedule_on_trigger: bool = True
     max_retries: int = 3
     retry_delay: float = 0.25
-    _auth = field(init=False)
+    _auth: Any = field(init=False)
 
     def __post_init__(self):
         """Set variables."""
         self._auth = HTTPBasicAuth(self.api_key, self.api_secret)
 
-    def request(self, endpoint: str, method: str, data: Optional[Dict[str, Any]]):
+    def request(self, endpoint: str, method: str, data: Dict[str, Any] = {}):
         """Make a request to Airbyte REST API endpoint."""
         headers = {"accept": "application/json"}
 
