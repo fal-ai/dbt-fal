@@ -1,3 +1,5 @@
+from fal import DbtModel
+
 def assert_contains_all(thisList, otherList):
     for other in otherList:
         assert other in thisList
