@@ -38,13 +38,13 @@ def _add_after_scripts(
 ) -> Tuple[nx.DiGraph, Dict[str, FalFlowNode]]:
     "Add dbt node to after scripts edges to the graph"
     after_scripts = model.get_script_paths(keyword, project_dir, False)
-    after_fal_scripts = list(
-        map(lambda script_path: FalScript(model, script_path), after_scripts)
+    after_fal_scripts = map(
+        lambda script_path: FalScript(model, script_path), after_scripts
     )
     after_fal_script_nodes = list(
         map(
-            lambda fal_script: FalFlowNode(
-                _script_id_from_path(fal_script.path, model.name, "AFTER")
+            lambda fal_script: ScriptNode(
+                _script_id_from_path(fal_script.path, model.name, "AFTER"), fal_script
             ),
             after_fal_scripts,
         )
@@ -72,8 +72,8 @@ def _add_before_scripts(
         lambda script_path: FalScript(model, script_path), before_scripts
     )
     before_fal_script_node = map(
-        lambda fal_script: FalFlowNode(
-            _script_id_from_path(fal_script.path, model.name, "BEFORE")
+        lambda fal_script: ScriptNode(
+            _script_id_from_path(fal_script.path, model.name, "BEFORE"), fal_script
         ),
         before_fal_scripts,
     )
@@ -100,7 +100,6 @@ class NodeGraph:
     def from_fal_dbt(cls, fal_dbt: FalDbt):
         graph = nx.DiGraph()
         node_lookup: Dict[str, FalFlowNode] = {}
-
         for model in fal_dbt.list_models():
             model_fal_node = DbtModelNode(model.unique_id, model)
             node_lookup[model_fal_node.unique_id] = model_fal_node

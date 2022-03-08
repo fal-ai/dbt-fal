@@ -11,42 +11,7 @@ from fal.fal_script import FalScript
 from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 
-def fal_run(
-    args: argparse.Namespace,
-    selects_count=0,  # TODO: remove `action="extend"` to match exactly what dbt does
-    exclude_count=0,
-    script_count=0,
-):
-    "Runs the fal run command in a subprocess"
-
-    args_dict = vars(args)
-    selector_flags = args.select or args.exclude or args.selector
-    if args_dict.get("all") and selector_flags:
-        raise FalGeneralException(
-            "Cannot pass --all flag alongside selection flags (--select/--models, --exclude, --selector)"
-        )
-
-    faldbt = _create_fal_dbt(args)
-    project = FalProject(faldbt)
-    models = project.get_filtered_models(
-        args_dict.get("all"), selector_flags, args_dict.get("before")
-    )
-
-    _handle_selector_warnings(selects_count, exclude_count, script_count, args)
-
-    scripts = _select_scripts(args_dict, models, project, args)
-
-    # run model specific scripts first
-    run_scripts(scripts, project)
-
-    # then run global scripts
-    if _should_run_global_scripts(args_dict):
-        _run_global_scripts(
-            project, faldbt, "before" if args_dict.get("before") else "after"
-        )
-
-
-def _create_fal_dbt(
+def create_fal_dbt(
     args: argparse.Namespace,
 ):
     real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
@@ -68,6 +33,41 @@ def _create_fal_dbt(
         args.selector,
         args.keyword,
     )
+
+
+def fal_run(
+    args: argparse.Namespace,
+    selects_count=0,  # TODO: remove `action="extend"` to match exactly what dbt does
+    exclude_count=0,
+    script_count=0,
+):
+    "Runs the fal run command in a subprocess"
+
+    args_dict = vars(args)
+    selector_flags = args.select or args.exclude or args.selector
+    if args_dict.get("all") and selector_flags:
+        raise FalGeneralException(
+            "Cannot pass --all flag alongside selection flags (--select/--models, --exclude, --selector)"
+        )
+
+    faldbt = create_fal_dbt(args)
+    project = FalProject(faldbt)
+    models = project.get_filtered_models(
+        args_dict.get("all"), selector_flags, args_dict.get("before")
+    )
+
+    _handle_selector_warnings(selects_count, exclude_count, script_count, args)
+
+    scripts = _select_scripts(args_dict, models, project, args)
+
+    # run model specific scripts first
+    run_scripts(scripts, project)
+
+    # then run global scripts
+    if _should_run_global_scripts(args_dict):
+        _run_global_scripts(
+            project, faldbt, "before" if args_dict.get("before") else "after"
+        )
 
 
 def _handle_selector_warnings(selects_count, exclude_count, script_count, args):
