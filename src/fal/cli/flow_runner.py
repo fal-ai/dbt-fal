@@ -16,7 +16,8 @@ def fal_flow_run(parsed):
 
     run_scripts(_id_to_fal_scripts(node_graph, execution_plan.before_scripts), project)
 
-    dbt_run(parsed, _unique_ids_to_model_names(execution_plan.dbt_models))
+    if len(execution_plan.dbt_models) != 0:
+        dbt_run(parsed, _unique_ids_to_model_names(execution_plan.dbt_models))
 
     run_scripts(_id_to_fal_scripts(node_graph, execution_plan.after_scripts), project)
 

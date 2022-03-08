@@ -8,6 +8,8 @@ def before_all(context):
 
 def after_all(context):
     os.system("rm -rf mock/temp")
+    if hasattr(context, "temp_dir"):
+        context.temp_dir.cleanup()
 
 
 def after_scenario(context, scenario):
