@@ -96,7 +96,7 @@ class NodeGraph:
     "Wrapper around networkx graph"
 
     @classmethod
-    def fromFalDbt(cls, fal_dbt: FalDbt):
+    def from_fal_dbt(cls, fal_dbt: FalDbt):
         graph = nx.DiGraph()
         node_lookup: Dict[str, FalFlowNode] = {}
 
@@ -130,9 +130,9 @@ class NodeGraph:
 
         return cls(graph, node_lookup)
 
-    def __init__(self, graph: nx.DiGraph, nodeLookup: Dict[str, FalFlowNode]):
+    def __init__(self, graph: nx.DiGraph, node_lookup: Dict[str, FalFlowNode]):
         self.graph = graph
-        self.nodeLookup = nodeLookup
+        self.node_lookup = node_lookup
 
     def get_descendants(self, id: str) -> List[str]:
         return list(nx.descendants(self.graph, id))
