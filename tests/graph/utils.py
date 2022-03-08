@@ -1,4 +1,6 @@
 from fal import DbtModel
+from unittest.mock import MagicMock
+
 
 def assert_contains_all(thisList, otherList):
     for other in otherList:
