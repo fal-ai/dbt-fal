@@ -137,7 +137,6 @@ class NodeGraph:
 
     def get_descendants(self, id: str) -> List[str]:
         return list(nx.descendants(self.graph, id))
-        # return list(self.graph.successors(id))
 
     def get_predecessors(self, id: str) -> List[str]:
         return list(self.graph.predecessors(id))
