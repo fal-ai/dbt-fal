@@ -4,7 +4,7 @@ from fal.fal_script import FalScript
 from typing import List
 
 
-def print_run_info(scripts: List[FalScript], keyword: str, before):
+def print_run_info(scripts: List[FalScript]):
     """Print information on the current fal run."""
     models_arr = []
     for script in scripts:
