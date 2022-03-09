@@ -7,6 +7,7 @@ from pathlib import Path
 
 from dbt.contracts.results import NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
+from fal.utils import print_run_info
 
 from faldbt.project import FalProject
 from fal.fal_script import FalScript
@@ -48,6 +49,9 @@ class Context:
 
 
 def run_scripts(list: List[FalScript], project: FalProject):
+
+    print_run_info(list)
+
     faldbt = project._faldbt
     for script in list:
         model = script.model
@@ -73,6 +77,9 @@ def run_scripts(list: List[FalScript], project: FalProject):
 
 
 def run_global_scripts(list: List[FalScript], project: FalProject):
+
+    print_run_info(list)
+
     faldbt = project._faldbt
     for script in list:
         context_config = ContextConfig(_get_target_path(faldbt._config))

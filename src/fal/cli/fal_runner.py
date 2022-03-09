@@ -8,7 +8,6 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import run_global_scripts, run_scripts
 from fal.fal_script import FalScript
-from fal.utils import print_run_info
 from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 
@@ -37,7 +36,6 @@ def fal_run(
 
     scripts = _select_scripts(args_dict, models, project, args)
 
-    print_run_info(scripts, args.keyword, args_dict.get("before"))
     # run model specific scripts first
     run_scripts(scripts, project)
 
