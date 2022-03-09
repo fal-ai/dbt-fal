@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Tuple, Dict
+
 from fal.fal_script import FalScript
 from faldbt.project import DbtModel, FalDbt
 from pathlib import Path
@@ -43,7 +44,7 @@ def _add_after_scripts(
     after_fal_script_nodes = list(
         map(
             lambda fal_script: FalFlowNode(
-                _script_id_from_path(fal_script.path, model.name)
+                _script_id_from_path(fal_script.path, model.name, "AFTER")
             ),
             after_fal_scripts,
         )
@@ -72,7 +73,7 @@ def _add_before_scripts(
     )
     before_fal_script_node = map(
         lambda fal_script: FalFlowNode(
-            _script_id_from_path(fal_script.path, model.name)
+            _script_id_from_path(fal_script.path, model.name, "BEFORE")
         ),
         before_fal_scripts,
     )
@@ -86,9 +87,9 @@ def _add_before_scripts(
     return graph, nodeLookup
 
 
-def _script_id_from_path(scriptPath: Path, modelName: str):
+def _script_id_from_path(scriptPath: Path, modelName: str, order: str):
     script_file_name = os.path.basename(scriptPath)
-    return f"script.{modelName}.{script_file_name}"
+    return f"script.{modelName}.{order}.{script_file_name}"
 
 
 @dataclass
@@ -138,5 +139,8 @@ class NodeGraph:
         return list(nx.descendants(self.graph, id))
         # return list(self.graph.successors(id))
 
-    def get_predecessors(self, id: str):
+    def get_predecessors(self, id: str) -> List[str]:
         return list(self.graph.predecessors(id))
+
+    def get_node(self, id: str) -> FalFlowNode | None:
+        return self.node_lookup.get(id)

@@ -18,11 +18,11 @@ def test_add_after_scripts(parsed_node):
 
     assert_contains_all(
         list(node_lookup.keys()),
-        ["script.modelA.scriptA.py", "script.modelA.scriptB.py"],
+        ["script.modelA.AFTER.scriptA.py", "script.modelA.AFTER.scriptB.py"],
     )
     assert_contains_all(
         list(graph.successors("model.modelA")),
-        ["script.modelA.scriptA.py", "script.modelA.scriptB.py"],
+        ["script.modelA.AFTER.scriptA.py", "script.modelA.AFTER.scriptB.py"],
     )
 
 
@@ -38,12 +38,12 @@ def test_add_before_scripts(parsed_node):
 
     assert_contains_all(
         list(node_lookup.keys()),
-        ["script.modelA.scriptA.py", "script.modelA.scriptB.py"],
+        ["script.modelA.BEFORE.scriptA.py", "script.modelA.BEFORE.scriptB.py"],
     )
 
     assert_contains_all(
         list(graph.predecessors("model.modelA")),
-        ["script.modelA.scriptA.py", "script.modelA.scriptB.py"],
+        ["script.modelA.BEFORE.scriptA.py", "script.modelA.BEFORE.scriptB.py"],
     )
 
 
@@ -75,25 +75,25 @@ def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
             "model.modelA",
             "model.modelB",
             "model.modelC",
-            "script.modelA.scriptA.py",
-            "script.modelA.scriptB.py",
-            "script.modelB.scriptB.py",
-            "script.modelC.scriptC.py",
+            "script.modelA.AFTER.scriptA.py",
+            "script.modelA.AFTER.scriptB.py",
+            "script.modelB.AFTER.scriptB.py",
+            "script.modelC.AFTER.scriptC.py",
         ],
     )
 
     assert_contains_all(
         node_graph.get_descendants("model.modelA"),
-        ["script.modelA.scriptB.py", "script.modelA.scriptA.py"],
+        ["script.modelA.AFTER.scriptB.py", "script.modelA.AFTER.scriptA.py"],
     )
 
     assert_contains_all(
         node_graph.get_descendants("model.modelB"),
         [
             "model.modelA",
-            "script.modelA.scriptB.py",
-            "script.modelA.scriptA.py",
-            "script.modelB.scriptB.py",
+            "script.modelA.AFTER.scriptB.py",
+            "script.modelA.AFTER.scriptA.py",
+            "script.modelB.AFTER.scriptB.py",
         ],
     )
 
@@ -101,8 +101,8 @@ def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
         node_graph.get_descendants("model.modelC"),
         [
             "model.modelA",
-            "script.modelA.scriptB.py",
-            "script.modelA.scriptA.py",
-            "script.modelC.scriptC.py",
+            "script.modelA.AFTER.scriptB.py",
+            "script.modelA.AFTER.scriptA.py",
+            "script.modelC.AFTER.scriptC.py",
         ],
     )
