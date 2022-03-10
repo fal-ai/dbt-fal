@@ -212,7 +212,7 @@ class FalDbt:
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir, threads)
 
-        self._el_adapters = parse.get_el_adapter_data(
+        self._el_adapters = parse.get_el_adapters(
             profiles_dir, self._config.profile_name
         )
 
@@ -487,6 +487,41 @@ class FalDbt:
                 logger.warn(
                     "Could not find acceptable Default GCP Application credentials"
                 )
+
+    def airbyte_sync(
+        self,
+        connection_id: str,
+        interval: float = 10,
+        timeout: float = None,
+        max_retries: int = 10,
+    ):
+        client = self._el_adapters["airbyte"].get("client", None)
+        if client is None:
+            raise Exception(
+                "Could not find Airbyte client. Did you you set it up in profiles.yml?"
+            )
+        client.sync_and_wait(connection_id, interval=interval, timeout=timeout)
+
+    def fivetran_sync(
+        self,
+        connector_id,
+        historical: bool = False,
+        poll_interval: float = 10,
+        poll_timeout: float = None,
+    ):
+        client = self._el_adapters["fivetran"].get("client", None)
+        if client is None:
+            raise Exception(
+                "Could not find Fivetran client. Did you you set it up in profiles.yml?"
+            )
+        if historical:
+            client.resync_and_wait(
+                connector_id, interval=poll_interval, timeout=poll_timeout
+            )
+        else:
+            client.sync_and_wait(
+                connector_id, interval=poll_interval, timeout=poll_timeout
+            )
 
 
 def _firestore_dict_to_document(data: Dict, key_column: str):
