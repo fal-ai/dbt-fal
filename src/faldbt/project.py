@@ -191,6 +191,8 @@ class FalDbt:
 
     _firestore_client: Union[FirestoreClient, None]
 
+    _el_adapters: Dict[str, Any]
+
     def __init__(
         self,
         project_dir: str,
@@ -209,6 +211,10 @@ class FalDbt:
         lib.initialize_dbt_flags(profiles_dir=profiles_dir)
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir, threads)
+
+        self._el_adapters = parse.get_el_adapter_data(
+            profiles_dir, self._config.profile_name
+        )
 
         # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(profiles_dir)
