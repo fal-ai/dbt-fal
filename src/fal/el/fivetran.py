@@ -2,6 +2,7 @@
 import time
 import requests
 import datetime
+import json
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
 from dataclasses import dataclass, field
@@ -10,8 +11,8 @@ from urllib.parse import urljoin
 from dateutil import parser
 from dbt.logger import GLOBAL_LOGGER as logger
 
-BASE_URL = "https://api.fivetran.com"
-CONNECTOR_PATH = "v1/connectors/"
+BASE_URL = urljoin("https://api.fivetran.com/", "v1/connectors/")
+SCHEDULE_TYPES = ["auto", "manual"]
 
 
 @dataclass
@@ -29,9 +30,9 @@ class FivetranClient:
         """Set variables."""
         self._auth = HTTPBasicAuth(self.api_key, self.api_secret)
 
-    def request(self, endpoint: str, method: str, data: Dict[str, Any] = {}):
+    def request(self, endpoint: str, method: str, data: str = None):
         """Make a request to Airbyte REST API endpoint."""
-        headers = {"accept": "application/json"}
+        headers = {"Content-Type": "application/json;version=2"}
 
         num_retries = 0
         while True:
@@ -48,7 +49,7 @@ class FivetranClient:
                 parsed = response.json()
                 return parsed["data"] if "data" in parsed else parsed
             except RequestException as e:
-                logger.warn("Fivetran API request failed: %s", e)
+                logger.warn(f"Fivetran API request failed: {e}")
                 if num_retries == self.max_retries:
                     break
                 num_retries += 1
@@ -64,9 +65,9 @@ class FivetranClient:
         """Check if connector can be synced."""
         connector_data = self.get_connector_data(connector_id)
         if connector_data["status"]["setup_state"] != "connected":
-            raise Exception("Cannot sync connector '{connector_id}': not set up.")
+            raise Exception(f"Cannot sync connector {connector_id}: not set up.")
         if connector_data["paused"]:
-            raise Exception("Cannot sync connector '{connector_id}': paused.")
+            raise Exception(f"Cannot sync connector {connector_id}: paused.")
 
     def get_sync_status(self, connector_id: str):
         """Return status of the latest sync operation for a given connector."""
@@ -85,13 +86,15 @@ class FivetranClient:
         self, connector_id: str, properties: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """Update connector details."""
-        return self.request(method="PATCH", endpoint=connector_id, data=properties)
+        return self.request(
+            method="PATCH", endpoint=connector_id, data=json.dumps(properties)
+        )
 
     def update_schedule_type(
         self, connector_id: str, schedule_type: str = None
     ) -> Dict[str, Any]:
         """Update connector schedule type to "auto" or "manual"."""
-        if schedule_type not in ["auto", "manual"]:
+        if schedule_type not in SCHEDULE_TYPES:
             raise Exception("schedule_type must be either 'auto' or 'manual'.")
         return self.update_connector(
             connector_id, properties={"schedule_type": schedule_type}
@@ -99,15 +102,15 @@ class FivetranClient:
 
     def get_connector_schema(self, connector_id: str) -> Dict[str, Any]:
         """Get schema config for a connector."""
-        return self.request("GET", endpoint=f"{connector_id}/schemas")
+        return self.request(method="GET", endpoint=f"{connector_id}/schemas")
 
     def start_sync(self, connector_id: str) -> Dict[str, Any]:
         """Start a Fivetran connector sync."""
-        if self._disable_schedule_on_trigger:
+        if self.disable_schedule_on_trigger:
             logger.info("Disabling Fivetran sync schedule.")
             self.update_schedule_type(connector_id, "manual")
-        self._check_connector(connector_id)
-        self.make_request(method="POST", endpoint=f"{connector_id}/force")
+        self.check_connector(connector_id)
+        self.request(method="POST", endpoint=f"{connector_id}/force")
         connector_data = self.get_connector_data(connector_id)
         logger.info(f"Sync start for connector_id={connector_id}.")
         return connector_data
@@ -116,14 +119,14 @@ class FivetranClient:
         self, connector_id: str, resync_parameters: Dict[str, List[str]]
     ) -> Dict[str, Any]:
         """Start a historical sync of all data for multiple schema tables within a connector."""
-        if self._disable_schedule_on_trigger:
+        if self.disable_schedule_on_trigger:
             logger.info("Disabling Fivetran sync schedule.")
             self.update_schedule_type(connector_id, "manual")
-        self._check_connector(connector_id)
-        self.make_request(
+        self.check_connector(connector_id)
+        self.request(
             method="POST",
             endpoint=f"{connector_id}/schemas/tables/resync",
-            data=resync_parameters,
+            data=json.dumps(resync_parameters),
         )
         connector_data = self.get_connector_data(connector_id)
         logger.info(f"Resync start for connector_id={connector_id}.")
