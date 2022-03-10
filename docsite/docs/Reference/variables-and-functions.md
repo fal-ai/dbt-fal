@@ -6,7 +6,7 @@ sidebar_position: 1
 
 Inside a Python script, you get access to some useful variables and functions
 
-## Variables
+## `context` Variable
 
 A `context` object with information relevant to the model through which the script was run. For the [`meta` Syntax](#meta-syntax) example, we would get the following:
 

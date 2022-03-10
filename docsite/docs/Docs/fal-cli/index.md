@@ -1,8 +1,10 @@
 # Running Python in a dbt project
 
-fal extends dbt's functionality to handle Python scripts before and after dbt runs. This enables you to use your data in a familiar way like you couldn't before.
+fal extends dbt's functionality to run Python scripts before and after dbt models. With fal you can interact with dbt models in your Python scripts seamlessly.
 
-This is done using the cli `fal flow run`.
+This is done using the command `fal flow run`.
+
+<!-- TODO: add a graph to show which nodes run when the example fal flow run is invoked -->
 
 Under the hood, the workflow is run in 3 parts:
 

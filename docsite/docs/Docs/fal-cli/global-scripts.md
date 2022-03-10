@@ -2,11 +2,9 @@
 sidebar_position: 4
 ---
 
-# Running scripts not associated to a dbt model
+# Running scripts not associated with a dbt model
 
-Just like when [running scripts associated to a dbt model](model-scripts.md), you can run a script as pre-hook or post-hook of the whole fal flow operation.
-
-This can be achieved by adding the same script lists as we do in `meta` for models, but in the schema.yml top level:
+Typically a [fal script is associated with a dbt model](model-scripts.md), this is how the [context variable is populated](../../Reference/variables-and-functions.md#context-variable). However you may want to invoke scripts independent of a dbt model as well. This can be achieved by adding a script configuration similar to meta for models, but in the schema.yml top level:
 
 ```yaml
 models:
@@ -15,11 +13,11 @@ models:
 fal:
   scripts:
     before:
-    - global/prepare_run.py
+      - global/prepare_run.py
     after:
-    - global/close_run.py
+      - global/close_run.py
 ```
 
-These will happen at the beginning and end of any fal flow run, no matter which models are selected, since these are pre and post hooks of running dbt.
+These will happen at the beginning and end of any `fal run`, no matter which models are selected, since these are pre and post hooks of running fal.
 
 The `before` part will run before all model scripts and the `after` will run after all model scripts.

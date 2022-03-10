@@ -70,7 +70,7 @@ models:
           - send_slack_message.py
 ```
 
-### 5 Run `fal flow run`
+## 5. Run `fal flow run`
 
 This command manages your dbt runs for you, by running scripts and models in the correct order.
 

@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# How it works?
+# What is fal?
 
 fal is a command line tool that can read the state of your dbt project and help you run Python scripts with dbt by leveraging the [`meta` config](https://docs.getdbt.com/reference/resource-configs/meta).
 

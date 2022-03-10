@@ -1,3 +1,7 @@
+---
+sidebar_position: 6
+---
+
 # Examples
 
 You can find examples in

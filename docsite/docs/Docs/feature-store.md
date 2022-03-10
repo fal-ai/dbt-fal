@@ -1,8 +1,8 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 ---
 
-# Building a feature store in dbt
+# dbt feature store
 
 A feature store is data system that facilitates managing the data transformations centrally for predictive analysis and ML models in production.
 
