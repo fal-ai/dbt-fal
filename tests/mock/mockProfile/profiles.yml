@@ -1,5 +1,22 @@
 fal_test:
   target: dev
+  fal:
+    el:
+      - type: fivetran
+        api_key: my_fivetran_key
+        api_secret: my_fivetran_secret
+        connectors:
+          - name: fivetran_connector_1
+            id: id_fivetran_connector_1
+          - name: fivetran_connector_2
+            id: id_fivetran_connector_2
+      - type: airbyte
+        host: http://localhost:8001
+        connections:
+          - name: airbyte_connection_1
+            id: id_airbyte_connection_1
+          - name: airbyte_connection_2
+            id: id_airbyte_connection_2
   outputs:
     dev:
       type: postgres
