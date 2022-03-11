@@ -33,4 +33,5 @@ write_to_firestore(df=model_df, collection="zendesk_sentiment_data", key_column=
 
 We first get a dbt model as a DataFrame `model_df` by using `ref` function and then we immediately send this data to Firestore, using the `id` column as a key. 
 
+## Full example
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/write_to_firestore.py).

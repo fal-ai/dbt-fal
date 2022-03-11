@@ -1,4 +1,4 @@
-# Example 8: Write dbt artifacts to AWS S3
+# Example 7: Write dbt artifacts to Google Cloud Storage
 
 Dbt artifacts are files created by the dbt compiler after a run is completed. They contain information about the project, help with documentation, calculate test coverage and much more. In this example we are going to focus on two of these artifacts `manifest.json` and `run_results.json`.
 
@@ -8,36 +8,41 @@ Dbt artifacts are files created by the dbt compiler after a run is completed. Th
 
 There might be several reasons why might want to store `dbt` artifacts. The most obvious reason would be to use the `--state` functionality to pass the previous state back to dbt. Besides that these artifacts can be stored in a database to later be analyzed..
 
-## Create an S3 Bucket
+This example assumes you have GCS (Google Cloud Storage) enabled in your project.
 
-Navigate the [S3 console](https://s3.console.aws.amazon.com/s3/home) and create a bucket. In the screenshot below I named the my bucket `fal-example-dbt-artifacts-bucket`, pick a unique name for yourself and complete the next steps as you see fit.
+## Create a GCS Bucket
 
-![AWS S3 bucket creation](s3_bucket.png)
+Navigate the [GCS console](https://console.cloud.google.com/storage/browser) and create a bucket. In the screenshot below I named the my bucket `fal_example_dbt_artifacts_bucket`, pick a unique name for yourself and complete the next steps as you see fit.
+
+![GCS bucket creation](gcs_bucket.png)
 
 ## Fal Script
 
-Now navigate to your dbt to project, create a directory for your fal scripts and create a python file inside that directory. [For example](https://github.com/fal-ai/fal_dbt_examples/tree/main/fal_scripts/upload_to_s3.py) a directory named `fal_scripts` and a python file named `upload_to_s3.py`.
+Now navigate to your dbt to project, create a directory for your fal scripts and create a python file inside that directory. [For example](https://github.com/fal-ai/fal_dbt_examples/tree/main/fal_scripts/upload_to_gcs.py) a directory named `fal_scripts` and a python file named `upload_to_gcs.py`.
 
-In your python file you'll write the script that would upload `dbt` artifacts to S3.
+In your python file you'll write the script that would upload `dbt` artifacts to GSC.
 
 ```python
 import os
-import boto3
+from google.cloud import storage
 
-s3_client = boto3.client('s3')
-
-bucket_name = "fal-example-dbt-artifacts-bucket"
-manifest_source_file_name = os.path.join(context.config.target_path, "manifest.json")
-run_results_source_file_name = os.path.join(context.config.target_path, "run_results.json")
+bucket_name = "fal_example_dbt_artifacts_bucket"
 manifest_destination_blob_name = "manifest.json"
 run_results_destination_blob_name = "run_results.json"
 
+manifest_source_file_name = os.path.join(context.config.target_path, "manifest.json")
+run_results_source_file_name = os.path.join(context.config.target_path, "run_results.json")
 
-s3_client.upload_file(manifest_source_file_name, bucket_name, manifest_destination_blob_name)
-s3_client.upload_file(run_results_source_file_name, bucket_name, run_results_destination_blob_name)
+storage_client = storage.Client()
+bucket = storage_client.bucket(bucket_name)
+manifest_blob = bucket.blob(manifest_destination_blob_name)
+run_results_blob = bucket.blob(run_results_destination_blob_name)
+
+manifest_blob.upload_from_filename(manifest_source_file_name)
+run_results_blob.upload_from_filename(run_results_source_file_name)
 ```
 
-This script will use [default credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html) set in your environment for AWS, one way to do this is to set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environment variables.
+This script will use [default credentials](https://cloud.google.com/docs/authentication/production) set in your environment for GCP.
 
 ## Meta tag
 
@@ -48,7 +53,8 @@ To configure this navigate to your `schema.yml` file or create one if you dont h
 ```yaml
 fal:
   scripts:
-    - fal_scripts/upload_to_s3.py
+    - fal_scripts/upload_to_gcs.py
 ```
 
+## Full example
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts).

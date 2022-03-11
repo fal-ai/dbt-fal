@@ -79,4 +79,5 @@ with ApiClient(configuration) as api_client:
         assert e.response["error"]
 ```
 
+## Full example
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/send_datadog_event.py).
