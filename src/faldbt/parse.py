@@ -41,14 +41,14 @@ def get_dbt_config(
     return RuntimeConfig.from_args(args)
 
 
-def get_el_adapters(profiles_dir: str, profile_name: str):
+def get_el_configs(profiles_dir: str, profile_name: str):
     path = os.path.join(profiles_dir, "profiles.yml")
     yml = load_yaml(path)
     adapters = yml.get(profile_name, {}).get("fal", {}).get("el", [])
-    adapter_map = {"fivetran": {}, "airbyte": {}}
+    config_map = {"fivetran": {}, "airbyte": {}}
     for adapter in adapters:
         if adapter["type"] == "fivetran":
-            adapter_map["fivetran"]["client"] = FivetranClient(
+            config_map["fivetran"]["client"] = FivetranClient(
                 api_key=adapter["api_key"],
                 api_secret=adapter["api_secret"],
                 disable_schedule_on_trigger=adapter.get(
@@ -57,15 +57,15 @@ def get_el_adapters(profiles_dir: str, profile_name: str):
                 max_retries=adapter.get("max_retries", 3),
                 retry_delay=adapter.get("retry_delay", 0.25),
             )
-            adapter_map["fivetran"]["connectors"] = adapter.get("connectors", [])
+            config_map["fivetran"]["connectors"] = adapter.get("connectors", [])
         elif adapter["type"] == "airbyte":
-            adapter_map["airbyte"]["client"] = AirbyteClient(
+            config_map["airbyte"]["client"] = AirbyteClient(
                 host=adapter["host"],
                 max_retries=adapter.get("max_retries", 5),
                 retry_delay=adapter.get("retry_delay", 5),
             )
-            adapter_map["airbyte"]["connections"] = adapter.get("connections", [])
-    return adapters
+            config_map["airbyte"]["connections"] = adapter.get("connections", [])
+    return config_map
 
 
 def get_dbt_manifest(config) -> Manifest:

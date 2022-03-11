@@ -191,7 +191,7 @@ class FalDbt:
 
     _firestore_client: Union[FirestoreClient, None]
 
-    _el_adapters: Dict[str, Any]
+    _el_configs: Dict[str, Any]
 
     def __init__(
         self,
@@ -212,9 +212,7 @@ class FalDbt:
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir, threads)
 
-        self._el_adapters = parse.get_el_adapters(
-            profiles_dir, self._config.profile_name
-        )
+        self._el_configs = parse.get_el_configs(profiles_dir, self._config.profile_name)
 
         # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(profiles_dir)
@@ -490,30 +488,65 @@ class FalDbt:
 
     def airbyte_sync(
         self,
-        connection_id: str,
+        connection_id: str = None,
+        connection_name: str = None,
         interval: float = 10,
         timeout: float = None,
         max_retries: int = 10,
     ):
-        client = self._el_adapters["airbyte"].get("client", None)
+        client = self._el_configs["airbyte"].get("client", None)
         if client is None:
             raise Exception(
                 "Could not find Airbyte client. Did you you set it up in profiles.yml?"
             )
+
+        if connection_id is None and connection_name is None:
+            raise Exception(
+                "Either connection id or connection name have to be provided."
+            )
+
+        if connection_id is None:
+            connections = self._el_configs["airbyte"].get("connections", [])
+            connection = next(
+                (c for c in connections if connection_name == c.get("name")), None
+            )
+            if connection is None:
+                raise Exception(
+                    f"Couldn't find connection {connection_name}. Did you add it to profiles.yml?"
+                )
+            connection_id = connection["id"]
         client.sync_and_wait(connection_id, interval=interval, timeout=timeout)
 
     def fivetran_sync(
         self,
-        connector_id,
+        connector_id: str = None,
+        connector_name: str = None,
         historical: bool = False,
         poll_interval: float = 10,
         poll_timeout: float = None,
     ):
-        client = self._el_adapters["fivetran"].get("client", None)
+        if connector_id is None and connector_name is None:
+            raise Exception(
+                "Either connector id or connector name have to be provided."
+            )
+
+        if connector_id is None:
+            connectors = self._el_configs["fivetran"].get("connectors", [])
+            connector = next(
+                (c for c in connectors if connector_name == c.get("name")), None
+            )
+            if connector is None:
+                raise Exception(
+                    f"Couldn't find connector {connector_name}. Did you add it to profiles.yml?"
+                )
+            connector_id = connector["id"]
+
+        client = self._el_configs["fivetran"].get("client", None)
         if client is None:
             raise Exception(
                 "Could not find Fivetran client. Did you you set it up in profiles.yml?"
             )
+
         if historical:
             client.resync_and_wait(
                 connector_id, interval=poll_interval, timeout=poll_timeout
