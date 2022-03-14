@@ -16,10 +16,10 @@ def test_fivetran_api():
         except Exception as e:
             mock_request.assert_called_with(
                 method="GET",
-                url="https://api.fivetran.com/test_id",
-                headers={"accept": "application/json"},
+                url="https://api.fivetran.com/v1/connectors/test_id",
+                headers={"Content-Type": "application/json;version=2"},
                 auth=ANY,
-                data="{}",
+                data=None,
                 timeout=5,
             )
             assert str(e) == "Exceeded max number of retries."
@@ -31,10 +31,10 @@ def test_fivetran_api():
         except Exception as e:
             mock_request.assert_called_with(
                 method="GET",
-                url="https://api.fivetran.com/test_id",
-                headers={"accept": "application/json"},
+                url="https://api.fivetran.com/v1/connectors/test_id",
+                headers={"Content-Type": "application/json;version=2"},
                 auth=ANY,
-                data="{}",
+                data=None,
                 timeout=5,
             )
             assert str(e) == "Exceeded max number of retries."
@@ -46,8 +46,8 @@ def test_fivetran_api():
         except Exception as e:
             mock_request.assert_called_with(
                 method="PATCH",
-                url="https://api.fivetran.com/test_id",
-                headers={"accept": "application/json"},
+                url="https://api.fivetran.com/v1/connectors/test_id",
+                headers={"Content-Type": "application/json;version=2"},
                 auth=ANY,
                 data='{"test_key": "test_value"}',
                 timeout=5,
@@ -61,8 +61,8 @@ def test_fivetran_api():
         except Exception as e:
             mock_request.assert_called_with(
                 method="PATCH",
-                url="https://api.fivetran.com/test_id",
-                headers={"accept": "application/json"},
+                url="https://api.fivetran.com/v1/connectors/test_id",
+                headers={"Content-Type": "application/json;version=2"},
                 auth=ANY,
                 data='{"schedule_type": "manual"}',
                 timeout=5,
@@ -78,27 +78,12 @@ def test_fivetran_api():
             api_client.check_connector.assert_called_once()
             mock_request.assert_called_with(
                 method="POST",
-                url="https://api.fivetran.com/test_id/force",
-                headers={"accept": "application/json"},
+                url="https://api.fivetran.com/v1/connectors/test_id/force",
+                headers={"Content-Type": "application/json;version=2"},
                 auth=ANY,
-                data="{}",
+                data=None,
                 timeout=5,
             )
             assert str(e) == "Exceeded max number of retries."
 
         api_client.check_connector.reset_mock()
-        mock_request.reset_mock()
-        try:
-            api_client.start_resync("test_id", {"test_key": "test_value"})
-
-        except Exception as e:
-            api_client.check_connector.assert_called_once()
-            mock_request.assert_called_with(
-                method="POST",
-                url="https://api.fivetran.com/test_id/schemas/tables/resync",
-                headers={"accept": "application/json"},
-                auth=ANY,
-                data='{"test_key": "test_value"}',
-                timeout=5,
-            )
-            assert str(e) == "Exceeded max number of retries."

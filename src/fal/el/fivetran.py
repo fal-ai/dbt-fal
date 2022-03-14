@@ -115,23 +115,6 @@ class FivetranClient:
         logger.info(f"Sync start for connector_id={connector_id}.")
         return connector_data
 
-    def start_resync(
-        self, connector_id: str, resync_parameters: Dict[str, List[str]]
-    ) -> Dict[str, Any]:
-        """Start a historical sync of all data for multiple schema tables within a connector."""
-        if self.disable_schedule_on_trigger:
-            logger.info("Disabling Fivetran sync schedule.")
-            self.update_schedule_type(connector_id, "manual")
-        self.check_connector(connector_id)
-        self.request(
-            method="POST",
-            endpoint=f"{connector_id}/schemas/tables/resync",
-            data=json.dumps(resync_parameters),
-        )
-        connector_data = self.get_connector_data(connector_id)
-        logger.info(f"Resync start for connector_id={connector_id}.")
-        return connector_data
-
     def poll_sync(
         self,
         connector_id: str,
@@ -183,24 +166,6 @@ class FivetranClient:
         schema_config = self.get_connector_schema(connector_id)
         init_last_sync_timestamp, _, _ = self.get_sync_status(connector_id)
         self.start_sync(connector_id)
-        final_details = self.poll_sync(
-            connector_id,
-            init_last_sync_timestamp,
-            poll_interval=poll_interval,
-            poll_timeout=poll_timeout,
-        )
-        return {"connector_details": final_details, "schema_config": schema_config}
-
-    def resync_and_wait(
-        self,
-        connector_id: str,
-        poll_interval: float = 10,
-        poll_timeout: float = None,
-    ):
-        """Start a sync operation for the given connector, and wait until it completes."""
-        schema_config = self.get_connector_schema(connector_id)
-        init_last_sync_timestamp, _, _ = self.get_sync_status(connector_id)
-        self.start_resync(connector_id)
         final_details = self.poll_sync(
             connector_id,
             init_last_sync_timestamp,
