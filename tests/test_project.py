@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
-from mock import Mock
+from mock import Mock, patch, ANY
+import requests
 
 from fal import FalDbt
 
@@ -53,24 +54,20 @@ def test_adapter_setup():
         project_dir=project_dir,
     )
 
-    fivetran_client = faldbt._el_configs["fivetran"].get("client", None)
-    assert fivetran_client is not None
-    assert fivetran_client.api_key == "my_fivetran_key"
-    assert fivetran_client.api_secret == "my_fivetran_secret"
+    config_list = faldbt._el_configs
+    assert len(config_list) == 2
 
-    connectors = faldbt._el_configs["fivetran"].get("connectors", None)
-    assert len(connectors) == 2
-    assert connectors[0]["name"] is not None
-    assert connectors[0]["id"] is not None
+    fivetran_config = config_list[0]
 
-    airbyte_client = faldbt._el_configs["airbyte"].get("client", None)
-    assert airbyte_client is not None
-    assert airbyte_client.host == "http://localhost:8001"
+    assert fivetran_config["name"] == "my_fivetran_el"
+    assert len(fivetran_config["connectors"]) == 2
+    assert fivetran_config["connectors"][0]["name"] == "fivetran_connector_1"
 
-    connections = faldbt._el_configs["airbyte"].get("connections", None)
-    assert len(connections) == 2
-    assert connections[0]["name"] is not None
-    assert connections[0]["id"] is not None
+    airbyte_config = config_list[1]
+
+    assert airbyte_config["name"] == "my_airbyte_el"
+    assert len(airbyte_config["connections"]) == 2
+    assert airbyte_config["connections"][0]["name"] == "airbyte_connection_1"
 
 
 def test_airbyte_sync():
@@ -78,39 +75,44 @@ def test_airbyte_sync():
         profiles_dir=profiles_dir,
         project_dir=project_dir,
     )
-    airbyte_client = faldbt._el_configs["airbyte"].get("client", None)
-    airbyte_client.sync_and_wait = Mock()
-
-    faldbt.airbyte_sync(connection_id="id_airbyte_connection_1")
-    airbyte_client.sync_and_wait.assert_called_with(
-        "id_airbyte_connection_1", interval=10, timeout=None
-    )
-
-    airbyte_client.sync_and_wait.reset_mock()
-
-    faldbt.airbyte_sync(connection_name="airbyte_connection_1")
-    airbyte_client.sync_and_wait.assert_called_with(
-        "id_airbyte_connection_1", interval=10, timeout=None
-    )
-
-    airbyte_client.sync_and_wait.reset_mock()
-
-    try:
-        faldbt.airbyte_sync()
-
-    except Exception as e:
-        assert str(e) == "Either connection id or connection name have to be provided."
-
-    airbyte_client.sync_and_wait.reset_mock()
-
-    try:
-        faldbt.airbyte_sync(connection_name="not_there")
-        assert False is True
-    except Exception as e:
-        assert (
-            str(e)
-            == "Couldn't find connection not_there. Did you add it to profiles.yml?"
+    with patch("fal.el.airbyte.AirbyteClient.sync_and_wait") as mock_sync:
+        faldbt.airbyte_sync(
+            config_name="my_airbyte_el", connection_id="id_airbyte_connection_1"
         )
+
+        mock_sync.assert_called_with("id_airbyte_connection_1")
+
+        mock_sync.reset_mock()
+
+        faldbt.airbyte_sync(
+            config_name="my_airbyte_el", connection_name="airbyte_connection_1"
+        )
+
+        mock_sync.assert_called_with("id_airbyte_connection_1")
+
+        try:
+            faldbt.airbyte_sync(
+                config_name="not_there", connection_name="airbyte_connection_1"
+            )
+
+        except Exception as e:
+            assert str(e) == "EL configuration not_there is not found."
+
+        try:
+            faldbt.airbyte_sync(
+                config_name="my_airbyte_el", connection_name="not_there"
+            )
+
+        except Exception as e:
+            assert str(e) == "Connection not_there not found."
+
+        try:
+            faldbt.airbyte_sync(config_name="my_airbyte_el")
+
+        except Exception as e:
+            assert (
+                str(e) == "Either connection id or connection name have to be provided."
+            )
 
 
 def test_fivetran_sync():
@@ -118,42 +120,41 @@ def test_fivetran_sync():
         profiles_dir=profiles_dir,
         project_dir=project_dir,
     )
-    fivetran_client = faldbt._el_configs["fivetran"].get("client", None)
-    fivetran_client.sync_and_wait = Mock()
-    fivetran_client.resync_and_wait = Mock()
-
-    faldbt.fivetran_sync(connector_id="id_fivetran_connector_1")
-    fivetran_client.sync_and_wait.assert_called_with(
-        "id_fivetran_connector_1", interval=10, timeout=None
-    )
-
-    fivetran_client.sync_and_wait.reset_mock()
-
-    faldbt.fivetran_sync(connector_name="fivetran_connector_1")
-    fivetran_client.sync_and_wait.assert_called_with(
-        "id_fivetran_connector_1", interval=10, timeout=None
-    )
-
-    fivetran_client.sync_and_wait.reset_mock()
-
-    try:
-        faldbt.fivetran_sync()
-
-    except Exception as e:
-        assert str(e) == "Either connector id or connector name have to be provided."
-
-    fivetran_client.sync_and_wait.reset_mock()
-
-    try:
-        faldbt.fivetran_sync(connector_name="not_there")
-        assert False is True
-    except Exception as e:
-        assert (
-            str(e)
-            == "Couldn't find connector not_there. Did you add it to profiles.yml?"
+    with patch("fal.el.fivetran.FivetranClient.sync_and_wait") as mock_sync:
+        faldbt.airbyte_sync(
+            config_name="my_fivetran_el", connection_id="id_fivetran_connection_1"
         )
 
-    faldbt.fivetran_sync(connector_name="fivetran_connector_1", historical=True)
-    fivetran_client.resync_and_wait.assert_called_with(
-        "id_fivetran_connector_1", interval=10, timeout=None
-    )
+        mock_sync.assert_called_with(connector_id="id_fivetran_connection_1")
+
+        mock_sync.reset_mock()
+
+        faldbt.fivetran_sync(
+            config_name="my_fivetran_el", connector_name="fivetran_connector_1"
+        )
+
+        mock_sync.assert_called_with(connector_id="id_fivetran_connector_1")
+
+        try:
+            faldbt.fivetran_sync(
+                config_name="not_there", connector_name="fivetran_connector_1"
+            )
+
+        except Exception as e:
+            assert str(e) == "EL configuration not_there is not found."
+
+        try:
+            faldbt.fivetran_sync(
+                config_name="my_fivetran_el", connector_name="not_there"
+            )
+
+        except Exception as e:
+            assert str(e) == "Connection not_there not found."
+
+        try:
+            faldbt.fivetran_sync(config_name="my_fivetran_el")
+
+        except Exception as e:
+            assert (
+                str(e) == "Either connection id or connection name have to be provided."
+            )

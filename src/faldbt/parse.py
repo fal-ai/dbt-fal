@@ -41,31 +41,13 @@ def get_dbt_config(
     return RuntimeConfig.from_args(args)
 
 
-def get_el_configs(profiles_dir: str, profile_name: str):
+def get_el_configs(profiles_dir: str, profile_name: str, target_name: str):
     path = os.path.join(profiles_dir, "profiles.yml")
     yml = load_yaml(path)
-    adapters = yml.get(profile_name, {}).get("fal", {}).get("el", [])
-    config_map = {"fivetran": {}, "airbyte": {}}
-    for adapter in adapters:
-        if adapter["type"] == "fivetran":
-            config_map["fivetran"]["client"] = FivetranClient(
-                api_key=adapter["api_key"],
-                api_secret=adapter["api_secret"],
-                disable_schedule_on_trigger=adapter.get(
-                    "disable_schedule_trigger", None
-                ),
-                max_retries=adapter.get("max_retries", 3),
-                retry_delay=adapter.get("retry_delay", 0.25),
-            )
-            config_map["fivetran"]["connectors"] = adapter.get("connectors", [])
-        elif adapter["type"] == "airbyte":
-            config_map["airbyte"]["client"] = AirbyteClient(
-                host=adapter["host"],
-                max_retries=adapter.get("max_retries", 5),
-                retry_delay=adapter.get("retry_delay", 5),
-            )
-            config_map["airbyte"]["connections"] = adapter.get("connections", [])
-    return config_map
+    sync_configs = (
+        yml.get(profile_name, {}).get("fal_extract_load", {}).get(target_name, [])
+    )
+    return sync_configs
 
 
 def get_dbt_manifest(config) -> Manifest:
