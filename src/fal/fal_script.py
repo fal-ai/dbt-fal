@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, TypeVar, Dict, Union
 from faldbt.project import DbtModel, FalDbt
 from pathlib import Path
+import sys
 
 T = TypeVar("T", bound="FalScript")
 
@@ -19,6 +20,10 @@ class FalScript:
         """
         Executes the script
         """
+
+        # Enable local imports
+        sys.path.append(str(self.path.parent))
+
         with open(self.path) as file:
             a_script = file.read()
             exec(
