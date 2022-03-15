@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional, List
 import subprocess
 import json
 
-from dbt.logger import log_manager, GLOBAL_LOGGER as logger
+from dbt.logger import GLOBAL_LOGGER as logger
 
 
 class DbtCliRuntimeError(Exception):
@@ -43,7 +43,7 @@ class DbtCliOutput:
         return self._logs
 
 
-def dbt_run(args):
+def dbt_run(args, models_list: List[str]):
     "Run the dbt run command in a subprocess"
 
     command_list = ["dbt", "--log-format", "json"]
@@ -59,9 +59,7 @@ def dbt_run(args):
         command_list += ["--profiles-dir", args.profiles_dir]
 
     if args.select:
-        command_list += ["--select"] + args.select
-    if args.exclude:
-        command_list += ["--exclude"] + args.exclude
+        command_list += ["--select"] + models_list
     if args.selector:
         command_list += ["--selector"] + [args.selector]
 

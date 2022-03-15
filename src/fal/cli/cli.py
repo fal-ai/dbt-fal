@@ -1,11 +1,10 @@
-import argparse
 from typing import List
 import sys
 from dbt.logger import log_manager, GLOBAL_LOGGER as logger
+from fal.cli.flow_runner import fal_flow_run
 from faldbt.lib import DBT_VCURRENT, DBT_V1
 from .args import parse_args
 from .fal_runner import fal_run
-from .dbt_runner import dbt_run
 
 
 def cli(argv: List[str] = sys.argv):
@@ -34,10 +33,7 @@ def cli(argv: List[str] = sys.argv):
 
         if parsed.command == "flow":
             if parsed.flow_command == "run":
-                parsed_with_before = argparse.Namespace(**vars(parsed), before=True)
-                fal_run(parsed_with_before)
-                dbt_run(parsed)
-                fal_run(parsed)
+                fal_flow_run(parsed)
 
         elif parsed.command == "run":
             fal_run(

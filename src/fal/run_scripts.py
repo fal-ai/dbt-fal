@@ -7,10 +7,10 @@ from pathlib import Path
 
 from dbt.contracts.results import NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
-from fal.utils import print_run_info
 
 from faldbt.project import FalProject
 from fal.fal_script import FalScript
+from fal.utils import print_run_info
 
 import faldbt.lib as lib
 
