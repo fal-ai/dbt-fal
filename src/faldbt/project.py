@@ -30,13 +30,12 @@ class FalGeneralException(Exception):
     pass
 
 
-def normalize_directories(base: str, dirs: List[Path]) -> List[Path]:
-    return list(
-        map(
-            lambda dir: Path(os.path.realpath(os.path.join(base, dir))),
-            dirs,
-        )
-    )
+def normalize_path(base: str, path: Union[Path, str]):
+    return Path(os.path.realpath(os.path.join(base, path)))
+
+
+def normalize_paths(base: str, paths: Union[List[Path], List[str]]) -> List[Path]:
+    return list(map(lambda path: normalize_path(base, path), paths))
 
 
 @dataclass
@@ -98,9 +97,9 @@ class DbtModel:
     def get_script_paths(
         self, keyword: str, project_dir: str, before: bool
     ) -> List[Path]:
-        return normalize_directories(project_dir, self.get_scripts(keyword, before))
+        return normalize_paths(project_dir, self.get_scripts(keyword, before))
 
-    def get_scripts(self, keyword: str, before: bool) -> List[Path]:
+    def get_scripts(self, keyword: str, before: bool) -> List[str]:
         # sometimes `scripts` can *be* there and still be None
         if self.meta.get(keyword):
             scripts_node = self.meta[keyword].get("scripts")
@@ -231,11 +230,12 @@ class FalDbt:
         )
 
         # BACKWARDS: Change intorduced in 1.0.0
+        model_paths: List[str] = []
         if hasattr(self._config, "model_paths"):
             model_paths = self._config.model_paths
         elif hasattr(self._config, "source_paths"):
             model_paths = self._config.source_paths
-        normalized_model_paths = normalize_directories(project_dir, model_paths)
+        normalized_model_paths = normalize_paths(project_dir, model_paths)
 
         self._global_script_paths = parse.get_global_script_configs(
             normalized_model_paths
