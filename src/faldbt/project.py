@@ -8,12 +8,7 @@ from dbt.node_types import NodeType
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
-from dbt.contracts.results import (
-    RunResultsArtifact,
-    RunResultOutput,
-    RunStatus,
-    TestStatus,
-)
+from dbt.contracts.results import RunResultsArtifact, RunResultOutput, NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.task.compile import CompileTask
 import dbt.tracking
@@ -78,7 +73,7 @@ class DbtModel:
     node: ParsedModelNode
     name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
-    status: RunStatus = field(init=False)
+    status: NodeStatus = field(init=False)
     columns: Dict[str, Any] = field(init=False)
     tests: List[DbtTest] = field(init=False)
 
@@ -554,14 +549,14 @@ def _map_nodes_to_models(run_results: DbtRunResult, manifest: DbtManifest):
         )
     )
     for model in models:
-        model.set_status(status_map.get(model.unique_id, RunStatus.Skipped))
+        model.set_status(status_map.get(model.unique_id, NodeStatus.Skipped))
         for test in tests:
             if hasattr(test, "model") and test.model == model.name:
                 model.tests.append(test)
-                test.set_status(status_map.get(test.unique_id, TestStatus.Skipped))
+                test.set_status(status_map.get(test.unique_id, NodeStatus.Skipped))
                 if (
-                    test.status != TestStatus.Skipped
-                    and model.status == RunStatus.Skipped
+                    test.status != NodeStatus.Skipped
+                    and model.status == NodeStatus.Skipped
                 ):
                     model.set_status("tested")
     return (models, tests)
