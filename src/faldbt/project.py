@@ -8,7 +8,7 @@ from dbt.node_types import NodeType
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
-from dbt.contracts.results import RunResultsArtifact, RunResultOutput
+from dbt.contracts.results import RunResultsArtifact, RunResultOutput, NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.task.compile import CompileTask
 import dbt.tracking
@@ -30,13 +30,12 @@ class FalGeneralException(Exception):
     pass
 
 
-def normalize_directories(base: str, dirs: List[Path]) -> List[Path]:
-    return list(
-        map(
-            lambda dir: Path(os.path.realpath(os.path.join(base, dir))),
-            dirs,
-        )
-    )
+def normalize_path(base: str, path: Union[Path, str]):
+    return Path(os.path.realpath(os.path.join(base, path)))
+
+
+def normalize_paths(base: str, paths: Union[List[Path], List[str]]) -> List[Path]:
+    return list(map(lambda path: normalize_path(base, path), paths))
 
 
 @dataclass
@@ -73,7 +72,7 @@ class DbtModel:
     node: ParsedModelNode
     name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
-    status: str = field(init=False)
+    status: NodeStatus = field(init=False)
     columns: Dict[str, Any] = field(init=False)
     tests: List[DbtTest] = field(init=False)
 
@@ -98,9 +97,9 @@ class DbtModel:
     def get_script_paths(
         self, keyword: str, project_dir: str, before: bool
     ) -> List[Path]:
-        return normalize_directories(project_dir, self.get_scripts(keyword, before))
+        return normalize_paths(project_dir, self.get_scripts(keyword, before))
 
-    def get_scripts(self, keyword: str, before: bool) -> List[Path]:
+    def get_scripts(self, keyword: str, before: bool) -> List[str]:
         # sometimes `scripts` can *be* there and still be None
         if self.meta.get(keyword):
             scripts_node = self.meta[keyword].get("scripts")
@@ -134,7 +133,7 @@ class DbtManifest:
             )
         )
 
-    def get_tests(self):
+    def get_tests(self) -> List[DbtTest]:
         return list(
             filter(
                 lambda test: test.node.resource_type == NodeType.Test,
@@ -162,12 +161,12 @@ class DbtRunResult:
 
 @dataclass
 class CompileArgs:
-    selector_name: str
+    selector_name: Union[str, None]
     select: Tuple[str]
     models: Tuple[str]
     exclude: Tuple[str]
-    state: any
-    single_threaded: bool
+    state: Any
+    single_threaded: Union[bool, None]
 
 
 @dataclass(init=False)
@@ -186,7 +185,7 @@ class FalDbt:
     # Could we instead extend it and create a FalRunTak?
     _compile_task: CompileTask
 
-    _global_script_paths: List[str]
+    _global_script_paths: Dict[str, List[str]]
 
     _firestore_client: Union[FirestoreClient, None]
 
@@ -194,9 +193,9 @@ class FalDbt:
         self,
         project_dir: str,
         profiles_dir: str,
-        select: List[str] = tuple(),
-        exclude: List[str] = tuple(),
-        selector_name: str = None,
+        select: Tuple[str] = tuple(),
+        exclude: Tuple[str] = tuple(),
+        selector_name: Union[str, None] = None,
         keyword: str = "fal",
     ):
         self.project_dir = project_dir
@@ -231,11 +230,12 @@ class FalDbt:
         )
 
         # BACKWARDS: Change intorduced in 1.0.0
+        model_paths: List[str] = []
         if hasattr(self._config, "model_paths"):
             model_paths = self._config.model_paths
         elif hasattr(self._config, "source_paths"):
             model_paths = self._config.source_paths
-        normalized_model_paths = normalize_directories(project_dir, model_paths)
+        normalized_model_paths = normalize_paths(project_dir, model_paths)
 
         self._global_script_paths = parse.get_global_script_configs(
             normalized_model_paths
@@ -539,7 +539,7 @@ def _models_ids(models):
     return list(map(lambda r: r.unique_id, models))
 
 
-def _map_nodes_to_models(run_results, manifest):
+def _map_nodes_to_models(run_results: DbtRunResult, manifest: DbtManifest):
     models = manifest.get_models()
     tests = manifest.get_tests()
     status_map = dict(
@@ -549,11 +549,14 @@ def _map_nodes_to_models(run_results, manifest):
         )
     )
     for model in models:
-        model.set_status(status_map.get(model.unique_id, "skipped"))
+        model.set_status(status_map.get(model.unique_id, NodeStatus.Skipped))
         for test in tests:
             if hasattr(test, "model") and test.model == model.name:
                 model.tests.append(test)
-                test.set_status(status_map.get(test.unique_id, "skipped"))
-                if test.status != "skipped" and model.status == "skipped":
+                test.set_status(status_map.get(test.unique_id, NodeStatus.Skipped))
+                if (
+                    test.status != NodeStatus.Skipped
+                    and model.status == NodeStatus.Skipped
+                ):
                     model.set_status("tested")
     return (models, tests)

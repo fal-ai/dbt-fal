@@ -1,6 +1,6 @@
 import argparse
-from typing import List
 from pathlib import Path
+from typing import Any, Dict, List
 import os
 
 import dbt.exceptions
@@ -9,7 +9,13 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import run_global_scripts, run_scripts
 from fal.fal_script import FalScript
-from faldbt.project import FalDbt, FalGeneralException, FalProject
+from faldbt.project import (
+    DbtModel,
+    FalDbt,
+    FalGeneralException,
+    FalProject,
+    normalize_path,
+)
 
 
 def create_fal_dbt(
@@ -59,7 +65,7 @@ def fal_run(
 
     _handle_selector_warnings(selects_count, exclude_count, script_count, args)
 
-    scripts = _select_scripts(args_dict, models, project, args)
+    scripts = _select_scripts(args, args_dict, models)
 
     # run model specific scripts first
     run_scripts(scripts, project)
@@ -97,23 +103,23 @@ def _should_run_global_scripts(args_dict) -> bool:
     return args_dict.get("scripts")
 
 
-def _select_scripts(args_dict, models, project, args) -> List[FalScript]:
+def _select_scripts(
+    args: argparse.Namespace, args_dict: Dict[str, Any], models: List[DbtModel]
+) -> List[FalScript]:
     scripts = []
-    # if --script selector is there only run selected scripts
-    if args_dict.get("scripts"):
-        scripts = []
-        for model in models:
-            model_scripts = model.get_scripts(args.keyword, args_dict.get("before"))
-            for el in args.scripts:
-                if el in model_scripts:
-                    scripts.append(FalScript(model, Path(el)))
-    else:
-        real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
-        for model in models:
-            for path in model.get_script_paths(
-                args.keyword, real_project_dir, args_dict.get("before")
-            ):
-                scripts.append(FalScript(model, path))
+    real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
+    scripts_flag = bool(args_dict.get("scripts"))
+
+    for model in models:
+        model_scripts = model.get_scripts(args.keyword, bool(args_dict.get("before")))
+        for path in model_scripts:
+            normalized = normalize_path(real_project_dir, path)
+            if not scripts_flag:
+                # run all scripts when no --script is passed
+                scripts.append(FalScript(model, normalized))
+            elif path in args.scripts:
+                # if --script selector is there only run selected scripts
+                scripts.append(FalScript(model, normalized))
 
     return scripts
 
@@ -121,7 +127,7 @@ def _select_scripts(args_dict, models, project, args) -> List[FalScript]:
 def _run_global_scripts(project: FalProject, faldbt: FalDbt, global_key: str):
     global_scripts = list(
         map(
-            lambda path: FalScript(None, path),
+            lambda path: FalScript(None, Path(path)),
             faldbt._global_script_paths[global_key],
         )
     )
