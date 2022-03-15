@@ -1,5 +1,6 @@
 import argparse
 from typing import List
+from pathlib import Path
 import os
 
 import dbt.exceptions
@@ -105,7 +106,7 @@ def _select_scripts(args_dict, models, project, args) -> List[FalScript]:
             model_scripts = model.get_scripts(args.keyword, args_dict.get("before"))
             for el in args.scripts:
                 if el in model_scripts:
-                    scripts.append(FalScript(model, el))
+                    scripts.append(FalScript(model, Path(el)))
     else:
         real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
         for model in models:

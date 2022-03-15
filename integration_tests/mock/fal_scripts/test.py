@@ -1,16 +1,13 @@
 import pandas as pd
 import io
+import my_util
 
 model_name = context.current_model.name
 
 output = f"Model name: {model_name}"
 
 if context.current_model.status == "tested":
-    for test in context.current_model.tests:
-        output += f"\nRan {test.name} for {test.column}, result: {test.status}"
-    f = open(f"temp/{model_name}_test", "w")
-    f.write(output)
-    f.close()
+    my_util.handle_dbt_test(context.current_model.tests, output, model_name)
 
 else:
     output = f"Model name: {model_name}"
