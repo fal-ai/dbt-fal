@@ -1,8 +1,8 @@
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import glob
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Union
 
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.manifest import Manifest
@@ -27,14 +27,15 @@ def get_dbt_user_config(profiles_dir: str) -> UserConfig:
 class RuntimeArgs:
     project_dir: str
     profiles_dir: str
+    threads: Union[int, None]
     single_threaded: bool
 
 
 def get_dbt_config(
-    project_dir: str, profiles_dir: str, single_threaded=False
+    project_dir: str, profiles_dir: str, threads: Union[int, None] = None
 ) -> RuntimeConfig:
     # Construct a phony config
-    args = RuntimeArgs(project_dir, profiles_dir, single_threaded)
+    args = RuntimeArgs(project_dir, profiles_dir, threads, single_threaded=False)
     return RuntimeConfig.from_args(args)
 
 
