@@ -7,7 +7,7 @@ import dbt.exceptions
 import dbt.ui
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
-from fal.run_scripts import run_global_scripts, run_scripts
+from fal.run_scripts import run_scripts
 from fal.fal_script import FalScript
 from faldbt.project import (
     DbtModel,
@@ -18,17 +18,14 @@ from faldbt.project import (
 )
 
 
-def create_fal_dbt(
-    args: argparse.Namespace,
-):
+def create_fal_dbt(args: argparse.Namespace):
     real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
     real_profiles_dir = None
+    env_profiles_dir = os.getenv("DBT_PROFILES_DIR")
     if args.profiles_dir is not None:
         real_profiles_dir = os.path.realpath(os.path.normpath(args.profiles_dir))
-    elif os.getenv("DBT_PROFILES_DIR"):
-        real_profiles_dir = os.path.realpath(
-            os.path.normpath(os.getenv("DBT_PROFILES_DIR"))
-        )
+    elif env_profiles_dir:
+        real_profiles_dir = os.path.realpath(os.path.normpath(env_profiles_dir))
     else:
         real_profiles_dir = DEFAULT_PROFILES_DIR
 
@@ -39,6 +36,7 @@ def create_fal_dbt(
         args.exclude,
         args.selector,
         args.keyword,
+        args.threads,
     )
 
 
@@ -65,7 +63,7 @@ def fal_run(
 
     _handle_selector_warnings(selects_count, exclude_count, script_count, args)
 
-    scripts = _select_scripts(args, args_dict, models)
+    scripts = _select_scripts(args, models)
 
     # run model specific scripts first
     run_scripts(scripts, project)
@@ -99,13 +97,14 @@ def _handle_selector_warnings(selects_count, exclude_count, script_count, args):
         )
 
 
-def _should_run_global_scripts(args_dict) -> bool:
-    return args_dict.get("scripts")
+def _should_run_global_scripts(args_dict: Dict[str, Any]) -> bool:
+    return bool(args_dict.get("scripts"))
 
 
 def _select_scripts(
-    args: argparse.Namespace, args_dict: Dict[str, Any], models: List[DbtModel]
+    args: argparse.Namespace, models: List[DbtModel]
 ) -> List[FalScript]:
+    args_dict = vars(args)
     scripts = []
     real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
     scripts_flag = bool(args_dict.get("scripts"))
@@ -132,4 +131,4 @@ def _run_global_scripts(project: FalProject, faldbt: FalDbt, global_key: str):
         )
     )
 
-    run_global_scripts(global_scripts, project)
+    run_scripts(global_scripts, project)
