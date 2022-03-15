@@ -22,7 +22,8 @@ class FalScript:
         """
 
         # Enable local imports
-        sys.path.append(str(self.path.parent))
+        local_path = str(self.path.parent)
+        sys.path.append(local_path)
 
         with open(self.path) as file:
             a_script = file.read()
@@ -40,3 +41,4 @@ class FalScript:
                     "list_features": faldbt.list_features,
                 },
             )
+            sys.path.remove(local_path)
