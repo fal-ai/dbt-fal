@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass, field
 import glob
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.manifest import Manifest
@@ -64,7 +64,7 @@ def get_scripts_list(project_dir: str) -> List[str]:
     return glob.glob(os.path.join(project_dir, "**.py"), recursive=True)
 
 
-def get_global_script_configs(source_dirs: List[Path]) -> List[str]:
+def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:
     global_scripts = {"before": [], "after": []}
     for source_dir in source_dirs:
         schema_files = glob.glob(os.path.join(source_dir, "**.yml"), recursive=True)
