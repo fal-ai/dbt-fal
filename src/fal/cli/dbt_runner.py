@@ -58,13 +58,16 @@ def dbt_run(args, models_list: List[str]):
     if args.profiles_dir:
         command_list += ["--profiles-dir", args.profiles_dir]
 
+    if args.threads:
+        command_list += ["--threads", args.threads]
+
     if args.select:
         if lib.DBT_VCURRENT.compare(lib.DBT_V1) < 0:
             command_list += ["--model"] + models_list
         else:
             command_list += ["--select"] + models_list
     if args.selector:
-        command_list += ["--selector"] + [args.selector]
+        command_list += ["--selector", args.selector]
 
     # Execute the dbt CLI command in a subprocess.
     full_command = " ".join(command_list)
