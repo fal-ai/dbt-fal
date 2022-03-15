@@ -1,18 +1,23 @@
 """Run fal scripts."""
+from multiprocessing.pool import Pool
 import os
 from typing import Dict, Any, List, Union
 from dataclasses import dataclass
-from dbt.config.runtime import RuntimeConfig
 from pathlib import Path
 
-from dbt.contracts.results import NodeStatus
+from multiprocessing.dummy import Pool as ThreadPool
+
+from dbt.contracts.results import RunStatus
+from dbt.config.runtime import RuntimeConfig
 from dbt.logger import GLOBAL_LOGGER as logger
 
-from faldbt.project import FalProject
+from faldbt.project import DbtModel, FalProject
 from fal.fal_script import FalScript
 from fal.utils import print_run_info
 
 import faldbt.lib as lib
+
+import traceback
 
 if lib.DBT_VCURRENT.compare(lib.DBT_V1) >= 0:
     from dbt.contracts.graph.parsed import ColumnInfo
@@ -23,7 +28,7 @@ else:
 @dataclass
 class CurrentModel:
     name: str
-    status: NodeStatus
+    status: RunStatus
     columns: Dict[str, ColumnInfo]
     tests: List[Any]
     meta: Dict[Any, Any]
@@ -48,46 +53,92 @@ class Context:
     config: ContextConfig
 
 
-def run_scripts(list: List[FalScript], project: FalProject):
-
-    print_run_info(list)
-
+def _prepare_exec_script(script: FalScript, project: FalProject) -> bool:
+    context = _build_script_context(script, project)
+    success: bool = True
     faldbt = project._faldbt
-    for script in list:
-        model = script.model
-        meta = model.meta
-        _del_key(meta, project.keyword)
 
-        tests = _process_tests(model.tests)
+    logger.debug(
+        "Running script {} for model {}",
+        script.path,
+        _get_script_model(script),
+    )
 
-        current_model = CurrentModel(
-            name=model.name,
-            status=model.status,
-            columns=model.columns,
-            tests=tests,
-            meta=meta,
+    try:
+        script.exec(context, faldbt)
+    except Exception as err:
+        err_str = str.join("\n", traceback.format_exception(err.__class__, err, None))
+        logger.error(
+            "Error in script {} with model {}:\n{}",
+            script.path,
+            _get_script_model(script),
+            err_str,
+        )
+        # TODO: what else to do?
+        success = False
+
+    finally:
+        logger.debug(
+            "Finished script {} for model {}",
+            script.path,
+            _get_script_model(script),
         )
 
-        context_config = ContextConfig(_get_target_path(faldbt._config))
-        context = Context(current_model=current_model, config=context_config)
-
-        logger.info("Running script {} for model {}", script.path, model.name)
-
-        script.exec(context, faldbt)
+    return success
 
 
-def run_global_scripts(list: List[FalScript], project: FalProject):
+def run_scripts(scripts: List[FalScript], project: FalProject) -> List[bool]:
 
-    print_run_info(list)
+    print_run_info(scripts)
 
     faldbt = project._faldbt
-    for script in list:
-        context_config = ContextConfig(_get_target_path(faldbt._config))
-        context = Context(current_model=None, config=context_config)
 
-        logger.info("Running global script {}", script.path)
+    logger.info("Concurrency: {} threads", faldbt.threads)
+    with ThreadPool(faldbt.threads) as pool:
+        pool: Pool = pool
+        try:
+            scripts_with_project = map(lambda script: (script, project), scripts)
+            results = pool.starmap(_prepare_exec_script, scripts_with_project)
 
-        script.exec(context, faldbt)
+        except KeyboardInterrupt:
+            pool.close()
+            pool.terminate()
+            pool.join()
+            raise
+
+    logger.debug("Script results: {}", results)
+    return results
+
+
+def _build_script_context(script: FalScript, project: FalProject):
+    context_config = ContextConfig(_get_target_path(project._faldbt._config))
+    if _is_global(script):
+        return Context(current_model=None, config=context_config)
+
+    model: DbtModel = script.model  # type: ignore
+
+    meta = model.meta
+    _del_key(meta, project.keyword)
+
+    tests = _process_tests(model.tests)
+
+    current_model = CurrentModel(
+        name=model.name,
+        status=model.status,
+        columns=model.columns,
+        tests=tests,
+        meta=meta,
+    )
+
+    return Context(current_model=current_model, config=context_config)
+
+
+def _is_global(script: FalScript):
+    return script.model is None
+
+
+def _get_script_model(script: FalScript):
+    return "<GLOBAL>" if _is_global(script) else script.model.name
 
 
 def _del_key(dict: Dict[str, Any], key: str):
