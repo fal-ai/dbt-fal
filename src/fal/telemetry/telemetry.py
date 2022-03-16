@@ -21,25 +21,30 @@ from typing import Any, Optional
 
 import platform
 
-TELEMETRY_VERSION = '0.0.1'
-DEFAULT_HOME_DIR = '~/.fal'
+
+TELEMETRY_VERSION = "0.0.1"
+DEFAULT_HOME_DIR = "~/.fal"
 CONF_DIR = "stats"
-posthog.project_api_key = 'phc_Yf1tsGPPb4POvqVjelT3rPPv2c3FH91zYURyyL30Phy'
+posthog.project_api_key = "phc_Yf1tsGPPb4POvqVjelT3rPPv2c3FH91zYURyyL30Phy"
 FAL_HOME_DIR = os.getenv("FAL_HOME_DIR")
 
 # Validate the input of type string
 def str_param(item: Any, name: str) -> str:
     if not isinstance(item, str):
-        raise TypeError(f"TypeError: Variable not supported/wrong type: "
-                        f"{item}, {name}, should be a str")
+        raise TypeError(
+            f"TypeError: Variable not supported/wrong type: "
+            f"{item}, {name}, should be a str"
+        )
     return item
 
 
 def opt_str_param(item: Any, name: str) -> Optional[str]:
     # Can leverage regular string function
     if item is not None and not isinstance(item, str):
-        raise TypeError(f"TypeError: Variable not supported/wrong type: "
-                        f"{item}, {name}, should be a str")
+        raise TypeError(
+            f"TypeError: Variable not supported/wrong type: "
+            f"{item}, {name}, should be a str"
+        )
     return item
 
 
@@ -49,9 +54,8 @@ def python_version():
 
 
 def is_online():
-    """Check if host is online
-    """
-    conn = httplib.HTTPSConnection('www.google.com', timeout=1)
+    """Check if host is online"""
+    conn = httplib.HTTPSConnection("www.google.com", timeout=1)
 
     try:
         conn.request("HEAD", "/")
@@ -65,11 +69,13 @@ def is_online():
 # Will output if the code is within a container
 def is_docker():
     try:
-        cgroup = Path('/proc/self/cgroup')
-        docker_env = Path('/.dockerenv')
-        return (docker_env.exists() or cgroup.exists()
-                and any('docker' in line
-                        for line in cgroup.read_text().splitlines()))
+        cgroup = Path("/proc/self/cgroup")
+        docker_env = Path("/.dockerenv")
+        return (
+            docker_env.exists()
+            or cgroup.exists()
+            and any("docker" in line for line in cgroup.read_text().splitlines())
+        )
     except OSError:
         return False
 
@@ -134,16 +140,16 @@ def check_uid():
     """
     Checks if local user id exists as a uid file, creates if not.
     """
-    uid_path = Path(check_dir_exist(CONF_DIR), 'uid.yaml')
+    uid_path = Path(check_dir_exist(CONF_DIR), "uid.yaml")
     conf = read_conf_file(uid_path)  # file already exist due to version check
-    if 'uid' not in conf.keys():
+    if "uid" not in conf.keys():
         uid = str(uuid.uuid4())
         res = write_conf_file(uid_path, {"uid": uid}, error=True)
         if res:
             return f"NO_UID {res}"
         else:
             return uid
-    return conf.get('uid', "NO_UID")
+    return conf.get("uid", "NO_UID")
 
 
 def check_stats_enabled():
@@ -152,17 +158,17 @@ def check_stats_enabled():
     1. If FAL_STATS_ENABLED defined, check its value
     2. Otherwise use the value in stats_enabled in the config.yaml file
     """
-    if 'FAL_STATS_ENABLED' in os.environ:
-        return os.environ['FAL_STATS_ENABLED'].lower() == 'true'
+    if "FAL_STATS_ENABLED" in os.environ:
+        return os.environ["FAL_STATS_ENABLED"].lower() == "true"
 
     # Check if local config exists
-    config_path = Path(check_dir_exist(CONF_DIR), 'config.yaml')
+    config_path = Path(check_dir_exist(CONF_DIR), "config.yaml")
     if not config_path.exists():
         write_conf_file(config_path, {"stats_enabled": True})
         return True
     else:  # read and return config
         conf = read_conf_file(config_path)
-        return conf.get('stats_enabled', True)
+        return conf.get("stats_enabled", True)
 
 
 def check_first_time_usage():
@@ -170,10 +176,10 @@ def check_first_time_usage():
     The function checks for first time usage if the conf file exists and the
     uid file doesn't exist.
     """
-    config_path = Path(check_dir_exist(CONF_DIR), 'config.yaml')
-    uid_path = Path(check_dir_exist(CONF_DIR), 'uid.yaml')
+    config_path = Path(check_dir_exist(CONF_DIR), "config.yaml")
+    uid_path = Path(check_dir_exist(CONF_DIR), "uid.yaml")
     uid_conf = read_conf_file(uid_path)
-    return config_path.exists() and 'uid' not in uid_conf.keys()
+    return config_path.exists() and "uid" not in uid_conf.keys()
 
 
 def read_conf_file(conf_path):
@@ -214,7 +220,7 @@ def _get_telemetry_info():
         uid = check_uid()
         return telemetry_enabled, uid, is_install
     else:
-        return False, '', False
+        return False, "", False
 
 
 def validate_entries(event_id, uid, action, client_time, total_runtime):
@@ -222,8 +228,7 @@ def validate_entries(event_id, uid, action, client_time, total_runtime):
     uid = str_param(uid, "uid")
     action = str_param(action, "action")
     client_time = str_param(str(client_time), "client_time")
-    total_runtime = opt_str_param(str(total_runtime),
-                                                 "total_runtime")
+    total_runtime = opt_str_param(str(total_runtime), "total_runtime")
     return event_id, uid, action, client_time, total_runtime
 
 
@@ -239,8 +244,8 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
         client_time = datetime.datetime.now()
 
     (telemetry_enabled, uid, is_install) = _get_telemetry_info()
-    if 'NO_UID' in uid:
-        additional_props['uid_issue'] = uid
+    if "NO_UID" in uid:
+        additional_props["uid_issue"] = uid
         uid = None
 
     py_version = python_version()
@@ -249,34 +254,34 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
     online = is_online()
 
     if telemetry_enabled and online:
-        (event_id, uid, action, client_time,
-         total_runtime) = validate_entries(event_id, uid, action, client_time,
-                                          total_runtime)
+        (event_id, uid, action, client_time, total_runtime) = validate_entries(
+            event_id, uid, action, client_time, total_runtime
+        )
         props = {
-            'event_id': event_id,
-            'user_id': uid,
-            'action': action,
-            'client_time': str(client_time),
-            'total_runtime': total_runtime,
-            'python_version': py_version,
-            'fal_version': fal_installed_version(),
-            'dbt_version': dbt_installed_version(),
-            'docker_container': docker_container,
-            'os': os,
-            'telemetry_version': TELEMETRY_VERSION,
-            '$geoip_disable': True, # This disables GeoIp despite the backend setting
-            '$ip': None # This disables IP tracking
+            "event_id": event_id,
+            "user_id": uid,
+            "action": action,
+            "client_time": str(client_time),
+            "total_runtime": total_runtime,
+            "python_version": py_version,
+            "fal_version": fal_installed_version(),
+            "dbt_version": dbt_installed_version(),
+            "docker_container": docker_container,
+            "os": os,
+            "telemetry_version": TELEMETRY_VERSION,
+            "$geoip_disable": True,  # This disables GeoIp despite the backend setting
+            "$ip": None,  # This disables IP tracking
         }
 
         if is_airflow():
-            props['airflow'] = True
+            props["airflow"] = True
 
         all_props = {**props, **additional_props}
 
         if is_install:
-            posthog.capture(distinct_id=uid,
-                            event='install_success',
-                            properties=all_props)
+            posthog.capture(
+                distinct_id=uid, event="install_success", properties=all_props
+            )
 
         posthog.capture(distinct_id=uid, event=action, properties=all_props)
 
@@ -284,12 +289,12 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
 # NOTE: should we log differently depending on the error type?
 # NOTE: how should we handle chained exceptions?
 def log_call(action):
-    """Runs a function and logs it
-    """
+    """Runs a function and logs it"""
+
     def _log_call(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            log_api(action=f'{action}_started', additional_props={'argv': sys.argv})
+            log_api(action=f"{action}_started", additional_props={"argv": sys.argv})
 
             start = datetime.datetime.now()
 
@@ -297,24 +302,24 @@ def log_call(action):
                 result = func(*args, **kwargs)
             except Exception as e:
                 log_api(
-                    action=f'{action}_error',
+                    action=f"{action}_error",
                     total_runtime=str(datetime.datetime.now() - start),
                     additional_props={
                         # can we log None to posthog?
-                        'exception': str(e),
-                        'argv': sys.argv
-                    })
+                        "exception": str(e),
+                        "argv": sys.argv,
+                    },
+                )
                 raise e
             else:
-                log_api(action=f'{action}_success',
-                        total_runtime=str(datetime.datetime.now() - start),
-                        additional_props={
-                            'argv': sys.argv
-                        })
+                log_api(
+                    action=f"{action}_success",
+                    total_runtime=str(datetime.datetime.now() - start),
+                    additional_props={"argv": sys.argv},
+                )
 
             return result
 
         return wrapper
 
     return _log_call
-

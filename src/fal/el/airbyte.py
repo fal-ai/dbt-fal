@@ -6,6 +6,8 @@ import time
 from requests.exceptions import RequestException
 from dbt.logger import GLOBAL_LOGGER as logger
 
+from fal.telemetry import telemetry
+
 
 class AirbyteJobState:
     """Possibe Airbyte job states."""
@@ -57,6 +59,7 @@ class AirbyteClient:
 
         raise Exception("Exceeded max number of retries.")
 
+    @telemetry.log_call("airbyte_client_sync")
     def sync(self, connection_id: str) -> dict:
         """Start Airbyte connection sync."""
         return self.request(
@@ -73,6 +76,7 @@ class AirbyteClient:
             endpoint="/connections/get", data={"connectionId": connection_id}
         )
 
+    @telemetry.log_call("airbyte_client_sync_and_wait")
     def sync_and_wait(
         self,
         connection_id: str,
@@ -116,6 +120,7 @@ class AirbyteClient:
         return {"job_details": job_details, "connection_details": connection}
 
 
+@telemetry.log_call("airbyte_sync")
 def airbyte_sync(
     host: str,
     connection_id: str,
