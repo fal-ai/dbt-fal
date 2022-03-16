@@ -218,7 +218,10 @@ def test_python_major_version():
 
 
 def test_creates_config_directory(monkeypatch,
+                                  tmp_directory,
                                   ignore_fal_stats_enabled_env_var):
+    monkeypatch.setattr(telemetry, 'DEFAULT_HOME_DIR', '.')
+
     @telemetry.log_call('some_action')
     def my_function():
         pass

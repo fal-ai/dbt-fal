@@ -1,7 +1,11 @@
+import stat
 import shutil
 import os
 import pytest
 import tempfile
+from glob import iglob
+from pathlib import Path
+
 
 def pytest_configure(config):
     """
@@ -10,6 +14,13 @@ def pytest_configure(config):
     file after command line options have been parsed.
     """
     os.environ['FAL_STATS_ENABLED'] = 'False'
+
+def _delete_dot_git_at(path):
+    for root, dirs, files in os.walk(path):
+        for dir_ in dirs:
+            os.chmod(Path(root, dir_), stat.S_IRWXU)
+        for file_ in files:
+            os.chmod(Path(root, file_), stat.S_IRWXU)
 
 def _delete_all_dot_git():
     if os.name == 'nt':
