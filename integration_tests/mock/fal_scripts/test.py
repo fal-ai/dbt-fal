@@ -23,3 +23,8 @@ else:
     f = open(f"temp/{model_name}", "w")
     f.write(output)
     f.close()
+
+    # Pass information to outside of this script
+    RESULT = df.size
+
+print(f"Test done for {model_name}")
