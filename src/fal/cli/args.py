@@ -74,6 +74,14 @@ def _build_dbt_common_options(parser: argparse.ArgumentParser):
     )
 
 
+def _add_threads_option(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--threads",
+        type=int,
+        help="Specify number of threads to use while executing Python scripts and dbt models. Overrides settings in profiles.yml.",
+    )
+
+
 def _build_dbt_selectors(sub: argparse.ArgumentParser, extend: bool):
 
     # fmt: off
@@ -112,6 +120,7 @@ def _build_run_parser(sub: argparse.ArgumentParser):
     _build_dbt_selectors(sub, extend=True)
     _build_dbt_common_options(sub)
     _build_fal_common_options(sub)
+    _add_threads_option(sub)
 
     sub.add_argument(
         "--all",
@@ -151,6 +160,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _build_dbt_selectors(flow_run_parser, extend=False)
     _build_dbt_common_options(flow_run_parser)
     _build_fal_common_options(flow_run_parser)
+    _add_threads_option(flow_run_parser)
 
 
 def _build_cli_parser():

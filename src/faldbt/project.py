@@ -197,6 +197,7 @@ class FalDbt:
         exclude: Tuple[str] = tuple(),
         selector_name: Union[str, None] = None,
         keyword: str = "fal",
+        threads: Union[int, None] = None,
     ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
@@ -205,7 +206,7 @@ class FalDbt:
 
         lib.initialize_dbt_flags(profiles_dir=profiles_dir)
 
-        self._config = parse.get_dbt_config(project_dir, profiles_dir)
+        self._config = parse.get_dbt_config(project_dir, profiles_dir, threads)
 
         # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(profiles_dir)
@@ -242,6 +243,10 @@ class FalDbt:
         )
 
         self.features = self._find_features()
+
+    @property
+    def threads(self):
+        return self._config.threads
 
     def list_sources(self):
         """
