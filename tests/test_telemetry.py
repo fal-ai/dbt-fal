@@ -84,11 +84,7 @@ def test_env_var_takes_precedence(
     stats = Path("stats")
     stats.mkdir()
 
-    (stats / "config.yaml").write_text(
-        f"""
-                                        stats_enabled: {yaml_value}
-                                        """
-    )
+    (stats / "config.yaml").write_text(f"stats_enabled: {yaml_value}")
 
     assert telemetry.check_stats_enabled() is expected_first
 
