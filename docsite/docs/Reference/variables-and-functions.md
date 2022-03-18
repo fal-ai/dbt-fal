@@ -70,9 +70,9 @@ from sqlalchemy.types import Integer
 write_to_source(df, 'source', 'table', dtype={'value': Integer()})
 ```
 
-### `airbyte_sync` and `fivetran_sync` functions
+## EL pipelines
 
-These functions let you run sync jobs on respective [Airbyte](https://docs.airbyte.com/) and [Fivetran](https://fivetran.com/docs/getting-started) connections and connectors. API connection details as well information on connectors have to be provided in [`profiles.yml`](../Docs/credentials-profile#exctract-load-configuration).
+`fal` provides a magic variable `el` that lets you run EL jobs. `el` has two methods: `el.airbyte_sync` and `el.fivetran_sync`. These methods let you run sync jobs on respective [Airbyte](https://docs.airbyte.com/) and [Fivetran](https://fivetran.com/docs/getting-started) connections and connectors. API connection details as well information on connectors have to be provided in [`profiles.yml`](../Docs/credentials-profile#exctract-load-configuration).
 
 Given this bit of `profiles.yml`:
 ```yaml
@@ -96,7 +96,7 @@ Given this bit of `profiles.yml`:
 you can run an Airbyte sync job:
 
 ```python
-airbyte_sync(config_name="my_airbyte_el", connection_name="airbyte_connection_1")
+el.airbyte_sync(config_name="my_airbyte_el", connection_name="airbyte_connection_1")
 ```
 
 `airbyte_sync` triggers and waits for a sync job on an Airbyte connections. Inputs:
@@ -109,7 +109,7 @@ airbyte_sync(config_name="my_airbyte_el", connection_name="airbyte_connection_1"
 Running a Fivetran sync job is similar:
 
 ```python
-fivetran_sync(config_name="my_fivetran_el", connector_name="fivetran_connector_1")
+el.fivetran_sync(config_name="my_fivetran_el", connector_name="fivetran_connector_1")
 ```
 `fivetran_sync` triggers and waits for a sync job on a Fivetran connector. Inputs:
 - `config_name` - name of the API configuration defined in `profiles.yml`
