@@ -2,8 +2,8 @@ fal_test:
   target: dev
   fal_extract_load:
     dev:
-      - name: 'my_fivetran_el'
-        type: fivetran
+      my_fivetran_el:
+        type: FIVETRAN
         api_key: my_fivetran_key
         api_secret: my_fivetran_secret
         connectors:
@@ -11,8 +11,8 @@ fal_test:
             id: id_fivetran_connector_1
           - name: fivetran_connector_2
             id: id_fivetran_connector_2
-      - name: 'my_airbyte_el'
-        type: airbyte
+      my_airbyte_el:
+        type: AIRBYTE
         host: http://localhost:8001
         connections:
           - name: airbyte_connection_1

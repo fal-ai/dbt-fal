@@ -11,8 +11,6 @@ from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
 from dbt.exceptions import IncompatibleSchemaException, RuntimeException
 from dbt.logger import GLOBAL_LOGGER as logger
-from fal.el.airbyte import AirbyteClient
-from fal.el.fivetran import FivetranClient
 
 from faldbt.utils.yaml_helper import load_yaml
 
@@ -41,11 +39,13 @@ def get_dbt_config(
     return RuntimeConfig.from_args(args)
 
 
-def get_el_configs(profiles_dir: str, profile_name: str, target_name: str):
+def get_el_configs(
+    profiles_dir: str, profile_name: str, target_name: str
+) -> Dict[str, Dict]:
     path = os.path.join(profiles_dir, "profiles.yml")
     yml = load_yaml(path)
     sync_configs = (
-        yml.get(profile_name, {}).get("fal_extract_load", {}).get(target_name, [])
+        yml.get(profile_name, {}).get("fal_extract_load", {}).get(target_name, {})
     )
     return sync_configs
 

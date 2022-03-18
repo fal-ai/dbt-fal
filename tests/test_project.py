@@ -54,18 +54,18 @@ def test_adapter_setup():
         project_dir=project_dir,
     )
 
-    config_list = faldbt._el_configs
-    assert len(config_list) == 2
+    config_dict = faldbt.el.configs
+    keys = list(config_dict.keys())
+    assert len(keys) == 2
+    fivetran_config = config_dict[keys[0]]
 
-    fivetran_config = config_list[0]
-
-    assert fivetran_config["name"] == "my_fivetran_el"
+    assert keys[0] == "my_fivetran_el"
     assert len(fivetran_config["connectors"]) == 2
     assert fivetran_config["connectors"][0]["name"] == "fivetran_connector_1"
 
-    airbyte_config = config_list[1]
+    airbyte_config = config_dict[keys[1]]
 
-    assert airbyte_config["name"] == "my_airbyte_el"
+    assert keys[1] == "my_airbyte_el"
     assert len(airbyte_config["connections"]) == 2
     assert airbyte_config["connections"][0]["name"] == "airbyte_connection_1"
 
@@ -76,7 +76,7 @@ def test_airbyte_sync():
         project_dir=project_dir,
     )
     with patch("fal.el.airbyte.AirbyteClient.sync_and_wait") as mock_sync:
-        faldbt.airbyte_sync(
+        faldbt.el.airbyte_sync(
             config_name="my_airbyte_el", connection_id="id_airbyte_connection_1"
         )
 
@@ -84,14 +84,14 @@ def test_airbyte_sync():
 
         mock_sync.reset_mock()
 
-        faldbt.airbyte_sync(
+        faldbt.el.airbyte_sync(
             config_name="my_airbyte_el", connection_name="airbyte_connection_1"
         )
 
         mock_sync.assert_called_with("id_airbyte_connection_1")
 
         try:
-            faldbt.airbyte_sync(
+            faldbt.el.airbyte_sync(
                 config_name="not_there", connection_name="airbyte_connection_1"
             )
 
@@ -99,7 +99,7 @@ def test_airbyte_sync():
             assert str(e) == "EL configuration not_there is not found."
 
         try:
-            faldbt.airbyte_sync(
+            faldbt.el.airbyte_sync(
                 config_name="my_airbyte_el", connection_name="not_there"
             )
 
@@ -107,7 +107,7 @@ def test_airbyte_sync():
             assert str(e) == "Connection not_there not found."
 
         try:
-            faldbt.airbyte_sync(config_name="my_airbyte_el")
+            faldbt.el.airbyte_sync(config_name="my_airbyte_el")
 
         except Exception as e:
             assert (
@@ -121,22 +121,22 @@ def test_fivetran_sync():
         project_dir=project_dir,
     )
     with patch("fal.el.fivetran.FivetranClient.sync_and_wait") as mock_sync:
-        faldbt.airbyte_sync(
-            config_name="my_fivetran_el", connection_id="id_fivetran_connection_1"
+        faldbt.el.fivetran_sync(
+            config_name="my_fivetran_el", connector_id="id_fivetran_connector_1"
         )
 
-        mock_sync.assert_called_with(connector_id="id_fivetran_connection_1")
+        mock_sync.assert_called_with(connector_id="id_fivetran_connector_1")
 
         mock_sync.reset_mock()
 
-        faldbt.fivetran_sync(
+        faldbt.el.fivetran_sync(
             config_name="my_fivetran_el", connector_name="fivetran_connector_1"
         )
 
         mock_sync.assert_called_with(connector_id="id_fivetran_connector_1")
 
         try:
-            faldbt.fivetran_sync(
+            faldbt.el.fivetran_sync(
                 config_name="not_there", connector_name="fivetran_connector_1"
             )
 
@@ -144,7 +144,7 @@ def test_fivetran_sync():
             assert str(e) == "EL configuration not_there is not found."
 
         try:
-            faldbt.fivetran_sync(
+            faldbt.el.fivetran_sync(
                 config_name="my_fivetran_el", connector_name="not_there"
             )
 
@@ -152,7 +152,7 @@ def test_fivetran_sync():
             assert str(e) == "Connection not_there not found."
 
         try:
-            faldbt.fivetran_sync(config_name="my_fivetran_el")
+            faldbt.el.fivetran_sync(config_name="my_fivetran_el")
 
         except Exception as e:
             assert (

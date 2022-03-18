@@ -39,8 +39,7 @@ class FalScript:
                     "list_models_ids": faldbt.list_models_ids,
                     "list_sources": faldbt.list_sources,
                     "list_features": faldbt.list_features,
-                    "airbyte_sync": faldbt.airbyte_sync,
-                    "fivetran_sync": faldbt.fivetran_sync,
+                    "el": faldbt.el,
                 },
             )
             sys.path.remove(local_path)

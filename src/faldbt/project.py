@@ -15,9 +15,9 @@ import dbt.tracking
 
 from . import parse
 from . import lib
+from .el_client import FalElClient
+
 from fal.feature_store.feature import Feature
-from fal.el.airbyte import AirbyteClient
-from fal.el.fivetran import FivetranClient
 
 import firebase_admin
 from firebase_admin import firestore
@@ -182,6 +182,7 @@ class FalDbt:
     method: str
     models: List[DbtModel]
     tests: List[DbtTest]
+    el: FalElClient
 
     _config: RuntimeConfig
     _manifest: DbtManifest
@@ -192,8 +193,6 @@ class FalDbt:
     _global_script_paths: Dict[str, List[str]]
 
     _firestore_client: Union[FirestoreClient, None]
-
-    _el_configs: Dict[str, Any]
 
     def __init__(
         self,
@@ -214,9 +213,12 @@ class FalDbt:
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir, threads)
 
-        self._el_configs = parse.get_el_configs(
+        el_configs = parse.get_el_configs(
             profiles_dir, self._config.profile_name, self._config.target_name
         )
+
+        # Setup EL API clients
+        self.el = FalElClient(el_configs)
 
         # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(profiles_dir)
@@ -490,91 +492,6 @@ class FalDbt:
                 logger.warn(
                     "Could not find acceptable Default GCP Application credentials"
                 )
-
-    def airbyte_sync(
-        self,
-        config_name: str,
-        connection_id: str = None,
-        connection_name: str = None,
-        poll_interval: float = 10,
-        poll_timeout: float = None,
-        max_retries: int = 10,
-    ):
-        return self._run_el_sync(
-            config_name=config_name,
-            connection_key="connections",
-            connection_id=connection_id,
-            connection_name=connection_name,
-            poll_interval=poll_interval,
-            poll_timeout=poll_timeout,
-        )
-
-    def fivetran_sync(
-        self,
-        config_name: str,
-        connector_id: str = None,
-        connector_name: str = None,
-        poll_interval: float = 10,
-        poll_timeout: float = None,
-    ):
-        return self._run_el_sync(
-            config_name=config_name,
-            connection_key="connectors",
-            connection_id=connector_id,
-            connection_name=connector_name,
-            poll_interval=poll_interval,
-            poll_timeout=poll_timeout,
-        )
-
-    def _run_el_sync(
-        self,
-        config_name: str,
-        connection_key: str,
-        connection_id: str,
-        connection_name: str,
-        poll_interval: float = 10,
-        poll_timeout: float = None,
-    ):
-        available_config_types = ["airbyte", "fivetran"]
-
-        el_config = next(
-            (config for config in self._el_configs if config["name"] == config_name),
-            None,
-        )
-
-        if el_config is None:
-            raise Exception(f"EL configuration {config_name} is not found.")
-
-        if connection_id is None and connection_name is None:
-            raise Exception(
-                "Either connection id or connection name have to be provided."
-            )
-
-        if connection_id is None:
-            connections = el_config[connection_key]
-            connection = next(
-                (c for c in connections if c["name"] == connection_name), None
-            )
-            if connection is None:
-                raise Exception(f"Connection {connection_name} not found.")
-            connection_id = connection["id"]
-
-        config_type = el_config.get("type", None)
-
-        if config_type not in available_config_types:
-            raise Exception(f"EL configuration type {config_type} is not supported.")
-
-        if config_type == "airbyte":
-            client = AirbyteClient(host=el_config["host"])
-            return client.sync_and_wait(connection_id)
-
-        elif config_type == "fivetran":
-            client = FivetranClient(
-                api_key=el_config["api_key"], api_secret=el_config["api_secret"]
-            )
-            return client.sync_and_wait(connector_id=connection_id)
-
-        raise Exception("Not implemented")
 
 
 def _firestore_dict_to_document(data: Dict, key_column: str):
