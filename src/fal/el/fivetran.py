@@ -3,39 +3,54 @@ import time
 import requests
 import datetime
 import json
+from enum import Enum
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
-from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Dict, Union, Literal
 from urllib.parse import urljoin
 from dateutil import parser
 from dbt.logger import GLOBAL_LOGGER as logger
 
 BASE_URL = urljoin("https://api.fivetran.com/", "v1/connectors/")
-SCHEDULE_TYPES = ["auto", "manual"]
 
 
-@dataclass
+class ScheduleType(Enum):
+    """Fivetran connector schedule type."""
+
+    AUTO = 1
+    MANUAL = 2
+
+
 class FivetranClient:
     """Fivetran API client."""
 
-    api_key: str
-    api_secret: str
-    disable_schedule_on_trigger: bool = True
-    max_retries: int = 3
-    retry_delay: float = 0.25
-    _auth: Any = field(init=False)
+    def __init__(
+        self,
+        api_key: str,
+        api_secret: str,
+        disable_schedule_on_trigger: bool = True,
+        max_retries: int = 3,
+        retry_delay: float = 0.25,
+    ):
+        """Initialize with local properties."""
+        self.disable_schedule_on_trigger = disable_schedule_on_trigger
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self._auth = HTTPBasicAuth(api_key, api_secret)
 
-    def __post_init__(self):
-        """Set variables."""
-        self._auth = HTTPBasicAuth(self.api_key, self.api_secret)
-
-    def request(self, endpoint: str, method: str, data: str = None):
+    def _request(
+        self,
+        endpoint: str,
+        method: Union[
+            Literal["GET"], Literal["PATCH"], Literal["POST"], Literal["DELETE"]
+        ],
+        data: str = None,
+    ):
         """Make a request to Airbyte REST API endpoint."""
         headers = {"Content-Type": "application/json;version=2"}
 
         num_retries = 0
-        while True:
+        while num_retries <= self.max_retries:
             try:
                 response = requests.request(
                     method=method,
@@ -50,8 +65,6 @@ class FivetranClient:
                 return parsed["data"] if "data" in parsed else parsed
             except RequestException as e:
                 logger.warn(f"Fivetran API request failed: {e}")
-                if num_retries == self.max_retries:
-                    break
                 num_retries += 1
                 time.sleep(self.retry_delay)
 
@@ -59,7 +72,7 @@ class FivetranClient:
 
     def get_connector_data(self, connector_id: str) -> dict:
         """Get details of a connector."""
-        return self.request(method="GET", endpoint=connector_id)
+        return self._request(method="GET", endpoint=connector_id)
 
     def check_connector(self, connector_id: str):
         """Check if connector can be synced."""
@@ -86,36 +99,36 @@ class FivetranClient:
         self, connector_id: str, properties: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """Update connector details."""
-        return self.request(
+        return self._request(
             method="PATCH", endpoint=connector_id, data=json.dumps(properties)
         )
 
-    def update_schedule_type(
-        self, connector_id: str, schedule_type: str = None
+    def _update_schedule_type(
+        self, connector_id: str, schedule_type: ScheduleType = None
     ) -> Dict[str, Any]:
         """Update connector schedule type to "auto" or "manual"."""
-        if schedule_type not in SCHEDULE_TYPES:
+        if type(schedule_type) != ScheduleType:
             raise Exception("schedule_type must be either 'auto' or 'manual'.")
         return self.update_connector(
-            connector_id, properties={"schedule_type": schedule_type}
+            connector_id, properties={"schedule_type": schedule_type.name.lower()}
         )
 
-    def get_connector_schema(self, connector_id: str) -> Dict[str, Any]:
+    def _get_connector_schema(self, connector_id: str) -> Dict[str, Any]:
         """Get schema config for a connector."""
-        return self.request(method="GET", endpoint=f"{connector_id}/schemas")
+        return self._request(method="GET", endpoint=f"{connector_id}/schemas")
 
     def start_sync(self, connector_id: str) -> Dict[str, Any]:
         """Start a Fivetran connector sync."""
         if self.disable_schedule_on_trigger:
             logger.info("Disabling Fivetran sync schedule.")
-            self.update_schedule_type(connector_id, "manual")
+            self._update_schedule_type(connector_id, ScheduleType.MANUAL)
         self.check_connector(connector_id)
-        self.request(method="POST", endpoint=f"{connector_id}/force")
+        self._request(method="POST", endpoint=f"{connector_id}/force")
         connector_data = self.get_connector_data(connector_id)
         logger.info(f"Sync start for connector_id={connector_id}.")
         return connector_data
 
-    def poll_sync(
+    def _poll_sync(
         self,
         connector_id: str,
         prev_sync_completion: datetime.datetime,
@@ -163,10 +176,10 @@ class FivetranClient:
         poll_timeout: float = None,
     ):
         """Start a sync operation for the given connector, and wait until it completes."""
-        schema_config = self.get_connector_schema(connector_id)
+        schema_config = self._get_connector_schema(connector_id)
         init_last_sync_timestamp, _, _ = self.get_sync_status(connector_id)
         self.start_sync(connector_id)
-        final_details = self.poll_sync(
+        final_details = self._poll_sync(
             connector_id,
             init_last_sync_timestamp,
             poll_interval=poll_interval,

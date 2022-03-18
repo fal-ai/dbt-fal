@@ -2,10 +2,10 @@ from mock import patch, Mock
 from unittest.mock import ANY
 import requests
 
-from fal.el.fivetran import FivetranClient
+from fal.el.fivetran import FivetranClient, ScheduleType
 
 
-def test_fivetran_api():
+def test_fivetran_get_connector_data():
     api_client = FivetranClient(
         api_key="test_key", api_secret="test_secret", disable_schedule_on_trigger=False
     )
@@ -24,7 +24,12 @@ def test_fivetran_api():
             )
             assert str(e) == "Exceeded max number of retries."
 
-        mock_request.reset_mock()
+
+def test_fivetran_check_connector():
+    api_client = FivetranClient(
+        api_key="test_key", api_secret="test_secret", disable_schedule_on_trigger=False
+    )
+    with patch("requests.request") as mock_request:
         try:
             api_client.check_connector("test_id")
 
@@ -37,9 +42,14 @@ def test_fivetran_api():
                 data=None,
                 timeout=5,
             )
-            assert str(e) == "Exceeded max number of retries."
+            assert str(e) == "Cannot sync connector test_id: not set up."
 
-        mock_request.reset_mock()
+
+def test_fivetran_update_connector():
+    api_client = FivetranClient(
+        api_key="test_key", api_secret="test_secret", disable_schedule_on_trigger=False
+    )
+    with patch("requests.request") as mock_request:
         try:
             api_client.update_connector("test_id", {"test_key": "test_value"})
 
@@ -54,9 +64,14 @@ def test_fivetran_api():
             )
             assert str(e) == "Exceeded max number of retries."
 
-        mock_request.reset_mock()
+
+def test_fivetran_update_schedule_type():
+    api_client = FivetranClient(
+        api_key="test_key", api_secret="test_secret", disable_schedule_on_trigger=False
+    )
+    with patch("requests.request") as mock_request:
         try:
-            api_client.update_schedule_type("test_id", "manual")
+            api_client._update_schedule_type("test_id", ScheduleType.MANUAL)
 
         except Exception as e:
             mock_request.assert_called_with(
@@ -69,7 +84,12 @@ def test_fivetran_api():
             )
             assert str(e) == "Exceeded max number of retries."
 
-        mock_request.reset_mock()
+
+def test_fivetran_start_sync():
+    api_client = FivetranClient(
+        api_key="test_key", api_secret="test_secret", disable_schedule_on_trigger=False
+    )
+    with patch("requests.request") as mock_request:
         try:
             api_client.check_connector = Mock(return_value=None)
             api_client.start_sync("test_id")
