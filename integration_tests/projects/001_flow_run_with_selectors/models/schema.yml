@@ -8,24 +8,21 @@ sources:
       - name: john_source
 
 models:
-  - name: agent_wait_time
-    description: Agent wait time series
+  - name: transform
     config:
       materialized: table
-    columns:
-      - name: y
-        tests:
-          - not_null
-      - name: ds
-        tests:
-          - not_null
-      - name: a
-        tests:
-          - unique
     meta:
       fal:
         scripts:
           before:
-            - fal_scripts/before.py
+            - fal_scripts/load_data.py
+
+  - name: dataset
+    description: Agent wait time series
+    config:
+      materialized: table
+    meta:
+      fal:
+        scripts:
           after:
-            - fal_scripts/after.py
+            - fal_scripts/clustering.py

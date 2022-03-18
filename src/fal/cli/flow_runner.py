@@ -11,15 +11,28 @@ from faldbt.project import FalProject
 def fal_flow_run(parsed):
     fal_dbt = create_fal_dbt(parsed)
     project = FalProject(fal_dbt)
-    node_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph)
+    main_graph = NodeGraph.from_fal_dbt(fal_dbt)
+    sub_graphs = main_graph.generate_safe_subgraphs()
+    bigger_plan = ExecutionPlan.create_plan_from_graph(parsed, main_graph)
+    for node_graph in sub_graphs:
+        execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph)
+        nodes = list(node_graph.graph.nodes())
+        local_befores = list(
+            filter(lambda node: node in nodes, bigger_plan.before_scripts)
+        )
 
-    run_scripts(_id_to_fal_scripts(node_graph, execution_plan.before_scripts), project)
+        local_dbts = list(filter(lambda node: node in nodes, bigger_plan.dbt_models))
 
-    if len(execution_plan.dbt_models) != 0:
-        dbt_run(parsed, _unique_ids_to_model_names(execution_plan.dbt_models))
+        local_afters = list(
+            filter(lambda node: node in nodes, bigger_plan.after_scripts)
+        )
 
-    run_scripts(_id_to_fal_scripts(node_graph, execution_plan.after_scripts), project)
+        run_scripts(_id_to_fal_scripts(node_graph, local_befores), project)
+
+        if len(bigger_plan.dbt_models) != 0:
+            dbt_run(parsed, _unique_ids_to_model_names(local_dbts))
+
+        run_scripts(_id_to_fal_scripts(node_graph, local_afters), project)
 
 
 def _id_to_fal_scripts(node_graph: NodeGraph, id_list: List[str]) -> List[FalScript]:
