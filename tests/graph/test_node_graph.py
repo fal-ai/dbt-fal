@@ -1,26 +1,27 @@
+from typing import Dict, List
 import networkx as nx
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 from unittest.mock import patch
 from fal.node_graph import NodeGraph, _add_after_scripts, _add_before_scripts
-from utils import assert_contains_all, create_mock_model
+from utils import assert_contains_only, create_mock_model
 
 
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
 def test_add_after_scripts(parsed_node):
     graph = nx.DiGraph()
     node_lookup = {}
-    modelA = create_mock_model(parsed_node, "modelA", ["scriptA.py", "scriptB.py"])
+    modelA = create_mock_model(parsed_node, "modelA", ["scriptA.py", "scriptB.py"], [])
 
     graph, node_lookup = _add_after_scripts(
         modelA, "model.modelA", "fal", "/dir", graph, node_lookup
     )
 
-    assert_contains_all(
+    assert_contains_only(
         list(node_lookup.keys()),
         ["script.modelA.AFTER.scriptA.py", "script.modelA.AFTER.scriptB.py"],
     )
-    assert_contains_all(
+    assert_contains_only(
         list(graph.successors("model.modelA")),
         ["script.modelA.AFTER.scriptA.py", "script.modelA.AFTER.scriptB.py"],
     )
@@ -30,18 +31,20 @@ def test_add_after_scripts(parsed_node):
 def test_add_before_scripts(parsed_node):
     graph = nx.DiGraph()
     node_lookup = {}
-    modelA = create_mock_model(parsed_node, "modelA", ["scriptA.py", "scriptB.py"])
+    modelA = create_mock_model(
+        parsed_node, "modelA", [], [], before_script_paths=["scriptA.py", "scriptB.py"]
+    )
 
     graph, node_lookup = _add_before_scripts(
         modelA, "model.modelA", "fal", "/dir", graph, node_lookup
     )
 
-    assert_contains_all(
+    assert_contains_only(
         list(node_lookup.keys()),
         ["script.modelA.BEFORE.scriptA.py", "script.modelA.BEFORE.scriptB.py"],
     )
 
-    assert_contains_all(
+    assert_contains_only(
         list(graph.predecessors("model.modelA")),
         ["script.modelA.BEFORE.scriptA.py", "script.modelA.BEFORE.scriptB.py"],
     )
@@ -60,7 +63,7 @@ def test_empty_fal_dbt(fal_dbt_class):
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
 @patch("fal.FalDbt")
 def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
-    modelA = create_mock_model(parsed_node, "modelA", ["scriptA.py", "scriptB.py"])
+    modelA = create_mock_model(parsed_node, "modelA", ["scriptA.py", "scriptB.py"], [])
     modelB = create_mock_model(parsed_node, "modelB", ["scriptB.py"], ["model.modelA"])
     modelC = create_mock_model(parsed_node, "modelC", ["scriptC.py"], ["model.modelA"])
     fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
@@ -69,7 +72,7 @@ def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
 
     node_graph = NodeGraph.from_fal_dbt(fal_dbt_instance)
 
-    assert_contains_all(
+    assert_contains_only(
         list(node_graph.node_lookup.keys()),
         [
             "model.modelA",
@@ -82,12 +85,12 @@ def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
         ],
     )
 
-    assert_contains_all(
+    assert_contains_only(
         node_graph.get_descendants("model.modelA"),
         ["script.modelA.AFTER.scriptB.py", "script.modelA.AFTER.scriptA.py"],
     )
 
-    assert_contains_all(
+    assert_contains_only(
         node_graph.get_descendants("model.modelB"),
         [
             "model.modelA",
@@ -97,7 +100,7 @@ def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
         ],
     )
 
-    assert_contains_all(
+    assert_contains_only(
         node_graph.get_descendants("model.modelC"),
         [
             "model.modelA",
