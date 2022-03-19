@@ -5,8 +5,10 @@ from fal.cli.flow_runner import fal_flow_run
 from faldbt.lib import DBT_VCURRENT, DBT_V1
 from .args import parse_args
 from .fal_runner import fal_run
+from fal.telemetry import telemetry
 
 
+@telemetry.log_call("cli")
 def cli(argv: List[str] = sys.argv):
     parsed = parse_args(argv[1:])
 

@@ -25,6 +25,8 @@ import uuid
 from decimal import Decimal
 import pandas as pd
 
+from fal.telemetry import telemetry
+
 
 class FalGeneralException(Exception):
     pass
@@ -248,6 +250,7 @@ class FalDbt:
     def threads(self):
         return self._config.threads
 
+    @telemetry.log_call("list_sources")
     def list_sources(self):
         """
         List tables available for `source` usage, formatting like `[[source_name, table_name], ...]`
@@ -258,6 +261,7 @@ class FalDbt:
 
         return res
 
+    @telemetry.log_call("list_models_ids")
     def list_models_ids(self) -> Dict[str, str]:
         """
         List model ids available for `ref` usage, formatting like `[ref_name, ...]`
@@ -268,6 +272,7 @@ class FalDbt:
 
         return res
 
+    @telemetry.log_call("list_models")
     def list_models(self) -> List[DbtModel]:
         """
         List models
@@ -280,6 +285,7 @@ class FalDbt:
         """
         return self.tests
 
+    @telemetry.log_call("list_features")
     def list_features(self) -> List[Feature]:
         return self.features
 
@@ -321,6 +327,7 @@ class FalDbt:
                 )
         return features
 
+    @telemetry.log_call("ref")
     def ref(
         self, target_model_name: str, target_package_name: Optional[str] = None
     ) -> pd.DataFrame:
@@ -347,6 +354,7 @@ class FalDbt:
             result.table.rows, columns=result.table.column_names, coerce_float=True
         )
 
+    @telemetry.log_call("source")
     def source(self, target_source_name: str, target_table_name: str) -> pd.DataFrame:
         """
         Download a dbt source as a pandas.DataFrame automagically.
@@ -371,6 +379,7 @@ class FalDbt:
             result.table.rows, columns=result.table.column_names
         )
 
+    @telemetry.log_call("write_to_source")
     def write_to_source(
         self,
         data: pd.DataFrame,
@@ -400,6 +409,7 @@ class FalDbt:
             dtype,
         )
 
+    @telemetry.log_call("write_to_firestore")
     def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):
         """
         Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
