@@ -63,4 +63,6 @@ jobs:
 
       - name: Run dbt and fal
         working-directory: integration_tests
+        env:
+          FAL_STATS_ENABLED: false
         run: behave
