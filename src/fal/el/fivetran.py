@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 from dateutil import parser
 from dbt.logger import GLOBAL_LOGGER as logger
 
-BASE_URL = urljoin("https://api.fivetran.com/", "v1/connectors/")
+BASE_URL = "https://api.fivetran.com/v1/connectors/"
 
 
 class ScheduleType(Enum):
