@@ -56,4 +56,6 @@ jobs:
           poetry run dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
 
       - name: Test
+        env:
+          FAL_STATS_ENABLED: false
         run: poetry run pytest tests -s
