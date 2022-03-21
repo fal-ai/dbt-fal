@@ -22,6 +22,10 @@ def cli(argv: List[str] = sys.argv):
     exclude_count = argv.count("--exclude")
     script_count = argv.count("--script")
 
+    # Disabling the dbt.logger.DelayedFileHandler manually
+    # since we do not use the new dbt logging system
+    # This fixes issue https://github.com/fal-ai/fal/issues/97
+    log_manager.set_path(None)
     if parsed.disable_logging:
         logger.disable()
     # Re-enable logging for 1.0.0 through old API of logger
