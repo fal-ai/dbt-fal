@@ -2,7 +2,7 @@ from fal.cli.selectors import ExecutionPlan
 from fal.node_graph import NodeGraph
 import networkx as nx
 from argparse import Namespace
-from utils import assert_contains_all
+from utils import assert_contains_only
 
 
 def test_execution_plan_only_dbt():
@@ -31,14 +31,14 @@ def test_execution_plan_mixed():
         "script.modelB.AFTER.scriptNameB.py",
     ]
     plan = ExecutionPlan(ids_to_execute)
-    assert_contains_all(
+    assert_contains_only(
         plan.after_scripts,
         [
             "script.modelA.AFTER.scriptName.py",
             "script.modelB.AFTER.scriptNameB.py",
         ],
     )
-    assert_contains_all(
+    assert_contains_only(
         plan.before_scripts,
         [
             "script.modelA.BEFORE.scriptName.py",
@@ -57,7 +57,7 @@ def test_create_plan_before_downstream():
 
     assert execution_plan.before_scripts == ["script.model.BEFORE.scriptC.py"]
     assert execution_plan.dbt_models == ["model.modelA"]
-    assert_contains_all(
+    assert_contains_only(
         execution_plan.after_scripts,
         [
             "script.model.AFTER.scriptA.py",
@@ -74,7 +74,7 @@ def test_create_plan_start_model_downstream():
 
     assert execution_plan.before_scripts == []
     assert execution_plan.dbt_models == ["model.modelA"]
-    assert_contains_all(
+    assert_contains_only(
         execution_plan.after_scripts,
         [
             "script.model.AFTER.scriptA.py",
@@ -89,7 +89,7 @@ def test_create_plan_start_model_upstream():
 
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph)
 
-    assert_contains_all(
+    assert_contains_only(
         execution_plan.before_scripts,
         [
             "script.model.BEFORE.scriptC.py",
@@ -106,7 +106,7 @@ def test_create_plan_start_model_upstream_and_downstream():
 
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph)
 
-    assert_contains_all(
+    assert_contains_only(
         execution_plan.before_scripts,
         [
             "script.model.BEFORE.scriptC.py",
@@ -114,7 +114,7 @@ def test_create_plan_start_model_upstream_and_downstream():
         ],
     )
     assert execution_plan.dbt_models == ["model.modelA"]
-    assert_contains_all(
+    assert_contains_only(
         execution_plan.after_scripts,
         [
             "script.model.AFTER.scriptA.py",
@@ -143,7 +143,7 @@ def test_create_plan_no_graph_selectors():
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph)
 
     assert execution_plan.before_scripts == []
-    assert_contains_all(
+    assert_contains_only(
         execution_plan.dbt_models,
         [
             "model.modelA",

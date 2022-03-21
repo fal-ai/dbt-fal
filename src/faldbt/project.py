@@ -96,6 +96,9 @@ class DbtModel:
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
 
+    def get_depends_on_nodes(self) -> List[str]:
+        return self.node.depends_on_nodes
+
     def get_script_paths(
         self, keyword: str, project_dir: str, before: bool
     ) -> List[Path]:
