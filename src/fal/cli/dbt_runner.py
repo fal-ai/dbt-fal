@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional, List
 import subprocess
 import json
-
+import faldbt.lib as lib
 from dbt.logger import GLOBAL_LOGGER as logger
 
 
@@ -59,7 +59,10 @@ def dbt_run(args, models_list: List[str]):
         command_list += ["--profiles-dir", args.profiles_dir]
 
     if args.select:
-        command_list += ["--select"] + models_list
+        if lib.DBT_VCURRENT.compare(lib.DBT_V1) < 0:
+            command_list += ["--model"] + models_list
+        else:
+            command_list += ["--select"] + models_list
     if args.selector:
         command_list += ["--selector"] + [args.selector]
 
