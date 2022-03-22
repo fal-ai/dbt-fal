@@ -9,10 +9,9 @@ import dbt.version
 import dbt.semver
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
-from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
-from dbt.contracts.graph.manifest import Manifest
 from dbt.logger import GLOBAL_LOGGER as logger
+from dbt.adapters.sql import SQLAdapter
 
 from . import parse
 
@@ -63,23 +62,15 @@ def initialize_dbt_flags(profiles_dir: str):
         flags.ENABLE_LEGACY_LOGGER = "1"
 
 
-def register_adapters(config: RuntimeConfig):
-    # Clear previously registered adapters. This fixes cacheing behavior on the dbt-server
-    adapters_factory.reset_adapters()
-    # Load the relevant adapter
-    adapters_factory.register_adapter(config)
-
-
 # NOTE: Once we get an adapter, we must call `connection_for` or `connection_named` to use it
-def _get_adapter(project_path: str, profiles_dir: str):
+def _get_adapter(project_path: str, profiles_dir: str) -> SQLAdapter:
     config = parse.get_dbt_config(project_path, profiles_dir)
 
-    adapters_factory.cleanup_connections()
-    return adapters_factory.get_adapter(config)
+    return adapters_factory.get_adapter(config)  # type: ignore
 
 
 def _execute_sql(
-    manifest: Manifest, project_path: str, profiles_dir: str, sql: str
+    project_path: str, profiles_dir: str, sql: str
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
     adapter = _get_adapter(project_path, profiles_dir)
 
@@ -88,9 +79,8 @@ def _execute_sql(
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
     result = None
-    with adapter.connection_named(name, node=None):
-        adapter.connections.begin()
-        response, execute_result = adapter.execute(sql, fetch=True)
+    with adapter.connection_named(name):
+        response, execute_result = adapter.execute(sql, auto_begin=True, fetch=True)
 
         table = ResultTable(
             column_names=list(execute_result.column_names),
@@ -106,7 +96,7 @@ def _execute_sql(
             logs=[],
             generated_at=datetime.utcnow(),
         )
-        adapter.connections.commit()
+        adapter.commit_if_has_connection()
 
     return response, result
 
@@ -118,8 +108,9 @@ def _get_target_relation(
 ):
     adapter = _get_adapter(project_path, profiles_dir)
 
+    name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
-    with adapter.connection_named(str(uuid4())):
+    with adapter.connection_named(name):
         # This ROLLBACKs so it has to be a new connection
         relation = adapter.get_relation(
             target.database, target.schema, target.identifier
@@ -127,15 +118,12 @@ def _get_target_relation(
     return relation
 
 
-def execute_sql(
-    manifest: Manifest, project_path: str, profiles_dir: str, sql: str
-) -> RemoteRunResult:
-    _, result = _execute_sql(manifest, project_path, profiles_dir, sql)
+def execute_sql(project_path: str, profiles_dir: str, sql: str) -> RemoteRunResult:
+    _, result = _execute_sql(project_path, profiles_dir, sql)
     return result
 
 
 def fetch_target(
-    manifest: Manifest,
     project_path: str,
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
@@ -146,13 +134,12 @@ def fetch_target(
         raise Exception(f"Could not get relation for '{target.unique_id}'")
 
     query = f"SELECT * FROM {relation}"
-    _, result = _execute_sql(manifest, project_path, profiles_dir, query)
+    _, result = _execute_sql(project_path, profiles_dir, query)
     return result
 
 
 def write_target(
     data: pd.DataFrame,
-    manifest: Manifest,
     project_path: str,
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
@@ -177,9 +164,7 @@ def write_target(
             bind=engine, compile_kwargs={"literal_binds": True}
         )
 
-        _execute_sql(
-            manifest, project_path, profiles_dir, six.text_type(create_stmt).strip()
-        )
+        _execute_sql(project_path, profiles_dir, six.text_type(create_stmt).strip())
 
     insert_stmt = (
         Insert(alchemy_table)
@@ -188,7 +173,7 @@ def write_target(
     )
 
     _, result = _execute_sql(
-        manifest, project_path, profiles_dir, six.text_type(insert_stmt).strip()
+        project_path, profiles_dir, six.text_type(insert_stmt).strip()
     )
     return result
 

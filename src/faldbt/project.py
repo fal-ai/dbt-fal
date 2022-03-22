@@ -344,11 +344,10 @@ class FalDbt:
 
         if target_model is None:
             raise Exception(
-                f"Could not find model {target_model_name}.{target_package_name or ''}"
+                f"Could not find model {(target_package_name + '.') if target_package_name else ''}{target_model_name}"
             )
 
         result = lib.fetch_target(
-            self._manifest.nativeManifest,
             self.project_dir,
             self.profiles_dir,
             target_model,
@@ -373,7 +372,6 @@ class FalDbt:
             )
 
         result = lib.fetch_target(
-            self._manifest.nativeManifest,
             self.project_dir,
             self.profiles_dir,
             target_source,
@@ -405,7 +403,6 @@ class FalDbt:
 
         lib.write_target(
             data,
-            self._manifest.nativeManifest,
             self.project_dir,
             self.profiles_dir,
             target_source,
