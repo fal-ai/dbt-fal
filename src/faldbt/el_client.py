@@ -69,7 +69,7 @@ class FalElClient:
                 "Either connection id or connection name have to be provided."
             )
 
-        config_type = el_config.get("type", None)
+        config_type = el_config.get("type", "").upper()
 
         if config_type not in [el.name for el in ELConfigTypes]:
             raise Exception(f"EL configuration type {config_type} is not supported.")
