@@ -51,7 +51,7 @@ class AirbyteClient:
                 response.raise_for_status()
                 return response.json()
             except RequestException as e:
-                logger.warn("Airbyte API request failed: %s", e)
+                logger.warn(f"Airbyte API request failed: {e}")
                 if num_retries == self.max_retries:
                     break
                 num_retries += 1

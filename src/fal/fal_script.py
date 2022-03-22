@@ -39,6 +39,7 @@ class FalScript:
                     "list_models_ids": faldbt.list_models_ids,
                     "list_sources": faldbt.list_sources,
                     "list_features": faldbt.list_features,
+                    "el": faldbt.el,
                 },
             )
             sys.path.remove(local_path)

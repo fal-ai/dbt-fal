@@ -15,6 +15,8 @@ import dbt.tracking
 
 from . import parse
 from . import lib
+from .el_client import FalElClient
+
 from fal.feature_store.feature import Feature
 
 import firebase_admin
@@ -183,6 +185,7 @@ class FalDbt:
     method: str
     models: List[DbtModel]
     tests: List[DbtTest]
+    el: FalElClient
 
     _config: RuntimeConfig
     _manifest: DbtManifest
@@ -213,11 +216,19 @@ class FalDbt:
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir, threads)
 
+        el_configs = parse.get_el_configs(
+            profiles_dir, self._config.profile_name, self._config.target_name
+        )
+
+        # Setup EL API clients
+        self.el = FalElClient(el_configs)
+
         # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(profiles_dir)
 
         args = CompileArgs(selector_name, select, select, exclude, None, None)
         self._compile_task = CompileTask(args, self._config)
+
         self._compile_task._runtime_initialize()
 
         self._manifest = DbtManifest(self._compile_task.manifest)
