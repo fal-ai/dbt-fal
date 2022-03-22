@@ -6,7 +6,7 @@ sidebar_position: 5
 
 `fal` integrates with `dbt`'s `profiles.yml` file to access and read data from the data warehouse. Once you setup credentials in your `profiles.yml` file for your existing `dbt` project, anytime you use `ref` or `source` to create a dataframe, `fal` authenticates using the credentials specified in the `profiles.yml` file.
 
-### Exctract-Load configuration
+## Exctract-Load configuration
 API configurations for some Extract-Load (EL) tools can be provided to `fal` via the `profiles.yml` file. At the moment, only two EL providers are supported: [Airbyte](https://docs.airbyte.com/) and [Fivetran](https://fivetran.com/docs/getting-started). API configurations have to be defined in a `target` node, similar to outputs. Here's an example `profiles.yml` with Airbyte and Fivetran configurations:
 
 ```yaml

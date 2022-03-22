@@ -70,9 +70,9 @@ from sqlalchemy.types import Integer
 write_to_source(df, 'source', 'table', dtype={'value': Integer()})
 ```
 
-## EL pipelines
+## Extract-Load pipelines
 
-`fal` provides a magic variable `el` that lets you run EL jobs. `el` has two methods: `el.airbyte_sync` and `el.fivetran_sync`. These methods let you run sync jobs on respective [Airbyte](https://docs.airbyte.com/) and [Fivetran](https://fivetran.com/docs/getting-started) connections and connectors. API connection details as well information on connectors have to be provided in [`profiles.yml`](../Docs/credentials-profile#exctract-load-configuration).
+`fal` provides a module `el` that lets you run EL jobs. `el` has two methods: `el.airbyte_sync` and `el.fivetran_sync`. These methods let you run sync jobs on respective [Airbyte](https://docs.airbyte.com/) and [Fivetran](https://fivetran.com/docs/getting-started) connections and connectors. API connection details as well information on connectors have to be provided in [`profiles.yml`](../Docs/credentials-profile#exctract-load-configuration).
 
 Given this bit of `profiles.yml`:
 ```yaml
