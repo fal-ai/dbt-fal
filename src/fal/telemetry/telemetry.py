@@ -40,6 +40,9 @@ def str_param(item: Any, name: str) -> str:
 
 def shutdown():
     posthog.shutdown()
+    # HACK: while https://github.com/PostHog/posthog-python/pull/52 happens
+    from posthog.request import _session as posthog_session
+    posthog_session.close()
 
 
 def opt_str_param(item: Any, name: str) -> Optional[str]:
