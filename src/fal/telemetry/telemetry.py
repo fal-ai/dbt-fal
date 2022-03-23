@@ -38,6 +38,10 @@ def str_param(item: Any, name: str) -> str:
     return item
 
 
+def shutdown():
+    posthog.shutdown()
+
+
 def opt_str_param(item: Any, name: str) -> Optional[str]:
     # Can leverage regular string function
     if item is not None and not isinstance(item, str):
