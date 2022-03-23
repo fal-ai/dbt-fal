@@ -8,8 +8,14 @@ from .fal_runner import fal_run
 from fal.telemetry import telemetry
 
 
-@telemetry.log_call("cli")
 def cli(argv: List[str] = sys.argv):
+    # Wrapper to be able to shutdown telemetry afterwards
+    _cli(argv)
+    telemetry.shutdown()
+
+
+@telemetry.log_call("cli")
+def _cli(argv: List[str]):
     parsed = parse_args(argv[1:])
 
     # TODO: remove `action="extend"` to match exactly what dbt does
