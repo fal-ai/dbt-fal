@@ -31,7 +31,7 @@ Feature: `flow run` command
     Given the project 001_flow_run_with_selectors
     When the following command is invoked:
     """
-    fal flow run --profiles-dir $baseDir --project-dir $baseDir --select agent_wait_time
+    fal flow run --profiles-dir $baseDir --project-dir $baseDir --select agent_wait_time --threads 1
     """
     Then the following models are calculated:
     | agent_wait_time |

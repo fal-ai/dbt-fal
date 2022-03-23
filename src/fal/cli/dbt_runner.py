@@ -69,8 +69,10 @@ def dbt_run(args, models_list: List[str]):
     if args.selector:
         command_list += ["--selector", args.selector]
 
+    command_list = list(map(str, command_list)) # make sure all are strings before joining for printing
+
     # Execute the dbt CLI command in a subprocess.
-    full_command = " ".join(command_list)
+    full_command = " ".join(command_list) # make sure all are strings before joining for printing
     logger.info(f"Executing command: {full_command}")
 
     return_code = 0
