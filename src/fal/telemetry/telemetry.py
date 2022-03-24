@@ -42,6 +42,7 @@ def shutdown():
     posthog.shutdown()
     # HACK: while https://github.com/PostHog/posthog-python/pull/52 happens
     from posthog.request import _session as posthog_session
+
     posthog_session.close()
 
 
@@ -313,7 +314,7 @@ def log_call(action):
                     total_runtime=str(datetime.datetime.now() - start),
                     additional_props={
                         # can we log None to posthog?
-                        "exception": str(e),
+                        "exception": type(e),
                         "argv": sys.argv,
                     },
                 )
