@@ -143,15 +143,10 @@ cython_debug/
 
 ### Tests
 mockTarget/
-integration_tests/mock/logs/
-integration_tests/mock/target/
-integration_tests/mock/dbt_modules/
+.user.yml
+logs/
+target/
+dbt_modules/
+temp/
 integration_tests/mock/regular_output
 integration_tests/mock/fal_output/agent_wait_time_test
-integration_tests/projects/001_flow_run_with_selectors/.user.yml
-integration_tests/projects/**/logs/**
-integration_tests/**/logs/
-integration_tests/**/.user.yml
-integration_tests/mock/script_selected
-integration_tests/mock/false_script_selected
-integration_tests/mock/.user.yml
