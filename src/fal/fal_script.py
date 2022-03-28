@@ -50,3 +50,15 @@ class FalScript:
             )
         finally:
             sys.path.remove(local_path)
+
+    @property
+    def id(self):
+        id_str = "("
+        if self.model:
+            id_str += self.model.name
+        else:
+            id_str += "<GLOBAL>"
+
+        # TODO: maybe `self.path - project_dir`, to show only relevant path
+        id_str += "," + str(self.path) + ")"
+        return id_str

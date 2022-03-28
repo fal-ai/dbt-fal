@@ -86,6 +86,14 @@ def _prepare_exec_script(script: FalScript, project: FalProject) -> bool:
     return success
 
 
+def raise_for_run_results_failures(scripts: List[FalScript], results: List[bool]):
+    if not all(results):
+        failures = filter(lambda t: not t[1], zip(scripts, results))
+        failure_ids = map(lambda t: t[0].id, failures)
+
+        raise RuntimeError(f"Error in scripts {str.join(', ', failure_ids)}")
+
+
 def run_scripts(scripts: List[FalScript], project: FalProject) -> List[bool]:
 
     print_run_info(scripts)

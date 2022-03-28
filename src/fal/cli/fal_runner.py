@@ -7,7 +7,7 @@ import dbt.exceptions
 import dbt.ui
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
-from fal.run_scripts import run_scripts
+from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.fal_script import FalScript
 from faldbt.project import (
     DbtModel,
@@ -72,7 +72,8 @@ def fal_run(
     scripts = _select_scripts(args, models)
 
     # run model specific scripts first
-    run_scripts(scripts, project)
+    results = run_scripts(scripts, project)
+    raise_for_run_results_failures(scripts, results)
 
     # then run global scripts
     if _should_run_global_scripts(args_dict):
@@ -137,4 +138,5 @@ def _run_global_scripts(project: FalProject, faldbt: FalDbt, global_key: str):
         )
     )
 
-    run_scripts(global_scripts, project)
+    results = run_scripts(global_scripts, project)
+    raise_for_run_results_failures(global_scripts, results)

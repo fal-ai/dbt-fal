@@ -1,5 +1,5 @@
 from typing import List, cast, Union
-from fal.run_scripts import run_scripts
+from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.cli.dbt_runner import dbt_run
 from fal.cli.fal_runner import create_fal_dbt
 from fal.cli.selectors import ExecutionPlan
@@ -15,9 +15,9 @@ def fal_flow_run(parsed):
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph)
 
     if len(execution_plan.before_scripts) != 0:
-        run_scripts(
-            _id_to_fal_scripts(node_graph, execution_plan.before_scripts), project
-        )
+        before_scripts = _id_to_fal_scripts(node_graph, execution_plan.before_scripts)
+        results = run_scripts(before_scripts, project)
+        raise_for_run_results_failures(before_scripts, results)
 
     if len(execution_plan.dbt_models) != 0:
         dbt_run(
@@ -28,9 +28,9 @@ def fal_flow_run(parsed):
         )
 
     if len(execution_plan.after_scripts) != 0:
-        run_scripts(
-            _id_to_fal_scripts(node_graph, execution_plan.after_scripts), project
-        )
+        after_scripts = _id_to_fal_scripts(node_graph, execution_plan.after_scripts)
+        results = run_scripts(after_scripts, project)
+        raise_for_run_results_failures(after_scripts, results)
 
 
 def _id_to_fal_scripts(node_graph: NodeGraph, id_list: List[str]) -> List[FalScript]:
