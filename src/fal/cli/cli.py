@@ -10,8 +10,10 @@ from fal.telemetry import telemetry
 
 def cli(argv: List[str] = sys.argv):
     # Wrapper to be able to shutdown telemetry afterwards
-    _cli(argv)
-    telemetry.shutdown()
+    try:
+        _cli(argv)
+    finally:
+        telemetry.shutdown()
 
 
 @telemetry.log_call("cli")
