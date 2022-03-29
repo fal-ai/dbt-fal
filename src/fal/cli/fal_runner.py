@@ -29,6 +29,11 @@ def create_fal_dbt(args: argparse.Namespace):
     else:
         real_profiles_dir = DEFAULT_PROFILES_DIR
 
+    if hasattr(args, "state") and args.state is not None:
+        real_state = Path(os.path.realpath(os.path.normpath(args.state)))
+    else:
+        real_state = None
+
     return FalDbt(
         real_project_dir,
         real_profiles_dir,
@@ -37,6 +42,7 @@ def create_fal_dbt(args: argparse.Namespace):
         args.selector,
         args.keyword,
         args.threads,
+        real_state,
     )
 
 

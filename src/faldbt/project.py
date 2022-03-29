@@ -186,6 +186,7 @@ class FalDbt:
     models: List[DbtModel]
     tests: List[DbtTest]
     el: FalElClient
+    state: str
 
     _config: RuntimeConfig
     _manifest: DbtManifest
@@ -206,6 +207,7 @@ class FalDbt:
         selector_name: Optional[str] = None,
         keyword: str = "fal",
         threads: Optional[int] = None,
+        state: Optional[str] = None,
     ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
@@ -226,7 +228,7 @@ class FalDbt:
         # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(profiles_dir)
 
-        args = CompileArgs(selector_name, select, select, exclude, None, None)
+        args = CompileArgs(selector_name, select, select, exclude, state, None)
         self._compile_task = CompileTask(args, self._config)
 
         self._compile_task._runtime_initialize()
