@@ -1,10 +1,10 @@
 """Run fal scripts."""
-from multiprocessing.pool import Pool
 import os
 from typing import Dict, Any, List, Union
 from dataclasses import dataclass
 from pathlib import Path
 
+from multiprocessing.pool import Pool
 from multiprocessing.dummy import Pool as ThreadPool
 
 from dbt.contracts.results import RunStatus
@@ -66,13 +66,12 @@ def _prepare_exec_script(script: FalScript, project: FalProject) -> bool:
 
     try:
         script.exec(context, faldbt)
-    except Exception as err:
-        err_str = str.join("\n", traceback.format_exception(err.__class__, err, None))
+    except:
         logger.error(
             "Error in script {} with model {}:\n{}",
             script.path,
             _get_script_model(script),
-            err_str,
+            traceback.format_exc(),
         )
         # TODO: what else to do?
         success = False

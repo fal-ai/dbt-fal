@@ -23,12 +23,18 @@ class FalScript:
 
         # Enable local imports
         local_path = str(self.path.parent)
-        sys.path.append(local_path)
+        try:
+            # NOTE: since this happens in threads, the `local_path` available
+            # in `sys.path` for all scripts running at the same time.
+            # This may introduce undesired race conditions for users.
+            # We probably want to pass the `sys.path` of each separately
+            sys.path.append(local_path)
 
-        with open(self.path) as file:
-            a_script = file.read()
+            with open(self.path) as file:
+                source_code = compile(file.read(), self.path, "exec")
+
             exec(
-                a_script,
+                source_code,
                 {
                     "context": context,
                     "ref": faldbt.ref,
@@ -42,4 +48,5 @@ class FalScript:
                     "el": faldbt.el,
                 },
             )
+        finally:
             sys.path.remove(local_path)
