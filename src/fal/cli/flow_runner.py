@@ -14,12 +14,21 @@ def fal_flow_run(parsed):
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph)
 
-    run_scripts(_id_to_fal_scripts(node_graph, execution_plan.before_scripts), project)
+    if len(execution_plan.before_scripts) != 0:
+        run_scripts(
+            _id_to_fal_scripts(node_graph, execution_plan.before_scripts), project
+        )
 
     if len(execution_plan.dbt_models) != 0:
-        dbt_run(parsed, _unique_ids_to_model_names(execution_plan.dbt_models))
+        dbt_run(
+            parsed,
+            _unique_ids_to_model_names(execution_plan.dbt_models),
+        )
 
-    run_scripts(_id_to_fal_scripts(node_graph, execution_plan.after_scripts), project)
+    if len(execution_plan.after_scripts) != 0:
+        run_scripts(
+            _id_to_fal_scripts(node_graph, execution_plan.after_scripts), project
+        )
 
 
 def _id_to_fal_scripts(node_graph: NodeGraph, id_list: List[str]) -> List[FalScript]:
