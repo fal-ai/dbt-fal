@@ -13,7 +13,7 @@ Feature: `flow run` command
     fal flow run --profiles-dir $baseDir --project-dir $baseDir --select before.py+
     """
     Then the following models are calculated:
-    | agent_wait_time |
+    | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
     And the following scripts are ran:
     | agent_wait_time.before.py | agent_wait_time.after.py |
 

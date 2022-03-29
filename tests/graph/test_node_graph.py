@@ -65,7 +65,9 @@ def test_empty_fal_dbt(fal_dbt_class):
 def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
     modelA = create_mock_model(parsed_node, "modelA", ["scriptA.py", "scriptB.py"], [])
     modelB = create_mock_model(parsed_node, "modelB", ["scriptB.py"], ["model.modelA"])
-    modelC = create_mock_model(parsed_node, "modelC", ["scriptC.py"], ["model.modelA"])
+    modelC = create_mock_model(
+        parsed_node, "modelC", ["scriptC.py"], ["model.modelA", "model.modelB"]
+    )
     fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
     fal_dbt_instance.list_models = MagicMock(return_value=[modelA, modelB, modelC])
     fal_dbt_instance.keyword = "fal"
@@ -87,25 +89,25 @@ def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
 
     assert_contains_only(
         node_graph.get_descendants("model.modelA"),
-        ["script.modelA.AFTER.scriptB.py", "script.modelA.AFTER.scriptA.py"],
-    )
-
-    assert_contains_only(
-        node_graph.get_descendants("model.modelB"),
         [
-            "model.modelA",
+            "model.modelC",
             "script.modelA.AFTER.scriptB.py",
+            "script.modelC.AFTER.scriptC.py",
             "script.modelA.AFTER.scriptA.py",
+            "model.modelB",
             "script.modelB.AFTER.scriptB.py",
         ],
     )
 
     assert_contains_only(
-        node_graph.get_descendants("model.modelC"),
+        node_graph.get_descendants("model.modelB"),
         [
-            "model.modelA",
-            "script.modelA.AFTER.scriptB.py",
-            "script.modelA.AFTER.scriptA.py",
+            "script.modelB.AFTER.scriptB.py",
+            "model.modelC",
             "script.modelC.AFTER.scriptC.py",
         ],
+    )
+
+    assert_contains_only(
+        node_graph.get_descendants("model.modelC"), ["script.modelC.AFTER.scriptC.py"]
     )
