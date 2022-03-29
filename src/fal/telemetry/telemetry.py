@@ -316,11 +316,11 @@ def log_call(action):
                     total_runtime=str(datetime.datetime.now() - start),
                     additional_props={
                         # can we log None to posthog?
-                        "exception": type(e),
+                        "exception": str(type(e)),
                         "argv": sys.argv,
                     },
                 )
-                raise e
+                raise
             else:
                 log_api(
                     action=f"{action}_success",

@@ -283,7 +283,7 @@ def test_log_call_exception(mock_telemetry):
                 action="some_action_error",
                 total_runtime="1",
                 additional_props={
-                    "exception": type(ValueError()),
+                    "exception": str(type(ValueError())),
                     "argv": sys.argv,
                 },
             ),
