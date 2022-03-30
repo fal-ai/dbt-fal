@@ -13,12 +13,12 @@ MODELS = ["agent_wait_time", "zendesk_ticket_data"]
 
 @given("`{command}` is run")
 def run_command_step(context, command):
-    _run_command(command)
+    _run_command(context, command)
 
 
 @when("`{command}` is run")
 def run_command_step2(context, command):
-    _run_command(command)
+    _run_command(context, command)
 
 
 @given("the project {project}")
@@ -73,7 +73,7 @@ def check_model_results(context):
 
 @then("scripts are run for {model}")
 def check_run_step(context, model):
-    output = open("mock/temp/output", "r").read()
+    output = open(f"mock/outputs/{_scenario_output_filename(context)}", "r").read()
 
     if model == "all models":
         for m in MODELS:
@@ -84,7 +84,8 @@ def check_run_step(context, model):
 
 @then("{model} scripts are skipped")
 def check_no_run_step(context, model):
-    output = open("mock/temp/output", "r").read()
+    output = open(f"mock/outputs/{_scenario_output_filename(context)}", "r").read()
+
     if model == "all model":
         for m in MODELS:
             assert m not in output
@@ -113,8 +114,16 @@ def _assertScriptFileExists(context, script):
     assert exists(script_file)
 
 
-def _run_command(command: str):
-    os.system(f"cd mock && {command} > temp/output")
+def _run_command(context, command: str):
+    os.system(f"cd mock && {command} > outputs/'{_scenario_output_filename(context)}'")
+
+
+def _scenario_output_filename(context):
+    filename = f"{context.feature.name}__{context.scenario.name}"
+    filename = filename.replace("'", "")
+    filename = filename.replace("`", "")
+    filename = filename.replace('"', "")
+    return filename
 
 
 def _check_output(model, is_test=False):
