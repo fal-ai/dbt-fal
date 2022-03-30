@@ -7,6 +7,7 @@ import json
 import unittest
 from os.path import exists
 import glob
+from pathlib import Path
 
 MODELS = ["agent_wait_time", "zendesk_ticket_data"]
 
@@ -28,10 +29,19 @@ def set_project_folder(context, project):
     os.environ["temp_dir"] = context.temp_dir.name
 
 
+@when("the data is seeded")
+def seed_data(context):
+    base_path = Path(context.base_dir)
+    profiles_dir = base_path.parent.absolute()
+    os.system(f"dbt seed --profiles-dir {profiles_dir} --project-dir {base_path}")
+
+
 @when("the following command is invoked")
 def invoke_fal_flow(context):
     _clean_target(context)
+    profiles_dir = Path(context.base_dir).parent.absolute()
     args = context.text.replace("$baseDir", context.base_dir)
+    args = args.replace("$profilesDir", str(profiles_dir))
     cli(args.split(" "))
 
 
