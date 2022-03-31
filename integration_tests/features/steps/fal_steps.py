@@ -36,12 +36,42 @@ def seed_data(context):
     os.system(f"dbt seed --profiles-dir {profiles_dir} --project-dir {base_path}")
 
 
+@when("state is stored in {folder_name}")
+def persist_state(context, folder_name):
+    target_path = reduce(os.path.join, [context.temp_dir.name, "target"])
+    os.system(f"mv {target_path} {context.temp_dir.name}/{folder_name}")
+
+
+@when("model named {model_name} is added")
+def add_model(context, model_name):
+    os.system(f"echo 'select 1' > {context.base_dir}/models/{model_name}.sql")
+
+
 @when("the following command is invoked")
 def invoke_fal_flow(context):
     profiles_dir = Path(context.base_dir).parent.absolute()
     args = context.text.replace("$baseDir", context.base_dir)
     args = args.replace("$profilesDir", str(profiles_dir))
+    args = args.replace("$tempDir", str(context.temp_dir.name))
     cli(args.split(" "))
+
+
+@then("the following command will fail")
+def invoke_failing_fal_flow(context):
+    profiles_dir = Path(context.base_dir).parent.absolute()
+    args = context.text.replace("$baseDir", context.base_dir)
+    args = args.replace("$profilesDir", str(profiles_dir))
+    args = args.replace("$tempDir", str(context.temp_dir.name))
+    try:
+        cli(args.split(" "))
+        assert True is False
+    except Exception as e:
+        print(e)
+
+
+@then("model named {model_name} is removed")
+def delete_model(context, model_name):
+    os.system(f"rm {context.base_dir}/models/{model_name}.sql")
 
 
 @then("the following scripts are ran")
