@@ -156,10 +156,10 @@ class DbtManifest:
 
 @dataclass(init=False)
 class DbtRunResult:
-    nativeRunResult: RunResultsArtifact
+    nativeRunResult: Optional[RunResultsArtifact]
     results: Sequence[RunResultOutput]
 
-    def __init__(self, nativeRunResult: RunResultsArtifact):
+    def __init__(self, nativeRunResult: Optional[RunResultsArtifact]):
         self.results = []
         self.nativeRunResult = nativeRunResult
         if self.nativeRunResult:
@@ -168,12 +168,12 @@ class DbtRunResult:
 
 @dataclass
 class CompileArgs:
-    selector_name: Union[str, None]
+    selector_name: Optional[str]
     select: Tuple[str]
     models: Tuple[str]
     exclude: Tuple[str]
     state: Any
-    single_threaded: Union[bool, None]
+    single_threaded: Optional[bool]
 
 
 @dataclass(init=False)
@@ -195,7 +195,7 @@ class FalDbt:
 
     _global_script_paths: Dict[str, List[str]]
 
-    _firestore_client: Union[FirestoreClient, None]
+    _firestore_client: Optional[FirestoreClient]
 
     def __init__(
         self,
@@ -203,9 +203,9 @@ class FalDbt:
         profiles_dir: str,
         select: Tuple[str] = tuple(),
         exclude: Tuple[str] = tuple(),
-        selector_name: Union[str, None] = None,
+        selector_name: Optional[str] = None,
         keyword: str = "fal",
-        threads: Union[int, None] = None,
+        threads: Optional[int] = None,
     ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
@@ -526,7 +526,7 @@ class FalProject:
         self.keyword = faldbt.keyword
         self.scripts = parse.get_scripts_list(faldbt.project_dir)
         self.target_path = faldbt._config.target_path
-        
+
     def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(
             filter(lambda model: keyword in model.meta, self._faldbt.list_models())

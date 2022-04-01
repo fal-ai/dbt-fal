@@ -63,16 +63,16 @@ def initialize_dbt_flags(profiles_dir: str):
 
 
 # NOTE: Once we get an adapter, we must call `connection_for` or `connection_named` to use it
-def _get_adapter(project_path: str, profiles_dir: str) -> SQLAdapter:
-    config = parse.get_dbt_config(project_path, profiles_dir)
+def _get_adapter(project_dir: str, profiles_dir: str) -> SQLAdapter:
+    config = parse.get_dbt_config(project_dir, profiles_dir)
 
     return adapters_factory.get_adapter(config)  # type: ignore
 
 
 def _execute_sql(
-    project_path: str, profiles_dir: str, sql: str
+    project_dir: str, profiles_dir: str, sql: str
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
-    adapter = _get_adapter(project_path, profiles_dir)
+    adapter = _get_adapter(project_dir, profiles_dir)
 
     logger.debug("Running query\n{}", sql)
 
@@ -103,10 +103,10 @@ def _execute_sql(
 
 def _get_target_relation(
     target: Union[ParsedModelNode, ParsedSourceDefinition],
-    project_path: str,
+    project_dir: str,
     profiles_dir: str,
 ):
-    adapter = _get_adapter(project_path, profiles_dir)
+    adapter = _get_adapter(project_dir, profiles_dir)
 
     name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
@@ -118,23 +118,23 @@ def _get_target_relation(
     return relation
 
 
-def execute_sql(project_path: str, profiles_dir: str, sql: str) -> RemoteRunResult:
-    _, result = _execute_sql(project_path, profiles_dir, sql)
+def execute_sql(project_dir: str, profiles_dir: str, sql: str) -> RemoteRunResult:
+    _, result = _execute_sql(project_dir, profiles_dir, sql)
     return result
 
 
 def fetch_target(
-    project_path: str,
+    project_dir: str,
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
 ) -> RemoteRunResult:
-    relation = _get_target_relation(target, project_path, profiles_dir)
+    relation = _get_target_relation(target, project_dir, profiles_dir)
 
     if relation is None:
         raise Exception(f"Could not get relation for '{target.unique_id}'")
 
     query = f"SELECT * FROM {relation}"
-    _, result = _execute_sql(project_path, profiles_dir, query)
+    _, result = _execute_sql(project_dir, profiles_dir, query)
     return result
 
 
@@ -179,7 +179,7 @@ def write_target(
 
 
 def _alchemy_engine(
-    adapter: adapters_factory.Adapter,
+    adapter: SQLAdapter,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
 ):
     url_string = f"{adapter.type()}://"
