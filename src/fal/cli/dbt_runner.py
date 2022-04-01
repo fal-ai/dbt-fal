@@ -3,6 +3,9 @@ import subprocess
 import json
 import faldbt.lib as lib
 from dbt.logger import GLOBAL_LOGGER as logger
+import os
+import shutil
+from os.path import exists
 
 
 class DbtCliRuntimeError(Exception):
@@ -43,7 +46,7 @@ class DbtCliOutput:
         return self._logs
 
 
-def dbt_run(args, models_list: List[str]):
+def dbt_run(args, models_list: List[str], target_path: str, run_index: int):
     "Run the dbt run command in a subprocess"
 
     command_list = ["dbt", "--log-format", "json"]
@@ -66,13 +69,17 @@ def dbt_run(args, models_list: List[str]):
             command_list += ["--model"] + models_list
         else:
             command_list += ["--select"] + models_list
+
     if args.selector:
         command_list += ["--selector", args.selector]
 
-    command_list = list(map(str, command_list)) # make sure all are strings before joining for printing
+    # make sure all are strings before joining for printing
+    command_list = list(map(str, command_list))
 
     # Execute the dbt CLI command in a subprocess.
-    full_command = " ".join(command_list) # make sure all are strings before joining for printing
+    full_command = " ".join(
+        command_list
+    )  # make sure all are strings before joining for printing
     logger.info(f"Executing command: {full_command}")
 
     return_code = 0
@@ -108,9 +115,19 @@ def dbt_run(args, models_list: List[str]):
     if return_code == 1:
         raise DbtCliRuntimeError(raw_output)
 
+    _create_fal_result_file(target_path, run_index)
+
     return DbtCliOutput(
         command=full_command,
         return_code=return_code,
         raw_output=raw_output,
         logs=logs,
     )
+
+
+def _create_fal_result_file(target_path: str, run_index: int):
+    fal_run_result = os.path.join(target_path, "run_results.json")
+    if exists(fal_run_result):
+        shutil.copy(
+            fal_run_result, os.path.join(target_path, f"fal_results_{run_index}.json")
+        )

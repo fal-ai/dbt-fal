@@ -23,6 +23,8 @@ def fal_flow_run(parsed):
         dbt_run(
             parsed,
             _unique_ids_to_model_names(execution_plan.dbt_models),
+            project.target_path,
+            0,
         )
 
     if len(execution_plan.after_scripts) != 0:
