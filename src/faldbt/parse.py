@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 import glob
 from pathlib import Path
-from typing import List, Dict, Union
+from typing import List, Dict, Optional
 
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.manifest import Manifest
@@ -27,12 +27,12 @@ def get_dbt_user_config(profiles_dir: str) -> UserConfig:
 class RuntimeArgs:
     project_dir: str
     profiles_dir: str
-    threads: Union[int, None]
+    threads: Optional[int]
     single_threaded: bool
 
 
 def get_dbt_config(
-    project_dir: str, profiles_dir: str, threads: Union[int, None] = None
+    project_dir: str, profiles_dir: str, threads: Optional[int] = None
 ) -> RuntimeConfig:
     # Construct a phony config
     args = RuntimeArgs(project_dir, profiles_dir, threads, single_threaded=False)
@@ -56,7 +56,9 @@ def get_dbt_manifest(config) -> Manifest:
     return ManifestLoader.get_full_manifest(config)
 
 
-def get_dbt_results(project_dir: str, config: RuntimeConfig) -> RunResultsArtifact:
+def get_dbt_results(
+    project_dir: str, config: RuntimeConfig
+) -> Optional[RunResultsArtifact]:
     results_path = os.path.join(project_dir, config.target_path, "run_results.json")
     try:
         # BACKWARDS: Change intorduced in 1.0.0
