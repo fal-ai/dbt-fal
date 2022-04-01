@@ -514,6 +514,7 @@ T = TypeVar("T", bound="FalProject")
 class FalProject:
     keyword: str
     scripts: List[Path]
+    target_path: str
 
     _faldbt: FalDbt
 
@@ -524,7 +525,8 @@ class FalProject:
         self._faldbt = faldbt
         self.keyword = faldbt.keyword
         self.scripts = parse.get_scripts_list(faldbt.project_dir)
-
+        self.target_path = faldbt._config.target_path
+        
     def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(
             filter(lambda model: keyword in model.meta, self._faldbt.list_models())

@@ -6,9 +6,8 @@ import tempfile
 import json
 import unittest
 from os.path import exists
-import glob
 from pathlib import Path
-import shutil
+import re
 
 MODELS = ["agent_wait_time", "zendesk_ticket_data"]
 
@@ -54,14 +53,16 @@ def check_script_results(context):
 
 @then("no models are calculated")
 def no_models_are_run(context):
-    run_results_path = reduce(
-        os.path.join, [context.base_dir, "target", "run_results.json"]
+    fal_results = _get_fal_results_file_name(context)
+    fal_results_paths = list(
+        map(lambda file: os.path.join(context.temp_dir.name, file), fal_results)
     )
-    if exists(run_results_path):
-        data = json.load(open(run_results_path))
-        assert len(data["results"]) == 0
-    else:
-        assert True
+    for fal_result_path in fal_results_paths:
+        if exists(fal_result_path):
+            data = json.load(open(fal_result_path))
+            assert len(data["results"]) == 0
+        else:
+            assert True
 
 
 @then("no scripts are run")
@@ -71,14 +72,18 @@ def no_scripts_are_run(context):
 
 @then("the following models are calculated")
 def check_model_results(context):
-    run_results = open(
-        reduce(os.path.join, [context.temp_dir.name, "target", "run_results.json"])
+    fal_results = _get_fal_results_file_name(context)
+    calculated_results = reduce(
+        lambda prev, fal_result: prev.append(
+            _get_models_from_result(context.temp_dir.name, fal_result)
+        )
+        or prev,
+        fal_results,
+        [],
     )
-    data = json.load(run_results)
-    calculated_results = map(
-        lambda result: result["unique_id"].split(".")[2], data["results"]
+    unittest.TestCase().assertCountEqual(
+        _flatten_list(calculated_results), context.table.headings
     )
-    unittest.TestCase().assertCountEqual(calculated_results, context.table.headings)
 
 
 @then("scripts are run for {model}")
@@ -136,3 +141,41 @@ def _check_output(model, is_test=False):
         print(f"Expected: {expected}", flush=True)
         print(f"Got: {current}", flush=True)
         raise Exception("Did not get expected output")
+
+
+def _get_models_from_result(dir_name, file_name):
+    return list(
+        map(
+            lambda result: result["unique_id"].split(".")[2],
+            _load_result(dir_name, file_name),
+        )
+    )
+
+
+def _load_result(dir_name, file_name):
+    return json.load(
+        open(
+            reduce(
+                os.path.join,
+                [dir_name, "target", file_name],
+            )
+        )
+    )["results"]
+
+
+def _get_fal_results_file_name(context):
+    target_path = os.path.join(context.temp_dir.name, "target")
+    pattern = re.compile("fal_results_*.\\.json")
+    target_files = list(os.walk(target_path))[0][2]
+    return list(filter(lambda file: pattern.match(file), target_files))
+
+
+def _flatten_list(target_list):
+    flat_list = []
+    for element in target_list:
+        if type(element) is list:
+            for item in element:
+                flat_list.append(item)
+        else:
+            flat_list.append(element)
+    return flat_list
