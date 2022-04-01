@@ -33,7 +33,9 @@ def set_project_folder(context, project):
 def seed_data(context):
     base_path = Path(context.base_dir)
     profiles_dir = str(base_path.parent.absolute())
-    os.system(f"dbt seed --profiles-dir {profiles_dir} --project-dir {base_path}")
+    os.system(
+        f"dbt seed --profiles-dir {profiles_dir} --project-dir {base_path} --full-refresh"
+    )
 
 
 @when("the following command is invoked")
@@ -48,7 +50,17 @@ def invoke_fal_flow(context):
 def check_script_results(context):
     expected_scripts = context.table.headings
     for script in expected_scripts:
-        _assertScriptFileExists(context, script)
+        filename = _temp_dir_path(context, script)
+        assert exists(filename)
+
+
+@then("the file {filename} has the lines")
+def check_file_has_lines(context, filename):
+    with open(_temp_dir_path(context, filename)) as handle:
+        handle_lines = [line.strip() for line in handle]
+        expected_lines = context.table.headings
+        for line in expected_lines:
+            assert line in handle_lines
 
 
 @then("no models are calculated")
@@ -117,9 +129,8 @@ def check_outputs(context, model, run_type):
         _check_output(model, test_results)
 
 
-def _assertScriptFileExists(context, script):
-    script_file = os.path.join(context.temp_dir.name, script)
-    assert exists(script_file)
+def _temp_dir_path(context, file):
+    return os.path.join(context.temp_dir.name, file)
 
 
 def _run_command(command: str):
