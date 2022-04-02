@@ -1,6 +1,6 @@
 from typing import List, cast, Union
 from fal.run_scripts import raise_for_run_results_failures, run_scripts
-from fal.cli.dbt_runner import dbt_run
+from fal.cli.dbt_runner import dbt_run, raise_for_dbt_run_errors
 from fal.cli.fal_runner import create_fal_dbt
 from fal.cli.selectors import ExecutionPlan
 from fal.fal_script import FalScript
@@ -20,12 +20,13 @@ def fal_flow_run(parsed):
         raise_for_run_results_failures(before_scripts, results)
 
     if len(execution_plan.dbt_models) != 0:
-        dbt_run(
+        output = dbt_run(
             parsed,
             _unique_ids_to_model_names(execution_plan.dbt_models),
             project.target_path,
             0,
         )
+        raise_for_dbt_run_errors(output)
 
     if len(execution_plan.after_scripts) != 0:
         after_scripts = _id_to_fal_scripts(node_graph, execution_plan.after_scripts)

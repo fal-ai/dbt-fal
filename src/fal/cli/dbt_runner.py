@@ -8,10 +8,6 @@ import shutil
 from os.path import exists
 
 
-class DbtCliRuntimeError(Exception):
-    pass
-
-
 class DbtCliOutput:
     def __init__(
         self,
@@ -44,6 +40,11 @@ class DbtCliOutput:
     @property
     def logs(self) -> List[Dict[str, Any]]:
         return self._logs
+
+
+def raise_for_dbt_run_errors(output: DbtCliOutput):
+    if output.return_code != 0:
+        raise RuntimeError("Error running dbt run")
 
 
 def dbt_run(args, models_list: List[str], target_path: str, run_index: int):
@@ -110,12 +111,6 @@ def dbt_run(args, models_list: List[str], target_path: str, run_index: int):
     logger.debug(f"dbt exited with return code {return_code}")
 
     raw_output = "\n".join(output)
-
-    if return_code == 2:
-        raise DbtCliRuntimeError(raw_output)
-
-    if return_code == 1:
-        raise DbtCliRuntimeError(raw_output)
 
     _create_fal_result_file(target_path, run_index)
 
