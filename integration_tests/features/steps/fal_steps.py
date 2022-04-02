@@ -50,12 +50,23 @@ def add_model(context, model_name):
 
 
 @when("the following command is invoked")
-def invoke_fal_flow(context):
+def invoke_command(context):
     profiles_dir = Path(context.base_dir).parent.absolute()
     args = context.text.replace("$baseDir", context.base_dir)
     args = args.replace("$profilesDir", str(profiles_dir))
     args = args.replace("$tempDir", str(context.temp_dir.name))
-    cli(args.split(" "))
+
+    context.exc = None
+    try:
+        cli(args.split(" "))
+    except Exception as e:
+        context.exc = e
+
+
+@then("it throws an {type} exception with message '{msg}'")
+def invoke_command_error(context, type, msg):
+    assert isinstance(context.exc, eval(type)), "Invalid exception - expected " + type
+    assert msg in str(context.exc), "Invalid message - expected " + msg
 
 
 @then("the following command will fail")

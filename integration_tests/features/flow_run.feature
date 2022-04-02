@@ -57,3 +57,11 @@ Feature: `flow run` command
     Then the following models are calculated:
     | new_model |
     And model named new_model is removed
+
+  Scenario: fal flow run with an error in before
+    Given the project 003_scripts_with_errors
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py
+      """
+    Then it throws an RuntimeError exception with message 'Error in scripts'
