@@ -17,7 +17,8 @@ from pathlib import Path
 import sys
 import uuid
 from functools import wraps
-from typing import Any, Optional, Dict
+from typing import Any, List, Optional, Dict
+import inspect
 
 import platform
 
@@ -298,26 +299,36 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
 
 # NOTE: should we log differently depending on the error type?
 # NOTE: how should we handle chained exceptions?
-def log_call(action):
+def log_call(action, args: List[str] = []):
     """Runs a function and logs it"""
 
     def _log_call(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
-            log_api(action=f"{action}_started", additional_props={"argv": sys.argv})
+        def wrapper(*func_args, **func_kwargs):
+
+            sig = inspect.signature(func).bind(*func_args, **func_kwargs)
+            sig.apply_defaults()
+            log_args = dict(map(lambda arg: (arg, sig.arguments.get(arg)), args))
+            log_api(
+                action=f"{action}_started",
+                additional_props={
+                    "argv": sys.argv,
+                    "args": log_args,
+                },
+            )
 
             start = datetime.datetime.now()
 
             try:
-                result = func(*args, **kwargs)
+                result = func(*func_args, **func_kwargs)
             except Exception as e:
                 log_api(
                     action=f"{action}_error",
                     total_runtime=str(datetime.datetime.now() - start),
                     additional_props={
-                        # can we log None to posthog?
                         "exception": str(type(e)),
                         "argv": sys.argv,
+                        "args": log_args,
                     },
                 )
                 raise
@@ -325,7 +336,10 @@ def log_call(action):
                 log_api(
                     action=f"{action}_success",
                     total_runtime=str(datetime.datetime.now() - start),
-                    additional_props={"argv": sys.argv},
+                    additional_props={
+                        "argv": sys.argv,
+                        "args": log_args,
+                    },
                 )
 
             return result
