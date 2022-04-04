@@ -1,13 +1,19 @@
+from enum import Enum
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional, Tuple, TypeVar, Sequence, Union
+from typing import Dict, List, Any, Literal, Optional, Tuple, TypeVar, Sequence, Union
 from pathlib import Path
 
 from dbt.node_types import NodeType
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
-from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
+from dbt.contracts.graph.manifest import (
+    Manifest,
+    MaybeNonSource,
+    MaybeParsedSource,
+    Disabled,
+)
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput, NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.task.compile import CompileTask
@@ -174,6 +180,11 @@ class CompileArgs:
     exclude: Tuple[str]
     state: Any
     single_threaded: Optional[bool]
+
+
+class WriteToSourceModeEnum(Enum):
+    APPEND = "append"
+    OVERWRITE = "overwrite"
 
 
 @dataclass(init=False)
@@ -367,20 +378,32 @@ class FalDbt:
             result.table.rows, columns=result.table.column_names, coerce_float=True
         )
 
+    def _source(
+        self, target_source_name: str, target_table_name: str
+    ) -> ParsedSourceDefinition:
+        target_source: MaybeParsedSource = self._manifest.nativeManifest.resolve_source(
+            target_source_name, target_table_name, self.project_dir, self.project_dir
+        )
+
+        if target_source is None:
+            raise RuntimeError(
+                f"Could not find source '{target_source_name}'.'{target_table_name}'"
+            )
+
+        if isinstance(target_source, Disabled):
+            raise RuntimeError(
+                f"Source '{target_source_name}'.'{target_table_name}' is disabled"
+            )
+
+        return target_source
+
     @telemetry.log_call("source")
     def source(self, target_source_name: str, target_table_name: str) -> pd.DataFrame:
         """
         Download a dbt source as a pandas.DataFrame automagically.
         """
 
-        target_source: MaybeNonSource = self._manifest.nativeManifest.resolve_source(
-            target_source_name, target_table_name, self.project_dir, self.project_dir
-        )
-
-        if target_source is None:
-            raise Exception(
-                f"Could not find source '{target_source_name}'.'{target_table_name}'"
-            )
+        target_source = self._source(target_source_name, target_table_name)
 
         result = lib.fetch_target(
             self.project_dir,
@@ -397,28 +420,30 @@ class FalDbt:
         data: pd.DataFrame,
         target_source_name: str,
         target_table_name: str,
+        # TODO: Make dtype named-param in the future?
         dtype: Any = None,
+        *,
+        mode: Literal["append", "overwrite"] = WriteToSourceModeEnum.APPEND.value,
     ):
         """
         Write a pandas.DataFrame to a dbt source automagically.
         """
 
-        target_source: MaybeParsedSource = self._manifest.nativeManifest.resolve_source(
-            target_source_name, target_table_name, self.project_dir, self.project_dir
-        )
+        target_source = self._source(target_source_name, target_table_name)
 
-        if target_source is None:
-            raise Exception(
-                f"Could not find source '{target_source_name}'.'{target_table_name}'"
+        if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
+            lib.write_target(
+                data, self.project_dir, self.profiles_dir, target_source, dtype
             )
 
-        lib.write_target(
-            data,
-            self.project_dir,
-            self.profiles_dir,
-            target_source,
-            dtype,
-        )
+        elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
+            lib.drop_target(self.project_dir, self.profiles_dir, target_source)
+            lib.write_target(
+                data, self.project_dir, self.profiles_dir, target_source, dtype
+            )
+
+        else:
+            raise Exception(f"write_to_source mode `{mode}` not supported")
 
     @telemetry.log_call("write_to_firestore")
     def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):

@@ -19,7 +19,7 @@ import pandas as pd
 from pandas.io import sql as pdsql
 
 import sqlalchemy
-from sqlalchemy.sql.ddl import CreateTable
+from sqlalchemy.sql.ddl import CreateTable, DropTable
 from sqlalchemy.sql import Insert
 
 DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
@@ -140,14 +140,12 @@ def fetch_target(
 
 def write_target(
     data: pd.DataFrame,
-    project_path: str,
+    project_dir: str,
     profiles_dir: str,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
     dtype=None,
 ) -> RemoteRunResult:
-    adapter = _get_adapter(project_path, profiles_dir)
-
-    relation = _get_target_relation(target, project_path, profiles_dir)
+    adapter = _get_adapter(project_dir, profiles_dir)
 
     engine = _alchemy_engine(adapter, target)
     pddb = pdsql.SQLDatabase(engine, schema=target.schema)
@@ -159,22 +157,42 @@ def write_target(
     rows = data.to_records(index=False)
     row_dicts = list(map(lambda row: dict(zip(column_names, row)), rows))
 
-    if relation is None:
-        create_stmt = CreateTable(alchemy_table).compile(
-            bind=engine, compile_kwargs={"literal_binds": True}
-        )
+    create_stmt = CreateTable(alchemy_table, if_not_exists=True).compile(
+        bind=engine, compile_kwargs={"literal_binds": True}
+    )
 
-        _execute_sql(project_path, profiles_dir, six.text_type(create_stmt).strip())
+    _execute_sql(project_dir, profiles_dir, six.text_type(create_stmt).strip())
 
-    insert_stmt = (
-        Insert(alchemy_table)
-        .values(row_dicts)
-        .compile(bind=engine, compile_kwargs={"literal_binds": True})
+    insert_stmt = Insert(alchemy_table, values=row_dicts).compile(
+        bind=engine, compile_kwargs={"literal_binds": True}
     )
 
     _, result = _execute_sql(
-        project_path, profiles_dir, six.text_type(insert_stmt).strip()
+        project_dir, profiles_dir, six.text_type(insert_stmt).strip()
     )
+    return result
+
+
+def drop_target(
+    project_dir: str,
+    profiles_dir: str,
+    target: Union[ParsedModelNode, ParsedSourceDefinition],
+):
+    adapter = _get_adapter(project_dir, profiles_dir)
+
+    engine = _alchemy_engine(adapter, target)
+
+    metadata = sqlalchemy.MetaData(schema=target.schema)
+    alchemy_table = sqlalchemy.Table(target.name, metadata)
+
+    drop_stmt = DropTable(alchemy_table, if_exists=True).compile(
+        bind=engine, compile_kwargs={"literal_binds": True}
+    )
+
+    _, result = _execute_sql(
+        project_dir, profiles_dir, six.text_type(drop_stmt).strip()
+    )
+
     return result
 
 
