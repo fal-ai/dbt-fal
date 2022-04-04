@@ -250,41 +250,57 @@ def mock_telemetry(monkeypatch):
 
 
 def test_log_call_success(mock_telemetry):
-    @telemetry.log_call("some_action")
-    def my_function():
+    @telemetry.log_call("some_action", ["a", "c", "d", "e"])
+    def my_function(a, b, c=0, *, d=1, e):
         pass
 
-    my_function()
+    my_function(1, 2, e=3)
 
     mock_telemetry.assert_has_calls(
         [
-            call(action="some_action_started", additional_props=dict(argv=sys.argv)),
+            call(
+                action="some_action_started",
+                additional_props={
+                    "argv": sys.argv,
+                    "args": {"a": 1, "c": 0, "d": 1, "e": 3},
+                },
+            ),
             call(
                 action="some_action_success",
                 total_runtime="1",
-                additional_props=dict(argv=sys.argv),
+                additional_props={
+                    "argv": sys.argv,
+                    "args": {"a": 1, "c": 0, "d": 1, "e": 3},
+                },
             ),
         ]
     )
 
 
 def test_log_call_exception(mock_telemetry):
-    @telemetry.log_call("some_action")
-    def my_function():
+    @telemetry.log_call("some_action", ["a", "c", "d", "e"])
+    def my_function(a, b, c=0, *, d=1, e):
         raise ValueError("some error")
 
     with pytest.raises(ValueError):
-        my_function()
+        my_function(1, 2, e=3)
 
     mock_telemetry.assert_has_calls(
         [
-            call(action="some_action_started", additional_props=dict(argv=sys.argv)),
+            call(
+                action="some_action_started",
+                additional_props={
+                    "argv": sys.argv,
+                    "args": {"a": 1, "c": 0, "d": 1, "e": 3},
+                },
+            ),
             call(
                 action="some_action_error",
                 total_runtime="1",
                 additional_props={
                     "exception": str(type(ValueError())),
                     "argv": sys.argv,
+                    "args": {"a": 1, "c": 0, "d": 1, "e": 3},
                 },
             ),
         ]
