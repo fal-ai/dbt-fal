@@ -75,6 +75,8 @@ def dbt_run(args, models_list: List[str], target_path: str, run_index: int):
 
     # make sure all are strings before joining for printing
     command_list = list(map(str, command_list))
+    if args.state:
+        command_list += ["--state", args.state]
 
     # Execute the dbt CLI command in a subprocess.
     full_command = " ".join(

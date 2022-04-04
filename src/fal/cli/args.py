@@ -82,6 +82,10 @@ def _add_threads_option(parser: argparse.ArgumentParser):
     )
 
 
+def _add_state_option(parser: argparse.ArgumentParser):
+    parser.add_argument("--state", type=str, help="Specify dbt state artifact path")
+
+
 def _build_dbt_selectors(sub: argparse.ArgumentParser, extend: bool):
 
     # fmt: off
@@ -161,6 +165,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _build_dbt_common_options(flow_run_parser)
     _build_fal_common_options(flow_run_parser)
     _add_threads_option(flow_run_parser)
+    _add_state_option(flow_run_parser)
 
 
 def _build_cli_parser():
