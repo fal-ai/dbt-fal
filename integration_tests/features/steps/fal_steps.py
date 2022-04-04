@@ -64,7 +64,7 @@ def invoke_failing_fal_flow(context):
     args = args.replace("$tempDir", str(context.temp_dir.name))
     try:
         cli(args.split(" "))
-        assert True is False
+        assert False, "Command should have failed."
     except Exception as e:
         print(e)
 
