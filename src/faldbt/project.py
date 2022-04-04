@@ -1,3 +1,4 @@
+from enum import Enum
 import os
 import re
 from dataclasses import dataclass, field
@@ -179,6 +180,11 @@ class CompileArgs:
     exclude: Tuple[str]
     state: Any
     single_threaded: Union[bool, None]
+
+
+class WriteToSourceModeEnum(Enum):
+    APPEND = "append"
+    OVERWRITE = "overwrite"
 
 
 @dataclass(init=False)
@@ -417,7 +423,7 @@ class FalDbt:
         # TODO: Make dtype named-param in the future?
         dtype: Any = None,
         *,
-        mode: Literal["append", "overwrite"] = "append",
+        mode: Literal["append", "overwrite"] = WriteToSourceModeEnum.APPEND.value,
     ):
         """
         Write a pandas.DataFrame to a dbt source automagically.
@@ -425,12 +431,12 @@ class FalDbt:
 
         target_source = self._source(target_source_name, target_table_name)
 
-        if mode.lower().strip() == "append":
+        if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
             lib.write_target(
                 data, self.project_dir, self.profiles_dir, target_source, dtype
             )
 
-        elif mode.lower().strip() == "overwrite":
+        elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
             lib.drop_target(self.project_dir, self.profiles_dir, target_source)
             lib.write_target(
                 data, self.project_dir, self.profiles_dir, target_source, dtype
@@ -545,7 +551,7 @@ class FalProject:
         self.keyword = faldbt.keyword
         self.scripts = parse.get_scripts_list(faldbt.project_dir)
         self.target_path = faldbt._config.target_path
-        
+
     def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(
             filter(lambda model: keyword in model.meta, self._faldbt.list_models())
