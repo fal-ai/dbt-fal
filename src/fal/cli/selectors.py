@@ -12,11 +12,13 @@ class ExecutionPlan:
     before_scripts: List[str]
     dbt_models: List[str]
     after_scripts: List[str]
+    project_name: str
 
-    def __init__(self, unique_ids: List[str]):
+    def __init__(self, unique_ids: List[str], project_name):
         self.before_scripts = []
         self.dbt_models = []
         self.after_scripts = []
+        self.project_name = project_name
         for id in unique_ids:
             if _is_before_scipt(id):
                 self.before_scripts.append(id)
@@ -26,7 +28,7 @@ class ExecutionPlan:
                 self.dbt_models.append(id)
 
     @classmethod
-    def create_plan_from_graph(cls, parsed, nodeGraph: NodeGraph):
+    def create_plan_from_graph(cls, parsed, nodeGraph: NodeGraph, project_name: str):
         """
         Creates and ExecutionPlan from the cli arguments
         """
@@ -35,7 +37,7 @@ class ExecutionPlan:
         if parsed.select:
             selector_plans = list(
                 map(
-                    lambda selector: SelectorPlan(selector, unique_ids),
+                    lambda selector: SelectorPlan(selector, unique_ids, project_name),
                     list(parsed.select),
                 )
             )
@@ -51,7 +53,7 @@ class ExecutionPlan:
 
         else:
             ids_to_execute.extend(unique_ids)
-        return cls(list(set(ids_to_execute)))
+        return cls(list(set(ids_to_execute)), project_name)
 
 
 def _expand_script(script_name: str, unique_ids: List[str]) -> List[str]:
@@ -79,14 +81,14 @@ class SelectorPlan:
     children: bool
     parents: bool
 
-    def __init__(self, selector: str, unique_ids: List[str]):
+    def __init__(self, selector: str, unique_ids: List[str], project_name):
         self.children = _needs_children(selector)
         self.parents = _need_parents(selector)
         node_name = _remove_graph_selectors(selector)
         if _is_script_node(node_name):
             self.unique_ids = _expand_script(node_name, unique_ids)
         else:
-            self.unique_ids = ["model." + node_name]
+            self.unique_ids = [f"model.{project_name}.{node_name}"]
 
 
 def _is_script_node(node_name: str) -> bool:

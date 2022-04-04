@@ -541,6 +541,7 @@ class FalProject:
     keyword: str
     scripts: List[Path]
     target_path: str
+    name: str
 
     _faldbt: FalDbt
 
@@ -552,6 +553,7 @@ class FalProject:
         self.keyword = faldbt.keyword
         self.scripts = parse.get_scripts_list(faldbt.project_dir)
         self.target_path = faldbt._config.target_path
+        self.name = faldbt._config.project_name
 
     def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(

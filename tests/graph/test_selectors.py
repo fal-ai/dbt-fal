@@ -4,10 +4,12 @@ import networkx as nx
 from argparse import Namespace
 from utils import assert_contains_only
 
+PROJECT_NAME = "test_project"
+
 
 def test_execution_plan_only_dbt():
     ids_to_execute = ["modelA", "modelB"]
-    plan = ExecutionPlan(ids_to_execute)
+    plan = ExecutionPlan(ids_to_execute, PROJECT_NAME)
     assert plan.after_scripts == []
     assert plan.before_scripts == []
     assert plan.dbt_models == ["modelA", "modelB"]
@@ -15,7 +17,7 @@ def test_execution_plan_only_dbt():
 
 def test_execution_plan_all_empty():
     ids_to_execute = []
-    plan = ExecutionPlan(ids_to_execute)
+    plan = ExecutionPlan(ids_to_execute, PROJECT_NAME)
     assert plan.after_scripts == []
     assert plan.before_scripts == []
     assert plan.dbt_models == []
@@ -30,7 +32,7 @@ def test_execution_plan_mixed():
         "script.modelB.BEFORE.scriptNameA.py",
         "script.modelB.AFTER.scriptNameB.py",
     ]
-    plan = ExecutionPlan(ids_to_execute)
+    plan = ExecutionPlan(ids_to_execute, PROJECT_NAME)
     assert_contains_only(
         plan.after_scripts,
         [
@@ -53,10 +55,10 @@ def test_create_plan_before_downstream():
     parsed = Namespace(select=["scriptC.py+"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph)
+    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
 
     assert execution_plan.before_scripts == ["script.model.BEFORE.scriptC.py"]
-    assert execution_plan.dbt_models == ["model.modelA"]
+    assert execution_plan.dbt_models == ["model.test_project.modelA"]
     assert_contains_only(
         execution_plan.after_scripts,
         [
@@ -70,10 +72,10 @@ def test_create_plan_start_model_downstream():
     parsed = Namespace(select=["modelA+"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph)
+    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
 
     assert execution_plan.before_scripts == []
-    assert execution_plan.dbt_models == ["model.modelA"]
+    assert execution_plan.dbt_models == ["model.test_project.modelA"]
     assert_contains_only(
         execution_plan.after_scripts,
         [
@@ -87,7 +89,7 @@ def test_create_plan_start_model_upstream():
     parsed = Namespace(select=["+modelA"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph)
+    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
 
     assert_contains_only(
         execution_plan.before_scripts,
@@ -96,7 +98,7 @@ def test_create_plan_start_model_upstream():
             "script.model.BEFORE.scriptD.py",
         ],
     )
-    assert execution_plan.dbt_models == ["model.modelA"]
+    assert execution_plan.dbt_models == ["model.test_project.modelA"]
     assert execution_plan.after_scripts == []
 
 
@@ -104,7 +106,7 @@ def test_create_plan_start_model_upstream_and_downstream():
     parsed = Namespace(select=["+modelA+"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph)
+    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
 
     assert_contains_only(
         execution_plan.before_scripts,
@@ -113,7 +115,7 @@ def test_create_plan_start_model_upstream_and_downstream():
             "script.model.BEFORE.scriptD.py",
         ],
     )
-    assert execution_plan.dbt_models == ["model.modelA"]
+    assert execution_plan.dbt_models == ["model.test_project.modelA"]
     assert_contains_only(
         execution_plan.after_scripts,
         [
@@ -127,7 +129,7 @@ def test_create_plan_start_after_downstream():
     parsed = Namespace(select=["scriptA.py+"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph)
+    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
 
     assert execution_plan.before_scripts == []
     assert execution_plan.dbt_models == []
@@ -140,14 +142,14 @@ def test_create_plan_no_graph_selectors():
     parsed = Namespace(select=["modelA", "modelB"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph)
+    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
 
     assert execution_plan.before_scripts == []
     assert_contains_only(
         execution_plan.dbt_models,
         [
-            "model.modelA",
-            "model.modelB",
+            "model.test_project.modelA",
+            "model.test_project.modelB",
         ],
     )
     assert execution_plan.after_scripts == []
@@ -159,8 +161,8 @@ def _create_test_graph():
     scriptC = "script.model.BEFORE.scriptC.py"
     scriptD = "script.model.BEFORE.scriptD.py"
 
-    modelA = "model.modelA"
-    modelB = "model.modelB"
+    modelA = "model.test_project.modelA"
+    modelB = "model.test_project.modelB"
 
     graph = nx.DiGraph()
 
