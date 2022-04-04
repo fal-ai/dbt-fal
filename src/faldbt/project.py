@@ -416,7 +416,7 @@ class FalDbt:
             result.table.rows, columns=result.table.column_names
         )
 
-    @telemetry.log_call("write_to_source")
+    @telemetry.log_call("write_to_source", ["mode"])
     def write_to_source(
         self,
         data: pd.DataFrame,
