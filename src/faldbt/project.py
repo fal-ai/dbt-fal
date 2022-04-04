@@ -186,7 +186,6 @@ class FalDbt:
     models: List[DbtModel]
     tests: List[DbtTest]
     el: FalElClient
-    state: str
 
     _config: RuntimeConfig
     _manifest: DbtManifest

@@ -44,7 +44,7 @@ def persist_state(context, folder_name):
 
 @when("model named {model_name} is added")
 def add_model(context, model_name):
-    os.system(f"echo 'select 1' > {context.base_dir}/models/{model_name}.sql")
+    os.system(f"echo 'select 1' > {context.base_dir}/other_models/{model_name}.sql")
 
 
 @when("the following command is invoked")
@@ -71,7 +71,7 @@ def invoke_failing_fal_flow(context):
 
 @then("model named {model_name} is removed")
 def delete_model(context, model_name):
-    os.system(f"rm {context.base_dir}/models/{model_name}.sql")
+    os.system(f"rm {context.base_dir}/other_models/{model_name}.sql")
 
 
 @then("the following scripts are ran")
