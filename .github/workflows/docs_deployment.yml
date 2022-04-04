@@ -3,6 +3,8 @@ name: Deploy docs website
 on:
   push:
     branches: [main, release]
+    paths:
+      - "docsite/**"
   workflow_dispatch:
 
 jobs:
