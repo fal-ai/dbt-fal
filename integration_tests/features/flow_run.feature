@@ -1,9 +1,8 @@
 Feature: `flow run` command
-  Background: Project Setup
-    Given the project 001_flow_run_with_selectors
-    When the data is seeded
 
   Scenario: fal flow run command with selectors
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
     When the following command is invoked:
     """
     fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py+
@@ -14,6 +13,8 @@ Feature: `flow run` command
     | agent_wait_time.before.py | agent_wait_time.after.py |
 
   Scenario: fal flow run command with selectors
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
     When the following command is invoked:
     """
     fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py
@@ -23,6 +24,8 @@ Feature: `flow run` command
     | agent_wait_time.before.py |
 
   Scenario: fal flow run command with selectors
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
     When the following command is invoked:
     """
     fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select agent_wait_time --threads 1
@@ -31,6 +34,7 @@ Feature: `flow run` command
     | agent_wait_time |
 
   Scenario: fal flow run command with state selector without state
+    Given the project 001_flow_run_with_selectors
     When the following command is invoked:
     """
     fal flow run --profiles-dir $profilesDir --project-dir $baseDir --threads 1
@@ -44,6 +48,7 @@ Feature: `flow run` command
     And model named new_model is removed
 
   Scenario: fal flow run command with state selector and with state
+    Given the project 001_flow_run_with_selectors
     When the following command is invoked:
     """
     fal flow run --profiles-dir $profilesDir --project-dir $baseDir --threads 1
@@ -57,3 +62,28 @@ Feature: `flow run` command
     Then the following models are calculated:
     | new_model |
     And model named new_model is removed
+
+  Scenario: fal flow run with an error in before
+    Given the project 003_scripts_with_errors
+    When the following command is invoked:
+    """
+    fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py
+    """
+    Then it throws an RuntimeError exception with message 'Error in scripts'
+
+
+  Scenario: fal flow run with an error in after
+    Given the project 003_scripts_with_errors
+    When the following command is invoked:
+    """
+    fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select after.py
+    """
+    Then it throws an RuntimeError exception with message 'Error in scripts'
+
+  Scenario: fal flow run with an error in dbt run
+    Given the project 003_scripts_with_errors
+    When the following command is invoked:
+    """
+    fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select some_model
+    """
+    Then it throws an RuntimeError exception with message 'Error running dbt run'

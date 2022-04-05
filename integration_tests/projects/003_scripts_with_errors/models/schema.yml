@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: some_model
+    meta:
+      fal:
+        scripts:
+          before:
+            - fal_scripts/before.py
+          after:
+            - fal_scripts/after.py
