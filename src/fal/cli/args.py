@@ -73,6 +73,13 @@ def _build_dbt_common_options(parser: argparse.ArgumentParser):
         dest=_flag_level("profiles_dir"),
     )
 
+    parser.add_argument(
+        "--defer",
+        action="store_true",
+        help="If set, defer to the state variable for resolving unselected nodes.",
+        dest=_flag_level("defer"),
+    )
+
 
 def _add_threads_option(parser: argparse.ArgumentParser):
     parser.add_argument(
