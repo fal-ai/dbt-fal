@@ -191,6 +191,7 @@ class WriteToSourceModeEnum(Enum):
 class FalDbt:
     project_dir: str
     profiles_dir: str
+    scripts_dir: str
     keyword: str
     features: List[Feature]
     method: str
@@ -223,6 +224,8 @@ class FalDbt:
         self.profiles_dir = profiles_dir
         self.keyword = keyword
         self._firestore_client = None
+
+        self.scripts_dir = parse.get_scripts_dir(project_dir)
 
         lib.initialize_dbt_flags(profiles_dir=profiles_dir)
 
@@ -552,7 +555,7 @@ class FalProject:
     ):
         self._faldbt = faldbt
         self.keyword = faldbt.keyword
-        self.scripts = parse.get_scripts_list(faldbt.project_dir)
+        self.scripts = parse.get_scripts_list(faldbt.scripts_dir)
         self.target_path = faldbt._config.target_path
         self.name = faldbt._config.project_name
 
