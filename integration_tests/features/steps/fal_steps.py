@@ -88,11 +88,29 @@ def delete_model(context, model_name):
 
 
 @then("the following scripts are ran")
-def check_script_results(context):
-    expected_scripts = context.table.headings
-    for script in expected_scripts:
-        filename = _temp_dir_path(context, script)
-        assert exists(filename)
+def check_script_files_exist(context):
+    scripts_exist = _check_files_exist(context, context.table.headings)
+    if not all(scripts_exist.values()):
+        not_existent = map(
+            lambda t: t[0], filter(lambda t: not t[1], scripts_exist.items())
+        )
+        to_report = ", ".join(not_existent)
+        assert False, f"Script files {to_report} should BE present"
+
+
+@then("the following scripts are not ran")
+def check_script_files_dont_exist(context):
+    scripts_exist = _check_files_exist(context, context.table.headings)
+    if any(scripts_exist.values()):
+        existent = map(lambda t: t[0], filter(lambda t: t[1], scripts_exist.items()))
+        to_report = ", ".join(existent)
+        assert False, f"Script files {to_report} should NOT BE present"
+
+
+def _check_files_exist(context, scripts: str):
+    filenames = map(lambda script: _temp_dir_path(context, script), scripts)
+    existing_filenames = map(exists, filenames)
+    return dict(zip(scripts, existing_filenames))
 
 
 @then("the file {filename} has the lines")
