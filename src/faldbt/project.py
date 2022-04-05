@@ -108,9 +108,9 @@ class DbtModel:
         return self.node.depends_on_nodes
 
     def get_script_paths(
-        self, keyword: str, project_dir: str, before: bool
+        self, keyword: str, scripts_dir: str, before: bool
     ) -> List[Path]:
-        return normalize_paths(project_dir, self.get_scripts(keyword, before))
+        return normalize_paths(scripts_dir, self.get_scripts(keyword, before))
 
     def get_scripts(self, keyword: str, before: bool) -> List[str]:
         # sometimes `scripts` can *be* there and still be None
