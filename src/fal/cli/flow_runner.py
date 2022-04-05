@@ -14,7 +14,7 @@ def fal_flow_run(parsed: argparse.Namespace):
     project = FalProject(fal_dbt)
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
     execution_plan = ExecutionPlan.create_plan_from_graph(
-        parsed, node_graph, project.name
+        parsed, node_graph, project.name, fal_dbt
     )
 
     if len(execution_plan.before_scripts) != 0:

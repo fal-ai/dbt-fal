@@ -12,6 +12,7 @@ models:
     description: Agent wait time series
     config:
       materialized: table
+      tags: daily
     columns:
       - name: y
         tests:

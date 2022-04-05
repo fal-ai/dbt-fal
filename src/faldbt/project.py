@@ -175,8 +175,8 @@ class DbtRunResult:
 @dataclass
 class CompileArgs:
     selector_name: Optional[str]
-    select: Tuple[str]
-    models: Tuple[str]
+    select: List[str]
+    models: List[str]
     exclude: Tuple[str]
     state: Optional[Path]
     single_threaded: Optional[bool]
@@ -204,7 +204,7 @@ class FalDbt:
     _run_results: DbtRunResult
     # Could we instead extend it and create a FalRunTak?
     _compile_task: CompileTask
-
+    _state: Optional[str]
     _global_script_paths: Dict[str, List[str]]
 
     _firestore_client: Optional[FirestoreClient]
@@ -213,7 +213,7 @@ class FalDbt:
         self,
         project_dir: str,
         profiles_dir: str,
-        select: Tuple[str] = tuple(),
+        select: List[str] = [],
         exclude: Tuple[str] = tuple(),
         selector_name: Optional[str] = None,
         keyword: str = "fal",
@@ -224,6 +224,7 @@ class FalDbt:
         self.profiles_dir = profiles_dir
         self.keyword = keyword
         self._firestore_client = None
+        self._state = state
 
         self.scripts_dir = parse.get_scripts_dir(project_dir)
 
