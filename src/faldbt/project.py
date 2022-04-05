@@ -305,6 +305,7 @@ class FalDbt:
         """
         return self.models
 
+    @telemetry.log_call("list_tests")
     def list_tests(self) -> List[DbtTest]:
         """
         List tests
@@ -318,7 +319,7 @@ class FalDbt:
     def _find_features(self) -> List[Feature]:
         """List features defined in schema.yml files."""
         keyword = self.keyword
-        models = self.list_models()
+        models = self.models
         models = list(
             filter(
                 # Find models that have both feature store and column defs
@@ -415,7 +416,7 @@ class FalDbt:
             result.table.rows, columns=result.table.column_names
         )
 
-    @telemetry.log_call("write_to_source")
+    @telemetry.log_call("write_to_source", ["mode"])
     def write_to_source(
         self,
         data: pd.DataFrame,
