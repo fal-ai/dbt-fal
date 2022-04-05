@@ -1,6 +1,6 @@
 Feature: `write_to_source` function
   Background: Project Setup
-    Given the project 003_script_paths
+    Given the project 004_script_paths
 
   Scenario: fal flow run
     When the following command is invoked:
