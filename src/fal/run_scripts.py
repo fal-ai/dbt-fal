@@ -1,5 +1,6 @@
 """Run fal scripts."""
 import os
+import sys
 from typing import Dict, Any, List, Union
 from dataclasses import dataclass
 from pathlib import Path
@@ -100,6 +101,9 @@ def run_scripts(scripts: List[FalScript], project: FalProject) -> List[bool]:
 
     faldbt = project._faldbt
 
+    # Enable local imports for fal scripts
+    sys.path.append(faldbt.scripts_dir)
+
     logger.info("Concurrency: {} threads", faldbt.threads)
     with ThreadPool(faldbt.threads) as pool:
         pool: Pool = pool
@@ -114,6 +118,8 @@ def run_scripts(scripts: List[FalScript], project: FalProject) -> List[bool]:
             raise
 
     logger.debug("Script results: {}", results)
+
+    sys.path.remove(faldbt.scripts_dir)
     return results
 
 
