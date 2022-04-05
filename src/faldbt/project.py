@@ -545,6 +545,7 @@ T = TypeVar("T", bound="FalProject")
 class FalProject:
     keyword: str
     scripts: List[Path]
+    name: str
     target_path: str
     name: str
 
@@ -559,6 +560,7 @@ class FalProject:
         self.scripts = parse.get_scripts_list(faldbt.scripts_dir)
         self.target_path = faldbt._config.target_path
         self.name = faldbt._config.project_name
+        self.target_path = faldbt._config.target_path
 
     def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(
