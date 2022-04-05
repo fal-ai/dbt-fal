@@ -12,7 +12,9 @@ def fal_flow_run(parsed):
     fal_dbt = create_fal_dbt(parsed)
     project = FalProject(fal_dbt)
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph)
+    execution_plan = ExecutionPlan.create_plan_from_graph(
+        parsed, node_graph, project.name
+    )
 
     if len(execution_plan.before_scripts) != 0:
         before_scripts = _id_to_fal_scripts(node_graph, execution_plan.before_scripts)
