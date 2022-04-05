@@ -178,7 +178,7 @@ class CompileArgs:
     select: Tuple[str]
     models: Tuple[str]
     exclude: Tuple[str]
-    state: Any
+    state: Optional[Path]
     single_threaded: Optional[bool]
 
 
@@ -217,7 +217,7 @@ class FalDbt:
         selector_name: Optional[str] = None,
         keyword: str = "fal",
         threads: Optional[int] = None,
-        state: Optional[str] = None,
+        state: Optional[Path] = None,
     ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
