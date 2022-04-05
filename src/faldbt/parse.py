@@ -14,6 +14,8 @@ from dbt.logger import GLOBAL_LOGGER as logger
 
 from faldbt.utils.yaml_helper import load_yaml
 
+FAL_SCRIPTS_PATH = "fal-scripts-path"
+
 
 class FalParseError(Exception):
     pass
@@ -52,10 +54,17 @@ def get_el_configs(
 
 def get_scripts_dir(project_dir: str) -> str:
     path = os.path.join(project_dir, "dbt_project.yml")
+
+    # This happens inside unit tests usually
+    if not os.path.exists(path):
+        return project_dir
+
     yml = load_yaml(path)
-    scripts_dir = yml.get("vars", {}).get("scripts-path", project_dir)
+    scripts_dir = yml.get("vars", {}).get(FAL_SCRIPTS_PATH, project_dir)
+
     if not isinstance(scripts_dir, str):
         raise FalParseError("Error parsing scripts_dir")
+
     return os.path.join(project_dir, scripts_dir)
 
 
