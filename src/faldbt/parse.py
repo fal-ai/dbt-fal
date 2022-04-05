@@ -53,7 +53,7 @@ def get_el_configs(
 def get_scripts_dir(project_dir: str) -> str:
     path = os.path.join(project_dir, "dbt_project.yml")
     yml = load_yaml(path)
-    scripts_dir = yml.get("scritps-path", project_dir)
+    scripts_dir = yml.get("vars", {}).get("scripts-path", project_dir)
     if not isinstance(scripts_dir, str):
         raise FalParseError("Error parsing scripts_dir")
     return os.path.join(project_dir, scripts_dir)
