@@ -26,6 +26,10 @@ Feature: `flow run` command
   Scenario: fal flow run command with selectors
     Given the project 001_flow_run_with_selectors
     When the data is seeded
+    And the file $baseDir/models/new_model.sql is created with the content: 
+      """ 
+      select * 1
+      """
     When the following command is invoked:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select agent_wait_time --threads 1
@@ -39,14 +43,16 @@ Feature: `flow run` command
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --threads 1
       """
-    And model named new_model is added
+    And the file $baseDir/models/new_model.sql is created with the content: 
+      """ 
+      select 1
+      """
     Then the following command will fail:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select state:new --threads 1
       """
     And no models are calculated
-    And model named new_model is removed
-
+  
   Scenario: fal flow run command with state selector and with state
     Given the project 001_flow_run_with_selectors
     When the following command is invoked:
@@ -54,14 +60,16 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --threads 1
       """
     And state is stored in old_state
-    And model named new_model is added
+    And the file $baseDir/models/new_model.sql is created with the content: 
+      """ 
+      select 1
+      """
     And the following command is invoked:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select state:new --state $tempDir/old_state --threads 1
       """
     Then the following models are calculated:
-      | new_model |
-    And model named new_model is removed
+    | new_model |
 
   Scenario: fal flow run with an error in before
     Given the project 003_scripts_with_errors
@@ -92,9 +100,9 @@ Feature: `flow run` command
     Given the project 001_flow_run_with_selectors
     When the data is seeded
     When the following command is invoked:
-    """
-    fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select tag:daily
-    """
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select tag:daily
+      """
     Then the following models are calculated:
     | agent_wait_time |
 
@@ -102,9 +110,9 @@ Feature: `flow run` command
     Given the project 001_flow_run_with_selectors
     When the data is seeded
     When the following command is invoked:
-    """
-    fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select tag:daily+
-    """
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select tag:daily+
+      """
     Then the following models are calculated:
     | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
     And the following scripts are ran:
