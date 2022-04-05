@@ -225,7 +225,7 @@ def _build_cli_parser():
 cli_parser = _build_cli_parser()
 
 
-def parse_args(argv: List[str]):
+def parse_args(argv: List[str]) -> argparse.Namespace:
     args = cli_parser.parse_args(argv)
     args_dict = vars(args)
 

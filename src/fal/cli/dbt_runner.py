@@ -6,6 +6,7 @@ from dbt.logger import GLOBAL_LOGGER as logger
 import os
 import shutil
 from os.path import exists
+import argparse
 
 
 class DbtCliOutput:
@@ -47,9 +48,7 @@ def raise_for_dbt_run_errors(output: DbtCliOutput):
         raise RuntimeError("Error running dbt run")
 
 
-def dbt_run(args, models_list: List[str], target_path: str, run_index: int):
-    "Run the dbt run command in a subprocess"
-
+def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]):
     command_list = ["dbt", "--log-format", "json"]
 
     if args.debug:
@@ -65,27 +64,31 @@ def dbt_run(args, models_list: List[str], target_path: str, run_index: int):
     if args.threads:
         command_list += ["--threads", args.threads]
 
-    if args.select:
-        if lib.DBT_VCURRENT.compare(lib.DBT_V1) < 0:
-            command_list += ["--model"] + models_list
-        else:
-            command_list += ["--select"] + models_list
-
-    if args.selector:
-        command_list += ["--selector", args.selector]
-
-    # make sure all are strings before joining for printing
-    command_list = list(map(str, command_list))
     if args.defer:
         command_list += ["--defer"]
 
     if args.state:
         command_list += ["--state", args.state]
 
+    if len(models_list) > 0:
+        if lib.DBT_VCURRENT.compare(lib.DBT_V1) < 0:
+            command_list += ["--model"] + models_list
+        else:
+            command_list += ["--select"] + models_list
+
+    return command_list
+
+
+def dbt_run(
+    args: argparse.Namespace, models_list: List[str], target_path: str, run_index: int
+):
+    "Run the dbt run command in a subprocess"
+
+    command_list = list(map(str, get_dbt_command_list(args, models_list)))
+
     # Execute the dbt CLI command in a subprocess.
-    full_command = " ".join(
-        command_list
-    )  # make sure all are strings before joining for printing
+    full_command = " ".join(command_list)
+
     logger.info(f"Executing command: {full_command}")
 
     return_code = 0

@@ -6,9 +6,10 @@ from fal.cli.selectors import ExecutionPlan
 from fal.fal_script import FalScript
 from fal.node_graph import FalFlowNode, NodeGraph, ScriptNode
 from faldbt.project import FalProject
+import argparse
 
 
-def fal_flow_run(parsed):
+def fal_flow_run(parsed: argparse.Namespace):
     fal_dbt = create_fal_dbt(parsed)
     project = FalProject(fal_dbt)
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
