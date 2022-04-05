@@ -1,5 +1,6 @@
 from functools import reduce
 import os
+from typing import Dict
 from behave import *
 from fal.cli import cli
 import tempfile
@@ -107,7 +108,7 @@ def check_script_files_dont_exist(context):
         assert False, f"Script files {to_report} should NOT BE present"
 
 
-def _check_files_exist(context, scripts: str):
+def _check_files_exist(context, scripts: str) -> Dict[str, bool]:
     filenames = map(lambda script: _temp_dir_path(context, script), scripts)
     existing_filenames = map(exists, filenames)
     return dict(zip(scripts, existing_filenames))
