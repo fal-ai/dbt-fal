@@ -54,32 +54,35 @@ def fal_run(
 ):
     "Runs the fal run command in a subprocess"
 
-    args_dict = vars(args)
     selector_flags = args.select or args.exclude or args.selector
-    if args_dict.get("all") and selector_flags:
+    if args.all and selector_flags:
         raise FalGeneralException(
             "Cannot pass --all flag alongside selection flags (--select/--models, --exclude, --selector)"
         )
 
     faldbt = create_fal_dbt(args)
     project = FalProject(faldbt)
-    models = project.get_filtered_models(
-        args_dict.get("all"), selector_flags, args_dict.get("before")
-    )
+    models = project.get_filtered_models(args.all, selector_flags, args.before)
 
     _handle_selector_warnings(selects_count, exclude_count, script_count, args)
 
     scripts = _select_scripts(args, models)
 
-    # run model specific scripts first
-    results = run_scripts(scripts, project)
-    raise_for_run_results_failures(scripts, results)
+    if args.before:
+        if not _scripts_flag(args):
+            # run globals when no --script is passed
+            _run_global_scripts(project, faldbt, args.before)
 
-    # then run global scripts
-    if _should_run_global_scripts(args_dict):
-        _run_global_scripts(
-            project, faldbt, "before" if args_dict.get("before") else "after"
-        )
+        results = run_scripts(scripts, project)
+        raise_for_run_results_failures(scripts, results)
+
+    else:
+        results = run_scripts(scripts, project)
+        raise_for_run_results_failures(scripts, results)
+
+        if not _scripts_flag(args):
+            # run globals when no --script is passed
+            _run_global_scripts(project, faldbt, args.before)
 
 
 def _handle_selector_warnings(selects_count, exclude_count, script_count, args):
@@ -104,20 +107,19 @@ def _handle_selector_warnings(selects_count, exclude_count, script_count, args):
         )
 
 
-def _should_run_global_scripts(args_dict: Dict[str, Any]) -> bool:
-    return bool(args_dict.get("scripts"))
+def _scripts_flag(args: argparse.Namespace) -> bool:
+    return bool(args.scripts)
 
 
 def _select_scripts(
     args: argparse.Namespace, models: List[DbtModel]
 ) -> List[FalScript]:
-    args_dict = vars(args)
     scripts = []
     real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
-    scripts_flag = bool(args_dict.get("scripts"))
+    scripts_flag = _scripts_flag(args)
 
     for model in models:
-        model_scripts = model.get_scripts(args.keyword, bool(args_dict.get("before")))
+        model_scripts = model.get_scripts(args.keyword, bool(args.before))
         for path in model_scripts:
             normalized = normalize_path(real_project_dir, path)
             if not scripts_flag:
@@ -130,11 +132,12 @@ def _select_scripts(
     return scripts
 
 
-def _run_global_scripts(project: FalProject, faldbt: FalDbt, global_key: str):
+def _run_global_scripts(project: FalProject, faldbt: FalDbt, is_before: bool):
+    real_project_dir = os.path.realpath(os.path.normpath(faldbt.project_dir))
     global_scripts = list(
         map(
-            lambda path: FalScript(None, Path(path)),
-            faldbt._global_script_paths[global_key],
+            lambda path: FalScript(None, Path(normalize_path(real_project_dir, path))),
+            faldbt._global_script_paths["before" if is_before else "after"],
         )
     )
 

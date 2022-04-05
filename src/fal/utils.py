@@ -9,7 +9,8 @@ def print_run_info(scripts: List[FalScript]):
     models_arr = []
     for script in scripts:
         path = str(script.path)
-        models_arr.append(f"{script.model.name}: {path}")
+        model_name = script.model.name if script.model else "GLOBAL"
+        models_arr.append(f"{model_name}: {path}")
 
     models_str = "\n".join(models_arr)
     print_timestamped_line(
