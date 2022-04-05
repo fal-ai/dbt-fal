@@ -41,6 +41,8 @@ class FalScript:
                     "el": faldbt.el,
                 },
             )
+        finally:
+            pass
 
     @property
     def id(self):

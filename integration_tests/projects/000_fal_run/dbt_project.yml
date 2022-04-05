@@ -7,8 +7,6 @@ data-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 target-path: "target"
-vars:
-  scripts-path: "fal_scripts"
 clean-targets:
   - "target"
   - "dbt_modules"
