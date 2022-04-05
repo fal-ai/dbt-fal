@@ -13,6 +13,19 @@ import re
 MODELS = ["agent_wait_time", "zendesk_ticket_data"]
 
 
+@when("the following shell command is invoked")
+def run_command_ste3(context):
+    profiles_dir = Path(context.base_dir).parent.absolute()
+    print(context)
+    command = (
+        context.text.replace("$baseDir", context.base_dir)
+        .replace("$profilesDir", str(profiles_dir))
+        .replace("$tempDir", str(context.temp_dir.name))
+    )
+    print(command)
+    os.system(command)
+
+
 @given("`{command}` is run")
 def run_command_step(context, command):
     _run_command(command)
