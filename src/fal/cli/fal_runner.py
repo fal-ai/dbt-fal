@@ -54,32 +54,33 @@ def fal_run(
 ):
     "Runs the fal run command in a subprocess"
 
-    args_dict = vars(args)
     selector_flags = args.select or args.exclude or args.selector
-    if args_dict.get("all") and selector_flags:
+    if args.all and selector_flags:
         raise FalGeneralException(
             "Cannot pass --all flag alongside selection flags (--select/--models, --exclude, --selector)"
         )
 
     faldbt = create_fal_dbt(args)
     project = FalProject(faldbt)
-    models = project.get_filtered_models(
-        args_dict.get("all"), selector_flags, args_dict.get("before")
-    )
+    models = project.get_filtered_models(args.all, selector_flags, args.before)
 
     _handle_selector_warnings(selects_count, exclude_count, script_count, args)
 
     scripts = _select_scripts(args, models)
 
-    # run model specific scripts first
-    results = run_scripts(scripts, project)
-    raise_for_run_results_failures(scripts, results)
+    if args.before:
+        if _should_run_global_scripts(args):
+            _run_global_scripts(project, faldbt, "before" if args.before else "after")
 
-    # then run global scripts
-    if _should_run_global_scripts(args_dict):
-        _run_global_scripts(
-            project, faldbt, "before" if args_dict.get("before") else "after"
-        )
+        results = run_scripts(scripts, project)
+        raise_for_run_results_failures(scripts, results)
+
+    else:
+        results = run_scripts(scripts, project)
+        raise_for_run_results_failures(scripts, results)
+
+        if _should_run_global_scripts(args):
+            _run_global_scripts(project, faldbt, "before" if args.before else "after")
 
 
 def _handle_selector_warnings(selects_count, exclude_count, script_count, args):
@@ -104,8 +105,8 @@ def _handle_selector_warnings(selects_count, exclude_count, script_count, args):
         )
 
 
-def _should_run_global_scripts(args_dict: Dict[str, Any]) -> bool:
-    return bool(args_dict.get("scripts"))
+def _should_run_global_scripts(args: argparse.Namespace) -> bool:
+    return not bool(args.scripts)
 
 
 def _select_scripts(
