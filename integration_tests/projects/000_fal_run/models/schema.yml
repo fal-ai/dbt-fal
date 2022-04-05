@@ -35,6 +35,6 @@ models:
       fal:
         scripts:
           before:
-            - fal_scripts/before.py
+            - before.py
           after:
             - fal_scripts/after.py

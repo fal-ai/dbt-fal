@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: results
+    database: test
+    schema: dbt_fal
+    tables:
+      - name: some_source
+
+models:
+  - name: some_model
+    meta:
+      fal:
+        scripts:
+          before:
+            - before.py
+          after:
+            - after.py

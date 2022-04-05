@@ -6,9 +6,6 @@ source-paths: ["models"]
 data-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
-target-path: "target"
 vars:
-  scripts-path: "fal_scripts"
-clean-targets:
-  - "target"
-  - "dbt_modules"
+  scripts-path: "scripts"
+target-path: "{{ env_var('temp_dir') }}/target"
