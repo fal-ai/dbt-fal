@@ -16,7 +16,7 @@ models:
       fal:
         scripts:
           after:
-            - fal_scripts/test.py
+            - fal_scripts/after.py
   - name: agent_wait_time
     description: Agent wait time series
     config:
@@ -37,12 +37,4 @@ models:
           before:
             - fal_scripts/before.py
           after:
-            - fal_scripts/test.py
-  - name: john_table
-    description: Test from Discord
-    config:
-      materialized: table
-    meta:
-      fal:
-        scripts:
-          - fal_scripts/john_test.py
+            - fal_scripts/after.py

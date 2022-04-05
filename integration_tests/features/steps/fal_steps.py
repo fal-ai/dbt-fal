@@ -14,7 +14,7 @@ MODELS = ["agent_wait_time", "zendesk_ticket_data"]
 
 
 @when("the following shell command is invoked")
-def run_command_ste3(context):
+def run_command_step3(context):
     profiles_dir = Path(context.base_dir).parent.absolute()
     print(context)
     command = (
@@ -26,14 +26,15 @@ def run_command_ste3(context):
     os.system(command)
 
 
-@given("`{command}` is run")
-def run_command_step(context, command):
-    _run_command(command)
-
-
 @when("`{command}` is run")
-def run_command_step2(context, command):
-    _run_command(command)
+def run_command_step(context, command):
+    profiles_dir = Path(context.base_dir).parent.absolute()
+    command = (
+        command.replace("$baseDir", context.base_dir)
+        .replace("$profilesDir", str(profiles_dir))
+        .replace("$tempDir", str(context.temp_dir.name))
+    )
+    os.system(command)
 
 
 @given("the project {project}")
@@ -171,43 +172,8 @@ def check_model_results(context):
     )
 
 
-@then("scripts are run for {model}")
-def check_run_step(context, model):
-    output = open("mock/temp/output", "r").read()
-
-    if model == "all models":
-        for m in MODELS:
-            assert m in output
-    else:
-        assert model in output
-
-
-@then("{model} scripts are skipped")
-def check_no_run_step(context, model):
-    output = open("mock/temp/output", "r").read()
-    if model == "all model":
-        for m in MODELS:
-            assert m not in output
-    else:
-        assert model not in output
-
-
-@then("outputs for {model} contain {run_type} results")
-def check_outputs(context, model, run_type):
-    test_results = run_type == "test"
-    if model == "all models":
-        for m in MODELS:
-            _check_output(m, test_results)
-    else:
-        _check_output(model, test_results)
-
-
 def _temp_dir_path(context, file):
     return os.path.join(context.temp_dir.name, file)
-
-
-def _run_command(command: str):
-    os.system(f"cd mock && {command} > temp/output")
 
 
 def _check_output(model, is_test=False):
