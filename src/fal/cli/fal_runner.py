@@ -132,9 +132,10 @@ def _select_scripts(
 
 
 def _run_global_scripts(project: FalProject, faldbt: FalDbt, global_key: str):
+    real_project_dir = os.path.realpath(os.path.normpath(faldbt.project_dir))
     global_scripts = list(
         map(
-            lambda path: FalScript(None, Path(path)),
+            lambda path: FalScript(None, Path(normalize_path(real_project_dir, path))),
             faldbt._global_script_paths[global_key],
         )
     )
