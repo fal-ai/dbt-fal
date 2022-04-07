@@ -4,7 +4,6 @@ from ..my_utils import write_data
 
 
 def process_data(context, ref):
-
     model_name = context.current_model.name
 
     output = f"Model name: {model_name}"

@@ -29,6 +29,7 @@ The directory containing fal scripts is temporarily added to `sys.path` during r
 ```
 └── my_scripts_dir
     ├── after.py
+    ├── random_script.py
     └── my_utils
         ├── custom_functions.py
         └── message
@@ -53,4 +54,4 @@ formatted = format_string(my_string)
 ...
 ```
 
-Note that in this example, `my_scripts_dir` is not itself loaded as a module, so a similar import wouldn't work from `custom_functions.py`.
+Note that in this example, `my_scripts_dir` is not itself loaded as a module, so a `from ..` import wouldn't work in `custom_functions.py`. Instead, you can do `import random_script`, because everything in `my_scripts_dir` is available in `sys.path`.
