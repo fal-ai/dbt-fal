@@ -8,7 +8,7 @@ model_name = context.current_model.name
 
 def write_to_file(mode: Literal["w", "a"]):
 
-    path = reduce(os.path.join, [os.environ["temp_dir"], model_name + ".after.py"])
+    path = reduce(os.path.join, [os.environ["temp_dir"], model_name + ".after.txt"])
     with open(path, mode) as file:
         source_size = len(source("results", "some_source"))
         file.write(f"results.some_source size: {source_size}\n")
@@ -26,6 +26,6 @@ source_size = len(source("results", "some_source"))
 output += f"results.some_source size: {source_size}\n"
 
 
-path = reduce(os.path.join, [os.environ["temp_dir"], model_name + ".after.py"])
+path = reduce(os.path.join, [os.environ["temp_dir"], model_name + ".after.txt"])
 with open(path, "w") as file:
     file.write(output)
