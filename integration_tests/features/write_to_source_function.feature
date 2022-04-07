@@ -1,6 +1,6 @@
 Feature: `write_to_source` function
   Background: Project Setup
-    Given the project 002_functions_and_variables
+    Given the project 005_functions_and_variables
 
   Scenario:
     When the following command is invoked:
