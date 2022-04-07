@@ -14,6 +14,8 @@ from dbt.logger import GLOBAL_LOGGER as logger
 
 from faldbt.utils.yaml_helper import load_yaml
 
+FAL_SCRIPTS_PATH = "fal-scripts-path"
+
 
 class FalParseError(Exception):
     pass
@@ -50,6 +52,22 @@ def get_el_configs(
     return sync_configs
 
 
+def get_scripts_dir(project_dir: str) -> str:
+    path = os.path.join(project_dir, "dbt_project.yml")
+
+    # This happens inside unit tests usually
+    if not os.path.exists(path):
+        return project_dir
+
+    yml = load_yaml(path)
+    scripts_dir = yml.get("vars", {}).get(FAL_SCRIPTS_PATH, project_dir)
+
+    if not isinstance(scripts_dir, str):
+        raise FalParseError("Error parsing scripts_dir")
+
+    return os.path.join(project_dir, scripts_dir)
+
+
 def get_dbt_manifest(config) -> Manifest:
     from dbt.parser.manifest import ManifestLoader
 
@@ -74,8 +92,8 @@ def get_dbt_results(
         return None
 
 
-def get_scripts_list(project_dir: str) -> List[str]:
-    return glob.glob(os.path.join(project_dir, "**.py"), recursive=True)
+def get_scripts_list(scripts_dir: str) -> List[str]:
+    return glob.glob(os.path.join(scripts_dir, "**.py"), recursive=True)
 
 
 def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:
@@ -95,6 +113,6 @@ def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:
                         global_scripts["before"] += script_paths.get("before") or []
                         global_scripts["after"] += script_paths.get("after") or []
             else:
-                raise FalParseError("Error pasing the schema file " + file)
+                raise FalParseError("Error parsing the schema file " + file)
 
     return global_scripts

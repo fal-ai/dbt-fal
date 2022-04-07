@@ -32,12 +32,12 @@ def _add_after_scripts(
     model: DbtModel,
     upstream_fal_node_unique_id: str,
     keyword: str,
-    project_dir: str,
+    scripts_dir: str,
     graph: nx.DiGraph,
     nodeLookup: Dict[str, FalFlowNode],
 ) -> Tuple[nx.DiGraph, Dict[str, FalFlowNode]]:
     "Add dbt node to after scripts edges to the graph"
-    after_scripts = model.get_script_paths(keyword, project_dir, False)
+    after_scripts = model.get_script_paths(keyword, scripts_dir, False)
     after_fal_scripts = map(
         lambda script_path: FalScript(model, script_path), after_scripts
     )
@@ -62,12 +62,12 @@ def _add_before_scripts(
     model: DbtModel,
     downstream_fal_node_unique_id: str,
     keyword: str,
-    project_dir: str,
+    scripts_dir: str,
     graph: nx.DiGraph,
     nodeLookup: Dict[str, FalFlowNode],
 ) -> Tuple[nx.DiGraph, Dict[str, FalFlowNode]]:
     "Add before scripts to dbt node edges to the graph"
-    before_scripts = model.get_script_paths(keyword, project_dir, True)
+    before_scripts = model.get_script_paths(keyword, scripts_dir, True)
     before_fal_scripts = map(
         lambda script_path: FalScript(model, script_path), before_scripts
     )
@@ -114,7 +114,7 @@ class NodeGraph:
                 model,
                 model_fal_node.unique_id,
                 fal_dbt.keyword,
-                fal_dbt.project_dir,
+                fal_dbt.scripts_dir,
                 graph,
                 node_lookup,
             )
@@ -123,7 +123,7 @@ class NodeGraph:
                 model,
                 model_fal_node.unique_id,
                 fal_dbt.keyword,
-                fal_dbt.project_dir,
+                fal_dbt.scripts_dir,
                 graph,
                 node_lookup,
             )

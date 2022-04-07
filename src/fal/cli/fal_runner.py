@@ -66,7 +66,7 @@ def fal_run(
 
     _handle_selector_warnings(selects_count, exclude_count, script_count, args)
 
-    scripts = _select_scripts(args, models)
+    scripts = _select_scripts(args, models, faldbt.scripts_dir)
 
     if args.before:
         if not _scripts_flag(args):
@@ -112,16 +112,16 @@ def _scripts_flag(args: argparse.Namespace) -> bool:
 
 
 def _select_scripts(
-    args: argparse.Namespace, models: List[DbtModel]
+    args: argparse.Namespace, models: List[DbtModel], scripts_dir: str
 ) -> List[FalScript]:
     scripts = []
-    real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
+    real_scripts_dir = os.path.realpath(os.path.normpath(scripts_dir))
     scripts_flag = _scripts_flag(args)
 
     for model in models:
         model_scripts = model.get_scripts(args.keyword, bool(args.before))
         for path in model_scripts:
-            normalized = normalize_path(real_project_dir, path)
+            normalized = normalize_path(real_scripts_dir, path)
             if not scripts_flag:
                 # run all scripts when no --script is passed
                 scripts.append(FalScript(model, normalized))
