@@ -48,7 +48,7 @@ def raise_for_dbt_run_errors(output: DbtCliOutput):
         raise RuntimeError("Error running dbt run")
 
 
-def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]):
+def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> List[str]:
     command_list = ["dbt", "--log-format", "json"]
 
     if args.debug:
@@ -76,7 +76,8 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]):
         else:
             command_list += ["--select"] + models_list
 
-    return command_list
+    # Assure all command parts are str
+    return list(map(str, command_list))
 
 
 def dbt_run(
@@ -84,7 +85,7 @@ def dbt_run(
 ):
     "Run the dbt run command in a subprocess"
 
-    command_list = list(map(str, get_dbt_command_list(args, models_list)))
+    command_list = get_dbt_command_list(args, models_list)
 
     # Execute the dbt CLI command in a subprocess.
     full_command = " ".join(command_list)
