@@ -1,31 +1,63 @@
 Feature: `run` command
+  Background:
+    Given the project 000_fal_run
+    When the data is seeded
+
   Scenario: fal run works
-    Given `dbt run --profiles-dir .` is run
-    When `fal run --profiles-dir .` is run
-    Then scripts are run for all models
-    And outputs for all models contain run results
+    When the following shell command is invoked:
+    """
+    dbt run --profiles-dir $profilesDir --project-dir $baseDir
+    """
+    And the following command is invoked:
+    """
+    fal run --profiles-dir $profilesDir --project-dir $baseDir
+    """
+    Then the following scripts are ran:
+    | agent_wait_time.after.py | zendesk_ticket_data.after.py |
 
   Scenario: fal run works after selected dbt model run
-    Given `dbt run --profiles-dir . --models agent_wait_time` is run
-    When `fal run --profiles-dir .` is run
-    Then scripts are run for agent_wait_time
-    And outputs for agent_wait_time contain run results
-    But zendesk_ticket_data scripts are skipped
+    When the following shell command is invoked:
+    """
+    dbt run --profiles-dir $profilesDir --project-dir $baseDir --models agent_wait_time
+    """
+    And the following command is invoked:
+    """
+    fal run --profiles-dir $profilesDir --project-dir $baseDir
+    """
+    Then the following scripts are ran:
+    | agent_wait_time.after.py |
 
-  Scenario: fal run works on selected models
-    Given `dbt run --profiles-dir .` is run
-    When `fal run --profiles-dir . --model zendesk_ticket_data` is run
-    Then scripts are run for zendesk_ticket_data
-    And outputs for zendesk_ticket_data contain run results
-    But agent_wait_time scripts are skipped
+  Scenario: fal run works with model selection
+    When the following shell command is invoked:
+    """
+    dbt run --profiles-dir $profilesDir --project-dir $baseDir
+    """
+    And the following command is invoked:
+    """
+    fal run --profiles-dir $profilesDir --project-dir $baseDir --model zendesk_ticket_data
+    """
+    Then the following scripts are ran:
+    | zendesk_ticket_data.after.py |
 
   Scenario: fal run works with script selection
-    Given `dbt run --profiles-dir .` is run
-    When `fal run --profiles-dir . --script fal_scripts/john_test.py` is run
-    Then scripts are run for john_table
-    But zendesk_ticket_data scripts are skipped
+    When the following shell command is invoked:
+    """
+    dbt run --profiles-dir $profilesDir --project-dir $baseDir
+    """
+    And the following command is invoked:
+    """
+    fal run --profiles-dir $profilesDir --project-dir $baseDir --script fal_scripts/after.py
+    """
+    Then the following scripts are ran:
+    | agent_wait_time.after.py |
 
   Scenario: when false script is selected, nothing runs
-    Given `dbt run --profiles-dir .` is run
-    When `fal run --profiles-dir . --script fal_scripts/notthere.py` is run
-    Then all model scripts are skipped
+    When the following shell command is invoked:
+    """
+    dbt run --profiles-dir $profilesDir --project-dir $baseDir
+    """
+    And the following command is invoked:
+    """
+    fal run --profiles-dir $profilesDir --project-dir $baseDir --script fal_scripts/notthere.py
+    """
+    Then no scripts are run
