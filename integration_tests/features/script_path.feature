@@ -32,4 +32,3 @@ Feature: defining script path
     """
     Then the following scripts are ran:
     | some_model.after.py |
-
