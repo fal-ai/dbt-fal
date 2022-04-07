@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Variables and functions
 
-Inside a Python script, you get access to some useful variables and functions
+Inside a Python script, you get access to some useful variables and functions.
 
 ## `context` Variable
 
@@ -38,7 +38,7 @@ context.current_model.tests
 
 ## `ref` and `source` functions
 
-There are also available some familiar functions from `dbt`
+There are also available some familiar functions from `dbt`:
 
 ```python
 # Refer to dbt models or sources by name and returns it as `pandas.DataFrame`
@@ -51,13 +51,13 @@ ref(context.current_model.name)
 
 ## `write_to_source` function
 
-It is also possible to send data back to your datawarehouse. This makes it easy to get the data, process it and upload it back into dbt territory.
+It is also possible to send data back to your data warehouse. This makes it easy to get the data, process it, and upload it back into dbt territory.
 
-All you have to do is define the target source in your schema and use it in fal.
+You have to define the target source in your schema and use it in fal.
 This operation appends to the existing source by default and should only be used targetting tables, not views.
 
 ```python
-# Upload a `pandas.DataFrame` back to the datawarehouse
+# Upload a `pandas.DataFrame` back to the data warehouse
 write_to_source(df, 'source_name', 'table_name2')
 ```
 
@@ -69,6 +69,32 @@ from sqlalchemy.types import Integer
 # Can be useful if data has `None` values
 write_to_source(df, 'source', 'table', dtype={'value': Integer()})
 ```
+
+### `write_to_source` modes of _writing_
+
+This function also accepts two modes of _writing_: `append` and `overwrite`.
+
+They are passed with the optional `mode` argument (`append` is the default value).
+
+```python
+# Overwrite the table with the dataframe data, deleting old data
+write_to_source(df, 'source_name', 'table_name', mode='overwrite')
+
+# Append more data to the table
+write_to_source(df2, 'source_name', 'table_name', mode='append') #default `mode`
+```
+
+The `append` mode
+
+1. creates the table if it does not exist yet
+2. insert data into the table
+
+The `overwrite` mode
+
+1. creates a temporal table
+2. insert data into the temporal table
+3. drops the old table if it exists
+4. renames the temporal table to the final table name
 
 ## Extract-Load pipelines
 
