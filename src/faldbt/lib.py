@@ -75,8 +75,6 @@ def _execute_sql(
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
     adapter = _get_adapter(project_dir, profiles_dir)
 
-    logger.debug("Running query\n{}", sql)
-
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
     result = None
@@ -146,21 +144,6 @@ def fetch_target(
     return result
 
 
-def rename_relation(
-    project_dir: str,
-    profiles_dir: str,
-    from_relation: BaseRelation,
-    to_relation: BaseRelation,
-):
-    adapter = _get_adapter(project_dir, profiles_dir)
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "relation:" + str(hash(str(from_relation))) + ":" + str(uuid4())
-    with adapter.connection_named(name):
-        adapter.connections.begin()
-        adapter.rename_relation(from_relation, to_relation)
-        adapter.connections.commit_if_has_connection()
-
-
 def overwrite_target(
     data: pd.DataFrame,
     project_dir: str,
@@ -180,13 +163,11 @@ def overwrite_target(
 
     results = _write_relation(data, project_dir, profiles_dir, temporal_relation, dtype)
     try:
-        drop_relation(project_dir, profiles_dir, relation)
-
-        rename_relation(project_dir, profiles_dir, temporal_relation, relation)
+        _replace_relation(project_dir, profiles_dir, relation, temporal_relation)
 
         return results
     except:
-        drop_relation(project_dir, profiles_dir, temporal_relation)
+        _drop_relation(project_dir, profiles_dir, temporal_relation)
         raise
 
 
@@ -238,14 +219,30 @@ def _write_relation(
     return result
 
 
-def drop_relation(
+def _replace_relation(
+    project_dir: str,
+    profiles_dir: str,
+    original_relation: BaseRelation,
+    new_relation: BaseRelation,
+):
+    adapter = _get_adapter(project_dir, profiles_dir)
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    name = "replace_relation:" + str(hash(str(original_relation))) + ":" + str(uuid4())
+    with adapter.connection_named(name):
+        adapter.connections.begin()
+        adapter.drop_relation(original_relation)
+        adapter.rename_relation(new_relation, original_relation)
+        adapter.connections.commit_if_has_connection()
+
+
+def _drop_relation(
     project_dir: str,
     profiles_dir: str,
     relation: BaseRelation,
 ):
     adapter = _get_adapter(project_dir, profiles_dir)
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "relation:" + str(hash(str(relation))) + ":" + str(uuid4())
+    name = "drop_relation:" + str(hash(str(relation))) + ":" + str(uuid4())
     with adapter.connection_named(name):
         adapter.connections.begin()
         adapter.drop_relation(relation)
