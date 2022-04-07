@@ -3,7 +3,7 @@ import six
 from datetime import datetime
 from dataclasses import dataclass
 from uuid import uuid4
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import dbt.version
 import dbt.semver
@@ -12,6 +12,7 @@ import dbt.adapters.factory as adapters_factory
 from dbt.contracts.connection import AdapterResponse
 from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.adapters.sql import SQLAdapter
+from dbt.adapters.base import BaseRelation
 
 from . import parse
 
@@ -105,16 +106,23 @@ def _get_target_relation(
     target: Union[ParsedModelNode, ParsedSourceDefinition],
     project_dir: str,
     profiles_dir: str,
-):
+    default: bool = False,
+) -> Optional[BaseRelation]:
     adapter = _get_adapter(project_dir, profiles_dir)
 
     name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
     with adapter.connection_named(name):
         # This ROLLBACKs so it has to be a new connection
-        relation = adapter.get_relation(
-            target.database, target.schema, target.identifier
-        )
+        relation = adapter.get_relation(target.database, target.schema, target.name)
+
+    if relation is None and default:
+        from dbt.contracts.relation import Path, RelationType
+
+        path = Path(target.database, target.schema, target.identifier)
+        # NOTE: assuming we want TABLE relation if not found
+        relation = BaseRelation(path, type=RelationType.Table)
+
     return relation
 
 
@@ -138,6 +146,50 @@ def fetch_target(
     return result
 
 
+def rename_relation(
+    project_dir: str,
+    profiles_dir: str,
+    from_relation: BaseRelation,
+    to_relation: BaseRelation,
+):
+    adapter = _get_adapter(project_dir, profiles_dir)
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    name = "relation:" + str(hash(str(from_relation))) + ":" + str(uuid4())
+    with adapter.connection_named(name):
+        adapter.connections.begin()
+        adapter.rename_relation(from_relation, to_relation)
+        adapter.connections.commit_if_has_connection()
+
+
+def overwrite_target(
+    data: pd.DataFrame,
+    project_dir: str,
+    profiles_dir: str,
+    target: Union[ParsedModelNode, ParsedSourceDefinition],
+    dtype=None,
+) -> RemoteRunResult:
+    relation: BaseRelation = _get_target_relation(  # type: ignore
+        target, project_dir, profiles_dir, default=True
+    )
+    from dbt.contracts.relation import Path, RelationType
+
+    temporal_relation = BaseRelation(
+        Path(relation.database, relation.schema, f"{relation.identifier}__f__"),
+        type=RelationType.Table,
+    )
+
+    results = _write_relation(data, project_dir, profiles_dir, temporal_relation, dtype)
+    try:
+        drop_relation(project_dir, profiles_dir, relation)
+
+        rename_relation(project_dir, profiles_dir, temporal_relation, relation)
+
+        return results
+    except:
+        drop_relation(project_dir, profiles_dir, temporal_relation)
+        raise
+
+
 def write_target(
     data: pd.DataFrame,
     project_dir: str,
@@ -145,11 +197,24 @@ def write_target(
     target: Union[ParsedModelNode, ParsedSourceDefinition],
     dtype=None,
 ) -> RemoteRunResult:
+    relation: BaseRelation = _get_target_relation(  # type: ignore
+        target, project_dir, profiles_dir, default=True
+    )
+    return _write_relation(data, project_dir, profiles_dir, relation, dtype)
+
+
+def _write_relation(
+    data: pd.DataFrame,
+    project_dir: str,
+    profiles_dir: str,
+    relation: BaseRelation,
+    dtype=None,
+) -> RemoteRunResult:
     adapter = _get_adapter(project_dir, profiles_dir)
 
-    engine = _alchemy_engine(adapter, target)
-    pddb = pdsql.SQLDatabase(engine, schema=target.schema)
-    pdtable = pdsql.SQLTable(target.name, pddb, data, index=False, dtype=dtype)
+    engine = _alchemy_engine(adapter, relation.database)
+    pddb = pdsql.SQLDatabase(engine, schema=relation.schema)
+    pdtable = pdsql.SQLTable(relation.identifier, pddb, data, index=False, dtype=dtype)
     alchemy_table: sqlalchemy.Table = pdtable.table.to_metadata(pdtable.pd_sql.meta)
 
     column_names: List[str] = list(data.columns)
@@ -173,36 +238,28 @@ def write_target(
     return result
 
 
-def drop_target(
+def drop_relation(
     project_dir: str,
     profiles_dir: str,
-    target: Union[ParsedModelNode, ParsedSourceDefinition],
+    relation: BaseRelation,
 ):
     adapter = _get_adapter(project_dir, profiles_dir)
-
-    engine = _alchemy_engine(adapter, target)
-
-    metadata = sqlalchemy.MetaData(schema=target.schema)
-    alchemy_table = sqlalchemy.Table(target.name, metadata)
-
-    drop_stmt = DropTable(alchemy_table, if_exists=True).compile(
-        bind=engine, compile_kwargs={"literal_binds": True}
-    )
-
-    _, result = _execute_sql(
-        project_dir, profiles_dir, six.text_type(drop_stmt).strip()
-    )
-
-    return result
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    name = "relation:" + str(hash(str(relation))) + ":" + str(uuid4())
+    with adapter.connection_named(name):
+        adapter.connections.begin()
+        adapter.drop_relation(relation)
+        adapter.connections.commit_if_has_connection()
 
 
 def _alchemy_engine(
     adapter: SQLAdapter,
-    target: Union[ParsedModelNode, ParsedSourceDefinition],
+    database: Optional[str],
 ):
     url_string = f"{adapter.type()}://"
     if adapter.type() == "bigquery":
-        url_string = f"bigquery://{target.database}"
+        assert database is not None
+        url_string = f"bigquery://{database}"
     if adapter.type() == "postgres":
         url_string = "postgresql://"
     # TODO: add special cases as needed
