@@ -10,8 +10,6 @@ from os.path import exists
 from pathlib import Path
 import re
 
-MODELS = ["agent_wait_time", "zendesk_ticket_data"]
-
 
 @when("the following shell command is invoked")
 def run_command_step(context):
@@ -172,23 +170,6 @@ def check_model_results(context):
 
 def _temp_dir_path(context, file):
     return os.path.join(context.temp_dir.name, file)
-
-
-def _check_output(model, is_test=False):
-    try:
-        print(f"Checking: {model}", flush=True)
-        if is_test:
-            expected = open(f"mock/fal_output/{model}_expected_test", "r").read()
-            current = open(f"mock/temp/{model}_test", "r").read()
-        else:
-            expected = open(f"mock/fal_output/{model}_expected", "r").read()
-            current = open(f"mock/temp/{model}", "r").read()
-        assert expected == current
-    except AssertionError:
-        print(f"Error for {model}:", flush=True)
-        print(f"Expected: {expected}", flush=True)
-        print(f"Got: {current}", flush=True)
-        raise Exception("Did not get expected output")
 
 
 def _get_models_from_result(dir_name, file_name):
