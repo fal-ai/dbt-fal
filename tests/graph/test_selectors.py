@@ -3,6 +3,7 @@ from fal.node_graph import NodeGraph
 import networkx as nx
 from argparse import Namespace
 from utils import assert_contains_only
+from unittest.mock import MagicMock
 
 PROJECT_NAME = "test_project"
 
@@ -55,7 +56,9 @@ def test_create_plan_before_downstream():
     parsed = Namespace(select=["scriptC.py+"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
+    execution_plan = ExecutionPlan.create_plan_from_graph(
+        parsed, graph, PROJECT_NAME, MagicMock()
+    )
 
     assert execution_plan.before_scripts == ["script.model.BEFORE.scriptC.py"]
     assert execution_plan.dbt_models == ["model.test_project.modelA"]
@@ -72,7 +75,9 @@ def test_create_plan_start_model_downstream():
     parsed = Namespace(select=["modelA+"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
+    execution_plan = ExecutionPlan.create_plan_from_graph(
+        parsed, graph, PROJECT_NAME, MagicMock()
+    )
 
     assert execution_plan.before_scripts == []
     assert execution_plan.dbt_models == ["model.test_project.modelA"]
@@ -89,7 +94,9 @@ def test_create_plan_start_model_upstream():
     parsed = Namespace(select=["+modelA"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
+    execution_plan = ExecutionPlan.create_plan_from_graph(
+        parsed, graph, PROJECT_NAME, MagicMock()
+    )
 
     assert_contains_only(
         execution_plan.before_scripts,
@@ -106,7 +113,9 @@ def test_create_plan_start_model_upstream_and_downstream():
     parsed = Namespace(select=["+modelA+"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
+    execution_plan = ExecutionPlan.create_plan_from_graph(
+        parsed, graph, PROJECT_NAME, MagicMock()
+    )
 
     assert_contains_only(
         execution_plan.before_scripts,
@@ -129,7 +138,9 @@ def test_create_plan_start_after_downstream():
     parsed = Namespace(select=["scriptA.py+"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
+    execution_plan = ExecutionPlan.create_plan_from_graph(
+        parsed, graph, PROJECT_NAME, MagicMock()
+    )
 
     assert execution_plan.before_scripts == []
     assert execution_plan.dbt_models == []
@@ -142,7 +153,9 @@ def test_create_plan_no_graph_selectors():
     parsed = Namespace(select=["modelA", "modelB"])
     graph = _create_test_graph()
 
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, graph, PROJECT_NAME)
+    execution_plan = ExecutionPlan.create_plan_from_graph(
+        parsed, graph, PROJECT_NAME, MagicMock()
+    )
 
     assert execution_plan.before_scripts == []
     assert_contains_only(

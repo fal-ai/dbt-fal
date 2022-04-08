@@ -16,7 +16,6 @@ MODELS = ["agent_wait_time", "zendesk_ticket_data"]
 @when("the following shell command is invoked")
 def run_command_step(context):
     profiles_dir = Path(context.base_dir).parent.absolute()
-    print(context)
     command = (
         context.text.replace("$baseDir", context.base_dir)
         .replace("$profilesDir", str(profiles_dir))
@@ -50,7 +49,12 @@ def persist_state(context, folder_name):
 
 @when("model named {model_name} is added")
 def add_model(context, model_name):
-    os.system(f"echo 'select 1' > {context.base_dir}/other_models/{model_name}.sql")
+    folder = os.path.join(context.base_dir, "other_models")
+    if not exists(folder):
+        os.mkdir(folder)
+    f = open(f"{context.base_dir}/other_models/{model_name}.sql", "w")
+    f.write("select 1")
+    f.close()
 
 
 @when("the following command is invoked")
@@ -88,7 +92,12 @@ def invoke_failing_fal_flow(context):
 
 @then("model named {model_name} is removed")
 def delete_model(context, model_name):
-    os.system(f"rm {context.base_dir}/other_models/{model_name}.sql")
+    os.remove(
+        reduce(
+            os.path.join,
+            [context.base_dir, "other_models", f"{model_name}.sql"],
+        )
+    )
 
 
 @then("the following scripts are ran")

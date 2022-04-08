@@ -87,3 +87,25 @@ Feature: `flow run` command
     fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select some_model
     """
     Then it throws an RuntimeError exception with message 'Error running dbt run'
+
+  Scenario: fal flow run command with selectors with complex selectors
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+    When the following command is invoked:
+    """
+    fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select tag:daily
+    """
+    Then the following models are calculated:
+    | agent_wait_time |
+
+  Scenario: fal flow run command with complex selectors and children
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+    When the following command is invoked:
+    """
+    fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select tag:daily+
+    """
+    Then the following models are calculated:
+    | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+    And the following scripts are ran:
+    | agent_wait_time.after.py |
