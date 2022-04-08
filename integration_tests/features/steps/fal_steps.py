@@ -47,14 +47,20 @@ def persist_state(context, folder_name):
     os.system(f"mv {target_path} {context.temp_dir.name}/{folder_name}")
 
 
-@when("model named {model_name} is added")
-def add_model(context, model_name):
-    folder = os.path.join(context.base_dir, "other_models")
-    if not exists(folder):
-        os.mkdir(folder)
-    f = open(f"{context.base_dir}/other_models/{model_name}.sql", "w")
-    f.write("select 1")
-    f.close()
+@when("the file {file} is created with the content")
+def add_model(context, file):
+    file = file.replace("$baseDir", context.base_dir)
+    context.added_during_tests = (
+        context.added_during_tests.append(file)
+        if hasattr(context, "added_during_tests")
+        else [file]
+    )
+    parent = os.path.dirname(file)
+    if not exists(parent):
+        os.mkdir(parent)
+    with open(file, "w") as f:
+        f.write(context.text)
+        f.close()
 
 
 @when("the following command is invoked")
@@ -88,16 +94,6 @@ def invoke_failing_fal_flow(context):
         assert False, "Command should have failed."
     except Exception as e:
         print(e)
-
-
-@then("model named {model_name} is removed")
-def delete_model(context, model_name):
-    os.remove(
-        reduce(
-            os.path.join,
-            [context.base_dir, "other_models", f"{model_name}.sql"],
-        )
-    )
 
 
 @then("the following scripts are ran")
