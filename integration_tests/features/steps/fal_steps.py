@@ -112,13 +112,16 @@ def check_script_files_dont_exist(context):
 
 
 def _check_files_exist(context, scripts: str) -> Dict[str, bool]:
-    filenames = map(lambda script: _temp_dir_path(context, script), scripts)
+    filenames = map(
+        lambda script: _temp_dir_path(context, _script_filename(script)), scripts
+    )
     existing_filenames = map(exists, filenames)
     return dict(zip(scripts, existing_filenames))
 
 
-@then("the file {filename} has the lines")
-def check_file_has_lines(context, filename):
+@then("the model {script} output file has the lines")
+def check_file_has_lines(context, script):
+    filename = _script_filename(script)
     with open(_temp_dir_path(context, filename)) as handle:
         handle_lines = [line.strip() for line in handle]
         expected_lines = context.table.headings
@@ -159,6 +162,10 @@ def check_model_results(context):
     unittest.TestCase().assertCountEqual(
         _flatten_list(calculated_results), context.table.headings
     )
+
+
+def _script_filename(script: str):
+    return script.replace(".py", ".txt")
 
 
 def _temp_dir_path(context, file):
