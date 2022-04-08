@@ -7,6 +7,6 @@ output = f"Model name: {model_name}"
 
 temp_dir = os.environ["temp_dir"]
 print(temp_dir)
-write_dir = open(reduce(os.path.join, [temp_dir, model_name + ".after.py"]), "w")
+write_dir = open(reduce(os.path.join, [temp_dir, model_name + ".after.txt"]), "w")
 write_dir.write(output)
 write_dir.close()

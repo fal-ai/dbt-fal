@@ -11,5 +11,5 @@ Feature: `write_to_source` function
       | some_model |
     And the following scripts are ran:
       | some_model.after.py |
-    And the file some_model.after.py has the lines:
+    And the model some_model.after.py output file has the lines:
       | results.some_source size: 1 | results.some_source size: 2 |
