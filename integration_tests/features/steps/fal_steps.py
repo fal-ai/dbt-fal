@@ -49,18 +49,12 @@ def persist_state(context, folder_name):
 
 @when("model named {model_name} is added")
 def add_model(context, model_name):
-<<<<<<< HEAD
     folder = os.path.join(context.base_dir, "other_models")
     if not exists(folder):
         os.mkdir(folder)
     f = open(f"{context.base_dir}/other_models/{model_name}.sql", "w")
     f.write("select 1")
     f.close()
-=======
-    file = open(f"{context.base_dir}/other_models/{model_name}.sql", "w")
-    file.write("select 1")
-    file.close()
->>>>>>> a7fe38c (Add select support for complex selectors like tags and state)
 
 
 @when("the following command is invoked")
