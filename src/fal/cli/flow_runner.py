@@ -16,23 +16,53 @@ def fal_flow_run(parsed: argparse.Namespace):
     execution_plan = ExecutionPlan.create_plan_from_graph(
         parsed, node_graph, project.name, fal_dbt
     )
+    main_graph = NodeGraph.from_fal_dbt(fal_dbt)
+    sub_graphs = [main_graph]
+    if parsed.experimental_flow:
+        sub_graphs = main_graph.generate_sub_graphs()
 
-    if len(execution_plan.before_scripts) != 0:
-        before_scripts = _id_to_fal_scripts(node_graph, execution_plan.before_scripts)
+    for (index, node_graph) in enumerate(sub_graphs):
+        if index > 0:
+            # we want to run all the nodes if we are not running the first subgraph
+            parsed.select = None
+        _run_sub_graph(index, parsed, node_graph, execution_plan, project)
+
+
+def _run_sub_graph(
+    index: int,
+    parsed: argparse.Namespace,
+    node_graph: NodeGraph,
+    plan: ExecutionPlan,
+    project: FalProject,
+):
+    nodes = list(node_graph.graph.nodes())
+
+    # we still want to seperate nodes as before/dbt/after and we can rely on the plan
+    # to do that
+    before_scripts = _id_to_fal_scripts(
+        node_graph, list(filter(lambda node: node in nodes, plan.before_scripts))
+    )
+
+    dbt_nodes = list(filter(lambda node: node in nodes, plan.dbt_models))
+
+    after_scripts = _id_to_fal_scripts(
+        node_graph, list(filter(lambda node: node in nodes, plan.after_scripts))
+    )
+
+    if len(before_scripts) != 0:
         results = run_scripts(before_scripts, project)
         raise_for_run_results_failures(before_scripts, results)
 
-    if len(execution_plan.dbt_models) != 0:
+    if len(dbt_nodes) != 0:
         output = dbt_run(
             parsed,
-            _unique_ids_to_model_names(execution_plan.dbt_models),
+            _unique_ids_to_model_names(dbt_nodes),
             project.target_path,
-            0,
+            index,
         )
         raise_for_dbt_run_errors(output)
 
-    if len(execution_plan.after_scripts) != 0:
-        after_scripts = _id_to_fal_scripts(node_graph, execution_plan.after_scripts)
+    if len(after_scripts) != 0:
         results = run_scripts(after_scripts, project)
         raise_for_run_results_failures(after_scripts, results)
 

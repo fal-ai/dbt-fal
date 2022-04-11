@@ -79,7 +79,6 @@ Feature: `flow run` command
       """
     Then it throws an RuntimeError exception with message 'Error in scripts'
 
-
   Scenario: fal flow run with an error in after
     Given the project 003_scripts_with_errors
     When the following command is invoked:

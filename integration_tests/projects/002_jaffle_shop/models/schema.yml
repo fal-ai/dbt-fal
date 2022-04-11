@@ -1,6 +1,16 @@
 version: 2
 
 models:
+  - name: middle_1
+
+  - name: after_middle
+
+  - name: middle_2
+    meta:
+      fal:
+        scripts:
+          - middle_script.py
+
   - name: customers
     description: This table has basic information about a customer, as well as some derived facts based on a customer's orders
 

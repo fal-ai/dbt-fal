@@ -7,6 +7,8 @@ from faldbt.project import DbtModel, FalDbt
 from pathlib import Path
 import networkx as nx
 import os as os
+import copy
+from functools import reduce
 
 
 @dataclass
@@ -142,3 +144,58 @@ class NodeGraph:
 
     def get_node(self, id: str) -> FalFlowNode | None:
         return self.node_lookup.get(id)
+
+    def _is_script_node(self, node_name: str) -> bool:
+        return node_name.endswith(".py")
+
+    def _is_critical_node(self, node):
+        successors = list(self.graph.successors(node))
+        if node in successors:
+            successors.remove(node)
+        has_script_pred = lambda node_name: node_name.endswith(".py")
+        has_model_pred = lambda node_name: node_name.split(".")[0] == "model"
+        if any(has_script_pred(i) for i in successors) and any(
+            has_model_pred(i) for i in successors
+        ):
+            return True
+
+    def sort_nodes(self):
+        return nx.topological_sort(self.graph)
+
+    def _group_nodes(self) -> List[List[str]]:
+        nodes = list(self.sort_nodes())
+        buckets = []
+        local_bucket = []
+        seen_nodes = []
+        for node in nodes:
+            if node not in seen_nodes:
+                local_bucket.append(node)
+                seen_nodes.append(node)
+                if self._is_critical_node(node):
+                    script_successors = list(
+                        filter(
+                            lambda successor: successor.endswith(".py"),
+                            self.graph.successors(node),
+                        )
+                    )
+                    seen_nodes.extend(script_successors)
+                    local_bucket.extend(script_successors)
+                    buckets.append(local_bucket)
+                    local_bucket = []
+        buckets.append(local_bucket)
+        return buckets
+
+    def generate_sub_graphs(self) -> List[NodeGraph]:
+        "Generates subgraphs that are seperated by `critical nodes`"
+        sub_graphs = []
+        for bucket in self._group_nodes():
+            sub_graph = self.graph.subgraph(bucket)
+            sub_graph_nodes = list(sub_graph.nodes())
+            local_lookup = dict(
+                filter(
+                    lambda node: node[0] in sub_graph_nodes, self.node_lookup.items()
+                )
+            )
+            node_graph = NodeGraph(sub_graph, local_lookup)
+            sub_graphs.append(node_graph)
+        return sub_graphs
