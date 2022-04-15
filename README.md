@@ -101,6 +101,13 @@ $ fal run
 # Your python scripts are run
 ```
 
+## 6. Alternatively run `fal flow run` 
+
+```bash
+$ fal flow run
+# both your dbt models and fal scripts are run
+```
+
 # Examples
 
 To explore what is possible with fal, take a look at the in-depth examples below. We will be adding more examples here over time:
