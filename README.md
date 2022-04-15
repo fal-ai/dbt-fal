@@ -3,7 +3,6 @@
 fal allows you to run Python scripts directly from your [dbt](https://www.getdbt.com/) project.
 
 - Sign up for the private beta of [fal Cloud](https://fal.ai#signup)
-- See our [March Roadmap](https://www.notion.so/featuresandlabels/March-Roadmap-03-22-b6d7503254d34a71a62561e4fcf9a9b5) and give us feedback.
   
 <p align="center">
   <a href="https://fal.ai#signup">
@@ -101,7 +100,7 @@ $ fal run
 # Your python scripts are run
 ```
 
-## 6. Alternatively run `fal flow run` 
+## 6. (New!) Alternatively run `fal flow run` 
 
 ```bash
 $ fal flow run
