@@ -1,15 +1,8 @@
 version: 2
 
-# HACK: until we get write_to_model
-sources:
-  - name: hack_source
-    database: test
-    schema: dbt_fal
-    tables:
-      - name: orders_forecast
-
 models:
   - name: orders_forecast
+    description: fal generated model that forecasts dollar amount and count of orders
     meta:
       fal:
         scripts:

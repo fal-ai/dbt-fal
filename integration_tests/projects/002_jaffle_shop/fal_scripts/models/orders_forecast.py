@@ -53,6 +53,4 @@ joined_forecast["ds"] = joined_forecast["ds"].map(lambda x: x.strftime("%Y-%m-%d
 
 # Generates a table with a BUNCH of columns
 # It will use the current model as target, no need to pass it
-# HACK: use write_to_source for testing for now
-write_to_source(joined_forecast, "hack_source", "orders_forecast", mode="overwrite")
-# write_to_model(joined_forecast, mode="overwrite")
+write_to_model(joined_forecast, mode="overwrite")
