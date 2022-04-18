@@ -99,10 +99,3 @@ models:
           - not_null
 
   - name: orders_daily
-
-  - name: orders_forecast
-    meta:
-      fal:
-        scripts:
-          after:
-            - models/orders_forecast.py
