@@ -26,11 +26,11 @@ from sqlalchemy.sql import Insert
 DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.get_installed_version()
 
+from dbt.contracts.graph.compiled import CompileResultNode
+
 if DBT_VCURRENT.compare(DBT_V1) >= 0:
-    from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
     from dbt.contracts.sql import ResultTable, RemoteRunResult
 else:
-    from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
     from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
 
 
@@ -101,7 +101,7 @@ def _execute_sql(
 
 
 def _get_target_relation(
-    target: Union[ParsedModelNode, ParsedSourceDefinition],
+    target: CompileResultNode,
     project_dir: str,
     profiles_dir: str,
     default: bool = False,
@@ -132,7 +132,7 @@ def execute_sql(project_dir: str, profiles_dir: str, sql: str) -> RemoteRunResul
 def fetch_target(
     project_dir: str,
     profiles_dir: str,
-    target: Union[ParsedModelNode, ParsedSourceDefinition],
+    target: CompileResultNode,
 ) -> RemoteRunResult:
     relation = _get_target_relation(target, project_dir, profiles_dir)
 
@@ -148,7 +148,7 @@ def overwrite_target(
     data: pd.DataFrame,
     project_dir: str,
     profiles_dir: str,
-    target: Union[ParsedModelNode, ParsedSourceDefinition],
+    target: CompileResultNode,
     dtype=None,
 ) -> RemoteRunResult:
     relation: BaseRelation = _get_target_relation(  # type: ignore
@@ -175,7 +175,7 @@ def write_target(
     data: pd.DataFrame,
     project_dir: str,
     profiles_dir: str,
-    target: Union[ParsedModelNode, ParsedSourceDefinition],
+    target: CompileResultNode,
     dtype=None,
 ) -> RemoteRunResult:
     relation: BaseRelation = _get_target_relation(  # type: ignore
@@ -249,10 +249,7 @@ def _drop_relation(
         adapter.connections.commit_if_has_connection()
 
 
-def _alchemy_engine(
-    adapter: SQLAdapter,
-    database: Optional[str],
-):
+def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
     url_string = f"{adapter.type()}://"
     if adapter.type() == "bigquery":
         assert database is not None
