@@ -8,6 +8,7 @@ from pathlib import Path
 from dbt.node_types import NodeType
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
+from dbt.contracts.graph.compiled import ManifestNode
 from dbt.contracts.graph.manifest import (
     Manifest,
     MaybeNonSource,
@@ -358,6 +359,23 @@ class FalDbt:
                 )
         return features
 
+    def _model(
+        self, target_model_name: str, target_package_name: Optional[str]
+    ) -> ManifestNode:
+        target_model: MaybeNonSource = self._manifest.nativeManifest.resolve_ref(
+            target_model_name, target_package_name, self.project_dir, self.project_dir
+        )
+
+        package_str = f"'{target_package_name}'." if target_package_name else ""
+        model_str = f"{package_str}'{target_model_name}'"
+        if target_model is None:
+            raise Exception(f"Could not find model {model_str}")
+
+        if isinstance(target_model, Disabled):
+            raise RuntimeError(f"Model {model_str} is disabled")
+
+        return target_model
+
     @telemetry.log_call("ref")
     def ref(
         self, target_model_name: str, target_package_name: Optional[str] = None
@@ -366,14 +384,7 @@ class FalDbt:
         Download a dbt model as a pandas.DataFrame automagically.
         """
 
-        target_model: MaybeNonSource = self._manifest.nativeManifest.resolve_ref(
-            target_model_name, target_package_name, self.project_dir, self.project_dir
-        )
-
-        if target_model is None:
-            raise Exception(
-                f"Could not find model {(target_package_name + '.') if target_package_name else ''}{target_model_name}"
-            )
+        target_model = self._model(target_model_name, target_package_name)
 
         result = lib.fetch_target(
             self.project_dir,
@@ -432,7 +443,7 @@ class FalDbt:
         mode: Literal["append", "overwrite"] = WriteToSourceModeEnum.APPEND.value,
     ):
         """
-        Write a pandas.DataFrame to a dbt source automagically.
+        Write a pandas.DataFrame to a dbt model automagically.
         """
 
         target_source = self._source(target_source_name, target_table_name)
@@ -443,10 +454,41 @@ class FalDbt:
             )
 
         elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
-            lib.overwrite_target(data, self.project_dir, self.profiles_dir, target_source, dtype)
+            lib.overwrite_target(
+                data, self.project_dir, self.profiles_dir, target_source, dtype
+            )
 
         else:
             raise Exception(f"write_to_source mode `{mode}` not supported")
+
+    @telemetry.log_call("write_to_model", ["mode"])
+    def write_to_model(
+        self,
+        data: pd.DataFrame,
+        target_model_name: str,
+        target_package_name: Optional[str] = None,
+        *,
+        dtype: Any = None,
+        mode: Literal["append", "overwrite"] = WriteToSourceModeEnum.OVERWRITE.value,
+    ):
+        """
+        Write a pandas.DataFrame to a dbt source automagically.
+        """
+
+        target_model = self._model(target_model_name, target_package_name)
+
+        if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
+            lib.write_target(
+                data, self.project_dir, self.profiles_dir, target_model, dtype
+            )
+
+        elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
+            lib.overwrite_target(
+                data, self.project_dir, self.profiles_dir, target_model, dtype
+            )
+
+        else:
+            raise Exception(f"write_to_model mode `{mode}` not supported")
 
     @telemetry.log_call("write_to_firestore")
     def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):
