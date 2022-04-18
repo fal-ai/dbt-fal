@@ -9,13 +9,7 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.fal_script import FalScript
-from faldbt.project import (
-    DbtModel,
-    FalDbt,
-    FalGeneralException,
-    FalProject,
-    normalize_path,
-)
+from faldbt.project import DbtModel, FalDbt, FalGeneralException, FalProject
 
 
 def create_fal_dbt(args: argparse.Namespace):
@@ -66,7 +60,7 @@ def fal_run(
 
     _handle_selector_warnings(selects_count, exclude_count, script_count, args)
 
-    scripts = _select_scripts(args, models, faldbt.scripts_dir)
+    scripts = _select_scripts(args, models, faldbt)
 
     if args.before:
         if not _scripts_flag(args):
@@ -112,31 +106,28 @@ def _scripts_flag(args: argparse.Namespace) -> bool:
 
 
 def _select_scripts(
-    args: argparse.Namespace, models: List[DbtModel], scripts_dir: str
+    args: argparse.Namespace, models: List[DbtModel], faldbt: FalDbt
 ) -> List[FalScript]:
     scripts = []
-    real_scripts_dir = os.path.realpath(os.path.normpath(scripts_dir))
     scripts_flag = _scripts_flag(args)
 
     for model in models:
         model_scripts = model.get_scripts(args.keyword, bool(args.before))
         for path in model_scripts:
-            normalized = normalize_path(real_scripts_dir, path)
             if not scripts_flag:
                 # run all scripts when no --script is passed
-                scripts.append(FalScript(model, normalized))
+                scripts.append(FalScript(faldbt, model, path))
             elif path in args.scripts:
                 # if --script selector is there only run selected scripts
-                scripts.append(FalScript(model, normalized))
+                scripts.append(FalScript(faldbt, model, path))
 
     return scripts
 
 
 def _run_global_scripts(project: FalProject, faldbt: FalDbt, is_before: bool):
-    real_project_dir = os.path.realpath(os.path.normpath(faldbt.project_dir))
     global_scripts = list(
         map(
-            lambda path: FalScript(None, Path(normalize_path(real_project_dir, path))),
+            lambda path: FalScript(faldbt, None, path),
             faldbt._global_script_paths["before" if is_before else "after"],
         )
     )

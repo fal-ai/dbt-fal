@@ -41,14 +41,6 @@ class FalGeneralException(Exception):
     pass
 
 
-def normalize_path(base: str, path: Union[Path, str]):
-    return Path(os.path.realpath(os.path.join(base, path)))
-
-
-def normalize_paths(base: str, paths: Union[List[Path], List[str]]) -> List[Path]:
-    return list(map(lambda path: normalize_path(base, path), paths))
-
-
 @dataclass
 class DbtTest:
     node: Any
@@ -107,11 +99,6 @@ class DbtModel:
 
     def get_depends_on_nodes(self) -> List[str]:
         return self.node.depends_on_nodes
-
-    def get_script_paths(
-        self, keyword: str, scripts_dir: str, before: bool
-    ) -> List[Path]:
-        return normalize_paths(scripts_dir, self.get_scripts(keyword, before))
 
     def get_scripts(self, keyword: str, before: bool) -> List[str]:
         # sometimes `scripts` can *be* there and still be None
@@ -269,7 +256,7 @@ class FalDbt:
             model_paths = self._config.model_paths
         elif hasattr(self._config, "source_paths"):
             model_paths = self._config.source_paths
-        normalized_model_paths = normalize_paths(project_dir, model_paths)
+        normalized_model_paths = parse.normalize_paths(project_dir, model_paths)
 
         self._global_script_paths = parse.get_global_script_configs(
             normalized_model_paths

@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 import glob
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 from dbt.config import RuntimeConfig
 from dbt.contracts.graph.manifest import Manifest
@@ -116,3 +116,14 @@ def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:
                 raise FalParseError("Error parsing the schema file " + file)
 
     return global_scripts
+
+
+def normalize_path(base: str, path: Union[Path, str]):
+    real_base = os.path.realpath(os.path.normpath(base))
+    return Path(os.path.realpath(os.path.join(real_base, path)))
+
+
+def normalize_paths(
+    base: str, paths: Union[List[Path], List[str], List[Union[Path, str]]]
+):
+    return list(map(lambda path: normalize_path(base, path), paths))
