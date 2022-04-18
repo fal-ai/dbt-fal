@@ -443,10 +443,7 @@ class FalDbt:
             )
 
         elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
-            lib.drop_target(self.project_dir, self.profiles_dir, target_source)
-            lib.write_target(
-                data, self.project_dir, self.profiles_dir, target_source, dtype
-            )
+            lib.overwrite_target(data, self.project_dir, self.profiles_dir, target_source, dtype)
 
         else:
             raise Exception(f"write_to_source mode `{mode}` not supported")
