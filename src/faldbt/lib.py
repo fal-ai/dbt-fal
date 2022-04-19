@@ -67,7 +67,9 @@ def initialize_dbt_flags(profiles_dir: str):
 def _get_adapter(project_dir: str, profiles_dir: str) -> SQLAdapter:
     config = parse.get_dbt_config(project_dir, profiles_dir)
 
-    return adapters_factory.get_adapter(config)  # type: ignore
+    adapter: SQLAdapter = adapters_factory.get_adapter(config)  # type: ignore
+
+    return adapter
 
 
 def _execute_sql(
@@ -208,6 +210,7 @@ def _write_relation(
     )
 
     _execute_sql(project_dir, profiles_dir, six.text_type(create_stmt).strip())
+    _clean_cache(project_dir, profiles_dir)
 
     insert_stmt = Insert(alchemy_table, values=row_dicts).compile(
         bind=engine, compile_kwargs={"literal_binds": True}
@@ -219,6 +222,19 @@ def _write_relation(
     return result
 
 
+# HACK: we are cleaning the cache because if we dropped or renamed a table with an empty cache,
+#       it populates it with that single table
+def _clean_cache(project_dir: str, profiles_dir: str):
+    adapter = _get_adapter(project_dir, profiles_dir)
+    config = parse.get_dbt_config(project_dir, profiles_dir)
+    manifest = parse.get_dbt_manifest(config)
+
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    name = "clean_cache:" + str(uuid4())
+    with adapter.connection_named(name):
+        adapter.set_relations_cache(manifest, True)
+
+
 def _replace_relation(
     project_dir: str,
     profiles_dir: str,
@@ -226,6 +242,7 @@ def _replace_relation(
     new_relation: BaseRelation,
 ):
     adapter = _get_adapter(project_dir, profiles_dir)
+
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "replace_relation:" + str(hash(str(original_relation))) + ":" + str(uuid4())
     with adapter.connection_named(name):
@@ -233,6 +250,7 @@ def _replace_relation(
         adapter.drop_relation(original_relation)
         adapter.rename_relation(new_relation, original_relation)
         adapter.connections.commit_if_has_connection()
+    _clean_cache(project_dir, profiles_dir)
 
 
 def _drop_relation(
@@ -241,12 +259,14 @@ def _drop_relation(
     relation: BaseRelation,
 ):
     adapter = _get_adapter(project_dir, profiles_dir)
+
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "drop_relation:" + str(hash(str(relation))) + ":" + str(uuid4())
     with adapter.connection_named(name):
         adapter.connections.begin()
         adapter.drop_relation(relation)
         adapter.connections.commit_if_has_connection()
+    _clean_cache(project_dir, profiles_dir)
 
 
 def _alchemy_engine(
