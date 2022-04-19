@@ -13,13 +13,12 @@ import re
 
 @when("the following shell command is invoked")
 def run_command_step(context):
-    profiles_dir = Path(context.base_dir).parent.absolute()
+    profiles_dir = _set_profiles_dir(context)
     command = (
         context.text.replace("$baseDir", context.base_dir)
         .replace("$profilesDir", str(profiles_dir))
         .replace("$tempDir", str(context.temp_dir.name))
     )
-    print(command)
     os.system(command)
 
 
@@ -33,7 +32,7 @@ def set_project_folder(context, project):
 @when("the data is seeded")
 def seed_data(context):
     base_path = Path(context.base_dir)
-    profiles_dir = str(base_path.parent.absolute())
+    profiles_dir = _set_profiles_dir(context)
     os.system(
         f"dbt seed --profiles-dir {profiles_dir} --project-dir {base_path} --full-refresh"
     )
@@ -63,7 +62,7 @@ def add_model(context, file):
 
 @when("the following command is invoked")
 def invoke_command(context):
-    profiles_dir = Path(context.base_dir).parent.absolute()
+    profiles_dir = _set_profiles_dir(context)
     args = context.text.replace("$baseDir", context.base_dir)
     args = args.replace("$profilesDir", str(profiles_dir))
     args = args.replace("$tempDir", str(context.temp_dir.name))
@@ -83,7 +82,7 @@ def invoke_command_error(context, type, msg):
 
 @then("the following command will fail")
 def invoke_failing_fal_flow(context):
-    profiles_dir = Path(context.base_dir).parent.absolute()
+    profiles_dir = _set_profiles_dir(context)
     args = context.text.replace("$baseDir", context.base_dir)
     args = args.replace("$profilesDir", str(profiles_dir))
     args = args.replace("$tempDir", str(context.temp_dir.name))
@@ -211,3 +210,17 @@ def _flatten_list(target_list):
         else:
             flat_list.append(element)
     return flat_list
+
+
+def _set_profiles_dir(context) -> Path:
+    available_profiles = ['bigquery', 'redshift', 'snowflake']
+    if "profile" in context.config.userdata:
+        profile = context.config.userdata['profile']
+        if profile not in available_profiles:
+            raise Exception(f"Profile {profile} is not supported")
+        path = reduce(
+            os.path.join,
+            [os.getcwd(), "profiles", context.config.userdata["profile"])
+        return Path(path).parent.absolute()
+    else:
+        return Path(context.base_dir).parent.absolute()
