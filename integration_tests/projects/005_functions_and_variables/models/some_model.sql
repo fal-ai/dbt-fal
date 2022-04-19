@@ -1,9 +1,13 @@
 {{ config(materialized='table') }}
 
-with data as (
-
-    SELECT 1::INTEGER as my_int, 'some text'::text as my_text, 0.1::NUMERIC as my_float
+WITH data AS (
+    SELECT 
+        1::integer AS my_int,
+        my_text, 
+        -- the after script value should reflect here
+        my_float
+    FROM {{ ref('other_model') }}
 )
 
-select *
-from data
+SELECT *
+FROM data
