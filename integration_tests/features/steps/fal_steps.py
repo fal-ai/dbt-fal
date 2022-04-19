@@ -121,7 +121,7 @@ def _check_files_exist(context, scripts: str) -> Dict[str, bool]:
     return dict(zip(scripts, existing_filenames))
 
 
-@then("the model {script} output file has the lines")
+@then("the script {script} output file has the lines")
 def check_file_has_lines(context, script):
     filename = _script_filename(script)
     with open(_temp_dir_path(context, filename)) as handle:

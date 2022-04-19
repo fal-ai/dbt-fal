@@ -13,4 +13,10 @@ models:
       fal:
         scripts:
           after:
-            - fal_scripts/after.py
+            - fal_scripts/write_to_source_twice.py
+  - name: other_model
+    meta:
+      fal:
+        scripts:
+          after:
+            - fal_scripts/complete_other_model.py

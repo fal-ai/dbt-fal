@@ -8,8 +8,8 @@ Feature: `write_to_source` function
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir
       """
     Then the following models are calculated:
-      | some_model |
+      | other_model | some_model |
     And the following scripts are ran:
-      | some_model.after.py |
-    And the model some_model.after.py output file has the lines:
-      | results.some_source size: 1 | results.some_source size: 2 |
+      | some_model.write_to_source_twice.py |
+    And the script some_model.write_to_source_twice.py output file has the lines:
+      | source size 1 | source size 2 |
