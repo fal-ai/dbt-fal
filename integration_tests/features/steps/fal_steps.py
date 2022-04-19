@@ -213,14 +213,14 @@ def _flatten_list(target_list):
 
 
 def _set_profiles_dir(context) -> Path:
-    available_profiles = ['bigquery', 'redshift', 'snowflake']
+    available_profiles = ["bigquery", "redshift", "snowflake"]
     if "profile" in context.config.userdata:
-        profile = context.config.userdata['profile']
+        profile = context.config.userdata["profile"]
         if profile not in available_profiles:
             raise Exception(f"Profile {profile} is not supported")
         path = reduce(
-            os.path.join,
-            [os.getcwd(), "profiles", context.config.userdata["profile"])
-        return Path(path).parent.absolute()
+            os.path.join, [os.getcwd(), "profiles", context.config.userdata["profile"]]
+        )
+        return Path(path).absolute()
     else:
         return Path(context.base_dir).parent.absolute()
