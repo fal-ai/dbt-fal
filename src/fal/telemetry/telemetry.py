@@ -289,6 +289,9 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
 
         all_props = _remove_path_from_props(all_props)
 
+        if "argv" in all_props:
+            all_props["argv"] = _clean_args_list(all_props["argv"])
+
         if is_install:
             posthog.capture(
                 distinct_id=uid, event="install_success", properties=all_props
@@ -361,4 +364,42 @@ def _remove_path_from_props(props: Dict) -> Dict:
         return val
 
     output = {key: _replace_value(value) for key, value in props.items()}
+    return output
+
+
+def _clean_args_list(args: List[str]) -> List[str]:
+    ALLOWLIST = [
+        "--disable-logging",
+        "--keyword",
+        "--project-dir",
+        "--profiles-dir",
+        "--defer",
+        "--threads",
+        "--state",
+        "--experimental-flow",
+        "-s",
+        "--select",
+        "-m",
+        "--models",
+        "--model",
+        "--exclude",
+        "--selector",
+        "--all",
+        "--scripts",
+        "--before",
+        "run",
+        "fal",
+        "-v",
+        "--version",
+        "--debug",
+        "flow",
+        "[PATH]",
+    ]
+    REDACTED = "[REDACTED]"
+    output = []
+    for item in args:
+        if item in ALLOWLIST:
+            output.append(item)
+        else:
+            output.append(REDACTED)
     return output
