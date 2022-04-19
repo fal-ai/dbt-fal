@@ -23,7 +23,7 @@ With fal, you can:
 
 - Send Slack notifications upon dbt model success or failure.
 - Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`
-- Use Python libraries such as [`sklearn`](https://scikit-learn.org/) or [`prophet`](https://facebook.github.io/prophet/) to build more complex pipelines downstream of `dbt` models.
+- Use Python libraries such as [`sklearn`](https://scikit-learn.org/) or [`prophet`](https://facebook.github.io/prophet/) to build more complex pipelines downstream of **[and in between (new!)](https://blog.fal.ai/python-or-sql-why-not-both/)** `dbt` models.
 
 and more...
 
