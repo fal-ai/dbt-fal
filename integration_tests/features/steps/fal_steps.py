@@ -218,9 +218,8 @@ def _set_profiles_dir(context) -> Path:
         profile = context.config.userdata["profile"]
         if profile not in available_profiles:
             raise Exception(f"Profile {profile} is not supported")
-        path = reduce(
-            os.path.join, [os.getcwd(), "profiles", context.config.userdata["profile"]]
-        )
+        path = reduce(os.path.join, [os.getcwd(), "profiles", profile])
         return Path(path).absolute()
     else:
+        # Use postgres profile
         return Path(context.base_dir).parent.absolute()
