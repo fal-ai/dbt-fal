@@ -12,11 +12,11 @@ output += f"my_float {df.my_float[0]}\n"
 
 write_to_source(df, "results", "some_source", mode="overwrite")
 source_size = len(source("results", "some_source"))
-output += f"results.some_source size {source_size}\n"
+output += f"source size {source_size}\n"
 
 write_to_source(df, "results", "some_source", mode="append")
 source_size = len(source("results", "some_source"))
-output += f"results.some_source size {source_size}\n"
+output += f"source size {source_size}\n"
 
 path = reduce(
     os.path.join, [os.environ["temp_dir"], model_name + ".write_to_source_twice.txt"]
