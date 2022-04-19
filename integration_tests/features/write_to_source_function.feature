@@ -2,7 +2,7 @@ Feature: `write_to_source` function
   Background: Project Setup
     Given the project 005_functions_and_variables
 
-  Scenario:
+  Scenario: Use write_to_source function with mode append and overwrite
     When the following command is invoked:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir
