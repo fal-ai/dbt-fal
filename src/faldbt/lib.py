@@ -103,10 +103,7 @@ def _execute_sql(
 
 
 def _get_target_relation(
-    target: CompileResultNode,
-    project_dir: str,
-    profiles_dir: str,
-    default: bool = False,
+    target: CompileResultNode, project_dir: str, profiles_dir: str
 ) -> Optional[BaseRelation]:
     adapter = _get_adapter(project_dir, profiles_dir)
 
@@ -115,13 +112,6 @@ def _get_target_relation(
     with adapter.connection_named(name):
         # This ROLLBACKs so it has to be a new connection
         relation = adapter.get_relation(target.database, target.schema, target.name)
-
-    if relation is None and default:
-        from dbt.contracts.relation import Path, RelationType
-
-        path = Path(target.database, target.schema, target.identifier)
-        # NOTE: assuming we want TABLE relation if not found
-        relation = BaseRelation(path, type=RelationType.Table)
 
     return relation
 
@@ -146,6 +136,21 @@ def fetch_target(
     return result
 
 
+def _build_table_from_parts(
+    database: Optional[str], schema: Optional[str], identifier: Optional[str]
+):
+    from dbt.contracts.relation import Path, RelationType
+
+    path = Path(database, schema, identifier)
+
+    # NOTE: assuming we want TABLE relation if not found
+    return BaseRelation(path, type=RelationType.Table)
+
+
+def _build_table_from_target(target: CompileResultNode):
+    return _build_table_from_parts(target.database, target.schema, target.identifier)
+
+
 def overwrite_target(
     data: pd.DataFrame,
     project_dir: str,
@@ -153,14 +158,12 @@ def overwrite_target(
     target: CompileResultNode,
     dtype=None,
 ) -> RemoteRunResult:
-    relation: BaseRelation = _get_target_relation(  # type: ignore
-        target, project_dir, profiles_dir, default=True
-    )
-    from dbt.contracts.relation import Path, RelationType
+    relation = _get_target_relation(target, project_dir, profiles_dir)
+    if relation is None:
+        relation = _build_table_from_target(target)
 
-    temporal_relation = BaseRelation(
-        Path(relation.database, relation.schema, f"{relation.identifier}__f__"),
-        type=RelationType.Table,
+    temporal_relation = _build_table_from_parts(
+        relation.database, relation.schema, f"{relation.identifier}__f__"
     )
 
     results = _write_relation(data, project_dir, profiles_dir, temporal_relation, dtype)
@@ -180,9 +183,10 @@ def write_target(
     target: CompileResultNode,
     dtype=None,
 ) -> RemoteRunResult:
-    relation: BaseRelation = _get_target_relation(  # type: ignore
-        target, project_dir, profiles_dir, default=True
-    )
+    relation = _get_target_relation(target, project_dir, profiles_dir)
+    if relation is None:
+        relation = _build_table_from_target(target)
+
     return _write_relation(data, project_dir, profiles_dir, relation, dtype)
 
 
@@ -247,7 +251,15 @@ def _replace_relation(
     name = "replace_relation:" + str(hash(str(original_relation))) + ":" + str(uuid4())
     with adapter.connection_named(name):
         adapter.connections.begin()
-        adapter.drop_relation(original_relation)
+
+        original_exists = adapter.get_relation(
+            original_relation.database,
+            original_relation.schema,
+            original_relation.identifier,
+        )
+        if original_exists:
+            adapter.drop_relation(original_relation)
+
         adapter.rename_relation(new_relation, original_relation)
         adapter.connections.commit_if_has_connection()
     _clean_cache(project_dir, profiles_dir)
