@@ -58,14 +58,19 @@ jobs:
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
+          # BigQuery
           KEYFILE: ${{ secrets.GCP_SA_KEY }}
           GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
           BQ_DATASET: ${{ secrets.BQ_DATASET }}
+          # Redshift
           RS_DB_NAME: ${{ secrets.RS_DB_NAME }}
+          # TODO: change to {{ secrets.RS_SCHEMA }} when testing with real Redshift
+          RS_SCHEMA: dbt_fal
           RS_HOST: ${{ secrets.RS_HOST }}
           RS_PASSWORD: ${{ secrets.RS_PASSWORD }}
           RS_PORT: ${{ secrets.RS_PORT }}
           RS_USER: ${{ secrets.RS_USER }}
+          # SnowFlake
           SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
           SF_USER: ${{ secrets.SF_USER }}
           SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
@@ -74,6 +79,20 @@ jobs:
           SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
           SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
         run: |
+          # Database and scheme setup for sources
+          if [[ '${{ matrix.profile }}' == "bigquery" ]]
+          then
+            export DBT_DATABASE="$GCLOUD_PROJECT" DBT_SCHEMA="$BQ_DATASET"
+          fi
+          if [[ '${{ matrix.profile }}' == "redshift" ]]
+          then
+            export DBT_DATABASE="$RS_DB_NAME" DBT_SCHEMA="$RS_SCHEMA"
+          fi
+          if [[ '${{ matrix.profile }}' == "snowflake" ]]
+          then
+            export DBT_DATABASE="$SF_DATABASE" DBT_SCHEMA="$SF_SCHEMA"
+          fi
+
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
           then
             echo $KEYFILE > $HOME/keyfile.json

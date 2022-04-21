@@ -1,13 +1,13 @@
 fal_test:
-  target: dev
+  target: integration_tests
   outputs:
-    dev:
+    integration_tests:
       type: snowflake
       account: "{{ env_var('SF_ACCOUNT') }}"
       user: "{{ env_var('SF_USER') }}"
       password: "{{ env_var('SF_PASSWORD') }}"
       role: "{{ env_var('SF_ROLE') }}"
-      database: "{{ env_var('SF_DATABASE') }}"
       warehouse: "{{ env_var('SF_WAREHOUSE') }}"
+      database: "{{ env_var('SF_DATABASE') }}"
       schema: "{{ env_var('SF_SCHEMA') }}"
       threads: 1

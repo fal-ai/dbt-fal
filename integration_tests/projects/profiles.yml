@@ -4,9 +4,9 @@ fal_test:
     dev:
       type: postgres
       host: localhost
+      port: 5432
       user: pguser
       password: pass
-      port: 5432
       dbname: test
       schema: dbt_fal
       threads: 4

@@ -1,12 +1,21 @@
 fal_test:
-  target: dev
+  target: integration_tests
   outputs:
     dev:
       type: redshift
-      dbname: "{{ env_var('RS_DB_NAME') }}"
-      host: "{{ env_var('RS_HOST') }}"
-      password: "{{ env_var('RS_PASSWORD') }}"
+      host: localhost
       port: 5432
+      user: pguser
+      password: pass
+      dbname: test
       schema: dbt_fal
       threads: 1
+    integration_tests:
+      type: redshift
+      host: "{{ env_var('RS_HOST') }}"
+      port: 5432
       user: "{{ env_var('RS_USER') }}"
+      password: "{{ env_var('RS_PASSWORD') }}"
+      dbname: "{{ env_var('RS_DB_NAME') }}"
+      schema: "{{ env_var('RS_SCHEMA') }}"
+      threads: 1
