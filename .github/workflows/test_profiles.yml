@@ -1,0 +1,65 @@
+name: Run Integration Tests
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+    paths-ignore:
+      - "examples/**"
+      - "docsite/**"
+      - "README.md"
+      - "LICENSE"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.8.x"]
+        dbt: ["1.0.4"]
+        profile: ["bigquery", "snowflake", "redshift"]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: "1.1.4"
+
+      - name: Fix jinja
+        run: |
+          pip install markupsafe==2.0.1
+
+      - name: Install fal
+        run: |
+          poetry build
+          pip install dist/fal-0.1.0-py3-none-any.whl
+
+      - name: Install dbt
+        run: |
+          pip install dbt-${{ matrix.profile }}==${{ matrix.dbt }}
+
+      - name: Start test Docker database
+        working-directory: integration_tests
+        run: |
+          if [[ '${{ matrix.profile }}' == "redshift" ]]
+          then
+            docker-compose up -d
+          fi
+
+      - name: Install test dependencies
+        working-directory: integration_tests
+        run: |
+          pip install behave
+          (test -f requirements.txt && pip install -r requirements.txt) || echo "No requirements.txt"
+
+      - name: Run dbt and fal
+        working-directory: integration_tests
+        env:
+          FAL_STATS_ENABLED: false
+        run: behave -D profile=${{ matrix.profile }}

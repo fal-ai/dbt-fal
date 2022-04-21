@@ -6,7 +6,7 @@ fal_test:
       dbname: "{{ env_var('RS_DB_NAME') }}"
       host: "{{ env_var('RS_HOST') }}"
       password: "{{ env_var('RS_PASSWORD') }}"
-      port: 5439
-      schema: tickit
+      port: 5432
+      schema: dbt_fal
       threads: 1
       user: "{{ env_var('RS_USER') }}"
