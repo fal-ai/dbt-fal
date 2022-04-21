@@ -287,7 +287,8 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
 
         all_props = {**props, **additional_props}
 
-        all_props = _remove_path_from_props(all_props)
+        if "argv" in all_props:
+            all_props["argv"] = _clean_args_list(all_props["argv"])
 
         if is_install:
             posthog.capture(
@@ -349,16 +350,40 @@ def log_call(action, args: List[str] = []):
     return _log_call
 
 
-def _remove_path_from_props(props: Dict) -> Dict:
-    PATH_STR = "[PATH]"
-
-    def _replace_value(val):
-        if isinstance(val, str):
-            if os.path.exists(val):
-                val = PATH_STR
-        elif isinstance(val, list):
-            val = list(map(_replace_value, val))
-        return val
-
-    output = {key: _replace_value(value) for key, value in props.items()}
+def _clean_args_list(args: List[str]) -> List[str]:
+    ALLOWLIST = [
+        "--disable-logging",
+        "--keyword",
+        "--project-dir",
+        "--profiles-dir",
+        "--defer",
+        "--threads",
+        "--thread",
+        "--state",
+        "--experimental-flow",
+        "-s",
+        "--select",
+        "-m",
+        "--models",
+        "--model",
+        "--exclude",
+        "--selector",
+        "--all",
+        "--scripts",
+        "--script",
+        "--before",
+        "run",
+        "fal",
+        "-v",
+        "--version",
+        "--debug",
+        "flow",
+    ]
+    REDACTED = "[REDACTED]"
+    output = []
+    for item in args:
+        if item in ALLOWLIST:
+            output.append(item)
+        else:
+            output.append(REDACTED)
     return output
