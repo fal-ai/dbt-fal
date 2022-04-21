@@ -1,13 +1,13 @@
 name: Run Integration Tests
 
 on:
-  # pull_request:
-  #   types: [assigned, opened, synchronize, reopened]
-  #   paths-ignore:
-  #     - "examples/**"
-  #     - "docsite/**"
-  #     - "README.md"
-  #     - "LICENSE"
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+    paths-ignore:
+      - "examples/**"
+      - "docsite/**"
+      - "README.md"
+      - "LICENSE"
   push:
     branches: [main]
   workflow_dispatch:
