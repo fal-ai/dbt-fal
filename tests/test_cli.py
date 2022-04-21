@@ -83,14 +83,14 @@ def test_flow_run_with_project_dir_and_select(capfd):
         )
 
         executing_re = re.compile(
-            r"Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile \--select|\--model model_with_before_scripts"
+            r"Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile \--select|\--models model_with_before_scripts"
         )
         found = executing_re.findall(captured.out)
         assert len(found) == 1
         assert "test.py" in captured.out
         assert (
             "--select model_with_before_scripts"
-            or "--model model_with_before_scripts" in captured.out
+            or "--models model_with_before_scripts" in captured.out
         )
 
 
@@ -138,7 +138,7 @@ def test_selection(capfd):
         assert "model_feature_store" in captured.out
         assert "model_empty_scripts" in captured.out
         assert (
-            "Passing multiple --select/--model flags to fal is deprecated"
+            "Passing multiple --select/--models flags to fal is deprecated"
             in captured.out
         )
 
@@ -160,7 +160,7 @@ def test_selection(capfd):
         assert "model_feature_store" in captured.out
         assert "model_empty_scripts" in captured.out
         assert (
-            "Passing multiple --select/--model flags to fal is deprecated"
+            "Passing multiple --select/--models flags to fal is deprecated"
             not in captured.out
         )
 

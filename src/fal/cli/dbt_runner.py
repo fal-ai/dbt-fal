@@ -72,7 +72,7 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> Li
 
     if len(models_list) > 0:
         if lib.DBT_VCURRENT.compare(lib.DBT_V1) < 0:
-            command_list += ["--model"] + models_list
+            command_list += ["--models"] + models_list
         else:
             command_list += ["--select"] + models_list
 

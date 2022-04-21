@@ -26,6 +26,8 @@ Feature: `run` command
       """
     Then the following scripts are ran:
       | agent_wait_time.after.py |
+    Then the following scripts are not ran:
+      | zendesk_ticket_data.after.py |
 
   Scenario: fal run works with model selection
     When the following shell command is invoked:
@@ -34,10 +36,12 @@ Feature: `run` command
       """
     And the following command is invoked:
       """
-      fal run --profiles-dir $profilesDir --project-dir $baseDir --model zendesk_ticket_data
+      fal run --profiles-dir $profilesDir --project-dir $baseDir --models zendesk_ticket_data
       """
     Then the following scripts are ran:
       | zendesk_ticket_data.after.py |
+    Then the following scripts are not ran:
+      | agent_wait_time.after.py |
 
   Scenario: fal run works with script selection
     When the following shell command is invoked:
