@@ -1,6 +1,6 @@
 import pathlib
 import sys
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch, ANY
 from pathlib import Path
 
 import pytest
@@ -305,3 +305,103 @@ def test_log_call_exception(mock_telemetry):
             ),
         ]
     )
+
+
+def test_redaction():
+    with patch("posthog.capture") as mock_capture:
+
+        def my_func():
+            return True, "test", True
+
+        telemetry._get_telemetry_info = my_func
+        telemetry.log_api(
+            "some_action",
+            additional_props={
+                "argv": [
+                    "fal",
+                    "flow",
+                    "run",
+                    "--disable-logging",
+                    "--keyword",
+                    "--project-dir",
+                    "some_dir",
+                    "--profiles-dir",
+                    "some_other_dir",
+                    "--defer",
+                    "--threads",
+                    "--state",
+                    "some_state",
+                    "--experimental-flow",
+                    "-s",
+                    "--select",
+                    "some_selector",
+                    "-m",
+                    "--models",
+                    "some_model",
+                    "--model",
+                    "another_model",
+                    "--exclude",
+                    "one_more_model",
+                    "--selector",
+                    "some_other_selector",
+                    "--all",
+                    "--scripts",
+                    "some_script",
+                    "--before",
+                    "--debug",
+                ]
+            },
+        )
+
+        mock_capture.assert_called_with(
+            distinct_id="test",
+            event="some_action",
+            properties={
+                "event_id": ANY,
+                "user_id": "test",
+                "action": "some_action",
+                "client_time": ANY,
+                "total_runtime": ANY,
+                "python_version": ANY,
+                "fal_version": ANY,
+                "dbt_version": ANY,
+                "docker_container": ANY,
+                "os": ANY,
+                "telemetry_version": ANY,
+                "$geoip_disable": True,
+                "$ip": None,
+                "argv": [
+                    "fal",
+                    "flow",
+                    "run",
+                    "--disable-logging",
+                    "--keyword",
+                    "--project-dir",
+                    "[REDACTED]",
+                    "--profiles-dir",
+                    "[REDACTED]",
+                    "--defer",
+                    "--threads",
+                    "--state",
+                    "[REDACTED]",
+                    "--experimental-flow",
+                    "-s",
+                    "--select",
+                    "[REDACTED]",
+                    "-m",
+                    "--models",
+                    "[REDACTED]",
+                    "--model",
+                    "[REDACTED]",
+                    "--exclude",
+                    "[REDACTED]",
+                    "--selector",
+                    "[REDACTED]",
+                    "--all",
+                    "--scripts",
+                    "[REDACTED]",
+                    "--before",
+                    "--debug",
+                ],
+            },
+        )
