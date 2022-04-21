@@ -7,7 +7,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
-from faldbt.project import FalProject
+from faldbt.project import FalDbt
 from fal.fal_script import FalScript
 from fal.utils import print_run_info
 
@@ -15,13 +15,13 @@ from fal.utils import print_run_info
 import traceback
 
 
-def _prepare_exec_script(script: FalScript, project: FalProject) -> bool:
+def _prepare_exec_script(script: FalScript, faldbt: FalDbt) -> bool:
     success: bool = True
 
     logger.debug("Running script {} for model {}", script.path, script.model_name)
 
     try:
-        script.exec(project._faldbt)
+        script.exec(faldbt)
     except:
         logger.error(
             "Error in script {} with model {}:\n{}",
@@ -46,11 +46,9 @@ def raise_for_run_results_failures(scripts: List[FalScript], results: List[bool]
         raise RuntimeError(f"Error in scripts {str.join(', ', failure_ids)}")
 
 
-def run_scripts(scripts: List[FalScript], project: FalProject) -> List[bool]:
+def run_scripts(scripts: List[FalScript], faldbt: FalDbt) -> List[bool]:
 
     print_run_info(scripts)
-
-    faldbt = project._faldbt
 
     # Enable local imports for fal scripts
     sys.path.append(faldbt.scripts_dir)
@@ -59,7 +57,7 @@ def run_scripts(scripts: List[FalScript], project: FalProject) -> List[bool]:
     with ThreadPool(faldbt.threads) as pool:
         pool: Pool = pool
         try:
-            scripts_with_project = map(lambda script: (script, project), scripts)
+            scripts_with_project = map(lambda script: (script, faldbt), scripts)
             results = pool.starmap(_prepare_exec_script, scripts_with_project)
 
         except KeyboardInterrupt:

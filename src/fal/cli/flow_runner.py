@@ -5,17 +5,14 @@ from fal.cli.fal_runner import create_fal_dbt
 from fal.cli.selectors import ExecutionPlan
 from fal.fal_script import FalScript
 from fal.node_graph import FalFlowNode, NodeGraph, ScriptNode
-from faldbt.project import FalProject
+from faldbt.project import FalDbt
 import argparse
 
 
 def fal_flow_run(parsed: argparse.Namespace):
     fal_dbt = create_fal_dbt(parsed)
-    project = FalProject(fal_dbt)
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    execution_plan = ExecutionPlan.create_plan_from_graph(
-        parsed, node_graph, project.name, fal_dbt
-    )
+    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
     main_graph = NodeGraph.from_fal_dbt(fal_dbt)
     sub_graphs = [main_graph]
     if parsed.experimental_flow:
@@ -25,7 +22,7 @@ def fal_flow_run(parsed: argparse.Namespace):
         if index > 0:
             # we want to run all the nodes if we are not running the first subgraph
             parsed.select = None
-        _run_sub_graph(index, parsed, node_graph, execution_plan, project)
+        _run_sub_graph(index, parsed, node_graph, execution_plan, fal_dbt)
 
 
 def _run_sub_graph(
@@ -33,7 +30,7 @@ def _run_sub_graph(
     parsed: argparse.Namespace,
     node_graph: NodeGraph,
     plan: ExecutionPlan,
-    project: FalProject,
+    fal_dbt: FalDbt,
 ):
     nodes = list(node_graph.graph.nodes())
 
@@ -50,20 +47,20 @@ def _run_sub_graph(
     )
 
     if len(before_scripts) != 0:
-        results = run_scripts(before_scripts, project)
+        results = run_scripts(before_scripts, fal_dbt)
         raise_for_run_results_failures(before_scripts, results)
 
     if len(dbt_nodes) != 0:
         output = dbt_run(
             parsed,
             _unique_ids_to_model_names(dbt_nodes),
-            project.target_path,
+            fal_dbt.target_path,
             index,
         )
         raise_for_dbt_run_errors(output)
 
     if len(after_scripts) != 0:
-        results = run_scripts(after_scripts, project)
+        results = run_scripts(after_scripts, fal_dbt)
         raise_for_run_results_failures(after_scripts, results)
 
 

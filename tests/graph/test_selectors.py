@@ -57,7 +57,7 @@ def test_create_plan_before_downstream():
     graph = _create_test_graph()
 
     execution_plan = ExecutionPlan.create_plan_from_graph(
-        parsed, graph, PROJECT_NAME, MagicMock()
+        parsed, graph, MagicMock(project_name=PROJECT_NAME)
     )
 
     assert execution_plan.before_scripts == ["script.model.BEFORE.scriptC.py"]
@@ -76,7 +76,7 @@ def test_create_plan_start_model_downstream():
     graph = _create_test_graph()
 
     execution_plan = ExecutionPlan.create_plan_from_graph(
-        parsed, graph, PROJECT_NAME, MagicMock()
+        parsed, graph, MagicMock(project_name=PROJECT_NAME)
     )
 
     assert execution_plan.before_scripts == []
@@ -95,7 +95,7 @@ def test_create_plan_start_model_upstream():
     graph = _create_test_graph()
 
     execution_plan = ExecutionPlan.create_plan_from_graph(
-        parsed, graph, PROJECT_NAME, MagicMock()
+        parsed, graph, MagicMock(project_name=PROJECT_NAME)
     )
 
     assert_contains_only(
@@ -114,7 +114,7 @@ def test_create_plan_start_model_upstream_and_downstream():
     graph = _create_test_graph()
 
     execution_plan = ExecutionPlan.create_plan_from_graph(
-        parsed, graph, PROJECT_NAME, MagicMock()
+        parsed, graph, MagicMock(project_name=PROJECT_NAME)
     )
 
     assert_contains_only(
@@ -139,7 +139,7 @@ def test_create_plan_start_after_downstream():
     graph = _create_test_graph()
 
     execution_plan = ExecutionPlan.create_plan_from_graph(
-        parsed, graph, PROJECT_NAME, MagicMock()
+        parsed, graph, MagicMock(project_name=PROJECT_NAME)
     )
 
     assert execution_plan.before_scripts == []
@@ -154,7 +154,7 @@ def test_create_plan_no_graph_selectors():
     graph = _create_test_graph()
 
     execution_plan = ExecutionPlan.create_plan_from_graph(
-        parsed, graph, PROJECT_NAME, MagicMock()
+        parsed, graph, MagicMock(project_name=PROJECT_NAME)
     )
 
     assert execution_plan.before_scripts == []

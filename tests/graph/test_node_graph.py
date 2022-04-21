@@ -8,13 +8,17 @@ from utils import assert_contains_only, create_mock_model
 
 
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
-def test_add_after_scripts(parsed_node):
+@patch("fal.FalDbt")
+def test_add_after_scripts(parsed_node, fal_dbt_class):
     graph = nx.DiGraph()
     node_lookup = {}
     modelA = create_mock_model(parsed_node, "modelA", ["scriptA.py", "scriptB.py"], [])
 
+    fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
+    fal_dbt_instance.scripts_dir = "/dir"
+    fal_dbt_instance.keyword = "fal"
     graph, node_lookup = _add_after_scripts(
-        modelA, "model.modelA", "fal", "/dir", graph, node_lookup
+        modelA, "model.modelA", fal_dbt_instance, graph, node_lookup
     )
 
     assert_contains_only(
@@ -28,15 +32,19 @@ def test_add_after_scripts(parsed_node):
 
 
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
-def test_add_before_scripts(parsed_node):
+@patch("fal.FalDbt")
+def test_add_before_scripts(parsed_node, fal_dbt_class):
     graph = nx.DiGraph()
     node_lookup = {}
     modelA = create_mock_model(
         parsed_node, "modelA", [], [], before_script_paths=["scriptA.py", "scriptB.py"]
     )
 
+    fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
+    fal_dbt_instance.scripts_dir = "/dir"
+    fal_dbt_instance.keyword = "fal"
     graph, node_lookup = _add_before_scripts(
-        modelA, "model.modelA", "fal", "/dir", graph, node_lookup
+        modelA, "model.modelA", fal_dbt_instance, graph, node_lookup
     )
 
     assert_contains_only(
@@ -53,8 +61,9 @@ def test_add_before_scripts(parsed_node):
 @patch("fal.FalDbt")
 def test_empty_fal_dbt(fal_dbt_class):
     fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
-    fal_dbt_instance.list_models = MagicMock(return_value=[])
+    fal_dbt_instance.scripts_dir = "/dir"
     fal_dbt_instance.keyword = "fal"
+    fal_dbt_instance.list_models = MagicMock(return_value=[])
     node_graph = NodeGraph.from_fal_dbt(fal_dbt_instance)
 
     assert list(node_graph.node_lookup.keys()) == []
@@ -69,8 +78,9 @@ def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
         parsed_node, "modelC", ["scriptC.py"], ["model.modelA", "model.modelB"]
     )
     fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
-    fal_dbt_instance.list_models = MagicMock(return_value=[modelA, modelB, modelC])
+    fal_dbt_instance.scripts_dir = "/dir"
     fal_dbt_instance.keyword = "fal"
+    fal_dbt_instance.list_models = MagicMock(return_value=[modelA, modelB, modelC])
 
     node_graph = NodeGraph.from_fal_dbt(fal_dbt_instance)
 

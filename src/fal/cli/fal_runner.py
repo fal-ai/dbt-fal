@@ -9,7 +9,7 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.fal_script import FalScript
-from faldbt.project import DbtModel, FalDbt, FalGeneralException, FalProject
+from faldbt.project import DbtModel, FalDbt, FalGeneralException
 
 
 def create_fal_dbt(args: argparse.Namespace):
@@ -55,8 +55,7 @@ def fal_run(
         )
 
     faldbt = create_fal_dbt(args)
-    project = FalProject(faldbt)
-    models = project.get_filtered_models(args.all, selector_flags, args.before)
+    models = _get_filtered_models(faldbt, args.all, selector_flags, args.before)
 
     _handle_selector_warnings(selects_count, exclude_count, script_count, args)
 
@@ -65,18 +64,18 @@ def fal_run(
     if args.before:
         if not _scripts_flag(args):
             # run globals when no --script is passed
-            _run_global_scripts(project, faldbt, args.before)
+            _run_global_scripts(faldbt, args.before)
 
-        results = run_scripts(scripts, project)
+        results = run_scripts(scripts, faldbt)
         raise_for_run_results_failures(scripts, results)
 
     else:
-        results = run_scripts(scripts, project)
+        results = run_scripts(scripts, faldbt)
         raise_for_run_results_failures(scripts, results)
 
         if not _scripts_flag(args):
             # run globals when no --script is passed
-            _run_global_scripts(project, faldbt, args.before)
+            _run_global_scripts(faldbt, args.before)
 
 
 def _handle_selector_warnings(selects_count, exclude_count, script_count, args):
@@ -124,7 +123,7 @@ def _select_scripts(
     return scripts
 
 
-def _run_global_scripts(project: FalProject, faldbt: FalDbt, is_before: bool):
+def _run_global_scripts(faldbt: FalDbt, is_before: bool):
     global_scripts = list(
         map(
             lambda path: FalScript(faldbt, None, path),
@@ -132,5 +131,48 @@ def _run_global_scripts(project: FalProject, faldbt: FalDbt, is_before: bool):
         )
     )
 
-    results = run_scripts(global_scripts, project)
+    results = run_scripts(global_scripts, faldbt)
     raise_for_run_results_failures(global_scripts, results)
+
+
+def _get_models_with_keyword(faldbt: FalDbt) -> List[DbtModel]:
+    return list(
+        filter(lambda model: faldbt.keyword in model.meta, faldbt.list_models())
+    )
+
+
+def _get_filtered_models(faldbt: FalDbt, all, selected, before) -> List[DbtModel]:
+    selected_ids = _models_ids(faldbt._compile_task._flattened_nodes)
+    filtered_models: List[DbtModel] = []
+
+    if (
+        not all
+        and not selected
+        and not before
+        and faldbt._run_results.nativeRunResult is None
+    ):
+        from faldbt.parse import FalParseError
+
+        raise FalParseError(
+            "Cannot define models to run without selection flags or dbt run_results artifact or --before flag"
+        )
+
+    models = _get_models_with_keyword(faldbt)
+
+    for node in models:
+        if selected:
+            if node.unique_id in selected_ids:
+                filtered_models.append(node)
+        elif before:
+            if node.get_scripts(faldbt.keyword, before) != []:
+                filtered_models.append(node)
+        elif all:
+            filtered_models.append(node)
+        elif node.status != "skipped":
+            filtered_models.append(node)
+
+    return filtered_models
+
+
+def _models_ids(models):
+    return list(map(lambda r: r.unique_id, models))
