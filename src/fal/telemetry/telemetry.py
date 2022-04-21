@@ -364,7 +364,6 @@ def _clean_args_list(args: List[str]) -> List[str]:
         "--select",
         "-m",
         "--models",
-        "--model",
         "--exclude",
         "--selector",
         "--all",
