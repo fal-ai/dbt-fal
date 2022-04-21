@@ -287,8 +287,6 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
 
         all_props = {**props, **additional_props}
 
-        all_props = _remove_path_from_props(all_props)
-
         if "argv" in all_props:
             all_props["argv"] = _clean_args_list(all_props["argv"])
 
@@ -352,21 +350,6 @@ def log_call(action, args: List[str] = []):
     return _log_call
 
 
-def _remove_path_from_props(props: Dict) -> Dict:
-    PATH_STR = "[PATH]"
-
-    def _replace_value(val):
-        if isinstance(val, str):
-            if os.path.exists(val):
-                val = PATH_STR
-        elif isinstance(val, list):
-            val = list(map(_replace_value, val))
-        return val
-
-    output = {key: _replace_value(value) for key, value in props.items()}
-    return output
-
-
 def _clean_args_list(args: List[str]) -> List[str]:
     ALLOWLIST = [
         "--disable-logging",
@@ -393,7 +376,6 @@ def _clean_args_list(args: List[str]) -> List[str]:
         "--version",
         "--debug",
         "flow",
-        "[PATH]",
     ]
     REDACTED = "[REDACTED]"
     output = []
