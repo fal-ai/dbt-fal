@@ -89,6 +89,16 @@ def is_docker():
         return False
 
 
+def is_github():
+    """Return True if inside a GitHub Action"""
+    return os.getenv("GITHUB_ACTIONS") is not None
+
+
+def is_gitlab():
+    """Return True if inside a GitLab CI"""
+    return os.getenv("GITLAB_CI") is not None
+
+
 def get_os():
     """
     The function will output the client platform
@@ -259,6 +269,8 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
 
     py_version = python_version()
     docker_container = is_docker()
+    gitlab = is_gitlab()
+    github = is_github()
     os = get_os()
     online = is_online()
 
@@ -276,6 +288,8 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
             "fal_version": fal_installed_version(),
             "dbt_version": dbt_installed_version(),
             "docker_container": docker_container,
+            "github_action": github,
+            "gitlab_ci": gitlab,
             "os": os,
             "telemetry_version": TELEMETRY_VERSION,
             "$geoip_disable": True,  # This disables GeoIp despite the backend setting

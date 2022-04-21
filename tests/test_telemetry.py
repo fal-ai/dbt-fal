@@ -364,6 +364,8 @@ def test_redaction():
                 "fal_version": ANY,
                 "dbt_version": ANY,
                 "docker_container": ANY,
+                "github_action": ANY,
+                "gitlab_ci": ANY,
                 "os": ANY,
                 "telemetry_version": ANY,
                 "$geoip_disable": True,
