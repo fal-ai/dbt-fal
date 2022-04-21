@@ -1,4 +1,4 @@
-name: Run Integration Tests
+name: Run Integration Tests on Different Profiles
 
 on:
   pull_request:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Install dbt
         run: |
-          pip install dbt-${{ matrix.profile }}==${{ matrix.dbt }}
+          pip install dbt-${{ matrix.profile }}
 
       - name: Start test Docker database
         working-directory: integration_tests
