@@ -25,7 +25,7 @@ def _cli(argv: List[str]):
         argv.count("-s")
         + argv.count("--select")
         + argv.count("-m")
-        + argv.count("--model")
+        + argv.count("--models")
     )
     exclude_count = argv.count("--exclude")
     script_count = argv.count("--script")
