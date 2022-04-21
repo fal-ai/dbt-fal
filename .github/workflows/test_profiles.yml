@@ -18,7 +18,7 @@ jobs:
       matrix:
         python: ["3.8.x"]
         dbt: ["1.0.4"]
-        profile: ["bigquery", "snowflake", "redshift"]
+        profile: ["bigquery"]
 
     steps:
       - uses: actions/checkout@v2
@@ -44,7 +44,7 @@ jobs:
         run: |
           pip install dbt-${{ matrix.profile }}
 
-      - name: Start test Docker database
+      - name: Setup environment
         working-directory: integration_tests
         run: |
           if [[ '${{ matrix.profile }}' == "redshift" ]]
@@ -52,7 +52,7 @@ jobs:
             docker-compose up -d
           fi
 
-      - name: Install test dependencies
+      - name: Install dependencies
         working-directory: integration_tests
         run: |
           pip install behave
@@ -62,4 +62,27 @@ jobs:
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
-        run: behave -D profile=${{ matrix.profile }}
+          KEYFILE: ${{ secrets.GCP_SA_KEY }}
+          GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          BQ_DATASET: ${{ secrets.BQ_DATASET }}
+          RS_DB_NAME: ${{ secrets.RS_DB_NAME }}
+          RS_HOST: ${{ secrets.RS_HOST }}
+          RS_PASSWORD: ${{ secrets.RS_PASSWORD }}
+          RS_PORT: ${{ secrets.RS_PORT }}
+          RS_USER: ${{ secrets.RS_USER }}
+          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+          SF_USER: ${{ secrets.SF_USER }}
+          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+          SF_ROLE: ${{ secrets.SF_ROLE }}
+          SF_DATABASE: ${{ secrets.SF_DATABASE }}
+          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
+          SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
+        run: |
+          if [[ '${{ matrix.profile }}' == "bigquery" ]]
+          then
+            echo $KEYFILE > $HOME/keyfile.json
+            ls -la $HOME/keyfile.json
+            export KEYFILE_DIR=$HOME
+            echo 'keyfile is ready'
+          fi
+          behave -D profile=${{ matrix.profile }}
