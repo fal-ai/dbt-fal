@@ -5,6 +5,8 @@ from functools import reduce
 
 model_name = context.current_model.name
 df: pd.DataFrame = ref(model_name)
+df.columns = df.columns.str.lower()  # Snowflake has uppercase columns
+
 
 if hasattr(df, "extra_col"):
     output = f"extra_col: {df.extra_col[0]}\n"
