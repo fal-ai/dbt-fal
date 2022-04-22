@@ -123,7 +123,7 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --threads 1
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
@@ -132,7 +132,7 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data --vars '{extra_col: true}' --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --vars 'extra_col: true' --threads 1
       """
     Then the following models are calculated:
       | zendesk_ticket_data |

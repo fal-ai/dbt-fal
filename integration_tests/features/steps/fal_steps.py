@@ -63,13 +63,15 @@ def add_model(context, file):
 @when("the following command is invoked")
 def invoke_command(context):
     profiles_dir = _set_profiles_dir(context)
-    args = context.text.replace("$baseDir", context.base_dir)
+    args: str = context.text.replace("$baseDir", context.base_dir)
     args = args.replace("$profilesDir", str(profiles_dir))
     args = args.replace("$tempDir", str(context.temp_dir.name))
 
+    import shlex
+
     context.exc = None
     try:
-        cli(args.split(" "))
+        cli(shlex.split(args))
     except Exception as e:
         context.exc = e
 
