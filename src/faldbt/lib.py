@@ -65,7 +65,7 @@ def initialize_dbt_flags(profiles_dir: str):
 
 # NOTE: Once we get an adapter, we must call `connection_for` or `connection_named` to use it
 def _get_adapter(project_dir: str, profiles_dir: str, target: str = None) -> SQLAdapter:
-    config = parse.get_dbt_config(project_dir, profiles_dir, target)
+    config = parse.get_dbt_config(project_dir, profiles_dir, target=target)
 
     adapter: SQLAdapter = adapters_factory.get_adapter(config)  # type: ignore
 
@@ -248,7 +248,7 @@ def _write_relation(
 #       it populates it with that single table
 def _clean_cache(project_dir: str, profiles_dir: str, target: str = None):
     adapter = _get_adapter(project_dir, profiles_dir, target)
-    config = parse.get_dbt_config(project_dir, profiles_dir, target)
+    config = parse.get_dbt_config(project_dir, profiles_dir, target=target)
     manifest = parse.get_dbt_manifest(config)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes

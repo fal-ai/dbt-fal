@@ -214,12 +214,28 @@ class FalDbt:
         self.keyword = keyword
         self._firestore_client = None
         self._state = state
+        self._profile_target = None
 
         self.scripts_dir = parse.get_scripts_dir(project_dir)
 
         lib.initialize_dbt_flags(profiles_dir=profiles_dir)
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir, threads)
+
+        self._run_results = DbtRunResult(
+            parse.get_dbt_results(self.project_dir, self._config)
+        )
+
+        self.method = "run"
+
+        if self._run_results.nativeRunResult:
+            self.method = self._run_results.nativeRunResult.args["rpc_method"]
+            self._profile_target = _get_custom_target(self._run_results)
+
+        if self._profile_target is not None:
+            self._config = parse.get_dbt_config(
+                project_dir, profiles_dir, threads, target=self._profile_target
+            )
 
         el_configs = parse.get_el_configs(
             profiles_dir, self._config.profile_name, self._config.target_name
@@ -237,16 +253,6 @@ class FalDbt:
         self._compile_task._runtime_initialize()
 
         self._manifest = DbtManifest(self._compile_task.manifest)
-
-        self._run_results = DbtRunResult(
-            parse.get_dbt_results(self.project_dir, self._config)
-        )
-
-        self.method = "run"
-
-        if self._run_results.nativeRunResult:
-            self.method = self._run_results.nativeRunResult.args["rpc_method"]
-            self._profile_target = _get_custom_target(self._run_results)
 
         self.models, self.tests = _map_nodes_to_models(
             self._run_results, self._manifest
@@ -384,7 +390,10 @@ class FalDbt:
         target_model = self._model(target_model_name, target_package_name)
 
         result = lib.fetch_target(
-            self.project_dir, self.profiles_dir, target_model, self._profile_target
+            self.project_dir,
+            self.profiles_dir,
+            target_model,
+            profile_target=self._profile_target,
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names, coerce_float=True
@@ -418,7 +427,10 @@ class FalDbt:
         target_source = self._source(target_source_name, target_table_name)
 
         result = lib.fetch_target(
-            self.project_dir, self.profiles_dir, target_source, self._profile_target
+            self.project_dir,
+            self.profiles_dir,
+            target_source,
+            profile_target=self._profile_target,
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
@@ -448,7 +460,7 @@ class FalDbt:
                 self.profiles_dir,
                 target_source,
                 dtype,
-                self._profile_target,
+                profile_target=self._profile_target,
             )
 
         elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
@@ -458,7 +470,7 @@ class FalDbt:
                 self.profiles_dir,
                 target_source,
                 dtype,
-                self._profile_target,
+                profile_target=self._profile_target,
             )
 
         else:
@@ -487,7 +499,7 @@ class FalDbt:
                 self.profiles_dir,
                 target_model,
                 dtype,
-                self._profile_target,
+                profile_target=self._profile_target,
             )
 
         elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
@@ -497,7 +509,7 @@ class FalDbt:
                 self.profiles_dir,
                 target_model,
                 dtype,
-                self._profile_target,
+                profile_target=self._profile_target,
             )
 
         else:

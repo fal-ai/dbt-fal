@@ -38,6 +38,16 @@ def seed_data(context):
     )
 
 
+@when("the data is seeded to {target} target in profile directory {profile_dir}")
+def seed_data_custom_target(context, target, profile_dir):
+    path = reduce(os.path.join, [context.base_dir, profile_dir])
+    profiles_path = Path(path).absolute()
+    base_path = Path(context.base_dir)
+    os.system(
+        f"dbt seed --profiles-dir {profiles_path} --project-dir {base_path} --full-refresh --target {target}"
+    )
+
+
 @when("state is stored in {folder_name}")
 def persist_state(context, folder_name):
     target_path = reduce(os.path.join, [context.temp_dir.name, "target"])
