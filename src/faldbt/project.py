@@ -193,6 +193,7 @@ class FalDbt:
     # Could we instead extend it and create a FalRunTak?
     _compile_task: CompileTask
     _state: Optional[Path]
+    _profile_target: Optional[str]
     _global_script_paths: Dict[str, List[str]]
 
     _firestore_client: Optional[FirestoreClient]
@@ -245,6 +246,7 @@ class FalDbt:
 
         if self._run_results.nativeRunResult:
             self.method = self._run_results.nativeRunResult.args["rpc_method"]
+            self._profile_target = _get_custom_target(self._run_results)
 
         self.models, self.tests = _map_nodes_to_models(
             self._run_results, self._manifest
@@ -382,9 +384,7 @@ class FalDbt:
         target_model = self._model(target_model_name, target_package_name)
 
         result = lib.fetch_target(
-            self.project_dir,
-            self.profiles_dir,
-            target_model,
+            self.project_dir, self.profiles_dir, target_model, self._profile_target
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names, coerce_float=True
@@ -418,9 +418,7 @@ class FalDbt:
         target_source = self._source(target_source_name, target_table_name)
 
         result = lib.fetch_target(
-            self.project_dir,
-            self.profiles_dir,
-            target_source,
+            self.project_dir, self.profiles_dir, target_source, self._profile_target
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
@@ -445,12 +443,22 @@ class FalDbt:
 
         if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
             lib.write_target(
-                data, self.project_dir, self.profiles_dir, target_source, dtype
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                target_source,
+                dtype,
+                self._profile_target,
             )
 
         elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
             lib.overwrite_target(
-                data, self.project_dir, self.profiles_dir, target_source, dtype
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                target_source,
+                dtype,
+                self._profile_target,
             )
 
         else:
@@ -474,12 +482,22 @@ class FalDbt:
 
         if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
             lib.write_target(
-                data, self.project_dir, self.profiles_dir, target_model, dtype
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                target_model,
+                dtype,
+                self._profile_target,
             )
 
         elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
             lib.overwrite_target(
-                data, self.project_dir, self.profiles_dir, target_model, dtype
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                target_model,
+                dtype,
+                self._profile_target,
             )
 
         else:
@@ -593,3 +611,9 @@ def _map_nodes_to_models(run_results: DbtRunResult, manifest: DbtManifest):
                 ):
                     model.set_status("tested")
     return (models, tests)
+
+
+def _get_custom_target(run_results: DbtRunResult):
+    if "target" in run_results.nativeRunResult.args:
+        return run_results.nativeRunResult.args["target"]
+    return None
