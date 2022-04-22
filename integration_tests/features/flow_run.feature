@@ -26,8 +26,8 @@ Feature: `flow run` command
   Scenario: fal flow run command with selectors
     Given the project 001_flow_run_with_selectors
     When the data is seeded
-    And the file $baseDir/models/new_model.sql is created with the content: 
-      """ 
+    And the file $baseDir/models/new_model.sql is created with the content:
+      """
       select * 1
       """
     When the following command is invoked:
@@ -43,8 +43,8 @@ Feature: `flow run` command
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --threads 1
       """
-    And the file $baseDir/models/new_model.sql is created with the content: 
-      """ 
+    And the file $baseDir/models/new_model.sql is created with the content:
+      """
       select 1
       """
     Then the following command will fail:
@@ -52,7 +52,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select state:new --threads 1
       """
     And no models are calculated
-  
+
   Scenario: fal flow run command with state selector and with state
     Given the project 001_flow_run_with_selectors
     When the following command is invoked:
@@ -60,8 +60,8 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --threads 1
       """
     And state is stored in old_state
-    And the file $baseDir/models/new_model.sql is created with the content: 
-      """ 
+    And the file $baseDir/models/new_model.sql is created with the content:
+      """
       select 1
       """
     And the following command is invoked:
@@ -69,7 +69,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select state:new --state $tempDir/old_state --threads 1
       """
     Then the following models are calculated:
-    | new_model |
+      | new_model |
 
   Scenario: fal flow run with an error in before
     Given the project 003_scripts_with_errors
@@ -103,7 +103,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select tag:daily
       """
     Then the following models are calculated:
-    | agent_wait_time |
+      | agent_wait_time |
 
   Scenario: fal flow run command with complex selectors and children
     Given the project 001_flow_run_with_selectors
@@ -113,6 +113,28 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select tag:daily+
       """
     Then the following models are calculated:
-    | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
     And the following scripts are ran:
-    | agent_wait_time.after.py |
+      | agent_wait_time.after.py |
+
+  Scenario: fal flow run command with vars
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --threads 1
+      """
+    Then the following models are calculated:
+      | zendesk_ticket_data |
+    And the script zendesk_ticket_data.check_extra.py output file has the lines:
+      | no extra_col |
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --vars 'extra_col: true' --threads 1
+      """
+    Then the following models are calculated:
+      | zendesk_ticket_data |
+    And the script zendesk_ticket_data.check_extra.py output file has the lines:
+      | extra_col: yes |

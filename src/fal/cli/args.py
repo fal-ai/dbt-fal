@@ -93,8 +93,27 @@ def _add_state_option(parser: argparse.ArgumentParser):
     parser.add_argument("--state", type=str, help="Specify dbt state artifact path")
 
 
+def _add_vars_option(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--vars",
+        type=str,
+        default="{}",
+        help="""
+        Supply variables to the project. This argument overrides variables
+        defined in your dbt_project.yml file. This argument should be a YAML
+        string, eg. '{my_variable: my_value}'
+        """,
+    )
+
+
 def _add_experimental_flow_option(parser: argparse.ArgumentParser):
-    parser.add_argument("--experimental-flow", action="store_true")
+    parser.add_argument(
+        "--experimental-flow",
+        action="store_true",
+        help="""
+        Run fal after scripts right after a dbt node has finished to before continuing with downstream nodes.
+        """,
+    )
 
 
 def _build_dbt_selectors(sub: argparse.ArgumentParser, extend: bool):
@@ -178,6 +197,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _add_threads_option(flow_run_parser)
     _add_state_option(flow_run_parser)
     _add_experimental_flow_option(flow_run_parser)
+    _add_vars_option(flow_run_parser)
 
 
 def _build_cli_parser():

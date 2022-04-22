@@ -347,6 +347,8 @@ def test_redaction():
                     "some_script",
                     "--before",
                     "--debug",
+                    "--vars",
+                    "{env: 'some'}",
                 ]
             },
         )
@@ -400,6 +402,8 @@ def test_redaction():
                     "[REDACTED]",
                     "--before",
                     "--debug",
+                    "--vars",
+                    "[REDACTED]",
                 ],
             },
         )

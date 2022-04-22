@@ -71,21 +71,28 @@ def add_model(context, file):
 @when("the following command is invoked")
 def invoke_command(context):
     profiles_dir = _set_profiles_dir(context)
-    args = context.text.replace("$baseDir", context.base_dir)
+    args: str = context.text.replace("$baseDir", context.base_dir)
     args = args.replace("$profilesDir", str(profiles_dir))
     args = args.replace("$tempDir", str(context.temp_dir.name))
 
+    import shlex
+
     context.exc = None
     try:
-        cli(args.split(" "))
-    except Exception as e:
-        context.exc = e
+        cli(shlex.split(args))
+    except Exception:
+        import sys
+
+        context.exc = sys.exc_info()
 
 
-@then("it throws an {type} exception with message '{msg}'")
-def invoke_command_error(context, type, msg):
-    assert isinstance(context.exc, eval(type)), "Invalid exception - expected " + type
-    assert msg in str(context.exc), "Invalid message - expected " + msg
+@then("it throws an {etype} exception with message '{msg}'")
+def invoke_command_error(context, etype: str, msg: str):
+    _etype, value, _tb = context.exc
+    assert isinstance(
+        value, eval(etype)
+    ), f"Invalid exception - expected {type}, got {type(value)}"
+    assert msg in str(value), "Invalid message - expected " + msg
 
 
 @then("the following command will fail")

@@ -26,9 +26,10 @@ def _cli(argv: List[str]):
         + argv.count("--select")
         + argv.count("-m")
         + argv.count("--models")
+        + argv.count("--model")
     )
     exclude_count = argv.count("--exclude")
-    script_count = argv.count("--script")
+    script_count = argv.count("--script") + argv.count("--scripts")
 
     # Disabling the dbt.logger.DelayedFileHandler manually
     # since we do not use the new dbt logging system
