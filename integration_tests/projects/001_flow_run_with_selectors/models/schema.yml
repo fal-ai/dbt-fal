@@ -8,6 +8,12 @@ sources:
       - name: john_source
 
 models:
+  - name: zendesk_ticket_data
+    meta:
+      fal:
+        scripts:
+          after:
+            - fal_scripts/check_extra.py
   - name: agent_wait_time
     description: Agent wait time series
     config:
