@@ -193,6 +193,7 @@ class FalDbt:
     # Could we instead extend it and create a FalRunTak?
     _compile_task: CompileTask
     _state: Optional[Path]
+    _profile_target: Optional[str]
     _global_script_paths: Dict[str, List[str]]
 
     _firestore_client: Optional[FirestoreClient]
@@ -213,12 +214,28 @@ class FalDbt:
         self.keyword = keyword
         self._firestore_client = None
         self._state = state
+        self._profile_target = None
 
         self.scripts_dir = parse.get_scripts_dir(project_dir)
 
         lib.initialize_dbt_flags(profiles_dir=profiles_dir)
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir, threads)
+
+        self._run_results = DbtRunResult(
+            parse.get_dbt_results(self.project_dir, self._config)
+        )
+
+        self.method = "run"
+
+        if self._run_results.nativeRunResult:
+            self.method = self._run_results.nativeRunResult.args["rpc_method"]
+            self._profile_target = _get_custom_target(self._run_results)
+
+        if self._profile_target is not None:
+            self._config = parse.get_dbt_config(
+                project_dir, profiles_dir, threads, profile_target=self._profile_target
+            )
 
         el_configs = parse.get_el_configs(
             profiles_dir, self._config.profile_name, self._config.target_name
@@ -236,15 +253,6 @@ class FalDbt:
         self._compile_task._runtime_initialize()
 
         self._manifest = DbtManifest(self._compile_task.manifest)
-
-        self._run_results = DbtRunResult(
-            parse.get_dbt_results(self.project_dir, self._config)
-        )
-
-        self.method = "run"
-
-        if self._run_results.nativeRunResult:
-            self.method = self._run_results.nativeRunResult.args["rpc_method"]
 
         self.models, self.tests = _map_nodes_to_models(
             self._run_results, self._manifest
@@ -385,6 +393,7 @@ class FalDbt:
             self.project_dir,
             self.profiles_dir,
             target_model,
+            profile_target=self._profile_target,
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names, coerce_float=True
@@ -421,6 +430,7 @@ class FalDbt:
             self.project_dir,
             self.profiles_dir,
             target_source,
+            profile_target=self._profile_target,
         )
         return pd.DataFrame.from_records(
             result.table.rows, columns=result.table.column_names
@@ -445,12 +455,22 @@ class FalDbt:
 
         if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
             lib.write_target(
-                data, self.project_dir, self.profiles_dir, target_source, dtype
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                target_source,
+                dtype,
+                profile_target=self._profile_target,
             )
 
         elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
             lib.overwrite_target(
-                data, self.project_dir, self.profiles_dir, target_source, dtype
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                target_source,
+                dtype,
+                profile_target=self._profile_target,
             )
 
         else:
@@ -474,12 +494,22 @@ class FalDbt:
 
         if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
             lib.write_target(
-                data, self.project_dir, self.profiles_dir, target_model, dtype
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                target_model,
+                dtype,
+                profile_target=self._profile_target,
             )
 
         elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
             lib.overwrite_target(
-                data, self.project_dir, self.profiles_dir, target_model, dtype
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                target_model,
+                dtype,
+                profile_target=self._profile_target,
             )
 
         else:
@@ -593,3 +623,9 @@ def _map_nodes_to_models(run_results: DbtRunResult, manifest: DbtManifest):
                 ):
                     model.set_status("tested")
     return (models, tests)
+
+
+def _get_custom_target(run_results: DbtRunResult):
+    if "target" in run_results.nativeRunResult.args:
+        return run_results.nativeRunResult.args["target"]
+    return None

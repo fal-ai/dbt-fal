@@ -64,8 +64,12 @@ def initialize_dbt_flags(profiles_dir: str):
 
 
 # NOTE: Once we get an adapter, we must call `connection_for` or `connection_named` to use it
-def _get_adapter(project_dir: str, profiles_dir: str) -> SQLAdapter:
-    config = parse.get_dbt_config(project_dir, profiles_dir)
+def _get_adapter(
+    project_dir: str, profiles_dir: str, profile_target: str = None
+) -> SQLAdapter:
+    config = parse.get_dbt_config(
+        project_dir, profiles_dir, profile_target=profile_target
+    )
 
     adapter: SQLAdapter = adapters_factory.get_adapter(config)  # type: ignore
 
@@ -73,9 +77,9 @@ def _get_adapter(project_dir: str, profiles_dir: str) -> SQLAdapter:
 
 
 def _execute_sql(
-    project_dir: str, profiles_dir: str, sql: str
+    project_dir: str, profiles_dir: str, sql: str, profile_target: str = None
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
-    adapter = _get_adapter(project_dir, profiles_dir)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
@@ -103,9 +107,12 @@ def _execute_sql(
 
 
 def _get_target_relation(
-    target: CompileResultNode, project_dir: str, profiles_dir: str
+    target: CompileResultNode,
+    project_dir: str,
+    profiles_dir: str,
+    profile_target: str = None,
 ) -> Optional[BaseRelation]:
-    adapter = _get_adapter(project_dir, profiles_dir)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
 
     name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
@@ -116,23 +123,29 @@ def _get_target_relation(
     return relation
 
 
-def execute_sql(project_dir: str, profiles_dir: str, sql: str) -> RemoteRunResult:
-    _, result = _execute_sql(project_dir, profiles_dir, sql)
+def execute_sql(
+    project_dir: str, profiles_dir: str, sql: str, profile_target: str = None
+) -> RemoteRunResult:
+    _, result = _execute_sql(
+        project_dir, profiles_dir, sql, profile_target=profile_target
+    )
     return result
 
 
 def fetch_target(
-    project_dir: str,
-    profiles_dir: str,
-    target: CompileResultNode,
+    project_dir: str, profiles_dir: str, target: CompileResultNode, profile_target=None
 ) -> RemoteRunResult:
-    relation = _get_target_relation(target, project_dir, profiles_dir)
+    relation = _get_target_relation(
+        target, project_dir, profiles_dir, profile_target=profile_target
+    )
 
     if relation is None:
         raise Exception(f"Could not get relation for '{target.unique_id}'")
 
     query = f"SELECT * FROM {relation}"
-    _, result = _execute_sql(project_dir, profiles_dir, query)
+    _, result = _execute_sql(
+        project_dir, profiles_dir, query, profile_target=profile_target
+    )
     return result
 
 
@@ -157,8 +170,11 @@ def overwrite_target(
     profiles_dir: str,
     target: CompileResultNode,
     dtype=None,
+    profile_target: str = None,
 ) -> RemoteRunResult:
-    relation = _get_target_relation(target, project_dir, profiles_dir)
+    relation = _get_target_relation(
+        target, project_dir, profiles_dir, profile_target=profile_target
+    )
     if relation is None:
         relation = _build_table_from_target(target)
 
@@ -166,13 +182,28 @@ def overwrite_target(
         relation.database, relation.schema, f"{relation.identifier}__f__"
     )
 
-    results = _write_relation(data, project_dir, profiles_dir, temporal_relation, dtype)
+    results = _write_relation(
+        data,
+        project_dir,
+        profiles_dir,
+        temporal_relation,
+        dtype,
+        profile_target=profile_target,
+    )
     try:
-        _replace_relation(project_dir, profiles_dir, relation, temporal_relation)
+        _replace_relation(
+            project_dir,
+            profiles_dir,
+            relation,
+            temporal_relation,
+            profile_target=profile_target,
+        )
 
         return results
     except:
-        _drop_relation(project_dir, profiles_dir, temporal_relation)
+        _drop_relation(
+            project_dir, profiles_dir, temporal_relation, profile_target=profile_target
+        )
         raise
 
 
@@ -182,12 +213,17 @@ def write_target(
     profiles_dir: str,
     target: CompileResultNode,
     dtype=None,
+    profile_target: str = None,
 ) -> RemoteRunResult:
-    relation = _get_target_relation(target, project_dir, profiles_dir)
+    relation = _get_target_relation(
+        target, project_dir, profiles_dir, profile_target=profile_target
+    )
     if relation is None:
         relation = _build_table_from_target(target)
 
-    return _write_relation(data, project_dir, profiles_dir, relation, dtype)
+    return _write_relation(
+        data, project_dir, profiles_dir, relation, dtype, profile_target=profile_target
+    )
 
 
 def _write_relation(
@@ -196,8 +232,9 @@ def _write_relation(
     profiles_dir: str,
     relation: BaseRelation,
     dtype=None,
+    profile_target: str = None,
 ) -> RemoteRunResult:
-    adapter = _get_adapter(project_dir, profiles_dir)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
 
     engine = _alchemy_engine(adapter, relation.database)
     pddb = pdsql.SQLDatabase(engine, schema=relation.schema)
@@ -213,24 +250,34 @@ def _write_relation(
         bind=engine, compile_kwargs={"literal_binds": True}
     )
 
-    _execute_sql(project_dir, profiles_dir, six.text_type(create_stmt).strip())
-    _clean_cache(project_dir, profiles_dir)
+    _execute_sql(
+        project_dir,
+        profiles_dir,
+        six.text_type(create_stmt).strip(),
+        profile_target=profile_target,
+    )
+    _clean_cache(project_dir, profiles_dir, profile_target=profile_target)
 
     insert_stmt = Insert(alchemy_table, values=row_dicts).compile(
         bind=engine, compile_kwargs={"literal_binds": True}
     )
 
     _, result = _execute_sql(
-        project_dir, profiles_dir, six.text_type(insert_stmt).strip()
+        project_dir,
+        profiles_dir,
+        six.text_type(insert_stmt).strip(),
+        profile_target=profile_target,
     )
     return result
 
 
 # HACK: we are cleaning the cache because if we dropped or renamed a table with an empty cache,
 #       it populates it with that single table
-def _clean_cache(project_dir: str, profiles_dir: str):
-    adapter = _get_adapter(project_dir, profiles_dir)
-    config = parse.get_dbt_config(project_dir, profiles_dir)
+def _clean_cache(project_dir: str, profiles_dir: str, profile_target: str = None):
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    config = parse.get_dbt_config(
+        project_dir, profiles_dir, profile_target=profile_target
+    )
     manifest = parse.get_dbt_manifest(config)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
@@ -244,8 +291,9 @@ def _replace_relation(
     profiles_dir: str,
     original_relation: BaseRelation,
     new_relation: BaseRelation,
+    profile_target: str = None,
 ):
-    adapter = _get_adapter(project_dir, profiles_dir)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "replace_relation:" + str(hash(str(original_relation))) + ":" + str(uuid4())
@@ -262,15 +310,16 @@ def _replace_relation(
 
         adapter.rename_relation(new_relation, original_relation)
         adapter.connections.commit_if_has_connection()
-    _clean_cache(project_dir, profiles_dir)
+    _clean_cache(project_dir, profiles_dir, profile_target=profile_target)
 
 
 def _drop_relation(
     project_dir: str,
     profiles_dir: str,
     relation: BaseRelation,
+    profile_target: str = None,
 ):
-    adapter = _get_adapter(project_dir, profiles_dir)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "drop_relation:" + str(hash(str(relation))) + ":" + str(uuid4())
@@ -278,7 +327,7 @@ def _drop_relation(
         adapter.connections.begin()
         adapter.drop_relation(relation)
         adapter.connections.commit_if_has_connection()
-    _clean_cache(project_dir, profiles_dir)
+    _clean_cache(project_dir, profiles_dir, profile_target=profile_target)
 
 
 def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):

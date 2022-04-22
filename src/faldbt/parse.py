@@ -31,13 +31,19 @@ class RuntimeArgs:
     profiles_dir: str
     threads: Optional[int]
     single_threaded: bool
+    target: str = None
 
 
 def get_dbt_config(
-    project_dir: str, profiles_dir: str, threads: Optional[int] = None
+    project_dir: str,
+    profiles_dir: str,
+    threads: Optional[int] = None,
+    profile_target=None,
 ) -> RuntimeConfig:
     # Construct a phony config
-    args = RuntimeArgs(project_dir, profiles_dir, threads, single_threaded=False)
+    args = RuntimeArgs(
+        project_dir, profiles_dir, threads, single_threaded=False, target=profile_target
+    )
     return RuntimeConfig.from_args(args)
 
 
