@@ -32,9 +32,7 @@ class ExecutionPlan:
                 self.dbt_models.append(id)
 
     @classmethod
-    def create_plan_from_graph(
-        cls, parsed, nodeGraph: NodeGraph, project_name: str, fal_dbt: FalDbt
-    ):
+    def create_plan_from_graph(cls, parsed, nodeGraph: NodeGraph, fal_dbt: FalDbt):
         """
         Creates and ExecutionPlan from the cli arguments
         """
@@ -43,9 +41,7 @@ class ExecutionPlan:
         if parsed.select:
             selector_plans = list(
                 map(
-                    lambda selector: SelectorPlan(
-                        selector, unique_ids, project_name, fal_dbt
-                    ),
+                    lambda selector: SelectorPlan(selector, unique_ids, fal_dbt),
                     list(parsed.select),
                 )
             )
@@ -61,7 +57,7 @@ class ExecutionPlan:
 
         else:
             ids_to_execute.extend(unique_ids)
-        return cls(list(set(ids_to_execute)), project_name)
+        return cls(list(set(ids_to_execute)), fal_dbt.project_name)
 
 
 def _expand_script(script_name: str, unique_ids: List[str]) -> List[str]:
@@ -96,16 +92,14 @@ class SelectorPlan:
     parents: bool
     type: SelectType
 
-    def __init__(
-        self, selector: str, unique_ids: List[str], project_name, fal_dbt: FalDbt
-    ):
+    def __init__(self, selector: str, unique_ids: List[str], fal_dbt: FalDbt):
         self.children = _needs_children(selector)
         self.parents = _need_parents(selector)
         self.type = _to_select_type(selector)
         node_name = _remove_graph_selectors(selector)
 
         if self.type == SelectType.MODEL:
-            self.unique_ids = [f"model.{project_name}.{node_name}"]
+            self.unique_ids = [f"model.{fal_dbt.project_name}.{node_name}"]
         elif self.type == SelectType.SCRIPT:
             self.unique_ids = _expand_script(node_name, unique_ids)
         elif self.type == SelectType.COMPLEX:

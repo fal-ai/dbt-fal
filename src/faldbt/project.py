@@ -41,14 +41,6 @@ class FalGeneralException(Exception):
     pass
 
 
-def normalize_path(base: str, path: Union[Path, str]):
-    return Path(os.path.realpath(os.path.join(base, path)))
-
-
-def normalize_paths(base: str, paths: Union[List[Path], List[str]]) -> List[Path]:
-    return list(map(lambda path: normalize_path(base, path), paths))
-
-
 @dataclass
 class DbtTest:
     node: Any
@@ -107,11 +99,6 @@ class DbtModel:
 
     def get_depends_on_nodes(self) -> List[str]:
         return self.node.depends_on_nodes
-
-    def get_script_paths(
-        self, keyword: str, scripts_dir: str, before: bool
-    ) -> List[Path]:
-        return normalize_paths(scripts_dir, self.get_scripts(keyword, before))
 
     def get_scripts(self, keyword: str, before: bool) -> List[str]:
         # sometimes `scripts` can *be* there and still be None
@@ -205,7 +192,7 @@ class FalDbt:
     _run_results: DbtRunResult
     # Could we instead extend it and create a FalRunTak?
     _compile_task: CompileTask
-    _state: Optional[str]
+    _state: Optional[Path]
     _global_script_paths: Dict[str, List[str]]
 
     _firestore_client: Optional[FirestoreClient]
@@ -269,7 +256,7 @@ class FalDbt:
             model_paths = self._config.model_paths
         elif hasattr(self._config, "source_paths"):
             model_paths = self._config.source_paths
-        normalized_model_paths = normalize_paths(project_dir, model_paths)
+        normalized_model_paths = parse.normalize_paths(project_dir, model_paths)
 
         self._global_script_paths = parse.get_global_script_configs(
             normalized_model_paths
@@ -280,6 +267,14 @@ class FalDbt:
     @property
     def threads(self):
         return self._config.threads
+
+    @property
+    def target_path(self):
+        return self._config.target_path
+
+    @property
+    def project_name(self):
+        return self._config.project_name
 
     @telemetry.log_call("list_sources")
     def list_sources(self):
@@ -575,70 +570,6 @@ def _firestore_dict_to_document(data: Dict, key_column: str):
         else:
             output[k] = v
     return output
-
-
-T = TypeVar("T", bound="FalProject")
-
-
-@dataclass(init=False)
-class FalProject:
-    keyword: str
-    scripts: List[Path]
-    name: str
-    target_path: str
-    name: str
-
-    _faldbt: FalDbt
-
-    def __init__(
-        self,
-        faldbt: FalDbt,
-    ):
-        self._faldbt = faldbt
-        self.keyword = faldbt.keyword
-        self.scripts = parse.get_scripts_list(faldbt.scripts_dir)
-        self.target_path = faldbt._config.target_path
-        self.name = faldbt._config.project_name
-        self.target_path = faldbt._config.target_path
-
-    def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
-        return list(
-            filter(lambda model: keyword in model.meta, self._faldbt.list_models())
-        )
-
-    def get_filtered_models(self, all, selected, before) -> List[DbtModel]:
-        selected_ids = _models_ids(self._faldbt._compile_task._flattened_nodes)
-        filtered_models: List[DbtModel] = []
-
-        if (
-            not all
-            and not selected
-            and not before
-            and self._faldbt._run_results.nativeRunResult is None
-        ):
-            raise parse.FalParseError(
-                "Cannot define models to run without selection flags or dbt run_results artifact or --before flag"
-            )
-
-        models = self._get_models_with_keyword(self.keyword)
-
-        for node in models:
-            if selected:
-                if node.unique_id in selected_ids:
-                    filtered_models.append(node)
-            elif before:
-                if node.get_scripts(self.keyword, before) != []:
-                    filtered_models.append(node)
-            elif all:
-                filtered_models.append(node)
-            elif node.status != "skipped":
-                filtered_models.append(node)
-
-        return filtered_models
-
-
-def _models_ids(models):
-    return list(map(lambda r: r.unique_id, models))
 
 
 def _map_nodes_to_models(run_results: DbtRunResult, manifest: DbtManifest):
