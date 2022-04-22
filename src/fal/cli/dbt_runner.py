@@ -70,7 +70,7 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> Li
     if args.state:
         command_list += ["--state", args.state]
 
-    if args.vars:
+    if args.vars is not None and args.vars != "{}":
         command_list += ["--vars", args.vars]
 
     if len(models_list) > 0:
