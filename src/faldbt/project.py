@@ -234,7 +234,7 @@ class FalDbt:
 
         if self._profile_target is not None:
             self._config = parse.get_dbt_config(
-                project_dir, profiles_dir, threads, target=self._profile_target
+                project_dir, profiles_dir, threads, profile_target=self._profile_target
             )
 
         el_configs = parse.get_el_configs(
