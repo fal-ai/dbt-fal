@@ -54,14 +54,3 @@ Feature: `run` command with a custom profile target
       """
     Then the following scripts are ran:
       | agent_wait_time.after.py |
-
-  Scenario: when false script is selected, nothing runs with custom target
-    When the following shell command is invoked:
-      """
-      dbt run --profiles-dir profiles/broken --project-dir $baseDir --target custom
-      """
-    And the following command is invoked:
-      """
-      fal run --profiles-dir profiles/broken --project-dir $baseDir --script fal_scripts/notthere.py
-      """
-    Then no scripts are run
