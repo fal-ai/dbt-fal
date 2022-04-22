@@ -72,14 +72,19 @@ def invoke_command(context):
     context.exc = None
     try:
         cli(shlex.split(args))
-    except Exception as e:
-        context.exc = e
+    except Exception:
+        import sys
+
+        context.exc = sys.exc_info()
 
 
-@then("it throws an {type} exception with message '{msg}'")
-def invoke_command_error(context, type, msg):
-    assert isinstance(context.exc, eval(type)), "Invalid exception - expected " + type
-    assert msg in str(context.exc), "Invalid message - expected " + msg
+@then("it throws an {etype} exception with message '{msg}'")
+def invoke_command_error(context, etype: str, msg: str):
+    _etype, value, _tb = context.exc
+    assert isinstance(
+        value, eval(etype)
+    ), f"Invalid exception - expected {type}, got {type(value)}"
+    assert msg in str(value), "Invalid message - expected " + msg
 
 
 @then("the following command will fail")
