@@ -7,9 +7,9 @@ model_name = context.current_model.name
 df: pd.DataFrame = ref(model_name)
 
 if hasattr(df, "extra_col"):
-    output = "extra_col: " + df.extra_col
+    output = f"extra_col: {df.extra_col[0]}\n"
 else:
-    output = "no extra_col"
+    output = "no extra_col\n"
 
 temp_dir = os.environ["temp_dir"]
 write_dir = open(reduce(os.path.join, [temp_dir, model_name + ".check_extra.txt"]), "w")

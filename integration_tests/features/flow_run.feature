@@ -137,4 +137,4 @@ Feature: `flow run` command
     Then the following models are calculated:
       | zendesk_ticket_data |
     And the script zendesk_ticket_data.check_extra.py output file has the lines:
-      | extra_col: 'yes' |
+      | extra_col: yes |
