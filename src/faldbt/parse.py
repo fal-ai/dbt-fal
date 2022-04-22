@@ -60,6 +60,7 @@ def get_scripts_dir(project_dir: str) -> str:
         return project_dir
 
     yml = load_yaml(path)
+    # TODO: consider `vars` flag
     scripts_dir = yml.get("vars", {}).get(FAL_SCRIPTS_PATH, project_dir)
 
     if not isinstance(scripts_dir, str):

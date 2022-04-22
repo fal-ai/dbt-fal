@@ -392,6 +392,8 @@ def _clean_args_list(args: List[str]) -> List[str]:
         "--version",
         "--debug",
         "flow",
+        "--vars",
+        "--var",
     ]
     REDACTED = "[REDACTED]"
     output = []

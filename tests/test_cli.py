@@ -116,6 +116,28 @@ def test_flow_run_with_defer(capfd):
         assert len(found) == 1
 
 
+def test_flow_run_with_vars(capfd):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+        captured = _run_fal(
+            [
+                # fmt: off
+                "flow", "run",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                "--vars", "{some: 'value'}"
+                # fmt: on
+            ],
+            capfd,
+        )
+
+        executing_re = re.compile(
+            r"Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile --vars {some: 'value'}"
+        )
+        found = executing_re.findall(captured.out)
+        assert len(found) == 1
+
+
 def test_selection(capfd):
     with tempfile.TemporaryDirectory() as tmp_dir:
         shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
