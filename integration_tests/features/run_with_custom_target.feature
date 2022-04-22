@@ -1,16 +1,16 @@
 Feature: `run` command with a custom profile target
   Background:
-    Given the project 007_run_with_custom_target
-    When the data is seeded to custom target in profile directory .
+    Given the project 000_fal_run
+    When the data is seeded to custom target in profile directory profiles/broken
 
   Scenario: fal run works with custom target
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir --target custom
+      dbt run --profiles-dir profiles/broken --project-dir $baseDir --target custom
       """
     And the following command is invoked:
       """
-      fal run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir
+      fal run --profiles-dir profiles/broken --project-dir $baseDir
       """
     Then the following scripts are ran:
       | agent_wait_time.after.py | zendesk_ticket_data.after.py |
@@ -18,11 +18,11 @@ Feature: `run` command with a custom profile target
   Scenario: fal run works after selected dbt model run with custom target
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir --models agent_wait_time --target custom
+      dbt run --profiles-dir profiles/broken --project-dir $baseDir --models agent_wait_time --target custom
       """
     And the following command is invoked:
       """
-      fal run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir
+      fal run --profiles-dir profiles/broken --project-dir $baseDir
       """
     Then the following scripts are ran:
       | agent_wait_time.after.py |
@@ -32,11 +32,11 @@ Feature: `run` command with a custom profile target
   Scenario: fal run works with model selection with custom target
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir --target custom
+      dbt run --profiles-dir profiles/broken --project-dir $baseDir --target custom
       """
     And the following command is invoked:
       """
-      fal run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir --models zendesk_ticket_data
+      fal run --profiles-dir profiles/broken --project-dir $baseDir --models zendesk_ticket_data
       """
     Then the following scripts are ran:
       | zendesk_ticket_data.after.py |
@@ -46,11 +46,11 @@ Feature: `run` command with a custom profile target
   Scenario: fal run works with script selection with custom target
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir --target custom
+      dbt run --profiles-dir profiles/broken --project-dir $baseDir --target custom
       """
     And the following command is invoked:
       """
-      fal run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir --script fal_scripts/after.py
+      fal run --profiles-dir profiles/broken --project-dir $baseDir --script fal_scripts/after.py
       """
     Then the following scripts are ran:
       | agent_wait_time.after.py |
@@ -58,10 +58,10 @@ Feature: `run` command with a custom profile target
   Scenario: when false script is selected, nothing runs with custom target
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir --target custom
+      dbt run --profiles-dir profiles/broken --project-dir $baseDir --target custom
       """
     And the following command is invoked:
       """
-      fal run --profiles-dir projects/007_run_with_custom_target --project-dir $baseDir --script fal_scripts/notthere.py
+      fal run --profiles-dir profiles/broken --project-dir $baseDir --script fal_scripts/notthere.py
       """
     Then no scripts are run
