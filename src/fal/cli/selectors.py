@@ -38,26 +38,45 @@ class ExecutionPlan:
         """
         unique_ids = list(nodeGraph.graph.nodes.keys())
         ids_to_execute = []
+
+        ids_to_exclude = []
+
         if parsed.select:
-            selector_plans = list(
-                map(
-                    lambda selector: SelectorPlan(selector, unique_ids, fal_dbt),
-                    list(parsed.select),
-                )
+            ids_to_execute = _filter_node_ids(
+                unique_ids, fal_dbt, list(parsed.select), nodeGraph
             )
-            for selector_plan in selector_plans:
-                for id in selector_plan.unique_ids:
-                    ids_to_execute.append(id)
-                    if selector_plan.children:
-                        children = list(nodeGraph.get_descendants(id))
-                        ids_to_execute.extend(children)
-                    if selector_plan.parents:
-                        parents = list(nodeGraph.get_predecessors(id))
-                        ids_to_execute.extend(parents)
 
         else:
             ids_to_execute.extend(unique_ids)
+
+        if parsed.exclude:
+            ids_to_exclude = _filter_node_ids(
+                unique_ids, fal_dbt, list(parsed.exclude), nodeGraph
+            )
+
+        ids_to_execute = [i for i in ids_to_execute if i not in ids_to_exclude]
         return cls(list(set(ids_to_execute)), fal_dbt.project_name)
+
+
+def _filter_node_ids(unique_ids, fal_dbt, selected_nodes, nodeGraph) -> List[str]:
+    """Filter list of unique_ids according to a selector."""
+    output = []
+    selector_plans = list(
+        map(
+            lambda selector: SelectorPlan(selector, unique_ids, fal_dbt),
+            selected_nodes,
+        )
+    )
+    for selector_plan in selector_plans:
+        for id in selector_plan.unique_ids:
+            output.append(id)
+            if selector_plan.children:
+                children = list(nodeGraph.get_descendants(id))
+                output.extend(children)
+            if selector_plan.parents:
+                parents = list(nodeGraph.get_predecessors(id))
+                output.extend(parents)
+    return output
 
 
 def _expand_script(script_name: str, unique_ids: List[str]) -> List[str]:
