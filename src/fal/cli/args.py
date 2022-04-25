@@ -135,14 +135,14 @@ def _build_dbt_selectors(sub: argparse.ArgumentParser, extend: bool):
         help="Specify the nodes to include.",
     )
     sub.add_argument(
+        "--selector",
+        help="The selector name to use, as defined in selectors.yml",
+    )
+    sub.add_argument(
         "--exclude",
         nargs="+",
         action="extend" if extend else None, # For backwards compatibility with past fal version
         help="Specify the nodes to exclude.",
-    )
-    sub.add_argument(
-        "--selector",
-        help="The selector name to use, as defined in selectors.yml",
     )
     # fmt: on
 
