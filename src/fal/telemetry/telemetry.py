@@ -394,6 +394,7 @@ def _clean_args_list(args: List[str]) -> List[str]:
         "flow",
         "--vars",
         "--var",
+        "--target",
     ]
     REDACTED = "[REDACTED]"
     output = []

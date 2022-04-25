@@ -303,6 +303,28 @@ def test_flag_level(capfd):
         assert "model_with_scripts" in captured.out
 
 
+def test_target(capfd):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+
+        captured = _run_fal(
+            [
+                "run",
+                "--project-dir",
+                tmp_dir,
+                "--profiles-dir",
+                profiles_dir,
+                "--target",
+                "false_target",
+            ],
+            capfd,
+        )
+        assert (
+            "The profile 'fal_test' does not have a target named 'false_target'"
+            in captured.out
+        )
+
+
 def _run_fal(args, capfd):
     # Given fal arguments, runs fal and returns capfd output
     try:
