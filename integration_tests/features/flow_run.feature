@@ -178,3 +178,20 @@ Feature: `flow run` command
       | agent_wait_time.after.py |
     And the following scripts are ran:
       | agent_wait_time.before.py |
+
+Scenario: fal flow run with target
+  Given the project 001_flow_run_with_selectors
+    When the data is seeded
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data+ --threads 1
+      """
+    Then it throws an RuntimeError exception with message 'Error running dbt run'
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data+ --threads 1 --target custom
+      """
+    Then the following models are calculated:
+      | zendesk_ticket_data |
