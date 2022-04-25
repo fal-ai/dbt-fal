@@ -49,7 +49,7 @@ class ExecutionPlan:
         else:
             ids_to_execute.extend(unique_ids)
 
-        if parsed.exclude:
+        if "exclude" in parsed and parsed.exclude:
             ids_to_exclude = _filter_node_ids(
                 unique_ids, fal_dbt, list(parsed.exclude), nodeGraph
             )

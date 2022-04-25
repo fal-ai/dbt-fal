@@ -141,7 +141,7 @@ def _build_dbt_selectors(sub: argparse.ArgumentParser, extend: bool):
     sub.add_argument(
         "--exclude",
         nargs="+",
-        action="extend",
+        action="extend" if extend else None, # For backwards compatibility with past fal version
         help="Specify the nodes to exclude.",
     )
     # fmt: on

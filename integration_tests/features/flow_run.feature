@@ -138,3 +138,30 @@ Feature: `flow run` command
       | zendesk_ticket_data |
     And the script zendesk_ticket_data.check_extra.py output file has the lines:
       | extra_col: yes |
+
+  Scenario: fal flow run command with exclude arg
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude before.py
+      """
+    Then the following models are calculated:
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | zendesk_ticket_data |
+    And the following scripts are ran:
+      | agent_wait_time.after.py |
+    And the following scripts are not ran:
+      | agent_wait_time.before.py |
+
+  Scenario: fal flow run command with exclude arg with children
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude before.py+
+      """
+    Then the following models are calculated:
+      | zendesk_ticket_data |
+    And the following scripts are not ran:
+      | agent_wait_time.before.py | agent_wait_time.after.py |
+
