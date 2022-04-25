@@ -208,13 +208,14 @@ class FalDbt:
         keyword: str = "fal",
         threads: Optional[int] = None,
         state: Optional[Path] = None,
+        profile_target: Optional[str] = None,
     ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
         self.keyword = keyword
         self._firestore_client = None
         self._state = state
-        self._profile_target = None
+        self._profile_target = profile_target
 
         self.scripts_dir = parse.get_scripts_dir(project_dir)
 
@@ -230,7 +231,8 @@ class FalDbt:
 
         if self._run_results.nativeRunResult:
             self.method = self._run_results.nativeRunResult.args["rpc_method"]
-            self._profile_target = _get_custom_target(self._run_results)
+            if self._profile_target is None:
+                self._profile_target = _get_custom_target(self._run_results)
 
         if self._profile_target is not None:
             self._config = parse.get_dbt_config(

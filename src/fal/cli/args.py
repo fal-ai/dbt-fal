@@ -169,6 +169,12 @@ def _build_run_parser(sub: argparse.ArgumentParser):
     )
 
     sub.add_argument(
+        "--target",
+        type=str,
+        help="Specify a custom target from profiles.yml",
+    )
+
+    sub.add_argument(
         "--before",
         action="store_true",
         help="Run scripts specified in model `before` tag",

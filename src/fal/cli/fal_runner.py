@@ -37,6 +37,7 @@ def create_fal_dbt(args: argparse.Namespace):
         args.keyword,
         args.threads,
         real_state,
+        args.target,
     )
 
 
