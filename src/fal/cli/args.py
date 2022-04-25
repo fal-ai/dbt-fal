@@ -89,6 +89,15 @@ def _add_threads_option(parser: argparse.ArgumentParser):
     )
 
 
+def _add_target_option(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--target",
+        type=str,
+        default=None,
+        help="Specify a custom target from profiles.yml",
+    )
+
+
 def _add_state_option(parser: argparse.ArgumentParser):
     parser.add_argument("--state", type=str, help="Specify dbt state artifact path")
 
@@ -155,6 +164,7 @@ def _build_run_parser(sub: argparse.ArgumentParser):
     _build_dbt_common_options(sub)
     _build_fal_common_options(sub)
     _add_threads_option(sub)
+    _add_target_option(sub)
 
     sub.add_argument(
         "--all",
@@ -166,12 +176,6 @@ def _build_run_parser(sub: argparse.ArgumentParser):
         nargs="+",
         action="extend", # For backwards compatibility with past fal version
         help="Specify scripts to run, overrides schema.yml",
-    )
-
-    sub.add_argument(
-        "--target",
-        type=str,
-        help="Specify a custom target from profiles.yml",
     )
 
     sub.add_argument(
@@ -204,6 +208,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _add_state_option(flow_run_parser)
     _add_experimental_flow_option(flow_run_parser)
     _add_vars_option(flow_run_parser)
+    _add_target_option(flow_run_parser)
 
 
 def _build_cli_parser():
