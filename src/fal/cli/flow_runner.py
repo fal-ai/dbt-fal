@@ -7,6 +7,7 @@ from fal.fal_script import FalScript
 from fal.node_graph import FalFlowNode, NodeGraph, ScriptNode
 from faldbt.project import FalDbt
 import argparse
+from fal.telemetry import telemetry
 
 
 def fal_flow_run(parsed: argparse.Namespace):
@@ -17,6 +18,9 @@ def fal_flow_run(parsed: argparse.Namespace):
     sub_graphs = [main_graph]
     if parsed.experimental_flow:
         sub_graphs = main_graph.generate_sub_graphs()
+
+    if len(sub_graphs) > 1:
+        telemetry.log_call("fal_in_the_middle")
 
     for (index, node_graph) in enumerate(sub_graphs):
         if index > 0:
