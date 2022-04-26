@@ -96,7 +96,7 @@ write_to_source(df, 'source', 'table', dtype={'value': Integer()})
 ### `write_to_model` function
 
 You have to define the target source in your schema and use it in fal.
-This operation appends to the existing source by default and should only be used targetting tables, not views.
+This operation overwrites the existing relation by default and should only be used targetting tables, not views.
 
 When used in `fal flow run` or `fal run`, it does not accept a model name, since it only operates on the associated model
 
@@ -148,10 +148,10 @@ They are passed with the optional `mode` argument (`append` is the default value
 ```python
 # Overwrite the table with the dataframe data, deleting old data
 write_to_source(df, 'source_name', 'table_name', mode='overwrite')
-write_to_model(df, 'model_name', mode='overwrite')
+write_to_model(df, 'model_name', mode='overwrite') # default mode
 
-# Append more data to the table: default `mode`
-write_to_source(df2, 'source_name', 'table_name', mode='append')
+# Append more data to the existing table (create it if it does not exist)
+write_to_source(df2, 'source_name', 'table_name', mode='append') # default mode
 write_to_model(df2, 'model_name', mode='apend')
 ```
 
