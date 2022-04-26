@@ -1,5 +1,6 @@
 import pandas as pd
 from functools import reduce
+from sqlalchemy import Integer
 import os
 
 model_name = context.current_model.name
@@ -11,7 +12,9 @@ df: pd.DataFrame = ref(model_name)
 output += f"my_float {df.my_float[0]}\n"
 
 df.my_float = 2.3
-write_to_model(df, mode="overwrite")
+write_to_model(df, mode="append")
+write_to_model(df, dtype={"my_float": Integer})
+write_to_model(df)  # default: overwrite
 
 df: pd.DataFrame = ref(model_name)
 output += f"my_float {df.my_float[0]}\n"

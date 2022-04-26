@@ -501,7 +501,6 @@ class FalDbt:
             target_package_name = target_1
             target_model_name = target_2
 
-
         target_model = self._model(target_model_name, target_package_name)
 
         if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
