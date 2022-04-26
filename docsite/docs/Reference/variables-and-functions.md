@@ -93,9 +93,42 @@ from sqlalchemy.types import Integer
 write_to_source(df, 'source', 'table', dtype={'value': Integer()})
 ```
 
+### `write_to_model` function
+
+You have to define the target source in your schema and use it in fal.
+This operation appends to the existing source by default and should only be used targetting tables, not views.
+
+When used in `fal flow run` or `fal run`, it does not accept a model name, since it only operates on the associated model
+
+```python
+df = faldbt.ref('stg_zendesk_ticket_data')
+df = add_zendesk_metrics_info(df)
+
+# Upload a `pandas.DataFrame` back to the data warehouse
+write_to_model(df)
+```
+
+But when importing fal as a Python module, you have to specify the model:
+
+```python
+from fal import FalDbt
+faldbt = FalDbt(profiles_dir="~/.dbt", project_dir="../my_project")
+
+faldbt.list_models()
+# {
+#   'zendesk_ticket_metrics': <RunStatus.Success: 'success'>,
+#   'stg_zendesk_ticket_data': <RunStatus.Success: 'success'>,
+# }
+
+df = faldbt.ref('stg_zendesk_ticket_data')
+df = add_zendesk_metrics_info(df)
+
+faldbt.write_to_model(df, 'zendesk_ticket_metrics')
+```
+
 ### Specifying column types
 
-The function `write_to_source` also accepts an optional `dtype` argument, which lets you specify datatypes of columns.
+The functions `write_to_source` and `write_to_model` also accept an optional `dtype` argument, which lets you specify datatypes of columns.
 It works the same way as `dtype` argument for [`DataFrame.to_sql` function.](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html)
 
 ```python
@@ -115,9 +148,11 @@ They are passed with the optional `mode` argument (`append` is the default value
 ```python
 # Overwrite the table with the dataframe data, deleting old data
 write_to_source(df, 'source_name', 'table_name', mode='overwrite')
+write_to_model(df, 'model_name', mode='overwrite')
 
 # Append more data to the table: default `mode`
 write_to_source(df2, 'source_name', 'table_name', mode='append')
+write_to_model(df2, 'model_name', mode='apend')
 ```
 
 #### The `append` mode
