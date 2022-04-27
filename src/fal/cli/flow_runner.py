@@ -1,4 +1,12 @@
-from typing import List, cast, Union
+from functools import reduce
+from genericpath import isfile
+from glob import glob
+import json
+import os
+from pathlib import Path
+from typing import Dict, List, cast, Union
+from xxlimited import Str
+
 from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.cli.dbt_runner import dbt_run, raise_for_dbt_run_errors
 from fal.cli.fal_runner import create_fal_dbt
@@ -8,6 +16,9 @@ from fal.node_graph import FalFlowNode, NodeGraph, ScriptNode
 from faldbt.project import FalDbt
 import argparse
 from fal.telemetry import telemetry
+
+RUN_RESULTS_FILE_NAME = "run_results.json"
+RUN_RESULTS_KEY = "results"
 
 
 def fal_flow_run(parsed: argparse.Namespace):
@@ -27,6 +38,10 @@ def fal_flow_run(parsed: argparse.Namespace):
             # we want to run all the nodes if we are not running the first subgraph
             parsed.select = None
         _run_sub_graph(index, parsed, node_graph, execution_plan, fal_dbt)
+
+    # each dbt run creates its own run_results file, here we are combining
+    # these files in a single run_results file that fits dbt file format
+    _combine_fal_run_results(fal_dbt.target_path)
 
 
 def _run_sub_graph(
@@ -87,11 +102,53 @@ def _flow_node_to_fal_scripts(list: List[Union[FalFlowNode, None]]) -> List[FalS
     return new_list
 
 
-def _unique_id_to_model_name(unique_id: str):
+def _unique_id_to_model_name(unique_id: str) -> str:
     split_list = unique_id.split(".")
     # if its a unique id 'model.fal_test.model_with_before_scripts'
     return split_list[len(split_list) - 1]
 
 
-def _unique_ids_to_model_names(id_list: List[str]):
+def _unique_ids_to_model_names(id_list: List[str]) -> List[str]:
     return list(map(lambda id: _unique_id_to_model_name(id), id_list))
+
+
+def _combine_fal_run_results(target_path):
+    result_files = _get_fal_run_results(target_path)
+    all_results = reduce(
+        lambda all, next: all.extend(_get_result_array(next)) or all,
+        result_files,
+        [],
+    )
+
+    last_run_result = _get_all_result_content(result_files[-1])
+    last_run_result[RUN_RESULTS_KEY] = all_results
+    run_result_file = os.path.join(target_path, RUN_RESULTS_FILE_NAME)
+
+    # remove all run_results_*.json files for the next fal flow run
+    _remove_all(result_files)
+
+    with open(run_result_file, "w") as file:
+        file.write(json.dumps(last_run_result))
+        file.close()
+
+
+def _remove_all(files: List[str]):
+    for file in files:
+        os.remove(file) if os.path.exists(file) else None
+
+
+def _get_all_result_content(file) -> Dict:
+    with open(file) as content:
+        return json.load(content)
+
+
+def _get_result_array(file) -> List[dict]:
+    return _get_all_result_content(file)[RUN_RESULTS_KEY]
+
+
+def _get_fal_run_results(target_path) -> List[str]:
+    run_result_files = map(
+        lambda x: str(x),
+        filter(lambda p: p.is_file(), Path(target_path).glob("fal_results_*.json")),
+    )
+    return list(run_result_files)

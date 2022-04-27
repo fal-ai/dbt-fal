@@ -10,7 +10,7 @@ from fal.fal_script import FalScript
 from faldbt.project import DbtModel, FalDbt, FalGeneralException
 
 
-def create_fal_dbt(args: argparse.Namespace):
+def create_fal_dbt(args: argparse.Namespace) -> FalDbt:
     real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
     real_profiles_dir = None
     env_profiles_dir = os.getenv("DBT_PROFILES_DIR")
