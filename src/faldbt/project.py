@@ -382,12 +382,15 @@ class FalDbt:
         return target_model
 
     @telemetry.log_call("ref")
-    def ref(
-        self, target_model_name: str, target_package_name: Optional[str] = None
-    ) -> pd.DataFrame:
+    def ref(self, target_1: str, target_2: Optional[str] = None, /) -> pd.DataFrame:
         """
         Download a dbt model as a pandas.DataFrame automagically.
         """
+        target_model_name = target_1
+        target_package_name = None
+        if target_2 is not None:
+            target_package_name = target_1
+            target_model_name = target_2
 
         target_model = self._model(target_model_name, target_package_name)
 
@@ -482,8 +485,9 @@ class FalDbt:
     def write_to_model(
         self,
         data: pd.DataFrame,
-        target_model_name: str,
-        target_package_name: Optional[str] = None,
+        target_1: str,
+        target_2: Optional[str] = None,
+        /,
         *,
         dtype: Any = None,
         mode: Literal["append", "overwrite"] = WriteToSourceModeEnum.OVERWRITE.value,
@@ -491,6 +495,11 @@ class FalDbt:
         """
         Write a pandas.DataFrame to a dbt source automagically.
         """
+        target_model_name = target_1
+        target_package_name = None
+        if target_2 is not None:
+            target_package_name = target_1
+            target_model_name = target_2
 
         target_model = self._model(target_model_name, target_package_name)
 
