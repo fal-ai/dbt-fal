@@ -38,7 +38,7 @@ context.current_model.tests
 
 ## Read functions
 
-There are also available some familiar functions from `dbt` to read the models and sources as a Pandas DataFrame.
+The familiar dbt functions `ref` and `source` are available in fal scripts to read the models and sources as a Pandas DataFrame.
 
 ### `ref` function
 
@@ -95,20 +95,32 @@ write_to_source(df, 'source', 'table', dtype={'value': Integer()})
 
 ### `write_to_model` function
 
-You have to define the target source in your schema and use it in fal.
 This operation overwrites the existing relation by default and should only be used targetting tables, not views.
 
-When used in `fal flow run` or `fal run`, it does not accept a model name, since it only operates on the associated model
+For example, if the script is attached to the `zendesk_ticket_metrics` model,
 
+```yaml
+models:
+  - name: zendesk_ticket_metrics
+    meta:
+      fal:
+        scripts:
+          after:
+            - from_zendesk_ticket_data.py
+```
+
+
+`write_to_model` will write to the `zendesk_ticket_metrics` table:
 ```python
 df = faldbt.ref('stg_zendesk_ticket_data')
 df = add_zendesk_metrics_info(df)
 
 # Upload a `pandas.DataFrame` back to the data warehouse
-write_to_model(df)
+write_to_model(df) # writes to attached model: zendesk_ticket_metrics
 ```
+> NOTE: When used with `fal flow run` or `fal run` commands, `write_to_model` does not accept a model name, it only operates on the associated model.
 
-But when importing fal as a Python module, you have to specify the model:
+But when importing `fal` as a Python module, you have to specify the model to write to:
 
 ```python
 from fal import FalDbt
@@ -123,7 +135,7 @@ faldbt.list_models()
 df = faldbt.ref('stg_zendesk_ticket_data')
 df = add_zendesk_metrics_info(df)
 
-faldbt.write_to_model(df, 'zendesk_ticket_metrics')
+faldbt.write_to_model(df, 'zendesk_ticket_metrics') # specify the model
 ```
 
 ### Specifying column types
