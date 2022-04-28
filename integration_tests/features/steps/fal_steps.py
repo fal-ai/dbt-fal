@@ -143,7 +143,7 @@ def check_file_has_lines(context, script):
         handle_lines = [line.strip() for line in handle]
         expected_lines = context.table.headings
         for line in expected_lines:
-            assert line in handle_lines
+            assert line in handle_lines, f"{line} not in {handle_lines}"
 
 
 @then("no models are calculated")
@@ -155,7 +155,9 @@ def no_models_are_run(context):
     for fal_result_path in fal_results_paths:
         if exists(fal_result_path):
             data = json.load(open(fal_result_path))
-            assert len(data["results"]) == 0
+            assert (
+                len(data["results"]) == 0
+            ), f"results length is {len(data['results'])}"
         else:
             assert True
 
