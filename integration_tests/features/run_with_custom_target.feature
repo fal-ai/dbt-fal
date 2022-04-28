@@ -1,3 +1,4 @@
+@broken_profile
 Feature: `run` command with a custom profile target
   Background:
     Given the project 000_fal_run

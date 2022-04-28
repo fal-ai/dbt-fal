@@ -100,4 +100,4 @@ jobs:
             export KEYFILE_DIR=$HOME
             echo 'keyfile is ready'
           fi
-          behave -D profile=${{ matrix.profile }}
+          behave --tags=-broken_profile -D profile=${{ matrix.profile }}

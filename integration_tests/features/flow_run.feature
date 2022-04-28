@@ -179,8 +179,9 @@ Feature: `flow run` command
     And the following scripts are ran:
       | agent_wait_time.before.py |
 
-Scenario: fal flow run with target
-  Given the project 001_flow_run_with_selectors
+  @broken_profile
+  Scenario: fal flow run with target
+    Given the project 001_flow_run_with_selectors
     When the data is seeded
 
     When the following command is invoked:
