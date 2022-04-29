@@ -36,24 +36,47 @@ context.current_model.tests
 #= [CurrentTest(name='not_null', modelname='historical_ozone_levels, column='ds', status='Pass')]
 ```
 
-## `ref` and `source` functions
+## Read functions
 
-There are also available some familiar functions from `dbt`:
+The familiar dbt functions `ref` and `source` are available in fal scripts to read the models and sources as a Pandas DataFrame.
 
-```python
-# Refer to dbt models or sources by name and returns it as `pandas.DataFrame`
-ref('model_name')
-source('source_name', 'table_name')
+### `ref` function
 
-# You can use it to get the running model data
-ref(context.current_model.name)
+The `ref` function is used exactly like in `dbt`. You reference a model in your project
+
+```py
+# returned as `pandas.DataFrame`
+df = ref('model_name')
 ```
 
-## `write_to_source` function
+Or a package model (package first, model second)
+
+```py
+df = ref('dbt_artifacts', 'dim_dbt__exposures')
+```
+
+You can use the context variable to the the associated model data
+
+```py
+df = ref(context.current_model.name)
+```
+
+### `source` function
+
+The `source` function is used exactly like in `dbt`. You reference a source in your project
+
+```py
+# returned as `pandas.DataFrame`
+df = source('source_name', 'table_name')
+```
+
+## Write functions
 
 It is also possible to send data back to your data warehouse. This makes it easy to get the data, process it, and upload it back into dbt territory.
 
-You have to define the target source in your schema and use it in fal.
+### `write_to_source` function
+
+You first have to define the source in your schema.
 This operation appends to the existing source by default and should only be used targetting tables, not views.
 
 ```python
@@ -70,26 +93,86 @@ from sqlalchemy.types import Integer
 write_to_source(df, 'source', 'table', dtype={'value': Integer()})
 ```
 
-### `write_to_source` modes of _writing_
+### `write_to_model` function
 
-This function also accepts two modes of _writing_: `append` and `overwrite`.
+This operation overwrites the existing relation by default and should only be used targetting tables, not views.
+
+For example, if the script is attached to the `zendesk_ticket_metrics` model,
+
+```yaml
+models:
+  - name: zendesk_ticket_metrics
+    meta:
+      fal:
+        scripts:
+          after:
+            - from_zendesk_ticket_data.py
+```
+
+
+`write_to_model` will write to the `zendesk_ticket_metrics` table:
+```python
+df = faldbt.ref('stg_zendesk_ticket_data')
+df = add_zendesk_metrics_info(df)
+
+# Upload a `pandas.DataFrame` back to the data warehouse
+write_to_model(df) # writes to attached model: zendesk_ticket_metrics
+```
+> NOTE: When used with `fal flow run` or `fal run` commands, `write_to_model` does not accept a model name, it only operates on the associated model.
+
+But when importing `fal` as a Python module, you have to specify the model to write to:
+
+```python
+from fal import FalDbt
+faldbt = FalDbt(profiles_dir="~/.dbt", project_dir="../my_project")
+
+faldbt.list_models()
+# {
+#   'zendesk_ticket_metrics': <RunStatus.Success: 'success'>,
+#   'stg_zendesk_ticket_data': <RunStatus.Success: 'success'>,
+# }
+
+df = faldbt.ref('stg_zendesk_ticket_data')
+df = add_zendesk_metrics_info(df)
+
+faldbt.write_to_model(df, 'zendesk_ticket_metrics') # specify the model
+```
+
+### Specifying column types
+
+The functions `write_to_source` and `write_to_model` also accept an optional `dtype` argument, which lets you specify datatypes of columns.
+It works the same way as `dtype` argument for [`DataFrame.to_sql` function.](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html)
+
+```python
+from sqlalchemy.types import Integer
+
+# Upload but specifically create the `my_col` column with type `integer`
+# Can be specially useful if data has `None` values
+write_to_source(df, 'source', 'table', dtype={'my_col': Integer()})
+```
+
+### Modes of _writing_
+
+These functions accepts two modes of _writing_: `append` and `overwrite`.
 
 They are passed with the optional `mode` argument (`append` is the default value).
 
 ```python
 # Overwrite the table with the dataframe data, deleting old data
 write_to_source(df, 'source_name', 'table_name', mode='overwrite')
+write_to_model(df, 'model_name', mode='overwrite') # default mode
 
-# Append more data to the table
-write_to_source(df2, 'source_name', 'table_name', mode='append') #default `mode`
+# Append more data to the existing table (create it if it does not exist)
+write_to_source(df2, 'source_name', 'table_name', mode='append') # default mode
+write_to_model(df2, 'model_name', mode='apend')
 ```
 
-The `append` mode
+#### The `append` mode
 
 1. creates the table if it does not exist yet
 2. insert data into the table
 
-The `overwrite` mode
+#### The `overwrite` mode
 
 1. creates a temporal table
 2. insert data into the temporal table
@@ -158,4 +241,5 @@ models:
           - another_python_script.py # will be run sequentially
 ```
 
-Use the `fal` and `scripts` keys underneath the `meta` config to let fal CLI know where to look for the Python scripts. You can pass a list of scripts as shown above to run one or more scripts as a post-hook operation after a dbt run.
+Use the `fal` and `scripts` keys underneath the `meta` config to let fal CLI know where to look for the Python scripts.
+You can pass a list of scripts as shown above to run one or more scripts as a post-hook operation after a dbt run.
