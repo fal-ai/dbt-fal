@@ -1,11 +1,15 @@
 from typing import List
 import sys
-from dbt.logger import log_manager, GLOBAL_LOGGER as logger
+
 from fal.cli.flow_runner import fal_flow_run
 from faldbt.lib import DBT_VCURRENT, DBT_V1
 from .args import parse_args
 from .fal_runner import fal_run
 from fal.telemetry import telemetry
+
+import dbt.exceptions
+import dbt.ui
+from dbt.logger import log_manager, GLOBAL_LOGGER as logger
 
 
 def cli(argv: List[str] = sys.argv):
@@ -19,17 +23,6 @@ def cli(argv: List[str] = sys.argv):
 @telemetry.log_call("cli")
 def _cli(argv: List[str]):
     parsed = parse_args(argv[1:])
-
-    # TODO: remove `action="extend"` to match exactly what dbt does
-    selects_count = (
-        argv.count("-s")
-        + argv.count("--select")
-        + argv.count("-m")
-        + argv.count("--models")
-        + argv.count("--model")
-    )
-    exclude_count = argv.count("--exclude")
-    script_count = argv.count("--script") + argv.count("--scripts")
 
     # Disabling the dbt.logger.DelayedFileHandler manually
     # since we do not use the new dbt logging system
@@ -51,9 +44,44 @@ def _cli(argv: List[str]):
                 fal_flow_run(parsed)
 
         elif parsed.command == "run":
-            fal_run(
-                parsed,
-                selects_count=selects_count,
-                exclude_count=exclude_count,
-                script_count=script_count,
-            )
+            # TODO: remove in fal version 0.4.0
+            _warn_selectors_multiple_times(argv, parsed)
+
+            fal_run(parsed)
+
+
+# TODO: remove in fal version 0.4.0
+def _warn_selectors_multiple_times(argv, parsed):
+    """
+    Warn about past behaviour of flags no longer supported
+    """
+    selects_count = (
+        argv.count("-s")
+        + argv.count("--select")
+        + argv.count("-m")
+        + argv.count("--models")
+        + argv.count("--model")
+    )
+
+    if selects_count > 1:
+        dbt.exceptions.warn_or_error(
+            "Passing multiple --select/--models flags to fal is no longer supported.\n"
+            + f"Please use model selection like dbt. Use: --select {' '.join(parsed.select)}",
+            log_fmt=dbt.ui.warning_tag("{}"),
+        )
+
+    exclude_count = argv.count("--exclude")
+    if exclude_count > 1:
+        dbt.exceptions.warn_or_error(
+            "Passing multiple --exclude flags to fal is no longer supported.\n"
+            + f"Please use model exclusion like dbt. Use: --exclude {' '.join(parsed.exclude)}",
+            log_fmt=dbt.ui.warning_tag("{}"),
+        )
+
+    script_count = argv.count("--script") + argv.count("--scripts")
+    if script_count > 1:
+        dbt.exceptions.warn_or_error(
+            "Passing multiple --script flags to fal is no longer supported.\n"
+            + f"Please dbt-style selection. Use: --script {' '.join(parsed.scripts)}",
+            log_fmt=dbt.ui.warning_tag("{}"),
+        )

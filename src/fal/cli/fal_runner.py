@@ -3,8 +3,6 @@ from pathlib import Path
 from typing import Any, Dict, List
 import os
 
-import dbt.exceptions
-import dbt.ui
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 
 from fal.run_scripts import raise_for_run_results_failures, run_scripts
@@ -41,12 +39,7 @@ def create_fal_dbt(args: argparse.Namespace):
     )
 
 
-def fal_run(
-    args: argparse.Namespace,
-    selects_count=0,  # TODO: remove `action="extend"` to match exactly what dbt does
-    exclude_count=0,
-    script_count=0,
-):
+def fal_run(args: argparse.Namespace):
     "Runs the fal run command in a subprocess"
 
     selector_flags = args.select or args.exclude or args.selector
@@ -57,8 +50,6 @@ def fal_run(
 
     faldbt = create_fal_dbt(args)
     models = _get_filtered_models(faldbt, args.all, selector_flags, args.before)
-
-    _handle_selector_warnings(selects_count, exclude_count, script_count, args)
 
     scripts = _select_scripts(args, models, faldbt)
 
@@ -77,28 +68,6 @@ def fal_run(
         if not _scripts_flag(args):
             # run globals when no --script is passed
             _run_global_scripts(faldbt, args.before)
-
-
-def _handle_selector_warnings(selects_count, exclude_count, script_count, args):
-    # TODO: remove `action="extend"` to match exactly what dbt does
-    if selects_count > 1:
-        dbt.exceptions.warn_or_error(
-            "Passing multiple --select/--models flags to fal is deprecated and will be removed in fal version 0.4.\n"
-            + f"Please use model selection like dbt. Use: --select {' '.join(args.select)}",
-            log_fmt=dbt.ui.warning_tag("{}"),
-        )
-    if exclude_count > 1:
-        dbt.exceptions.warn_or_error(
-            "Passing multiple --select/--models flags to fal is deprecated and will be removed in fal version 0.4.\n"
-            + f"Please use model exclusion like dbt. Use: --exclude {' '.join(args.exclude)}",
-            log_fmt=dbt.ui.warning_tag("{}"),
-        )
-    if script_count > 1:
-        dbt.exceptions.warn_or_error(
-            "Passing multiple --select/--models flags to fal is deprecated and will be removed in fal version 0.4.\n"
-            + f"Please use: --script {' '.join(args.scripts)}",
-            log_fmt=dbt.ui.warning_tag("{}"),
-        )
 
 
 def _scripts_flag(args: argparse.Namespace) -> bool:

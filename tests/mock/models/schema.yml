@@ -15,6 +15,12 @@ models:
         scripts:
           - fal_scripts/test.py
 
+  - name: other_with_scripts
+    meta:
+      fal:
+        scripts:
+          - fal_scripts/test.py
+
   - name: model_with_before_scripts
     meta:
       fal:
