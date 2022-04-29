@@ -147,18 +147,15 @@ def test_selection(capfd):
                 "run",
                 "--project-dir", tmp_dir,
                 "--profiles-dir", profiles_dir,
-                "--select", "model_feature_store", "model_empty_scripts",
-                "--select", "model_with_scripts",
-                # included (extend)
+                "--select", "model_with_scripts", # not included (overwritten)
+                "--select", "other_with_scripts",
                 # fmt: on
             ],
             capfd,
         )
 
-        assert "model_with_scripts" in captured.out
-        assert "model_no_fal" not in captured.out
-        assert "model_feature_store" in captured.out
-        assert "model_empty_scripts" in captured.out
+        assert "model_with_scripts" not in captured.out
+        assert "other_with_scripts" in captured.out
         assert (
             "Passing multiple --select/--models flags to fal is deprecated"
             in captured.out
@@ -181,10 +178,6 @@ def test_selection(capfd):
         assert "model_no_fal" not in captured.out
         assert "model_feature_store" in captured.out
         assert "model_empty_scripts" in captured.out
-        assert (
-            "Passing multiple --select/--models flags to fal is deprecated"
-            not in captured.out
-        )
 
         captured = _run_fal(
             [
