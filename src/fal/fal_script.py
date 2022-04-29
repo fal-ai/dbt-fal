@@ -94,11 +94,8 @@ class FalScript:
 
             if self.model is not None:
                 # Hard-wire the model
-                def write_to_model(tg1, tg2, data, /, **kwargs):
-                    return faldbt.write_to_model(data, tg1, tg2, **kwargs)
-
                 exec_globals["write_to_model"] = partial(
-                    write_to_model, self.model.name, None
+                    faldbt.write_to_model, target_1=self.model.name, target_2=None
                 )
 
             exec(source_code, exec_globals)
