@@ -10,6 +10,15 @@ profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 project_dir = os.path.join(Path.cwd(), "tests/mock")
 
 
+class ProjectTemporaryDirectory(tempfile.TemporaryDirectory):
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+
+        # Copy project_dir to a clean temp directory
+        shutil.rmtree(self.name, ignore_errors=True)
+        shutil.copytree(project_dir, self.name)
+
+
 def test_run():
     try:
         cli(["fal", "run", "--profiles-dir", profiles_dir])
@@ -32,23 +41,21 @@ def test_no_arg(capfd):
     assert "the following arguments are required: COMMAND" in captured.err
 
 
-def test_run_with_project_dir():
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+def test_run_with_project_dir(capfd):
+    with ProjectTemporaryDirectory() as tmp_dir:
         cli(["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
 
 
 def test_version(capfd):
-    import importlib.metadata
+    import pkg_resources
 
-    version = importlib.metadata.version("fal")
+    version = pkg_resources.get_distribution("fal").version
     captured = _run_fal(["--version"], capfd)
     assert f"fal {version}" in captured.out
 
 
 def test_flow_run_with_project_dir(capfd):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+    with ProjectTemporaryDirectory() as tmp_dir:
         captured = _run_fal(
             [
                 # fmt: off
@@ -68,8 +75,7 @@ def test_flow_run_with_project_dir(capfd):
 
 
 def test_flow_run_with_project_dir_and_select(capfd):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+    with ProjectTemporaryDirectory() as tmp_dir:
         captured = _run_fal(
             [
                 # fmt: off
@@ -95,8 +101,7 @@ def test_flow_run_with_project_dir_and_select(capfd):
 
 
 def test_flow_run_with_defer(capfd):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+    with ProjectTemporaryDirectory() as tmp_dir:
         captured = _run_fal(
             [
                 # fmt: off
@@ -117,8 +122,7 @@ def test_flow_run_with_defer(capfd):
 
 
 def test_flow_run_with_vars(capfd):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+    with ProjectTemporaryDirectory() as tmp_dir:
         captured = _run_fal(
             [
                 # fmt: off
@@ -139,8 +143,7 @@ def test_flow_run_with_vars(capfd):
 
 
 def test_selection(capfd):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+    with ProjectTemporaryDirectory() as tmp_dir:
         captured = _run_fal(
             [
                 # fmt: off
@@ -198,8 +201,7 @@ def test_selection(capfd):
 
 
 def test_no_run_results(capfd):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+    with ProjectTemporaryDirectory() as tmp_dir:
         shutil.rmtree(os.path.join(tmp_dir, "mockTarget"))
 
         # Without selection flag
@@ -222,8 +224,7 @@ def test_no_run_results(capfd):
 
 
 def test_before(capfd):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+    with ProjectTemporaryDirectory() as tmp_dir:
 
         captured = _run_fal(
             [
@@ -263,8 +264,7 @@ def test_before(capfd):
 
 
 def test_flag_level(capfd):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+    with ProjectTemporaryDirectory() as tmp_dir:
 
         captured = _run_fal(
             [
@@ -297,8 +297,7 @@ def test_flag_level(capfd):
 
 
 def test_target(capfd):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        shutil.copytree(project_dir, tmp_dir, dirs_exist_ok=True)
+    with ProjectTemporaryDirectory() as tmp_dir:
 
         captured = _run_fal(
             [
