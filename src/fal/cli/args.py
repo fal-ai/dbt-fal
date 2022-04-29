@@ -125,21 +125,18 @@ def _add_experimental_flow_option(parser: argparse.ArgumentParser):
     )
 
 
-def _build_dbt_selectors(sub: argparse.ArgumentParser, extend: bool):
+def _build_dbt_selectors(sub: argparse.ArgumentParser):
 
     # fmt: off
-    # TODO: remove `action="extend"` to match exactly what dbt does
     sub.add_argument(
         "-s", "--select",
         nargs="+",
-        action="extend" if extend else None, # For backwards compatibility with past fal version
         dest="select",
         help="Specify the nodes to include.",
     )
     sub.add_argument(
         "-m", "--models",
         nargs="+",
-        action="extend" if extend else None, # For backwards compatibility with past fal version
         dest="select",
         help="Specify the nodes to include.",
     )
@@ -150,7 +147,6 @@ def _build_dbt_selectors(sub: argparse.ArgumentParser, extend: bool):
     sub.add_argument(
         "--exclude",
         nargs="+",
-        action="extend" if extend else None, # For backwards compatibility with past fal version
         help="Specify the nodes to exclude.",
     )
     # fmt: on
@@ -159,8 +155,7 @@ def _build_dbt_selectors(sub: argparse.ArgumentParser, extend: bool):
 def _build_run_parser(sub: argparse.ArgumentParser):
 
     # fmt: off
-    # TODO: remove `action="extend"` to match exactly what dbt does
-    _build_dbt_selectors(sub, extend=True)
+    _build_dbt_selectors(sub)
     _build_dbt_common_options(sub)
     _build_fal_common_options(sub)
     _add_threads_option(sub)
@@ -174,7 +169,6 @@ def _build_run_parser(sub: argparse.ArgumentParser):
     sub.add_argument(
         "--scripts",
         nargs="+",
-        action="extend", # For backwards compatibility with past fal version
         help="Specify scripts to run, overrides schema.yml",
     )
 
@@ -201,7 +195,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
         name="run",
         help="Execute fal and dbt run in correct order",
     )
-    _build_dbt_selectors(flow_run_parser, extend=False)
+    _build_dbt_selectors(flow_run_parser)
     _build_dbt_common_options(flow_run_parser)
     _build_fal_common_options(flow_run_parser)
     _add_threads_option(flow_run_parser)
