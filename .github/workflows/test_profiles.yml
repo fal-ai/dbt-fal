@@ -12,12 +12,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.8.x"]
+        python: ["3.7", "3.8", "3.9", "3.10"]
         dbt: ["1.0.4"]
         profile: ["bigquery", "snowflake", "redshift"]
 
     steps:
       - uses: actions/checkout@v2
+
+      # Avoid running against the same profile at the same time
+      - name: Set up mutex on profiles
+        uses: ben-z/gh-action-mutex@v1.0-alpha-4
+        with:
+          branch: gh-mutex-profile-${{ matrix.profile }}
 
       - uses: actions/setup-python@v2
         with:
