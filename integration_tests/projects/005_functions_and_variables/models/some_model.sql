@@ -2,7 +2,7 @@
 
 WITH data AS (
     SELECT 
-        1::integer AS my_int,
+        cast(1 AS integer) AS my_int,
         my_text, 
         -- the after script value should reflect here
         my_float

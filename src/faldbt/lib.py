@@ -113,10 +113,18 @@ def _get_target_relation(
     profile_target: str = None,
 ) -> Optional[BaseRelation]:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    config = parse.get_dbt_config(
+        project_dir, profiles_dir, profile_target=profile_target
+    )
+    manifest = parse.get_dbt_manifest(config)
 
     name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
     with adapter.connection_named(name):
+        # HACK: Sometimes we cache an incomplete cache or create stuff without the cache noticing.
+        #       Some adapters work without this. We should separate adapter solutions like dbt.
+        adapter.set_relations_cache(manifest, True)
+
         # This ROLLBACKs so it has to be a new connection
         relation = adapter.get_relation(target.database, target.schema, target.name)
 
@@ -256,7 +264,6 @@ def _write_relation(
         six.text_type(create_stmt).strip(),
         profile_target=profile_target,
     )
-    _clean_cache(project_dir, profiles_dir, profile_target=profile_target)
 
     insert_stmt = Insert(alchemy_table, values=row_dicts).compile(
         bind=engine, compile_kwargs={"literal_binds": True}
@@ -269,21 +276,6 @@ def _write_relation(
         profile_target=profile_target,
     )
     return result
-
-
-# HACK: we are cleaning the cache because if we dropped or renamed a table with an empty cache,
-#       it populates it with that single table
-def _clean_cache(project_dir: str, profiles_dir: str, profile_target: str = None):
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
-    config = parse.get_dbt_config(
-        project_dir, profiles_dir, profile_target=profile_target
-    )
-    manifest = parse.get_dbt_manifest(config)
-
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "clean_cache:" + str(uuid4())
-    with adapter.connection_named(name):
-        adapter.set_relations_cache(manifest, True)
 
 
 def _replace_relation(
@@ -310,7 +302,6 @@ def _replace_relation(
 
         adapter.rename_relation(new_relation, original_relation)
         adapter.connections.commit_if_has_connection()
-    _clean_cache(project_dir, profiles_dir, profile_target=profile_target)
 
 
 def _drop_relation(
@@ -327,7 +318,6 @@ def _drop_relation(
         adapter.connections.begin()
         adapter.drop_relation(relation)
         adapter.connections.commit_if_has_connection()
-    _clean_cache(project_dir, profiles_dir, profile_target=profile_target)
 
 
 def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):

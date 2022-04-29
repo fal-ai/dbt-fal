@@ -1,7 +1,7 @@
 fal_test:
-  target: dev
+  target: integration_tests
   outputs:
-    dev:
+    integration_tests:
       type: bigquery
       method: service-account
       keyfile: "{{ env_var('KEYFILE_DIR') }}/keyfile.json"
