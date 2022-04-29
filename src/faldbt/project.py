@@ -381,7 +381,7 @@ class FalDbt:
         return target_model
 
     @telemetry.log_call("ref")
-    def ref(self, target_1: str, target_2: Optional[str] = None, /) -> pd.DataFrame:
+    def ref(self, target_1: str, target_2: Optional[str] = None) -> pd.DataFrame:
         """
         Download a dbt model as a pandas.DataFrame automagically.
         """
@@ -487,7 +487,6 @@ class FalDbt:
         data: pd.DataFrame,
         target_1: str,
         target_2: Optional[str] = None,
-        /,
         *,
         dtype: Any = None,
         mode: str = "overwrite",
