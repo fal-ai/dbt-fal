@@ -19,6 +19,11 @@ jobs:
         python: ["3.8.x"]
         dbt: ["0.20.1", "0.21.1", "1.0.4"]
 
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      cancel-in-progress: true
+
     steps:
       - uses: actions/checkout@v2
 
