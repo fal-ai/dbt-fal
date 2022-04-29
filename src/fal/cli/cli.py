@@ -24,9 +24,6 @@ def cli(argv: List[str] = sys.argv):
 def _cli(argv: List[str]):
     parsed = parse_args(argv[1:])
 
-    # TODO: remove in fal version 0.4.0
-    _warn_selectors_multiple_times(argv, parsed)
-
     # Disabling the dbt.logger.DelayedFileHandler manually
     # since we do not use the new dbt logging system
     # This fixes issue https://github.com/fal-ai/fal/issues/97
@@ -47,6 +44,9 @@ def _cli(argv: List[str]):
                 fal_flow_run(parsed)
 
         elif parsed.command == "run":
+            # TODO: remove in fal version 0.4.0
+            _warn_selectors_multiple_times(argv, parsed)
+
             fal_run(parsed)
 
 
@@ -65,7 +65,7 @@ def _warn_selectors_multiple_times(argv, parsed):
 
     if selects_count > 1:
         dbt.exceptions.warn_or_error(
-            "Passing multiple --select/--models flags to fal is deprecated and will be removed in fal version 0.4.\n"
+            "Passing multiple --select/--models flags to fal is no longer supported.\n"
             + f"Please use model selection like dbt. Use: --select {' '.join(parsed.select)}",
             log_fmt=dbt.ui.warning_tag("{}"),
         )
@@ -73,7 +73,7 @@ def _warn_selectors_multiple_times(argv, parsed):
     exclude_count = argv.count("--exclude")
     if exclude_count > 1:
         dbt.exceptions.warn_or_error(
-            "Passing multiple --exclude flags to fal is deprecated and will be removed in fal version 0.4.\n"
+            "Passing multiple --exclude flags to fal is no longer supported.\n"
             + f"Please use model exclusion like dbt. Use: --exclude {' '.join(parsed.exclude)}",
             log_fmt=dbt.ui.warning_tag("{}"),
         )
@@ -81,7 +81,7 @@ def _warn_selectors_multiple_times(argv, parsed):
     script_count = argv.count("--script") + argv.count("--scripts")
     if script_count > 1:
         dbt.exceptions.warn_or_error(
-            "Passing multiple --script flags to fal is deprecated and will be removed in fal version 0.4.\n"
-            + f"Please use: --script {' '.join(parsed.scripts)}",
+            "Passing multiple --script flags to fal is no longer supported.\n"
+            + f"Please dbt-style selection. Use: --script {' '.join(parsed.scripts)}",
             log_fmt=dbt.ui.warning_tag("{}"),
         )

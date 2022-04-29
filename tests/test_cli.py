@@ -160,7 +160,7 @@ def test_selection(capfd):
         assert "model_with_scripts" not in captured.out
         assert "other_with_scripts" in captured.out
         assert (
-            "Passing multiple --select/--models flags to fal is deprecated"
+            "Passing multiple --select/--models flags to fal is no longer supported"
             in captured.out
         )
 
