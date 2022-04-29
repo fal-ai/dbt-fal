@@ -1,8 +1,7 @@
 from enum import Enum
-import os
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Literal, Optional, Tuple, TypeVar, Sequence, Union
+from typing import Dict, List, Any, Optional, Tuple, Sequence
 from pathlib import Path
 
 from dbt.node_types import NodeType
@@ -170,7 +169,7 @@ class CompileArgs:
     single_threaded: Optional[bool]
 
 
-class WriteToSourceModeEnum(Enum):
+class WriteModeEnum(Enum):
     APPEND = "append"
     OVERWRITE = "overwrite"
 
@@ -450,7 +449,7 @@ class FalDbt:
         # TODO: Make dtype named-param in the future?
         dtype: Any = None,
         *,
-        mode: Literal["append", "overwrite"] = WriteToSourceModeEnum.APPEND.value,
+        mode: str = "append",
     ):
         """
         Write a pandas.DataFrame to a dbt model automagically.
@@ -458,7 +457,8 @@ class FalDbt:
 
         target_source = self._source(target_source_name, target_table_name)
 
-        if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
+        write_mode = WriteModeEnum(mode.lower().strip())
+        if write_mode == WriteModeEnum.APPEND:
             lib.write_target(
                 data,
                 self.project_dir,
@@ -468,7 +468,7 @@ class FalDbt:
                 profile_target=self._profile_target,
             )
 
-        elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
+        elif write_mode == WriteModeEnum.OVERWRITE:
             lib.overwrite_target(
                 data,
                 self.project_dir,
@@ -490,7 +490,7 @@ class FalDbt:
         /,
         *,
         dtype: Any = None,
-        mode: Literal["append", "overwrite"] = WriteToSourceModeEnum.OVERWRITE.value,
+        mode: str = "overwrite",
     ):
         """
         Write a pandas.DataFrame to a dbt source automagically.
@@ -503,7 +503,8 @@ class FalDbt:
 
         target_model = self._model(target_model_name, target_package_name)
 
-        if mode.lower().strip() == WriteToSourceModeEnum.APPEND.value:
+        write_mode = WriteModeEnum(mode.lower().strip())
+        if write_mode == WriteModeEnum.APPEND:
             lib.write_target(
                 data,
                 self.project_dir,
@@ -513,7 +514,7 @@ class FalDbt:
                 profile_target=self._profile_target,
             )
 
-        elif mode.lower().strip() == WriteToSourceModeEnum.OVERWRITE.value:
+        elif write_mode == WriteModeEnum.OVERWRITE:
             lib.overwrite_target(
                 data,
                 self.project_dir,

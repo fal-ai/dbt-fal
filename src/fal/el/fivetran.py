@@ -6,7 +6,7 @@ import json
 from enum import Enum
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException
-from typing import Any, Dict, Union, Literal
+from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 from dateutil import parser
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -19,6 +19,13 @@ class ScheduleType(Enum):
 
     AUTO = 1
     MANUAL = 2
+
+
+class MethodsEnum(Enum):
+    GET = "GET"
+    PATCH = "PATCH"
+    POST = "POST"
+    DELETE = "DELETE"
 
 
 class FivetranClient:
@@ -40,11 +47,10 @@ class FivetranClient:
 
     def _request(
         self,
-        endpoint: str,
-        method: Union[
-            Literal["GET"], Literal["PATCH"], Literal["POST"], Literal["DELETE"]
-        ],
-        data: str = None,
+        *,
+        method: MethodsEnum,
+        endpoint: Optional[str] = None,
+        data: Optional[str] = None,
     ):
         """Make a request to Airbyte REST API endpoint."""
         headers = {"Content-Type": "application/json;version=2"}
@@ -53,7 +59,7 @@ class FivetranClient:
         while num_retries <= self.max_retries:
             try:
                 response = requests.request(
-                    method=method,
+                    method=method.value,
                     url=urljoin(BASE_URL, endpoint),
                     headers=headers,
                     auth=self._auth,
@@ -72,7 +78,7 @@ class FivetranClient:
 
     def get_connector_data(self, connector_id: str) -> dict:
         """Get details of a connector."""
-        return self._request(method="GET", endpoint=connector_id)
+        return self._request(method=MethodsEnum.GET, endpoint=connector_id)
 
     def check_connector(self, connector_id: str):
         """Check if connector can be synced."""
@@ -100,7 +106,7 @@ class FivetranClient:
     ) -> Dict[str, Any]:
         """Update connector details."""
         return self._request(
-            method="PATCH", endpoint=connector_id, data=json.dumps(properties)
+            method=MethodsEnum.PATCH, endpoint=connector_id, data=json.dumps(properties)
         )
 
     def _update_schedule_type(
@@ -115,7 +121,7 @@ class FivetranClient:
 
     def _get_connector_schema(self, connector_id: str) -> Dict[str, Any]:
         """Get schema config for a connector."""
-        return self._request(method="GET", endpoint=f"{connector_id}/schemas")
+        return self._request(method=MethodsEnum.GET, endpoint=f"{connector_id}/schemas")
 
     def start_sync(self, connector_id: str) -> Dict[str, Any]:
         """Start a Fivetran connector sync."""
@@ -123,7 +129,7 @@ class FivetranClient:
             logger.info("Disabling Fivetran sync schedule.")
             self._update_schedule_type(connector_id, ScheduleType.MANUAL)
         self.check_connector(connector_id)
-        self._request(method="POST", endpoint=f"{connector_id}/force")
+        self._request(method=MethodsEnum.POST, endpoint=f"{connector_id}/force")
         connector_data = self.get_connector_data(connector_id)
         logger.info(f"Sync start for connector_id={connector_id}.")
         return connector_data
