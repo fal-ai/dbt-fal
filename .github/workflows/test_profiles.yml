@@ -22,6 +22,7 @@ jobs:
       # Avoid running against the same profile at the same time
       - name: Set up mutex on profiles
         uses: ben-z/gh-action-mutex@v1.0-alpha-4
+        if: matrix.profile != 'postgres'
         with:
           branch: gh-mutex-profile-${{ matrix.profile }}
 
