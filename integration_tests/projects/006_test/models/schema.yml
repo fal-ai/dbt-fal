@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: fal
+    database: "{{ env_var('DBT_DATABASE', 'test') }}"
+    schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
+    tables:
+      - name: all_predictions

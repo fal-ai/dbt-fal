@@ -1,0 +1,12 @@
+---
+version: 2
+
+models:
+  - name: features_input
+    description: >-
+      fans features - ml input
+
+    meta:
+      fal:
+        scripts:
+          - scripts/fal/predict.py

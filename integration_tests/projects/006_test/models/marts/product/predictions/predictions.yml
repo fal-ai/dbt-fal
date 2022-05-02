@@ -1,0 +1,10 @@
+---
+version: 2
+
+models:
+  - name: last_predictions
+    description: >-
+      last_predictions
+    columns:
+      - name: user_id
+      - name: prediction
