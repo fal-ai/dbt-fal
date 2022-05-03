@@ -55,7 +55,7 @@ The first step in our workflow is to setup python and install the dependencies f
 ```yaml
 - uses: actions/setup-python@v2
   with:
-    python-version: '3.8.x'
+    python-version: '3.8'
 
 - name: Install dependencies
   run: |

@@ -12,12 +12,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.8.x"]
+        python: ["3.7", "3.8", "3.9", "3.10"]
         dbt: ["1.0.4"]
-        profile: ["bigquery", "snowflake", "redshift"]
+        profile: ["postgres", "bigquery", "snowflake", "redshift"]
 
     steps:
       - uses: actions/checkout@v2
+
+      # Avoid running against the same profile at the same time
+      - name: Set up mutex on profiles
+        uses: ben-z/gh-action-mutex@v1.0-alpha-4
+        if: matrix.profile != 'postgres'
+        with:
+          branch: gh-mutex-profile-${{ matrix.profile }}
 
       - uses: actions/setup-python@v2
         with:
@@ -42,11 +49,8 @@ jobs:
 
       - name: Setup environment
         working-directory: integration_tests
-        run: |
-          if [[ '${{ matrix.profile }}' == "redshift" ]]
-          then
-            docker-compose up -d
-          fi
+        if: matrix.profile == 'redshift' || matrix.profile == 'postgres'
+        run: docker-compose up -d
 
       - name: Install dependencies
         working-directory: integration_tests
@@ -70,7 +74,7 @@ jobs:
           RS_PASSWORD: ${{ secrets.RS_PASSWORD }}
           RS_PORT: ${{ secrets.RS_PORT }}
           RS_USER: ${{ secrets.RS_USER }}
-          # SnowFlake
+          # Snowflake
           SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
           SF_USER: ${{ secrets.SF_USER }}
           SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
@@ -79,7 +83,7 @@ jobs:
           SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
           SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
         run: |
-          # Database and scheme setup for sources
+          # Database and schema setup for sources
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
           then
             export DBT_DATABASE="$GCLOUD_PROJECT" DBT_SCHEMA="$BQ_DATASET"
@@ -100,4 +104,5 @@ jobs:
             export KEYFILE_DIR=$HOME
             echo 'keyfile is ready'
           fi
+
           behave --tags=-broken_profile -D profile=${{ matrix.profile }}
