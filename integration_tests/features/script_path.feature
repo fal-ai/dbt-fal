@@ -1,6 +1,6 @@
 Feature: defining script path
   Background: Project Setup
-    Given the project 005_script_paths
+    Given the project 006_script_paths
     When the data is seeded
 
   Scenario: fal flow run
