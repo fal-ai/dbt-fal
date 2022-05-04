@@ -11,9 +11,13 @@ assignees: ''
 Please describe the issue.
 
 **Your environment**
-- `fal` version: 
-- OS:
-- Other relevant dependencies & versions:
+- OS: 
+- Paste the following commands output:
+  ```
+  fal --version
+  dbt --version
+  ```
+- Adapter being used: <!-- (if more than one dbt plugin installed) --> 
 
 **How to reproduce**
 Tell us how to reproduce the behavior.
