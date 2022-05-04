@@ -1,25 +1,34 @@
-### Subject of the issue
+---
+name: Bug report
+about: Report an issue to help us improve
+title: ''
+labels: bug
+assignees: ''
 
-Describe your issue here
+---
 
-### Your environment
+**Describe the bug**
+Please describe the issue.
 
-* Version of fal
-* Operating system
-* Relevant dependencies and versions
+**Your environment**
+- `fal` version: 
+- OS:
+- Other relevant dependencies & versions:
 
-### Steps to reproduce
+**How to reproduce**
+Tell us how to reproduce the behavior.
 
-Tell us how to reproduce this issue
+**Expected behavior**
+Tell us what you expected to happen.
 
-### Expected behavior
+**Actual behavior**
+Tell us what actually happened.
 
-Tell us what should happen
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-### Actual behavior
+**Additional context**
+Add any other context about the problem here.
 
-Tell us what happens instead
-
-### Additional context
-
-Tell us anything else you think may be helpful in resolving this issue
+**Is there an existing bug report for this?**
+ * [ ]  I have searched the existing issues
