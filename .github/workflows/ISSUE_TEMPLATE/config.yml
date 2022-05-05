@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Features and Labels Core Team
+    url: hello@fal.ai
+    about: Please report security vulnerabilities to this email address, not in public issues.
