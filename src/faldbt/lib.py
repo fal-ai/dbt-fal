@@ -158,18 +158,23 @@ def fetch_target(
 
 
 def _build_table_from_parts(
-    database: Optional[str], schema: Optional[str], identifier: Optional[str]
+    adapter: SQLAdapter,
+    database: Optional[str],
+    schema: Optional[str],
+    identifier: Optional[str],
 ):
     from dbt.contracts.relation import Path, RelationType
 
     path = Path(database, schema, identifier)
 
     # NOTE: assuming we want TABLE relation if not found
-    return BaseRelation(path, type=RelationType.Table)
+    return adapter.Relation(path, type=RelationType.Table)
 
 
-def _build_table_from_target(target: CompileResultNode):
-    return _build_table_from_parts(target.database, target.schema, target.identifier)
+def _build_table_from_target(adapter: SQLAdapter, target: CompileResultNode):
+    return _build_table_from_parts(
+        adapter, target.database, target.schema, target.identifier
+    )
 
 
 def overwrite_target(
@@ -180,14 +185,16 @@ def overwrite_target(
     dtype=None,
     profile_target: str = None,
 ) -> RemoteRunResult:
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+
     relation = _get_target_relation(
         target, project_dir, profiles_dir, profile_target=profile_target
     )
     if relation is None:
-        relation = _build_table_from_target(target)
+        relation = _build_table_from_target(adapter, target)
 
     temporal_relation = _build_table_from_parts(
-        relation.database, relation.schema, f"{relation.identifier}__f__"
+        adapter, relation.database, relation.schema, f"{relation.identifier}__f__"
     )
 
     results = _write_relation(
@@ -223,11 +230,13 @@ def write_target(
     dtype=None,
     profile_target: str = None,
 ) -> RemoteRunResult:
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+
     relation = _get_target_relation(
         target, project_dir, profiles_dir, profile_target=profile_target
     )
     if relation is None:
-        relation = _build_table_from_target(target)
+        relation = _build_table_from_target(adapter, target)
 
     return _write_relation(
         data, project_dir, profiles_dir, relation, dtype, profile_target=profile_target
