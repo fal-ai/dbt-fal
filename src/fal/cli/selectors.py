@@ -76,6 +76,22 @@ def _filter_node_ids(unique_ids, fal_dbt, selected_nodes, nodeGraph) -> List[str
             if selector_plan.parents:
                 parents = list(nodeGraph.get_predecessors(id))
                 output.extend(parents)
+            if selector_plan.children_with_parents:
+                ids = _get_children_with_parents(id, nodeGraph)
+                output.extend(ids)
+    return output
+
+
+def _get_children_with_parents(node_id, nodeGraph) -> List[str]:
+    output = []
+    children = list(nodeGraph.get_descendants(node_id))
+    output.extend(children)
+    all_parents = []
+    for child in children:
+        parents = list(nodeGraph.get_predecessors(child))
+        all_parents.extend(parents)
+
+    output.extend(all_parents)
     return output
 
 
@@ -108,12 +124,14 @@ class SelectorPlan:
 
     unique_ids: List[str]
     children: bool
+    children_with_parents: bool
     parents: bool
     type: SelectType
 
     def __init__(self, selector: str, unique_ids: List[str], fal_dbt: FalDbt):
         self.children = _needs_children(selector)
         self.parents = _need_parents(selector)
+        self.children_with_parents = _needs_children_with_parents(selector)
         self.type = _to_select_type(selector)
         node_name = _remove_graph_selectors(selector)
 
@@ -150,11 +168,17 @@ def _is_script_node(node_name: str) -> bool:
 
 
 def _remove_graph_selectors(selector: str) -> str:
-    return selector.replace("+", "")
+    selector = selector.replace("+", "")
+    return selector.replace("@", "")
 
 
 def _needs_children(selector: str) -> bool:
     children_operation_regex = re.compile(".*\\+$")
+    return bool(children_operation_regex.match(selector))
+
+
+def _needs_children_with_parents(selector: str) -> bool:
+    children_operation_regex = re.compile("^\\@.*")
     return bool(children_operation_regex.match(selector))
 
 
