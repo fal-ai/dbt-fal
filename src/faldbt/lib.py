@@ -65,7 +65,7 @@ def initialize_dbt_flags(profiles_dir: str):
 
 # NOTE: Once we get an adapter, we must call `connection_for` or `connection_named` to use it
 def _get_adapter(
-    project_dir: str, profiles_dir: str, profile_target: str = None
+    project_dir: str, profiles_dir: str, profile_target: str
 ) -> SQLAdapter:
     config = parse.get_dbt_config(
         project_dir, profiles_dir, profile_target=profile_target
@@ -79,7 +79,7 @@ def _get_adapter(
 def _execute_sql(
     project_dir: str, profiles_dir: str, sql: str, profile_target: str = None
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
@@ -112,7 +112,7 @@ def _get_target_relation(
     profiles_dir: str,
     profile_target: str = None,
 ) -> Optional[BaseRelation]:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
     config = parse.get_dbt_config(
         project_dir, profiles_dir, profile_target=profile_target
     )
@@ -251,7 +251,7 @@ def _write_relation(
     dtype=None,
     profile_target: str = None,
 ) -> RemoteRunResult:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     engine = _alchemy_engine(adapter, relation.database)
     pddb = pdsql.SQLDatabase(engine, schema=relation.schema)
@@ -294,7 +294,7 @@ def _replace_relation(
     new_relation: BaseRelation,
     profile_target: str = None,
 ):
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "replace_relation:" + str(hash(str(original_relation))) + ":" + str(uuid4())
@@ -319,7 +319,7 @@ def _drop_relation(
     relation: BaseRelation,
     profile_target: str = None,
 ):
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "drop_relation:" + str(hash(str(relation))) + ":" + str(uuid4())
