@@ -88,10 +88,13 @@ def _get_children_with_parents(node_id, nodeGraph) -> List[str]:
     output.extend(children)
     all_parents = []
     for child in children:
-        parents = list(nodeGraph.get_predecessors(child))
+        parents = list(nodeGraph.get_ancestors(child))
         all_parents.extend(parents)
-
     output.extend(all_parents)
+
+    # remove duplicates
+    output = list(dict.fromkeys(output))
+
     return output
 
 
