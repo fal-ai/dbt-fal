@@ -58,7 +58,12 @@ class ExecutionPlan:
         return cls(list(set(ids_to_execute)), fal_dbt.project_name)
 
 
-def _filter_node_ids(unique_ids, fal_dbt, selected_nodes, nodeGraph) -> List[str]:
+def _filter_node_ids(
+    unique_ids: List[str],
+    fal_dbt: FalDbt,
+    selected_nodes: List[str],
+    nodeGraph: NodeGraph,
+) -> List[str]:
     """Filter list of unique_ids according to a selector."""
     output = []
     selector_plans = list(
@@ -74,7 +79,7 @@ def _filter_node_ids(unique_ids, fal_dbt, selected_nodes, nodeGraph) -> List[str
                 children = list(nodeGraph.get_descendants(id))
                 output.extend(children)
             if selector_plan.parents:
-                parents = list(nodeGraph.get_predecessors(id))
+                parents = list(nodeGraph.get_ancestors(id))
                 output.extend(parents)
     return output
 

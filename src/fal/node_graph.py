@@ -132,11 +132,17 @@ class NodeGraph:
         self.graph = graph
         self.node_lookup = node_lookup
 
+    def get_successors(self, id: str) -> List[str]:
+        return list(self.graph.successors(id))
+
     def get_descendants(self, id: str) -> List[str]:
         return list(nx.descendants(self.graph, id))
 
     def get_predecessors(self, id: str) -> List[str]:
         return list(self.graph.predecessors(id))
+
+    def get_ancestors(self, id: str) -> List[str]:
+        return list(nx.ancestors(self.graph, id))
 
     def get_node(self, id: str) -> FalFlowNode | None:
         return self.node_lookup.get(id)
