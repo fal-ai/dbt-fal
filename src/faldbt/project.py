@@ -192,7 +192,6 @@ class FalDbt:
     # Could we instead extend it and create a FalRunTak?
     _compile_task: CompileTask
     _state: Optional[Path]
-    _profile_target: Optional[str]
     _global_script_paths: Dict[str, List[str]]
 
     _firestore_client: Optional[FirestoreClient]
@@ -214,7 +213,6 @@ class FalDbt:
         self.keyword = keyword
         self._firestore_client = None
         self._state = state
-        self._profile_target = profile_target
 
         self.scripts_dir = parse.get_scripts_dir(project_dir)
 
@@ -230,12 +228,12 @@ class FalDbt:
 
         if self._run_results.nativeRunResult:
             self.method = self._run_results.nativeRunResult.args["rpc_method"]
-            if self._profile_target is None:
-                self._profile_target = _get_custom_target(self._run_results)
+            if profile_target is None:
+                profile_target = _get_custom_target(self._run_results)
 
-        if self._profile_target is not None:
+        if profile_target is not None:
             self._config = parse.get_dbt_config(
-                project_dir, profiles_dir, threads, profile_target=self._profile_target
+                project_dir, profiles_dir, threads, profile_target=profile_target
             )
 
         el_configs = parse.get_el_configs(
@@ -272,6 +270,10 @@ class FalDbt:
         )
 
         self.features = self._find_features()
+
+    @property
+    def _profile_target(self):
+        return self._config.target_name
 
     @property
     def threads(self):

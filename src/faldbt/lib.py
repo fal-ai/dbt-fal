@@ -65,7 +65,7 @@ def initialize_dbt_flags(profiles_dir: str):
 
 # NOTE: Once we get an adapter, we must call `connection_for` or `connection_named` to use it
 def _get_adapter(
-    project_dir: str, profiles_dir: str, profile_target: str = None
+    project_dir: str, profiles_dir: str, profile_target: str
 ) -> SQLAdapter:
     config = parse.get_dbt_config(
         project_dir, profiles_dir, profile_target=profile_target
@@ -79,7 +79,7 @@ def _get_adapter(
 def _execute_sql(
     project_dir: str, profiles_dir: str, sql: str, profile_target: str = None
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
@@ -112,7 +112,7 @@ def _get_target_relation(
     profiles_dir: str,
     profile_target: str = None,
 ) -> Optional[BaseRelation]:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
     config = parse.get_dbt_config(
         project_dir, profiles_dir, profile_target=profile_target
     )
@@ -158,18 +158,23 @@ def fetch_target(
 
 
 def _build_table_from_parts(
-    database: Optional[str], schema: Optional[str], identifier: Optional[str]
+    adapter: SQLAdapter,
+    database: Optional[str],
+    schema: Optional[str],
+    identifier: Optional[str],
 ):
     from dbt.contracts.relation import Path, RelationType
 
     path = Path(database, schema, identifier)
 
     # NOTE: assuming we want TABLE relation if not found
-    return BaseRelation(path, type=RelationType.Table)
+    return adapter.Relation(path, type=RelationType.Table)
 
 
-def _build_table_from_target(target: CompileResultNode):
-    return _build_table_from_parts(target.database, target.schema, target.identifier)
+def _build_table_from_target(adapter: SQLAdapter, target: CompileResultNode):
+    return _build_table_from_parts(
+        adapter, target.database, target.schema, target.identifier
+    )
 
 
 def overwrite_target(
@@ -180,14 +185,16 @@ def overwrite_target(
     dtype=None,
     profile_target: str = None,
 ) -> RemoteRunResult:
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+
     relation = _get_target_relation(
         target, project_dir, profiles_dir, profile_target=profile_target
     )
     if relation is None:
-        relation = _build_table_from_target(target)
+        relation = _build_table_from_target(adapter, target)
 
     temporal_relation = _build_table_from_parts(
-        relation.database, relation.schema, f"{relation.identifier}__f__"
+        adapter, relation.database, relation.schema, f"{relation.identifier}__f__"
     )
 
     results = _write_relation(
@@ -223,11 +230,13 @@ def write_target(
     dtype=None,
     profile_target: str = None,
 ) -> RemoteRunResult:
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+
     relation = _get_target_relation(
         target, project_dir, profiles_dir, profile_target=profile_target
     )
     if relation is None:
-        relation = _build_table_from_target(target)
+        relation = _build_table_from_target(adapter, target)
 
     return _write_relation(
         data, project_dir, profiles_dir, relation, dtype, profile_target=profile_target
@@ -242,7 +251,7 @@ def _write_relation(
     dtype=None,
     profile_target: str = None,
 ) -> RemoteRunResult:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     engine = _alchemy_engine(adapter, relation.database)
     pddb = pdsql.SQLDatabase(engine, schema=relation.schema)
@@ -285,7 +294,7 @@ def _replace_relation(
     new_relation: BaseRelation,
     profile_target: str = None,
 ):
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "replace_relation:" + str(hash(str(original_relation))) + ":" + str(uuid4())
@@ -310,7 +319,7 @@ def _drop_relation(
     relation: BaseRelation,
     profile_target: str = None,
 ):
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target=profile_target)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "drop_relation:" + str(hash(str(relation))) + ":" + str(uuid4())
