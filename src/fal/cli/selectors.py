@@ -93,7 +93,7 @@ def _get_children_with_parents(node_id, nodeGraph) -> List[str]:
     output.extend(all_parents)
 
     # remove duplicates
-    output = list(dict.fromkeys(output))
+    output = list(set(output))
 
     return output
 
