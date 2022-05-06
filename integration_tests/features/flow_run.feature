@@ -179,7 +179,7 @@ Feature: `flow run` command
     And the following scripts are ran:
       | agent_wait_time.before.py |
 
-  Scenario: fal flow run command with select at
+  Scenario: fal flow run command with select @
     Given the project 001_flow_run_with_selectors
     When the data is seeded
     When the following command is invoked:
@@ -190,6 +190,18 @@ Feature: `flow run` command
       | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
     And the following scripts are ran:
       | model_c.before.py | agent_wait_time.after.py |
+
+  Scenario: fal flow run with @ in the middle
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select @model_c
+      """
+    Then the following models are calculated:
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
+    And the following scripts are ran:
+      | model_c.before.py |
 
   @broken_profile
   Scenario: fal flow run with target
