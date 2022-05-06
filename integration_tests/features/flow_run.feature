@@ -202,6 +202,8 @@ Feature: `flow run` command
       | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
     And the following scripts are ran:
       | model_c.before.py |
+    And the following scripts are not ran:
+      | agent_wait_time.after.py |
 
   @broken_profile
   Scenario: fal flow run with target

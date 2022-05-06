@@ -5,6 +5,7 @@ from fal.node_graph import NodeGraph
 from faldbt.project import CompileArgs, FalDbt
 from dbt.task.compile import CompileTask
 from enum import Enum
+from functools import reduce
 import faldbt.lib as lib
 
 
@@ -83,16 +84,11 @@ def _filter_node_ids(unique_ids, fal_dbt, selected_nodes, nodeGraph) -> List[str
 
 
 def _get_children_with_parents(node_id, nodeGraph) -> List[str]:
-    output = []
-    children = list(nodeGraph.get_descendants(node_id))
-    output.extend(children)
-    all_parents = []
-    for child in children:
-        parents = list(nodeGraph.get_ancestors(child))
-        all_parents.extend(parents)
-    output.extend(all_parents)
+    children = nodeGraph.get_descendants(node_id)
+    output = reduce(
+        lambda a, b: a + list(nodeGraph.get_ancestors(b)), children, children
+    )
 
-    # remove duplicates
     output = list(set(output))
 
     return output
