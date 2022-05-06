@@ -1,12 +1,10 @@
 import re
-from typing import List
-from dataclasses import dataclass
+from typing import List, Optional, Tuple
 from fal.node_graph import NodeGraph
 from faldbt.project import CompileArgs, FalDbt
 from dbt.task.compile import CompileTask
 from enum import Enum
 from functools import reduce
-import faldbt.lib as lib
 
 
 class ExecutionPlan:
@@ -76,11 +74,23 @@ def _filter_node_ids(
     for selector_plan in selector_plans:
         for id in selector_plan.unique_ids:
             output.append(id)
+
             if selector_plan.children:
-                children = list(nodeGraph.get_descendants(id))
+                if selector_plan.children_levels is None:
+                    children = list(nodeGraph.get_descendants(id))
+                else:
+                    children = nodeGraph.get_successors(
+                        id, selector_plan.children_levels
+                    )
                 output.extend(children)
+
             if selector_plan.parents:
-                parents = list(nodeGraph.get_ancestors(id))
+                if selector_plan.parents_levels is None:
+                    parents = list(nodeGraph.get_ancestors(id))
+                else:
+                    parents = nodeGraph.get_predecessors(
+                        id, selector_plan.parents_levels
+                    )
                 output.extend(parents)
             if selector_plan.children_with_parents:
                 ids = _get_children_with_parents(id, nodeGraph)
@@ -128,13 +138,15 @@ class SelectorPlan:
 
     unique_ids: List[str]
     children: bool
+    children_levels: Optional[int]
     children_with_parents: bool
     parents: bool
+    parents_levels: Optional[int]
     type: SelectType
 
     def __init__(self, selector: str, unique_ids: List[str], fal_dbt: FalDbt):
-        self.children = _needs_children(selector)
-        self.parents = _need_parents(selector)
+        self.children, self.children_levels = _needs_children(selector)
+        self.parents, self.parents_levels = _needs_parents(selector)
         self.children_with_parents = _needs_children_with_parents(selector)
         self.type = _to_select_type(selector)
         node_name = _remove_graph_selectors(selector)
@@ -176,9 +188,14 @@ def _remove_graph_selectors(selector: str) -> str:
     return selector.replace("@", "")
 
 
-def _needs_children(selector: str) -> bool:
-    children_operation_regex = re.compile(".*\\+$")
-    return bool(children_operation_regex.match(selector))
+def _needs_children(selector: str) -> Tuple[bool, Optional[int]]:
+    children_operation_regex = re.compile(".*\\+(\\d*)$")
+    match = children_operation_regex.match(selector)
+    if not match:
+        return False, None
+
+    grp = match.group(1)
+    return True, int(grp) if grp.isnumeric() else None
 
 
 def _needs_children_with_parents(selector: str) -> bool:
@@ -186,9 +203,14 @@ def _needs_children_with_parents(selector: str) -> bool:
     return bool(children_operation_regex.match(selector))
 
 
-def _need_parents(selector: str) -> bool:
-    parent_operation_regex = re.compile("^\\+.*")
-    return bool(parent_operation_regex.match(selector))
+def _needs_parents(selector: str) -> Tuple[bool, Optional[int]]:
+    parent_operation_regex = re.compile("^(\\d*)\\+.*")
+    match = parent_operation_regex.match(selector)
+    if not match:
+        return False, None
+
+    grp = match.group(1)
+    return True, int(grp) if grp.isnumeric() else None
 
 
 def _is_before_scipt(id: str) -> bool:

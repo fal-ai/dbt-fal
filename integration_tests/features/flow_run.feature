@@ -41,6 +41,31 @@ Feature: `flow run` command
     Then the following models are calculated:
       | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
 
+  Scenario: fal flow run command with plus operator with number selectors
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select 2+intermediate_model_3 --threads 1
+      """
+    Then the following models are calculated:
+      | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1+1 --threads 1
+      """
+    Then the following models are calculated:
+      | intermediate_model_1 | intermediate_model_2 |
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1+0 --threads 1
+      """
+    Then the following models are calculated:
+      | intermediate_model_1 |
+
   Scenario: fal flow run command with selectors
     Given the project 001_flow_run_with_selectors
     When the data is seeded
