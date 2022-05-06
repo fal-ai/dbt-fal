@@ -23,6 +23,24 @@ Feature: `flow run` command
     And the following scripts are ran:
       | agent_wait_time.before.py |
 
+  Scenario: fal flow run command with complex selectors
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select +intermediate_model_3 --threads 1
+      """
+    Then the following models are calculated:
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1+ --threads 1
+      """
+    Then the following models are calculated:
+      | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+
   Scenario: fal flow run command with selectors
     Given the project 001_flow_run_with_selectors
     When the data is seeded
