@@ -8,7 +8,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py+
       """
     Then the following models are calculated:
-      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_c |
     And the following scripts are ran:
       | agent_wait_time.before.py | agent_wait_time.after.py |
 
@@ -126,7 +126,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --threads 1
       """
     Then the following models are calculated:
-      | zendesk_ticket_data | empty_model_2 |
+      | zendesk_ticket_data |
     And the script zendesk_ticket_data.check_extra.py output file has the lines:
       | no extra_col |
 
@@ -135,7 +135,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --vars 'extra_col: true' --threads 1
       """
     Then the following models are calculated:
-      | zendesk_ticket_data | empty_model_2 |
+      | zendesk_ticket_data |
     And the script zendesk_ticket_data.check_extra.py output file has the lines:
       | extra_col: yes |
 
@@ -147,7 +147,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude before.py
       """
     Then the following models are calculated:
-      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | zendesk_ticket_data | empty_model | empty_model_2 |
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | zendesk_ticket_data | model_b | model_a | model_c |
     And the following scripts are ran:
       | agent_wait_time.after.py |
     And the following scripts are not ran:
@@ -161,7 +161,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude before.py+
       """
     Then the following models are calculated:
-      | zendesk_ticket_data | empty_model | empty_model_2 |
+      | zendesk_ticket_data | model_a | model_b |
     And the following scripts are not ran:
       | agent_wait_time.before.py | agent_wait_time.after.py |
 
@@ -173,7 +173,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py+ --exclude after.py
       """
     Then the following models are calculated:
-      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_c |
     And the following scripts are not ran:
       | agent_wait_time.after.py |
     And the following scripts are ran:
@@ -184,14 +184,12 @@ Feature: `flow run` command
     When the data is seeded
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select @zendesk_ticket_data
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select @agent_wait_time
       """
     Then the following models are calculated:
-      | zendesk_ticket_data | empty_model | empty_model_2 |
-    And the following scripts are not ran:
-      | agent_wait_time.after.py | agent_wait_time.before.py |
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
     And the following scripts are ran:
-      | empty_model_2.before_2.py | empty_model_2.after_2.py |
+      | model_c.before.py | agent_wait_time.after.py |
 
   @broken_profile
   Scenario: fal flow run with target
@@ -209,4 +207,4 @@ Feature: `flow run` command
       fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data+ --threads 1 --target custom
       """
     Then the following models are calculated:
-      | zendesk_ticket_data | empty_model_2 |
+      | zendesk_ticket_data |

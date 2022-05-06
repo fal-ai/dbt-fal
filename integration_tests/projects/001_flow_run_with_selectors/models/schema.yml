@@ -8,16 +8,16 @@ models:
           after:
             - fal_scripts/check_extra.py
 
-  - name: empty_model
+  - name: model_a
 
-  - name: empty_model_2
+  - name: model_b
+
+  - name: model_c
     meta:
       fal:
         scripts:
           before:
-            - fal_scripts/before_2.py
-          after:
-            - fal_scripts/after_2.py
+            - fal_scripts/before.py
 
   - name: agent_wait_time
     description: Agent wait time series
