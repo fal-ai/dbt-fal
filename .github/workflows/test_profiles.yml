@@ -117,7 +117,7 @@ jobs:
           # For posting a rich message using Block Kit
           payload: |
             {
-              "text": "Integration tests status for profile ${{ matrix.profile }}, Python version ${{ matrix.python }}: ${{ steps.test_run.outcome }}"
+              "text": "Integration tests status for profile ${{ matrix.profile }}, Python version ${{ matrix.python }}: ${{ steps.test_run.outcome }}. https://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
