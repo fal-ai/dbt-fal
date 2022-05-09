@@ -59,6 +59,7 @@ jobs:
           (test -f requirements.txt && pip install -r requirements.txt) || echo "No requirements.txt"
 
       - name: Run dbt and fal
+        id: test_run
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
@@ -105,4 +106,19 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          behave --tags=-broken_profile -D profile=${{ matrix.profile }}
+          # behave --tags=-broken_profile -D profile=${{ matrix.profile }}
+          echo "hello"
+
+      - name: Send custom JSON data to Slack workflow
+        if: always()
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
+        with:
+          # For posting a rich message using Block Kit
+          payload: |
+            {
+              "text": "Integration tests status for profile ${{ matrix.profile }}, Python version ${{ matrix.python }}: ${{ steps.test_run.outcome }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
