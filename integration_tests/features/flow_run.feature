@@ -32,7 +32,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select +intermediate_model_3 --threads 1
       """
     Then the following models are calculated:
-      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
 
     When the following command is invoked:
       """
