@@ -7,6 +7,18 @@ models:
         scripts:
           after:
             - fal_scripts/check_extra.py
+
+  - name: model_a
+
+  - name: model_b
+
+  - name: model_c
+    meta:
+      fal:
+        scripts:
+          before:
+            - fal_scripts/before.py
+
   - name: agent_wait_time
     description: Agent wait time series
     config:

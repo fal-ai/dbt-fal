@@ -5,6 +5,7 @@ from fal.node_graph import NodeGraph
 from faldbt.project import CompileArgs, FalDbt
 from dbt.task.compile import CompileTask
 from enum import Enum
+from functools import reduce
 import faldbt.lib as lib
 
 
@@ -81,6 +82,20 @@ def _filter_node_ids(
             if selector_plan.parents:
                 parents = list(nodeGraph.get_ancestors(id))
                 output.extend(parents)
+            if selector_plan.children_with_parents:
+                ids = _get_children_with_parents(id, nodeGraph)
+                output.extend(ids)
+    return output
+
+
+def _get_children_with_parents(node_id, nodeGraph) -> List[str]:
+    children = nodeGraph.get_descendants(node_id)
+    output = reduce(
+        lambda a, b: a + list(nodeGraph.get_ancestors(b)), children, children
+    )
+
+    output = list(set(output))
+
     return output
 
 
@@ -113,12 +128,14 @@ class SelectorPlan:
 
     unique_ids: List[str]
     children: bool
+    children_with_parents: bool
     parents: bool
     type: SelectType
 
     def __init__(self, selector: str, unique_ids: List[str], fal_dbt: FalDbt):
         self.children = _needs_children(selector)
         self.parents = _need_parents(selector)
+        self.children_with_parents = _needs_children_with_parents(selector)
         self.type = _to_select_type(selector)
         node_name = _remove_graph_selectors(selector)
 
@@ -155,11 +172,17 @@ def _is_script_node(node_name: str) -> bool:
 
 
 def _remove_graph_selectors(selector: str) -> str:
-    return selector.replace("+", "")
+    selector = selector.replace("+", "")
+    return selector.replace("@", "")
 
 
 def _needs_children(selector: str) -> bool:
     children_operation_regex = re.compile(".*\\+$")
+    return bool(children_operation_regex.match(selector))
+
+
+def _needs_children_with_parents(selector: str) -> bool:
+    children_operation_regex = re.compile("^\\@.*")
     return bool(children_operation_regex.match(selector))
 
 

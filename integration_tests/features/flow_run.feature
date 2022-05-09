@@ -8,7 +8,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py+
       """
     Then the following models are calculated:
-      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_c |
     And the following scripts are ran:
       | agent_wait_time.before.py | agent_wait_time.after.py |
 
@@ -165,7 +165,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude before.py
       """
     Then the following models are calculated:
-      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | zendesk_ticket_data |
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | zendesk_ticket_data | model_b | model_a | model_c |
     And the following scripts are ran:
       | agent_wait_time.after.py |
     And the following scripts are not ran:
@@ -179,7 +179,7 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude before.py+
       """
     Then the following models are calculated:
-      | zendesk_ticket_data |
+      | zendesk_ticket_data | model_a | model_b |
     And the following scripts are not ran:
       | agent_wait_time.before.py | agent_wait_time.after.py |
 
@@ -191,11 +191,37 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py+ --exclude after.py
       """
     Then the following models are calculated:
-      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_c |
     And the following scripts are not ran:
       | agent_wait_time.after.py |
     And the following scripts are ran:
       | agent_wait_time.before.py |
+
+  Scenario: fal flow run command with select @
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select @agent_wait_time
+      """
+    Then the following models are calculated:
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
+    And the following scripts are ran:
+      | model_c.before.py | agent_wait_time.after.py |
+
+  Scenario: fal flow run with @ in the middle
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select @model_c
+      """
+    Then the following models are calculated:
+      | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
+    And the following scripts are ran:
+      | model_c.before.py |
+    And the following scripts are not ran:
+      | agent_wait_time.after.py |
 
   @broken_profile
   Scenario: fal flow run with target
