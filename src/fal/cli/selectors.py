@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 import re
-from typing import List, Optional, Tuple
+from typing import List, Optional, Union
 from fal.node_graph import NodeGraph
 from faldbt.project import CompileArgs, FalDbt
 from dbt.task.compile import CompileTask
@@ -91,9 +92,11 @@ def _filter_node_ids(
                         id, selector_plan.parents_levels
                     )
                 output.extend(parents)
+
             if selector_plan.children_with_parents:
                 ids = _get_children_with_parents(id, nodeGraph)
                 output.extend(ids)
+
     return output
 
 
@@ -124,6 +127,7 @@ class SelectType(Enum):
     COMPLEX = 3
 
 
+@dataclass(init=False)
 class SelectorPlan:
     """
     Represents a single selector, for example in the command
@@ -140,20 +144,35 @@ class SelectorPlan:
     parents: bool
     parents_levels: Optional[int]
     type: SelectType
+    raw: str
 
     def __init__(self, selector: str, unique_ids: List[str], fal_dbt: FalDbt):
-        self.children, self.children_levels = _needs_children(selector)
-        self.parents, self.parents_levels = _needs_parents(selector)
-        self.children_with_parents = _needs_children_with_parents(selector)
+        self.raw = selector
+        self.children_with_parents = OP_CHILDREN_WITH_PARENTS.match(selector)
+        selector = OP_CHILDREN_WITH_PARENTS.rest(selector)
+
+        self.parents = OP_PARENTS.match(selector)
+        self.parents_levels = OP_PARENTS.depth(selector)
+        selector = OP_PARENTS.rest(selector)
+
+        self.children = OP_CHILDREN.match(selector)
+        self.children_levels = OP_CHILDREN.depth(selector)
+        selector = OP_CHILDREN.rest(selector)
+
         self.type = _to_select_type(selector)
-        node_name = _remove_graph_selectors(selector)
 
         if self.type == SelectType.MODEL:
-            self.unique_ids = [f"model.{fal_dbt.project_name}.{node_name}"]
+            self.unique_ids = [f"model.{fal_dbt.project_name}.{selector}"]
         elif self.type == SelectType.SCRIPT:
-            self.unique_ids = _expand_script(node_name, unique_ids)
+            self.unique_ids = _expand_script(selector, unique_ids)
         elif self.type == SelectType.COMPLEX:
             self.unique_ids = unique_ids_from_complex_selector(selector, fal_dbt)
+
+    def __post_init__(self):
+        if self.children and self.children_with_parents:
+            raise RuntimeError(
+                f'Invalid node spec {self.raw} - "@" prefix and "+" suffix are incompatible'
+            )
 
 
 def unique_ids_from_complex_selector(select, fal_dbt: FalDbt) -> List[str]:
@@ -165,12 +184,11 @@ def unique_ids_from_complex_selector(select, fal_dbt: FalDbt) -> List[str]:
     return list(graph.queued)
 
 
-def _to_select_type(select: str) -> SelectType:
-    if ":" in select:
+def _to_select_type(selector: str) -> SelectType:
+    if ":" in selector:
         return SelectType.COMPLEX
     else:
-        node_name = _remove_graph_selectors(select)
-        if _is_script_node(node_name):
+        if _is_script_node(selector):
             return SelectType.SCRIPT
         else:
             return SelectType.MODEL
@@ -180,34 +198,40 @@ def _is_script_node(node_name: str) -> bool:
     return node_name.endswith(".py")
 
 
-def _remove_graph_selectors(selector: str) -> str:
-    selector = selector.replace("+", "")
-    return selector.replace("@", "")
+class SelectorGraphOp:
+    _regex: re.Pattern
+
+    def __init__(self, regex: re.Pattern):
+        self._regex = regex
+        assert (
+            "rest" in regex.groupindex
+        ), 'rest must be in regex. Use `re.compile("something(?P<rest>.*)")`'
+
+    def _select(self, selector: str, group: Union[str, int]) -> Optional[str]:
+        match = self._regex.match(selector)
+        if match:
+            return match.group(group)
+
+    def match(self, selector: str) -> bool:
+        return self._select(selector, 0) is not None
+
+    def rest(self, selector: str) -> str:
+        rest = self._select(selector, "rest")
+        if rest is not None:
+            return rest
+        return selector
 
 
-def _needs_children(selector: str) -> Tuple[bool, Optional[int]]:
-    children_operation_regex = re.compile(".*\\+(\\d*)$")
-    match = children_operation_regex.match(selector)
-    if not match:
-        return False, None
-
-    grp = match.group(1)
-    return True, int(grp) if grp.isnumeric() else None
+class SelectorGraphOpDepth(SelectorGraphOp):
+    def depth(self, selector: str) -> Optional[int]:
+        depth = self._select(selector, "depth")
+        if depth:
+            return int(depth)
 
 
-def _needs_children_with_parents(selector: str) -> bool:
-    children_operation_regex = re.compile("^\\@.*")
-    return bool(children_operation_regex.match(selector))
-
-
-def _needs_parents(selector: str) -> Tuple[bool, Optional[int]]:
-    parent_operation_regex = re.compile("^(\\d*)\\+.*")
-    match = parent_operation_regex.match(selector)
-    if not match:
-        return False, None
-
-    grp = match.group(1)
-    return True, int(grp) if grp.isnumeric() else None
+OP_CHILDREN_WITH_PARENTS = SelectorGraphOp(re.compile("^\\@(?P<rest>.*)"))
+OP_PARENTS = SelectorGraphOpDepth(re.compile("^(?P<depth>\\d*)\\+(?P<rest>.*)"))
+OP_CHILDREN = SelectorGraphOpDepth(re.compile("(?P<rest>.*)\\+(?P<depth>\\d*)$"))
 
 
 def _is_before_scipt(id: str) -> bool:
