@@ -65,19 +65,18 @@ def _filter_node_ids(
 ) -> List[str]:
     """Filter list of unique_ids according to a selector."""
     output = []
-    selector_plans = list(
-        map(
-            lambda selector: SelectorPlan(selector, unique_ids, fal_dbt),
-            selected_nodes,
-        )
+    selector_plans = map(
+        lambda selector: SelectorPlan(selector, unique_ids, fal_dbt),
+        selected_nodes,
     )
+
     for selector_plan in selector_plans:
         for id in selector_plan.unique_ids:
             output.append(id)
 
             if selector_plan.children:
                 if selector_plan.children_levels is None:
-                    children = list(nodeGraph.get_descendants(id))
+                    children = nodeGraph.get_descendants(id)
                 else:
                     children = nodeGraph.get_successors(
                         id, selector_plan.children_levels
@@ -86,7 +85,7 @@ def _filter_node_ids(
 
             if selector_plan.parents:
                 if selector_plan.parents_levels is None:
-                    parents = list(nodeGraph.get_ancestors(id))
+                    parents = nodeGraph.get_ancestors(id)
                 else:
                     parents = nodeGraph.get_predecessors(
                         id, selector_plan.parents_levels
@@ -98,11 +97,9 @@ def _filter_node_ids(
     return output
 
 
-def _get_children_with_parents(node_id, nodeGraph) -> List[str]:
+def _get_children_with_parents(node_id: str, nodeGraph: NodeGraph) -> List[str]:
     children = nodeGraph.get_descendants(node_id)
-    output = reduce(
-        lambda a, b: a + list(nodeGraph.get_ancestors(b)), children, children
-    )
+    output = reduce(lambda l, ch: l + nodeGraph.get_ancestors(ch), children, children)
 
     output = list(set(output))
 
