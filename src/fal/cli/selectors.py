@@ -229,6 +229,7 @@ class SelectorGraphOpDepth(SelectorGraphOp):
             return int(depth)
 
 
+# Graph operators from their regex Patterns
 OP_CHILDREN_WITH_PARENTS = SelectorGraphOp(re.compile("^\\@(?P<rest>.*)"))
 OP_PARENTS = SelectorGraphOpDepth(re.compile("^(?P<depth>\\d*)\\+(?P<rest>.*)"))
 OP_CHILDREN = SelectorGraphOpDepth(re.compile("(?P<rest>.*)\\+(?P<depth>\\d*)$"))

@@ -109,6 +109,53 @@ def test_create_plan_start_model_upstream():
     assert execution_plan.after_scripts == []
 
 
+def test_create_plan_large_graph_model_levels():
+    def _model(s: str) -> str:
+        return f"model.test_project.{s}"
+
+    def _after_script_for_model(model: str) -> str:
+        return f"script.{model}.AFTER.script.py"
+
+    digraph = nx.DiGraph()
+
+    for n in range(100):
+        modeln_name = f"model{n}"
+        modeln = _model(modeln_name)
+
+        digraph.add_edge(modeln, _after_script_for_model(modeln_name))
+
+        modelnext = f"model.test_project.model{n+1}"
+        digraph.add_edge(modeln, modelnext)
+
+        for m in range(10):  # Avoid cycles with these ranges
+            modelm = _model(f"model{n}_{m}")
+            digraph.add_edge(modeln, modelm)
+
+    graph = NodeGraph(digraph, {})
+
+    parsed = Namespace(select=["model0+70"])
+
+    execution_plan = ExecutionPlan.create_plan_from_graph(
+        parsed, graph, MagicMock(project_name=PROJECT_NAME)
+    )
+
+    assert execution_plan.before_scripts == []
+    assert_contains_only(
+        execution_plan.dbt_models,
+        # model0, model1, ..., model70
+        [_model(f"model{n}") for n in range(71)]
+        # model0_0, model0_1, ..., model0_9, model1_0, ..., model69_0, ..., model69_9
+        # not the children of model70, it ends in model70
+        + [_model(f"model{n}_{m}") for m in range(10) for n in range(70)],
+    )
+    assert_contains_only(
+        execution_plan.after_scripts,
+        # after script for model0, model1, ..., model69
+        # not model70 because that is one level too far
+        [_after_script_for_model(f"model{n}") for n in range(70)],
+    )
+
+
 def test_create_plan_start_model_upstream_and_downstream():
     parsed = Namespace(select=["+modelA+"])
     graph = _create_test_graph()
