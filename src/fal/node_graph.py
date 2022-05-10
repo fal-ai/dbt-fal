@@ -132,14 +132,32 @@ class NodeGraph:
         self.graph = graph
         self.node_lookup = node_lookup
 
-    def get_successors(self, id: str) -> List[str]:
-        return list(self.graph.successors(id))
+    def get_successors(self, id: str, levels: int) -> List[str]:
+        assert levels >= 0
+        if levels == 0:
+            return []
+        else:
+            current: List[str] = list(self.graph.successors(id))
+            return reduce(
+                lambda acc, id: acc + self.get_successors(id, levels - 1),
+                current,
+                current,
+            )
 
     def get_descendants(self, id: str) -> List[str]:
         return list(nx.descendants(self.graph, id))
 
-    def get_predecessors(self, id: str) -> List[str]:
-        return list(self.graph.predecessors(id))
+    def get_predecessors(self, id: str, levels: int) -> List[str]:
+        assert levels >= 0
+        if levels == 0:
+            return []
+        else:
+            current: List[str] = list(self.graph.predecessors(id))
+            return reduce(
+                lambda acc, id: acc + self.get_predecessors(id, levels - 1),
+                current,
+                current,
+            )
 
     def get_ancestors(self, id: str) -> List[str]:
         return list(nx.ancestors(self.graph, id))
