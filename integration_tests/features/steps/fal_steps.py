@@ -27,6 +27,7 @@ def set_project_folder(context, project):
     context.base_dir = reduce(os.path.join, [os.getcwd(), "projects", project])
     context.temp_dir = tempfile.TemporaryDirectory()
     os.environ["temp_dir"] = context.temp_dir.name
+    os.environ["project_dir"] = context.base_dir
 
 
 @when("the data is seeded")
@@ -38,11 +39,11 @@ def seed_data(context):
     )
 
 
-@when("the data is seeded to {target} target in profile directory {profile_dir}")
-def seed_data_custom_target(context, target, profile_dir):
+@when("the data is seeded to {target} target in profile directory {profiles_dir}")
+def seed_data_custom_target(context, target, profiles_dir):
     base_path = Path(context.base_dir)
     os.system(
-        f"dbt seed --profiles-dir {profile_dir} --project-dir {base_path} --full-refresh --target {target}"
+        f"dbt seed --profiles-dir {profiles_dir} --project-dir {base_path} --full-refresh --target {target}"
     )
 
 
@@ -228,8 +229,13 @@ def _set_profiles_dir(context) -> Path:
         profile = context.config.userdata["profile"]
         if profile not in available_profiles:
             raise Exception(f"Profile {profile} is not supported")
-        path = reduce(os.path.join, [os.getcwd(), "profiles", profile])
-        return Path(path).absolute()
+        raw_path = reduce(os.path.join, [os.getcwd(), "profiles", profile])
+        path = Path(raw_path).absolute()
+    elif "profiles_dir" in context:
+        path = Path(context.profiles_dir).absolute()
     else:
         # Use postgres profile
-        return Path(context.base_dir).parent.absolute()
+        path = Path(context.base_dir).parent.absolute()
+
+    os.environ["profiles_dir"] = str(path)
+    return path
