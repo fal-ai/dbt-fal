@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.7", "3.8", "3.9", "3.10"]
+        python: ["3.7", "3.8", "3.9"]
         dbt: ["1.0.4"]
         profile: ["postgres", "bigquery", "snowflake", "redshift"]
 
@@ -59,6 +59,7 @@ jobs:
           (test -f requirements.txt && pip install -r requirements.txt) || echo "No requirements.txt"
 
       - name: Run dbt and fal
+        id: test_run
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
@@ -106,3 +107,17 @@ jobs:
           fi
 
           behave --tags=-broken_profile -D profile=${{ matrix.profile }}
+
+      - name: Send custom JSON data to Slack workflow
+        if: always()
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
+        with:
+          # For posting a rich message using Block Kit
+          payload: |
+            {
+              "text": "Integration tests for profile ${{ matrix.profile }}, Python version ${{ matrix.python }}: ${{ steps.test_run.outcome }}. https://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
