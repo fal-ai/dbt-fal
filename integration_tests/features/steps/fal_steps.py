@@ -169,18 +169,11 @@ def no_scripts_are_run(context):
 
 @then("the following models are calculated")
 def check_model_results(context):
-    fal_results = _get_fal_results_file_name(context)
-    calculated_results = reduce(
-        lambda prev, fal_result: prev.append(
-            _get_models_from_result(context.temp_dir.name, fal_result)
-        )
-        or prev,
-        fal_results,
-        [],
+    models = _get_models_from_result(
+        context.temp_dir.name,
+        reduce(os.path.join, [context.temp_dir.name, "target", "run_results.json"]),
     )
-    unittest.TestCase().assertCountEqual(
-        _flatten_list(calculated_results), context.table.headings
-    )
+    unittest.TestCase().assertCountEqual(_flatten_list(models), context.table.headings)
 
 
 def _script_filename(script: str):

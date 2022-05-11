@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Dict, Optional, List
 import subprocess
 import json
@@ -127,6 +128,9 @@ def dbt_run(
 
     _create_fal_result_file(target_path, run_index)
 
+    # Remove run_result.json files in between dbt runs during the same fal flow run
+    os.remove(_get_run_result_file(target_path))
+
     return DbtCliOutput(
         command=full_command,
         return_code=return_code,
@@ -135,8 +139,12 @@ def dbt_run(
     )
 
 
+def _get_run_result_file(target_path: str) -> str:
+    return os.path.join(target_path, "run_results.json")
+
+
 def _create_fal_result_file(target_path: str, run_index: int):
-    fal_run_result = os.path.join(target_path, "run_results.json")
+    fal_run_result = _get_run_result_file(target_path)
     if exists(fal_run_result):
         shutil.copy(
             fal_run_result, os.path.join(target_path, f"fal_results_{run_index}.json")
