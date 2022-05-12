@@ -11,6 +11,7 @@ from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.cli.dbt_runner import dbt_run, raise_for_dbt_run_errors
 from fal.cli.fal_runner import create_fal_dbt
 from fal.cli.selectors import ExecutionPlan
+from fal.cli.dbt_model_generator import generate_python_dbt_models
 from fal.fal_script import FalScript
 from fal.node_graph import FalFlowNode, NodeGraph, ScriptNode
 from faldbt.project import FalDbt
@@ -23,6 +24,11 @@ RUN_RESULTS_KEY = "results"
 
 def fal_flow_run(parsed: argparse.Namespace):
     fal_dbt = create_fal_dbt(parsed)
+
+    if parsed.experimental_python_models:
+        telemetry.log_call("experimental_python_models")
+        generate_python_dbt_models(fal_dbt)
+
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
     main_graph = NodeGraph.from_fal_dbt(fal_dbt)
@@ -33,7 +39,7 @@ def fal_flow_run(parsed: argparse.Namespace):
     if len(sub_graphs) > 1:
         telemetry.log_call("fal_in_the_middle")
 
-    for (index, node_graph) in enumerate(sub_graphs):
+    for index, node_graph in enumerate(sub_graphs):
         if index > 0:
             # we want to run all the nodes if we are not running the first subgraph
             parsed.select = None
