@@ -1,18 +1,20 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
 import six
+import os
 from datetime import datetime
 from dataclasses import dataclass
 from uuid import uuid4
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
+from urllib.parse import quote_plus
 
 import dbt.version
 import dbt.semver
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
 from dbt.contracts.connection import AdapterResponse
-from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.base import BaseRelation
+from dbt.contracts.graph.compiled import CompileResultNode
 
 from . import parse
 
@@ -20,13 +22,11 @@ import pandas as pd
 from pandas.io import sql as pdsql
 
 import sqlalchemy
-from sqlalchemy.sql.ddl import CreateTable, DropTable
+from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 
 DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.get_installed_version()
-
-from dbt.contracts.graph.compiled import CompileResultNode
 
 if DBT_VCURRENT.compare(DBT_V1) >= 0:
     from dbt.contracts.sql import ResultTable, RemoteRunResult
@@ -70,7 +70,6 @@ def _get_adapter(
     config = parse.get_dbt_config(
         project_dir, profiles_dir, profile_target=profile_target
     )
-
     adapter: SQLAdapter = adapters_factory.get_adapter(config)  # type: ignore
 
     return adapter
@@ -258,6 +257,21 @@ def _write_relation(
     pdtable = pdsql.SQLTable(relation.identifier, pddb, data, index=False, dtype=dtype)
     alchemy_table: sqlalchemy.Table = pdtable.table.to_metadata(pdtable.pd_sql.meta)
 
+    # HACK: athena needs "location" property that is not passed by mock adapter
+    if adapter.type() == "athena":
+        s3_dir = adapter.config.credentials.s3_staging_dir
+        alchemy_table.dialect_options["awsathena"] = {
+            "location": f"{s3_dir}{alchemy_table.schema}/{alchemy_table.name}/",
+            "tblproperties": None,
+            "compression": None,
+            "bucket_count": None,
+            "row_format": None,
+            "serdeproperties": None,
+            "file_format": None,
+            "partition": None,
+            "cluster": None,
+        }
+
     column_names: List[str] = list(data.columns)
 
     rows = data.to_records(index=False)
@@ -309,7 +323,18 @@ def _replace_relation(
         if original_exists:
             adapter.drop_relation(original_relation)
 
-        adapter.rename_relation(new_relation, original_relation)
+        # HACK: athena doesn't support renaming tables, we do it manually
+        if adapter.type() == "athena":
+            create_stmt = f"create table {original_relation} as select * from {new_relation} with data"
+            _execute_sql(
+                project_dir,
+                profiles_dir,
+                six.text_type(create_stmt).strip(),
+                profile_target=profile_target,
+            )
+            adapter.drop_relation(new_relation)
+        else:
+            adapter.rename_relation(new_relation, original_relation)
         adapter.connections.commit_if_has_connection()
 
 
@@ -340,5 +365,32 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
 
     def null_dump(sql, *multiparams, **params):
         pass
+
+    if adapter.type() == "athena":
+        AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY_ID"]
+        AWS_SECRET_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
+
+        if AWS_ACCESS_KEY is None or AWS_SECRET_KEY is None:
+            raise Exception(
+                "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY need to be set as environment variables."
+            )
+
+        SCHEMA_NAME = adapter.config.credentials.schema
+        S3_STAGING_DIR = adapter.config.credentials.s3_staging_dir
+        AWS_REGION = adapter.config.credentials.region_name
+
+        conn_str = (
+            "awsathena+rest://{aws_access_key_id}:{aws_secret_access_key}@"
+            "athena.{region_name}.amazonaws.com:443/"
+            "{schema_name}?s3_staging_dir={s3_staging_dir}&work_group=primary"
+        )
+
+        url_string = conn_str.format(
+            aws_access_key_id=quote_plus(AWS_ACCESS_KEY),
+            aws_secret_access_key=quote_plus(AWS_SECRET_KEY),
+            region_name=AWS_REGION,
+            schema_name=SCHEMA_NAME,
+            s3_staging_dir=quote_plus(S3_STAGING_DIR),
+        )
 
     return sqlalchemy.create_mock_engine(url_string, executor=null_dump)
