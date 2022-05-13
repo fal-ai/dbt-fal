@@ -38,6 +38,7 @@ def create_fal_dbt(
         args.threads,
         real_state,
         args.target,
+        args.vars,
         generated_models,
     )
 

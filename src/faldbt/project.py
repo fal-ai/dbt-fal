@@ -209,6 +209,7 @@ class FalDbt:
         threads: Optional[int] = None,
         state: Optional[Path] = None,
         profile_target: Optional[str] = None,
+        args_vars: str = "{}",
         generated_models: Dict[str, Path] = {},
     ):
         self.project_dir = project_dir
@@ -217,7 +218,7 @@ class FalDbt:
         self._firestore_client = None
         self._state = state
 
-        self.scripts_dir = parse.get_scripts_dir(project_dir)
+        self.scripts_dir = parse.get_scripts_dir(project_dir, args_vars)
 
         lib.initialize_dbt_flags(profiles_dir=profiles_dir)
 
