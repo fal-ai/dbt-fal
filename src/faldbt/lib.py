@@ -367,27 +367,17 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
         pass
 
     if adapter.type() == "athena":
-        AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY_ID"]
-        AWS_SECRET_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
-
-        if AWS_ACCESS_KEY is None or AWS_SECRET_KEY is None:
-            raise Exception(
-                "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY need to be set as environment variables."
-            )
 
         SCHEMA_NAME = adapter.config.credentials.schema
         S3_STAGING_DIR = adapter.config.credentials.s3_staging_dir
         AWS_REGION = adapter.config.credentials.region_name
 
         conn_str = (
-            "awsathena+rest://{aws_access_key_id}:{aws_secret_access_key}@"
-            "athena.{region_name}.amazonaws.com:443/"
+            "awsathena+rest://athena.{region_name}.amazonaws.com:443/"
             "{schema_name}?s3_staging_dir={s3_staging_dir}&work_group=primary"
         )
 
         url_string = conn_str.format(
-            aws_access_key_id=quote_plus(AWS_ACCESS_KEY),
-            aws_secret_access_key=quote_plus(AWS_SECRET_KEY),
             region_name=AWS_REGION,
             schema_name=SCHEMA_NAME,
             s3_staging_dir=quote_plus(S3_STAGING_DIR),
