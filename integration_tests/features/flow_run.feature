@@ -105,7 +105,7 @@ Feature: `flow run` command
     And state is stored in old_state
     And the file $baseDir/models/new_model.sql is created with the content:
       """
-      select 1
+      select cast(NULL as numeric) AS my_float
       """
     And the following command is invoked:
       """

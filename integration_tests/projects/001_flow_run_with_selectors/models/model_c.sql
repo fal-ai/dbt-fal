@@ -1,3 +1,3 @@
 -- {{ ref("model_a") }}
 -- {{ ref("model_b") }}
-select 1
+select y from {{ ref('time_series') }}
