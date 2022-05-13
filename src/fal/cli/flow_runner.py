@@ -23,11 +23,11 @@ RUN_RESULTS_KEY = "results"
 
 
 def fal_flow_run(parsed: argparse.Namespace):
-    fal_dbt = create_fal_dbt(parsed)
-
     if parsed.experimental_python_models:
         telemetry.log_call("experimental_python_models")
-        generate_python_dbt_models(fal_dbt)
+        generate_python_dbt_models(parsed.project_dir)
+
+    fal_dbt = create_fal_dbt(parsed)
 
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
