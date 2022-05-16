@@ -166,7 +166,7 @@ def _process_tests(tests: List[Any]):
 def _process_ipynb(filepath: str) -> str:
     def strip_magic(source: List[str]) -> List[str]:
         IMPORT_STMT = "from faldbt.magics import init_fal"
-        return (item for item in source if item[0] != "%" or item != IMPORT_STMT)
+        return (item for item in source if item[0] != "%" and item != IMPORT_STMT)
 
     with open(filepath) as raw_data:
         raw_script = json.load(raw_data)
