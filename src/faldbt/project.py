@@ -77,6 +77,7 @@ class DbtModel:
     status: NodeStatus = field(init=False)
     columns: Dict[str, Any] = field(init=False)
     tests: List[DbtTest] = field(init=False)
+    python_model: Optional[Path] = field(init=False)
 
     def __post_init__(self):
         node = self.node
@@ -92,6 +93,7 @@ class DbtModel:
         self.columns = node.columns
         self.unique_id = node.unique_id
         self.tests = []
+        self.python_model = None
 
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
@@ -207,6 +209,7 @@ class FalDbt:
         threads: Optional[int] = None,
         state: Optional[Path] = None,
         profile_target: Optional[str] = None,
+        generated_models: Dict[str, Path] = {},
     ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
@@ -254,7 +257,7 @@ class FalDbt:
         self._manifest = DbtManifest(self._compile_task.manifest)
 
         self.models, self.tests = _map_nodes_to_models(
-            self._run_results, self._manifest
+            self._run_results, self._manifest, generated_models
         )
 
         normalized_model_paths = parse.normalize_paths(project_dir, self.source_paths)
@@ -619,7 +622,9 @@ def _firestore_dict_to_document(data: Dict, key_column: str):
     return output
 
 
-def _map_nodes_to_models(run_results: DbtRunResult, manifest: DbtManifest):
+def _map_nodes_to_models(
+    run_results: DbtRunResult, manifest: DbtManifest, generated_models: Dict[str, Path]
+):
     models = manifest.get_models()
     tests = manifest.get_tests()
     status_map = dict(
@@ -629,6 +634,9 @@ def _map_nodes_to_models(run_results: DbtRunResult, manifest: DbtManifest):
         )
     )
     for model in models:
+        if model.name in generated_models:
+            model.python_model = generated_models[model.name]
+
         model.set_status(status_map.get(model.unique_id, NodeStatus.Skipped))
         for test in tests:
             if hasattr(test, "model") and test.model == model.name:

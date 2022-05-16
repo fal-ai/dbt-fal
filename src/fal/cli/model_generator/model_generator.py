@@ -37,6 +37,8 @@ def generate_python_dbt_models(project_dir: str):
         with open(sql_path, "w") as file:
             file.write(sql_contents)
 
+    return dict([(path.stem, path) for path in python_paths])
+
 
 def _check_path_safe_to_write(sql_path: Path, py_path: Path):
     if sql_path.exists():

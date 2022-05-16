@@ -1,11 +1,8 @@
 from functools import reduce
-from genericpath import isfile
-from glob import glob
 import json
 import os
 from pathlib import Path
 from typing import Dict, List, cast, Union
-from xxlimited import Str
 
 from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.cli.dbt_runner import dbt_run, raise_for_dbt_run_errors
@@ -13,7 +10,7 @@ from fal.cli.fal_runner import create_fal_dbt
 from fal.cli.selectors import ExecutionPlan
 from fal.cli.model_generator import generate_python_dbt_models
 from fal.fal_script import FalScript
-from fal.node_graph import FalFlowNode, NodeGraph, ScriptNode
+from fal.node_graph import DbtModelNode, FalFlowNode, NodeGraph, ScriptNode
 from faldbt.project import FalDbt
 import argparse
 from fal.telemetry import telemetry
@@ -23,17 +20,18 @@ RUN_RESULTS_KEY = "results"
 
 
 def fal_flow_run(parsed: argparse.Namespace):
+    generated_models: Dict[str, Path] = {}
     if parsed.experimental_python_models:
         telemetry.log_call("experimental_python_models")
-        generate_python_dbt_models(parsed.project_dir)
+        generated_models = generate_python_dbt_models(parsed.project_dir)
 
-    fal_dbt = create_fal_dbt(parsed)
+    fal_dbt = create_fal_dbt(parsed, generated_models)
 
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
     main_graph = NodeGraph.from_fal_dbt(fal_dbt)
     sub_graphs = [main_graph]
-    if parsed.experimental_flow:
+    if parsed.experimental_flow or parsed.experimental_python_models:
         sub_graphs = main_graph.generate_sub_graphs()
 
     if len(sub_graphs) > 1:
@@ -59,16 +57,20 @@ def _run_sub_graph(
 ):
     nodes = list(node_graph.graph.nodes())
 
-    # we still want to seperate nodes as before/dbt/after and we can rely on the plan
+    # we still want to seperate nodes as before/model/after and we can rely on the plan
     # to do that
     before_scripts = _id_to_fal_scripts(
-        node_graph, list(filter(lambda node: node in nodes, plan.before_scripts))
+        node_graph,
+        fal_dbt,
+        list(filter(lambda node: node in nodes, plan.before_scripts)),
     )
 
     dbt_nodes = list(filter(lambda node: node in nodes, plan.dbt_models))
 
     after_scripts = _id_to_fal_scripts(
-        node_graph, list(filter(lambda node: node in nodes, plan.after_scripts))
+        node_graph,
+        fal_dbt,
+        list(filter(lambda node: node in nodes, plan.after_scripts)),
     )
 
     if len(before_scripts) != 0:
@@ -84,27 +86,45 @@ def _run_sub_graph(
         )
         raise_for_dbt_run_errors(output)
 
+        fal_nodes = []
+        for n in dbt_nodes:
+            mnode = cast(DbtModelNode, node_graph.get_node(n))
+            if mnode.model.python_model:
+                fal_nodes.append(n)
+        if len(fal_nodes) != 0:
+            results = run_scripts(
+                _id_to_fal_scripts(node_graph, fal_dbt, fal_nodes), fal_dbt
+            )
+            raise_for_run_results_failures(after_scripts, results)
+
     if len(after_scripts) != 0:
         results = run_scripts(after_scripts, fal_dbt)
         raise_for_run_results_failures(after_scripts, results)
 
 
-def _id_to_fal_scripts(node_graph: NodeGraph, id_list: List[str]) -> List[FalScript]:
+def _id_to_fal_scripts(
+    node_graph: NodeGraph, fal_dbt: FalDbt, id_list: List[str]
+) -> List[FalScript]:
     return _flow_node_to_fal_scripts(
+        fal_dbt,
         list(
             map(
                 lambda id: node_graph.get_node(id),
                 id_list,
             )
-        )
+        ),
     )
 
 
-def _flow_node_to_fal_scripts(list: List[Union[FalFlowNode, None]]) -> List[FalScript]:
+def _flow_node_to_fal_scripts(
+    fal_dbt: FalDbt, list: List[Union[FalFlowNode, None]]
+) -> List[FalScript]:
     new_list: List[FalScript] = []
     for item in list:
-        if item != None and isinstance(item, ScriptNode):
+        if item is not None and isinstance(item, ScriptNode):
             new_list.append(cast(ScriptNode, item).script)
+        elif item is not None and isinstance(item, DbtModelNode):
+            new_list.append(FalScript.model_script(fal_dbt, item.model))
     return new_list
 
 

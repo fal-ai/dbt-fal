@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Dict, List
 import os
 
 from dbt.config.profile import DEFAULT_PROFILES_DIR
@@ -10,7 +10,9 @@ from fal.fal_script import FalScript
 from faldbt.project import DbtModel, FalDbt, FalGeneralException
 
 
-def create_fal_dbt(args: argparse.Namespace) -> FalDbt:
+def create_fal_dbt(
+    args: argparse.Namespace, generated_models: Dict[str, Path] = {}
+) -> FalDbt:
     real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
     real_profiles_dir = None
     env_profiles_dir = os.getenv("DBT_PROFILES_DIR")
@@ -36,6 +38,7 @@ def create_fal_dbt(args: argparse.Namespace) -> FalDbt:
         args.threads,
         real_state,
         args.target,
+        generated_models,
     )
 
 
