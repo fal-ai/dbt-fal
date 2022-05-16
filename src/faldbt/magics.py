@@ -13,7 +13,7 @@ def init_fal(line="", local_ns={}):
     """
     from faldbt.magics import init_fal
 
-    %init_fal project_dir=/my_project_dir profiles_dir=/my_profiles_dir
+    %init_fal project_dir=/my_project_dir profiles_dir=/my_profiles_dir default_model_name=my_model
     """
     '''
     args = dict([arg.split("=") for arg in line.split()])
@@ -53,4 +53,11 @@ def init_fal(line="", local_ns={}):
 
 
 def _raise_no_model_exception():
-    raise Exception("Model not found. Please provide a default model name.")
+    raise Exception(
+        '''
+        Model not found. Please provide a default model name. Example:
+        """
+        %init_fal project_dir=/my_project_dir profiles_dir=/my_profiles_dir default_model_name=my_model
+        """
+        '''
+    )
