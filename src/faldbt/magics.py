@@ -1,4 +1,5 @@
 from IPython.core.magic import register_line_magic, needs_local_scope
+from functools import partial
 from fal import FalDbt
 
 
@@ -38,4 +39,18 @@ def init_fal(line="", local_ns={}):
         "el": faldbt.el,
     }
 
+    if args.get("default_model_name"):
+        fal_globals["write_to_model"] = partial(
+            faldbt.write_to_model,
+            target_1=args.get("default_model_name"),
+            target_2=None,
+        )
+
+    else:
+        fal_globals["write_to_model"] = _raise_no_model_exception
+
     local_ns.update(fal_globals)
+
+
+def _raise_no_model_exception():
+    raise Exception("Model not found. Please provide a default model name.")
