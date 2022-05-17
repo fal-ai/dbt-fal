@@ -115,7 +115,8 @@ def get_dbt_results(
 
 
 def get_scripts_list(scripts_dir: str) -> List[str]:
-    return glob.glob(os.path.join(scripts_dir, "**.py"), recursive=True)
+    scripts_path = Path(scripts_dir)
+    return list(map(str, [*scripts_path.rglob("*.py"), *scripts_path.rglob("*.ipynb")]))
 
 
 def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:

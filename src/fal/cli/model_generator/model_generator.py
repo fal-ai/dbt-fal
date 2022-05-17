@@ -1,6 +1,7 @@
 import ast
 from typing import List, cast
 from pathlib import Path
+from fal.fal_script import python_from_file
 
 from faldbt.parse import load_dbt_project_contract
 from fal.cli.model_generator.deps_generator import generate_dbt_dependencies
@@ -32,8 +33,8 @@ def generate_python_dbt_models(project_dir: str):
         sql_path = py_path.with_suffix(".sql")
         _check_path_safe_to_write(sql_path, py_path)
 
-        with open(py_path) as file:
-            module = ast.parse(file.read(), str(py_path), "exec")
+        source_code = python_from_file(py_path)
+        module = ast.parse(source_code, str(py_path), "exec")
 
         dbt_deps: str = generate_dbt_dependencies(module)
         sql_contents = SQL_MODEL_TEMPLATE.replace("__deps__", dbt_deps)
@@ -55,7 +56,8 @@ def _check_path_safe_to_write(sql_path: Path, py_path: Path):
 
 
 def _find_python_files(model_paths: List[Path]) -> List[Path]:
-    paths_lists = map(lambda p: list(p.rglob("*.py")), model_paths)
-    flat_paths = sum(paths_lists, [])
-    flat_files = filter(lambda p: p.is_file(), flat_paths)
-    return list(flat_files)
+    files = []
+    for model_path in model_paths:
+        files.extend(model_path.rglob("*.py"))
+        files.extend(model_path.rglob("*.ipynb"))
+    return [p for p in files if p.is_file()]

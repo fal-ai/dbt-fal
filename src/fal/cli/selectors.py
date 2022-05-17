@@ -235,17 +235,13 @@ OP_PARENTS = SelectorGraphOpDepth(re.compile("^(?P<depth>\\d*)\\+(?P<rest>.*)"))
 OP_CHILDREN = SelectorGraphOpDepth(re.compile("(?P<rest>.*)\\+(?P<depth>\\d*)$"))
 
 
+IS_BEFORE_SCRIPT_REGEX = re.compile("^script.*.BEFORE.*.(ipynb|py)$")
+IS_AFTER_SCRIPT_REGEX = re.compile("^script.*.AFTER.*.(ipynb|py)$")
+
+
 def _is_before_script(id: str) -> bool:
-    if id.endswith(".ipynb"):
-        before_script_regex = re.compile("script.*.BEFORE.*.ipynb")
-    else:
-        before_script_regex = re.compile("script.*.BEFORE.*.py")
-    return bool(before_script_regex.match(id))
+    return bool(IS_BEFORE_SCRIPT_REGEX.match(id))
 
 
 def _is_after_script(id: str) -> bool:
-    if id.endswith(".ipynb"):
-        after_script_regex = re.compile("script.*.AFTER.*.ipynb")
-    else:
-        after_script_regex = re.compile("script.*.AFTER.*.py")
-    return bool(after_script_regex.match(id))
+    return bool(IS_AFTER_SCRIPT_REGEX.match(id))
