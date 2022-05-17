@@ -89,7 +89,7 @@ def _run_sub_graph(
         fal_nodes = []
         for n in dbt_nodes:
             mnode = cast(DbtModelNode, node_graph.get_node(n))
-            if mnode.model.python_model:
+            if mnode is not None and mnode.model.python_model is not None:
                 fal_nodes.append(n)
         if len(fal_nodes) != 0:
             results = run_scripts(
