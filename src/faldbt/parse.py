@@ -35,7 +35,7 @@ class RuntimeArgs:
     target: Optional[str]
 
 
-def load_dbt_project_contract(project_dir: str):
+def load_dbt_project_contract(project_dir: str) -> ProjectContract:
     partial_project = Project.partial_load(project_dir)
     contract = ProjectContract.from_dict(partial_project.project_dict)
     if contract.model_paths is None:

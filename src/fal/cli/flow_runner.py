@@ -11,7 +11,7 @@ from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.cli.dbt_runner import dbt_run, raise_for_dbt_run_errors
 from fal.cli.fal_runner import create_fal_dbt
 from fal.cli.selectors import ExecutionPlan
-from fal.cli.dbt_model_generator import generate_python_dbt_models
+from fal.cli.model_generator import generate_python_dbt_models
 from fal.fal_script import FalScript
 from fal.node_graph import FalFlowNode, NodeGraph, ScriptNode
 from faldbt.project import FalDbt
