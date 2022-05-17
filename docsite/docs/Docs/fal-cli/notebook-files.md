@@ -24,17 +24,20 @@ Now, you can initialize `fal` in your notebook:
 
 - `project_dir`: path to the dbt project directory
 - `profiles_dir`: path to the dbt profiles directory
-- `default_model_name`: the model name that this notebook is attached to in notebook runtime.
+- `default_model_name`: the model name that will be used in `write_to_model`, applies only in notebook runtime.
 
 Once executed, you can use fal functions in your notebook's Python cells:
 
 ```python
-my_df = ref('my_model')
+my_df = ref('some_model')
+
+# We made some predictions and stored them in `my_predictions`
 
 write_to_model(my_predictions)
 ```
+Note that the `default_model_name` is only active during notebook runtime. When the script is run with `fal run` or `fal flow run`, fal will determine the model to write to according to the relevant `schema.yml` file. In fal runtime, the `init_fal` line is ignored. 
 
-Note that the `default_model_name` is only active notebook runtime. When run using `fal run` or `fal flow run`, fal will determine the model according to the relevant `schema.yml` file. In fal runtime `init_fal` arguments are ignored. You can specify a .ipynb file the same way as a regular Python file:
+You can specify a .ipynb file the same way as a regular Python file:
 
 ```yaml
 models:
@@ -43,5 +46,4 @@ models:
       fal:
         scripts:
             - my_notebook.ipynb
-
 ```
