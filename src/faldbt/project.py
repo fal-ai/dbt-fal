@@ -257,19 +257,23 @@ class FalDbt:
             self._run_results, self._manifest
         )
 
-        # BACKWARDS: Change intorduced in 1.0.0
-        model_paths: List[str] = []
-        if hasattr(self._config, "model_paths"):
-            model_paths = self._config.model_paths
-        elif hasattr(self._config, "source_paths"):
-            model_paths = self._config.source_paths
-        normalized_model_paths = parse.normalize_paths(project_dir, model_paths)
+        normalized_model_paths = parse.normalize_paths(project_dir, self.source_paths)
 
         self._global_script_paths = parse.get_global_script_configs(
             normalized_model_paths
         )
 
         self.features = self._find_features()
+
+    @property
+    def source_paths(self) -> List[str]:
+        # BACKWARDS: Change intorduced in 1.0.0
+        if hasattr(self._config, "model_paths"):
+            return self._config.model_paths
+        elif hasattr(self._config, "source_paths"):
+            return self._config.source_paths  # type: ignore
+        else:
+            raise RuntimeError("No model_paths in config")
 
     @property
     def _profile_target(self):

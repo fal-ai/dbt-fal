@@ -4,7 +4,8 @@ import glob
 from pathlib import Path
 from typing import List, Dict, Optional, Union
 
-from dbt.config import RuntimeConfig
+from dbt.contracts.project import Project as ProjectContract
+from dbt.config import RuntimeConfig, Project
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.results import RunResultsArtifact
 from dbt.contracts.project import UserConfig
@@ -32,6 +33,16 @@ class RuntimeArgs:
     threads: Optional[int]
     single_threaded: bool
     target: Optional[str]
+
+
+def load_dbt_project_contract(project_dir: str) -> ProjectContract:
+    partial_project = Project.partial_load(project_dir)
+    contract = ProjectContract.from_dict(partial_project.project_dict)
+    if contract.model_paths is None:
+        contract.model_paths = contract.source_paths
+    if contract.seed_paths is None:
+        contract.seed_paths = contract.data_paths
+    return contract
 
 
 def get_dbt_config(

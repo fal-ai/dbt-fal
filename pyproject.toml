@@ -34,6 +34,7 @@ posthog = "^1.4.5"
 snowflake-sqlalchemy = "^1.3.3"
 sqlalchemy-redshift = "^0.8.9"
 deprecation = "^2.1.0"
+astor = "^0.8.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
