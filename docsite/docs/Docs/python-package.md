@@ -28,12 +28,6 @@ tickets = faldbt.ref('stg_zendesk_ticket_data')
 # pandas.DataFrame
 ```
 
-##  Interacting with dbt from a Notebook
-
-It is also possible to import fal from a Notebook for rapid iteration on some ideas and to then make them scripts to [use as a pre-hook or post-hook of a dbt model](fal-cli/index.md).
-
-We recommend it as an experimentation phase.
-
 *****
 
 Check out the [FalDbt class explanation](../Reference/faldbt-class-object.md) in the reference section.
