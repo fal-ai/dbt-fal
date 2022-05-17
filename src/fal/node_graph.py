@@ -166,15 +166,14 @@ class NodeGraph:
         return self.node_lookup.get(id)
 
     def _is_script_node(self, node_name: str) -> bool:
-        return node_name.endswith(".py")
+        return _is_script(node_name)
 
     def _is_critical_node(self, node):
         successors = list(self.graph.successors(node))
         if node in successors:
             successors.remove(node)
-        has_script_pred = lambda node_name: node_name.endswith(".py")
         has_model_pred = lambda node_name: node_name.split(".")[0] == "model"
-        if any(has_script_pred(i) for i in successors) and any(
+        if any(_is_script(i) for i in successors) and any(
             has_model_pred(i) for i in successors
         ):
             return True
@@ -194,7 +193,7 @@ class NodeGraph:
                 if self._is_critical_node(node):
                     script_successors = list(
                         filter(
-                            lambda successor: successor.endswith(".py"),
+                            _is_script,
                             self.graph.successors(node),
                         )
                     )
@@ -219,3 +218,7 @@ class NodeGraph:
             node_graph = NodeGraph(sub_graph, local_lookup)
             sub_graphs.append(node_graph)
         return sub_graphs
+
+
+def _is_script(name: str) -> bool:
+    return name.endswith(".py") or name.endswith(".ipynb")

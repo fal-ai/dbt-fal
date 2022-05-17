@@ -195,7 +195,7 @@ def _to_select_type(selector: str) -> SelectType:
 
 
 def _is_script_node(node_name: str) -> bool:
-    return node_name.endswith(".py")
+    return node_name.endswith(".py") or node_name.endswith(".ipynb")
 
 
 class SelectorGraphOp:
@@ -236,10 +236,16 @@ OP_CHILDREN = SelectorGraphOpDepth(re.compile("(?P<rest>.*)\\+(?P<depth>\\d*)$")
 
 
 def _is_before_scipt(id: str) -> bool:
-    before_script_regex = re.compile("script.*.BEFORE.*.py")
+    if id.endswith(".ipynb"):
+        before_script_regex = re.compile("script.*.BEFORE.*.ipynb")
+    else:
+        before_script_regex = re.compile("script.*.BEFORE.*.py")
     return bool(before_script_regex.match(id))
 
 
 def _is_after_script(id: str) -> bool:
-    after_script_regex = re.compile("script.*.AFTER.*.py")
+    if id.endswith(".ipynb"):
+        after_script_regex = re.compile("script.*.AFTER.*.ipynb")
+    else:
+        after_script_regex = re.compile("script.*.AFTER.*.py")
     return bool(after_script_regex.match(id))

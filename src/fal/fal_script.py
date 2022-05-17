@@ -1,4 +1,5 @@
 import os
+import json
 from typing import Dict, Any, List, Optional, Union
 from pathlib import Path
 from functools import partial
@@ -11,6 +12,7 @@ import faldbt.lib as lib
 
 from dbt.contracts.results import RunStatus
 from dbt.config.runtime import RuntimeConfig
+from dbt.logger import GLOBAL_LOGGER as logger
 
 if lib.DBT_VCURRENT.compare(lib.DBT_V1) >= 0:
     from dbt.contracts.graph.parsed import ColumnInfo
@@ -72,12 +74,14 @@ class FalScript:
         """
         Executes the script
         """
-
         # Enable local imports
         try:
-
-            with open(self.path) as file:
-                source_code = compile(file.read(), self.path, "exec")
+            if str(self.path).endswith(".ipynb"):
+                raw_source_code = _process_ipynb(str(self.path))
+                source_code = compile(raw_source_code, self.path, "exec")
+            else:
+                with open(self.path) as file:
+                    source_code = compile(file.read(), self.path, "exec")
 
             exec_globals = {
                 "context": self._build_script_context(),
@@ -157,3 +161,24 @@ def _process_tests(tests: List[Any]):
             tests,
         )
     )
+
+
+def _process_ipynb(filepath: str) -> str:
+    def strip_magic(source: List[str]) -> List[str]:
+        IMPORT_STMT = "from faldbt.magics import init_fal"
+        return (item for item in source if item[0] != "%" and item != IMPORT_STMT)
+
+    with open(filepath) as raw_data:
+        raw_script = json.load(raw_data)
+
+    script_list = []
+    for cell in raw_script["cells"]:
+        if cell["cell_type"] == "code":
+            source = strip_magic(cell["source"])
+            script_list.append("".join(source))
+
+    joined_script = "\n #cell \n".join(script_list)
+
+    logger.debug(f"Joined .ipynb cells to:\n{joined_script}")
+
+    return joined_script
