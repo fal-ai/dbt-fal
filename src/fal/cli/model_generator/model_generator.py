@@ -22,7 +22,11 @@ SELECT * FROM {{ target.schema }}.{{ model.name }}
 
 def generate_python_dbt_models(project_dir: str):
     project_contract = load_dbt_project_contract(project_dir)
-    python_paths = _find_python_files(cast(List[str], project_contract.model_paths))
+    project_path = Path(project_dir)
+    model_paths = map(
+        project_path.joinpath, cast(List[str], project_contract.model_paths)
+    )
+    python_paths = _find_python_files(list(model_paths))
 
     for py_path in python_paths:
         sql_path = py_path.with_suffix(".sql")
@@ -50,8 +54,8 @@ def _check_path_safe_to_write(sql_path: Path, py_path: Path):
                 )
 
 
-def _find_python_files(model_paths: List[str]) -> List[Path]:
-    paths_lists = map(lambda d: list(Path(d).rglob("*.py")), model_paths)
+def _find_python_files(model_paths: List[Path]) -> List[Path]:
+    paths_lists = map(lambda p: list(p.rglob("*.py")), model_paths)
     flat_paths = sum(paths_lists, [])
     flat_files = filter(lambda p: p.is_file(), flat_paths)
     return list(flat_files)
