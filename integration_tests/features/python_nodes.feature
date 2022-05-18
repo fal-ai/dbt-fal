@@ -7,9 +7,12 @@ Feature: Python nodes
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models
       """
+    # TODO: Python generated models are not included in the run_results.json because they are ephemeral
+    # Then the following models are calculated:
+    #   | model_a | model_b | model_c | model_d |
     Then the following models are calculated:
-      | model_a | model_b | model_c | model_d |
-    And the following scripts are ran:
+      | model_a | model_b | model_d |
+    Then the following scripts are ran:
       | model_c.after.py |
 
   Scenario: Run a project with Python nodes only selecting the Python model
@@ -17,17 +20,9 @@ Feature: Python nodes
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select model_c
       """
-    Then the following models are calculated:
-      | model_c |
-    And the following scripts are not ran:
+    # TODO: Python generated models are not included in the run_results.json because they are ephemeral
+    # Then the following models are calculated:
+    #   | model_c |
+    Then the following scripts are not ran:
       | model_c.after.py |
 
-  Scenario: Modifying a generated SQL throws an error
-    When the following command is invoked:
-      """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select model_c
-      """
-    Then the following models are calculated:
-      | model_c |
-    And the following scripts are not ran:
-      | model_c.after.py |
