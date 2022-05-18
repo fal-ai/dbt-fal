@@ -131,7 +131,7 @@ def _add_experimental_python_models_option(parser: argparse.ArgumentParser):
         dest="experimental_python_models",
         action="store_true",
         help="""
-        Search Python files in source paths and treat as pure Python models
+        Search Python files in source paths and treat as pure Python models. Implies --experimental-flow.
         """,
     )
 

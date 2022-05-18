@@ -1,13 +1,9 @@
 """
 DEPENDENCY: ref("model_b")
-- ref('mode_b')
+- ref('model_a')
 """
-import pandas as pd
-
-df: pd.DataFrame = ref("model_a")
-
 # weird way to call, but added in the docstring
-ref(*["model_b"])
+df = ref(*["model_b"])
 
 df["my_bool"] = True
 

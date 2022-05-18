@@ -38,10 +38,10 @@ class RuntimeArgs:
 def load_dbt_project_contract(project_dir: str) -> ProjectContract:
     partial_project = Project.partial_load(project_dir)
     contract = ProjectContract.from_dict(partial_project.project_dict)
-    if contract.model_paths is None:
-        contract.model_paths = contract.source_paths
-    if contract.seed_paths is None:
-        contract.seed_paths = contract.data_paths
+    if not hasattr(contract, "model_paths") or contract.model_paths is None:
+        setattr(contract, "model_paths", contract.source_paths)
+    if not hasattr(contract, "seed_paths") or contract.seed_paths is None:
+        setattr(contract, "seed_paths", contract.data_paths)
     return contract
 
 

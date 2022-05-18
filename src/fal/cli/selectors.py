@@ -24,7 +24,7 @@ class ExecutionPlan:
         self.after_scripts = []
         self.project_name = project_name
         for id in unique_ids:
-            if _is_before_scipt(id):
+            if _is_before_script(id):
                 self.before_scripts.append(id)
             elif _is_after_script(id):
                 self.after_scripts.append(id)
@@ -235,7 +235,7 @@ OP_PARENTS = SelectorGraphOpDepth(re.compile("^(?P<depth>\\d*)\\+(?P<rest>.*)"))
 OP_CHILDREN = SelectorGraphOpDepth(re.compile("(?P<rest>.*)\\+(?P<depth>\\d*)$"))
 
 
-def _is_before_scipt(id: str) -> bool:
+def _is_before_script(id: str) -> bool:
     if id.endswith(".ipynb"):
         before_script_regex = re.compile("script.*.BEFORE.*.ipynb")
     else:

@@ -27,7 +27,6 @@ class ScriptNode(FalFlowNode):
 class DbtModelNode(FalFlowNode):
     "Represents a dbt node"
     model: DbtModel
-    pass
 
 
 def _add_after_scripts(
@@ -172,11 +171,21 @@ class NodeGraph:
         successors = list(self.graph.successors(node))
         if node in successors:
             successors.remove(node)
-        has_model_pred = lambda node_name: node_name.split(".")[0] == "model"
-        if any(_is_script(i) for i in successors) and any(
-            has_model_pred(i) for i in successors
-        ):
-            return True
+
+        def is_python_model(id: str):
+            inode = self.get_node(id)
+            if isinstance(inode, DbtModelNode):
+                return inode.model.python_model
+            return False
+
+        is_model_pred = lambda node_name: node_name.split(".")[0] == "model"
+        # fmt:off
+        return (
+            (any(_is_script(i) for i in successors) and
+            any(is_model_pred(i) for i in successors)) or
+            is_python_model(node)
+        )
+        # fmt:on
 
     def sort_nodes(self):
         return nx.topological_sort(self.graph)

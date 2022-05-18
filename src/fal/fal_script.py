@@ -70,6 +70,13 @@ class FalScript:
         object.__setattr__(self, "path", normalize_path(faldbt.scripts_dir, path))
         object.__setattr__(self, "_faldbt", faldbt)
 
+    @classmethod
+    def model_script(cls, faldbt: FalDbt, model: DbtModel):
+        script = FalScript(faldbt, model, "")
+        # HACK: Set the script path specially for this case
+        object.__setattr__(script, "path", model.python_model)
+        return script
+
     def exec(self, faldbt: FalDbt):
         """
         Executes the script
