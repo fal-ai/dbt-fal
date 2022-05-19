@@ -83,12 +83,8 @@ class FalScript:
         """
         # Enable local imports
         try:
-            if str(self.path).endswith(".ipynb"):
-                raw_source_code = _process_ipynb(str(self.path))
-                source_code = compile(raw_source_code, self.path, "exec")
-            else:
-                with open(self.path) as file:
-                    source_code = compile(file.read(), self.path, "exec")
+            source_code = python_from_file(self.path)
+            program = compile(source_code, self.path, "exec")
 
             exec_globals = {
                 "context": self._build_script_context(),
@@ -109,7 +105,7 @@ class FalScript:
                     faldbt.write_to_model, target_1=self.model.name, target_2=None
                 )
 
-            exec(source_code, exec_globals)
+            exec(program, exec_globals)
         finally:
             pass
 
@@ -170,16 +166,23 @@ def _process_tests(tests: List[Any]):
     )
 
 
-def _process_ipynb(filepath: str) -> str:
-    def strip_magic(source: List[str]) -> List[str]:
-        IMPORT_STMT = "from faldbt.magics import init_fal"
-        return (item for item in source if item[0] != "%" and item != IMPORT_STMT)
+def python_from_file(path: Path) -> str:
+    with open(path) as file:
+        raw_source_code = file.read()
+        if path.suffix == ".ipynb":
+            raw_source_code = _process_ipynb(raw_source_code)
+    return raw_source_code
 
-    with open(filepath) as raw_data:
-        raw_script = json.load(raw_data)
+
+def _process_ipynb(raw_source_code: str) -> str:
+    def strip_magic(source: List[str]) -> List[str]:
+        NOTEBOOK_LIB = "faldbt.magics"
+        return [item for item in source if item[0] != "%" and NOTEBOOK_LIB not in item]
+
+    ipynb_struct = json.loads(raw_source_code)
 
     script_list = []
-    for cell in raw_script["cells"]:
+    for cell in ipynb_struct["cells"]:
         if cell["cell_type"] == "code":
             source = strip_magic(cell["source"])
             script_list.append("".join(source))
