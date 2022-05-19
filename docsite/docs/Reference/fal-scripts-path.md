@@ -4,9 +4,9 @@ sidebar_position: 1
 
 # Variable `fal-scripts-path`
 
-fal uses the `fal-scripts-path` [dbt variable](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/using-variables#defining-variables-in-dbt_projectyml) to scripts in your project.
+In order to find scripts in your project, fal uses the `fal-scripts-path` [dbt variable](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/using-variables#defining-variables-in-dbt_projectyml).
 
-Let's consider the following file structure for some examples:
+Let's consider the following project structure:
 ```
 .
 ├── dbt_project.yml
@@ -24,7 +24,7 @@ Let's consider the following file structure for some examples:
 
 By default `fal-scripts-path` is the [dbt project directory](https://docs.getdbt.com/reference/dbt_project.yml) (where the `dbt_project.yml` is located). 
 
-But it can be chagend in the [vars](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/using-variables#defining-variables-in-dbt_projectyml). An example of setting the variable would be:
+But it can be changed by setting in a dbt [var](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/using-variables#defining-variables-in-dbt_projectyml). An example of setting the variable would be:
 ```yaml
 name: "fal_test"
 version: "1.0.0"
@@ -38,9 +38,9 @@ vars:
 
 ## Script reference in `schema.yml`
 
-The Python scripts to be [associated to your models](../Docs/fal-cli/model-scripts.md) use the `fal-scripts-path` dbt variable as a base directory to search the files.
+Use the `fal-scripts-path` dbt variable as a base directory when [associating to your models](../Docs/fal-cli/model-scripts.md) to python scripts .
 
-Meaning that referencing a script in your `schema.yml` with the default `fal-scripts-path` value would look like:
+Referencing a script in your `schema.yml` with the default `fal-scripts-path` value looks like:
 ```yaml
 version: 2
 
@@ -56,7 +56,7 @@ models:
             - scripts/after.py
 ```
 
-But if changed the `fal-scritps-path` value to `scripts`, like specified above, the `schema.yml` would be:
+But if the `fal-scritps-path` value is changed to `scripts`, like specified above, the `schema.yml` would be:
 ```yaml
 version: 2
 
@@ -77,16 +77,16 @@ models:
 
 For larger scripts or repeated functionality, you may decide to have several Python files with functions to be imported into your [fal scripts](../Docs/fal-cli/model-scripts.md).
 
-Modifying the [`fal-scripts-path`](#script-path-for-in-a-dbt-project) var also affects how importing a separate Python script from your script works. The base directory for searching scripts during import is `fal-scripts-path`.
+The [`fal-scripts-path`](#script-path-for-in-a-dbt-project) variable refers to the base directory from which you do your imports. Changing `fal-scripts-path` also changes the base import directory.
 
-Meaning that importing a script with the default `fal-scripts-path` value would look like:
+For example; importing a script with the default `fal-scripts-path` value looks like:
 ```py
 # Searching from the top level: include `script` directory in path
 import scripts.utils.my_utils as my_utils
 from scripts.utils.process.process_df import some_func
 ```
 
-But if changed the `fal-scripts-path` value to `scripts`, like specified above, the import would look like:
+Changing the `fal-scripts-path` value to `scripts`, like specified above, would require `import` changes:
 ```py
 # Searching from the `scripts` directory
 import utils.my_utils as my_utils
