@@ -1,1 +1,1 @@
-select 1
+select y from {{ ref('time_series') }}

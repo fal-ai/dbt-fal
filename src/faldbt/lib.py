@@ -193,7 +193,7 @@ def overwrite_target(
         relation = _build_table_from_target(adapter, target)
 
     temporal_relation = _build_table_from_parts(
-        adapter, relation.database, relation.schema, f"{relation.identifier}__f__"
+        adapter, relation.database, relation.schema, f"{relation.identifier}__F__"
     )
 
     results = _write_relation(
