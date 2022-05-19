@@ -13,6 +13,17 @@ Feature: defining script path
     And the following scripts are ran:
       | some_model.before.py | some_model.after.py |
 
+  Scenario: fal flow run with cli var
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --vars "{'fal-scripts-path': 'scripts2'}"
+      """
+    Then the following models are calculated:
+      | some_model |
+    And the following scripts are ran:
+      | some_model.before2.py | some_model.after2.py |
+
+
   Scenario: fal run with before
     When the following command is invoked:
       """
