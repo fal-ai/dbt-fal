@@ -1,6 +1,11 @@
 import pandas as pd
 import io
+
+print("relative import in inner directories")
 from ..my_utils import write_data
+
+print("use 'utils' as base even in inner directories")
+from utils.my_utils import write_data
 
 
 def process_data(context, ref):
