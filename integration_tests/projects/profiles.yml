@@ -1,0 +1,12 @@
+fal_test:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: pguser
+      password: pass
+      dbname: test
+      schema: dbt_fal
+      threads: 4

@@ -20,23 +20,25 @@ const config = {
     [
       'classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
-      ({
+      {
         docs: {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          editUrl: 'https://github.com/fal-ai/fal/tree/main/docs',
+          editUrl: 'https://github.com/fal-ai/fal/tree/main/docsite',
         },
         blog: {
           showReadingTime: true,
-          // Please change this to your repo.
           editUrl:
-            'https://github.com/fal-ai/fal/tree/main/docs',
+            'https://github.com/fal-ai/fal/tree/main/docsite',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
-      }),
+        gtag: {
+          trackingID: 'G-343YEVGVHQ',
+          anonymizeIP: true,
+        },
+      },
     ],
   ],
 
@@ -44,25 +46,39 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: 'Features and Labels',
+        title: 'Features & Labels',
         logo: {
-          alt: 'My Site Logo',
+          alt: 'fal Logo',
           src: 'img/fal-logo.svg',
         },
         items: [
           {
             type: 'docSidebar',
             position: 'left',
-            sidebarId: 'cli',
-            label: 'fal CLI',
+            sidebarId: 'docs',
+            label: 'Docs',
           },
           {
-            type: 'doc',
-            docId: 'Feature Store/overview',
-            label: 'Feature Store',
+            type: 'docSidebar',
+            position: 'left',
+            sidebarId: 'reference',
+            label: 'Reference',
           },
-          {to: 'https://blog.fal.ai', label: 'Blog', position: 'left'},
-          {to: 'https://www.notion.so/featuresandlabels/February-Roadmap-e6521e39514a4ed598745aa71167de6b', label: 'Roadmap', position: 'left'},
+          {
+            to: 'https://blog.fal.ai',
+            label: 'Blog',
+            position: 'left'
+          },
+          {
+            to: 'https://www.notion.so/featuresandlabels/February-Roadmap-e6521e39514a4ed598745aa71167de6b',
+            label: 'Roadmap',
+            position: 'left'
+          },
+          {
+            to: 'https://fal.ai',
+            label: 'Home',
+            position: 'right'
+          },
           {
             href: 'https://github.com/fal-ai/fal',
             label: 'GitHub',
@@ -74,28 +90,15 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
-            items: [
-              {
-                label: 'Getting Started',
-                to: '/docs/getting-started',
-              },
-            ],
-          },
-          {
             title: 'Community',
             items: [
               {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+                label: 'GitHub',
+                href: 'https://github.com/fal-ai',
               },
               {
                 label: 'Discord',
-                href: 'https://discordapp.com/invite/docusaurus',
-              },
-              {
-                label: 'Twitter',
-                href: 'https://twitter.com/docusaurus',
+                href: 'https://discord.gg/Fyc9PwrccF',
               },
             ],
           },
@@ -103,17 +106,17 @@ const config = {
             title: 'More',
             items: [
               {
-                label: 'Blog',
-                to: '/blog',
+                label: 'fal',
+                href: 'https://fal.ai',
               },
               {
-                label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                label: 'Blog',
+                href: 'https://blog.fal.ai',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Features & Labels, Inc. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,

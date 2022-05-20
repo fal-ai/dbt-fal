@@ -1,102 +1,72 @@
 """Run fal scripts."""
-import os
-from typing import Dict, Any, List, Union
-from dataclasses import dataclass
-from dbt.config.runtime import RuntimeConfig
-from pathlib import Path
+import sys
+from typing import List
 
-from dbt.contracts.results import NodeStatus
+from multiprocessing.pool import Pool
+from multiprocessing.dummy import Pool as ThreadPool
+
 from dbt.logger import GLOBAL_LOGGER as logger
 
-from faldbt.project import FalProject
-from fal.dag import FalScript
-
-import faldbt.lib as lib
-
-if lib.DBT_VCURRENT.compare(lib.DBT_V1) >= 0:
-    from dbt.contracts.graph.parsed import ColumnInfo
-else:
-    from faldbt.cp.contracts.graph.parsed import ColumnInfo
+from faldbt.project import FalDbt
+from fal.fal_script import FalScript
+from fal.utils import print_run_info
 
 
-@dataclass
-class CurrentModel:
-    name: str
-    status: NodeStatus
-    columns: Dict[str, ColumnInfo]
-    tests: List[Any]
-    meta: Dict[Any, Any]
+import traceback
 
 
-@dataclass
-class CurrentTest:
-    name: str
-    modelname: str
-    column: str
-    status: str
+def _prepare_exec_script(script: FalScript, faldbt: FalDbt) -> bool:
+    success: bool = True
 
+    logger.debug("Running script {} for model {}", script.path, script.model_name)
 
-@dataclass
-class ContextConfig:
-    target_path: Path
-
-
-@dataclass
-class Context:
-    current_model: Union[CurrentModel, None]
-    config: ContextConfig
-
-
-def run_scripts(list: List[FalScript], project: FalProject):
-    faldbt = project._faldbt
-    for script in list:
-        model = script.model
-        meta = model.meta
-        _del_key(meta, project.keyword)
-
-        tests = _process_tests(model.tests)
-
-        current_model = CurrentModel(
-            name=model.name,
-            status=model.status,
-            columns=model.columns,
-            tests=tests,
-            meta=meta,
-        )
-
-        context_config = ContextConfig(_get_target_path(faldbt._config))
-        context = Context(current_model=current_model, config=context_config)
-
-        logger.info("Running script {} for model {}", script.path, model.name)
-
-        script.exec(context, faldbt)
-
-
-def run_global_scripts(list: List[FalScript], project: FalProject):
-    faldbt = project._faldbt
-    for script in list:
-        context_config = ContextConfig(_get_target_path(faldbt._config))
-        context = Context(current_model=None, config=context_config)
-
-        logger.info("Running global script {}", script.path)
-
-        script.exec(context, faldbt)
-
-
-def _del_key(dict: Dict[str, Any], key: str):
     try:
-        del dict[key]
-    except KeyError:
-        pass
+        script.exec(faldbt)
+    except:
+        logger.error(
+            "Error in script {} with model {}:\n{}",
+            script.path,
+            script.model_name,
+            traceback.format_exc(),
+        )
+        # TODO: what else to do?
+        success = False
+
+    finally:
+        logger.debug("Finished script {} for model {}", script.path, script.model_name)
+
+    return success
 
 
-def _get_target_path(config: RuntimeConfig) -> Path:
-    return Path(os.path.realpath(os.path.join(config.project_root, config.target_path)))
+def raise_for_run_results_failures(scripts: List[FalScript], results: List[bool]):
+    if not all(results):
+        failures = filter(lambda t: not t[1], zip(scripts, results))
+        failure_ids = map(lambda t: t[0].id, failures)
+
+        raise RuntimeError(f"Error in scripts {str.join(', ', failure_ids)}")
 
 
-def _process_tests(tests: List[Any]):
-    return list(map(
-        lambda test: CurrentTest(name=test.name,
-                                 column=test.column,
-                                 status=test.status,
-                                 modelname=test.model), tests))
+def run_scripts(scripts: List[FalScript], faldbt: FalDbt) -> List[bool]:
+
+    print_run_info(scripts)
+
+    # Enable local imports for fal scripts
+    sys.path.append(faldbt.scripts_dir)
+
+    logger.info("Concurrency: {} threads", faldbt.threads)
+    with ThreadPool(faldbt.threads) as pool:
+        pool: Pool = pool
+        try:
+            scripts_with_project = map(lambda script: (script, faldbt), scripts)
+            results = pool.starmap(_prepare_exec_script, scripts_with_project)
+
+        except KeyboardInterrupt:
+            pool.close()
+            pool.terminate()
+            pool.join()
+            raise
+
+    logger.debug("Script results: {}", results)
+
+    sys.path.remove(faldbt.scripts_dir)
+    return results

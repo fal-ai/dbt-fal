@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: zendesk_ticket_data
+    meta:
+      fal:
+        scripts:
+          after:
+            - fal_scripts/check_extra.py
+
+  - name: model_a
+
+  - name: model_b
+
+  - name: model_c
+    meta:
+      fal:
+        scripts:
+          before:
+            - fal_scripts/before.py
+
+  - name: agent_wait_time
+    description: Agent wait time series
+    config:
+      materialized: table
+      tags: daily
+    columns:
+      - name: y
+        tests:
+          - not_null
+      - name: ds
+        tests:
+          - not_null
+      - name: a
+        tests:
+          - unique
+    meta:
+      fal:
+        scripts:
+          before:
+            - fal_scripts/before.py
+          after:
+            - fal_scripts/after.py

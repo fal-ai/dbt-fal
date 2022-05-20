@@ -4,9 +4,10 @@ on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
+      - "examples/**"
+      - "docsite/**"
+      - "README.md"
+      - "LICENSE"
   workflow_dispatch:
 
 jobs:
@@ -15,25 +16,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.8.x"]
-        dbt: ["0.20.1", "0.21.1", "1.0.0"]
+        python: ["3.8"]
+        dbt: ["0.20.1", "0.21.1", "1.0.4"]
+
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v2
-
-      - uses: google-github-actions/setup-gcloud@master
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
 
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
 
+      - name: Start test Docker database
+        working-directory: tests
+        run: docker-compose up -d
+
       - uses: abatilo/actions-poetry@v2.0.0
         with:
           poetry-version: "1.1.4"
+
+      - name: Fix jinja
+        run: |
+          poetry run pip install markupsafe==2.0.1
 
       - name: Install fal
         run: |
@@ -45,9 +53,14 @@ jobs:
           then
             poetry run pip install dbt==${{ matrix.dbt }}
           else
-            poetry run pip install dbt-bigquery==${{ matrix.dbt }}
+            poetry run pip install dbt-postgres==${{ matrix.dbt }}
           fi
 
+      - name: Run dbt
+        run: |
+          poetry run dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
 
       - name: Test
-        run: poetry run pytest -s
+        env:
+          FAL_STATS_ENABLED: false
+        run: poetry run pytest tests -s

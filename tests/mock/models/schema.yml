@@ -1,7 +1,21 @@
 version: 2
 
+sources:
+  - name: test_sources
+    database: test
+    schema: public
+    tables:
+      - name: single_col
+      - name: sql_col
+
 models:
   - name: model_with_scripts
+    meta:
+      fal:
+        scripts:
+          - fal_scripts/test.py
+
+  - name: other_with_scripts
     meta:
       fal:
         scripts:

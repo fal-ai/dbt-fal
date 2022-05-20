@@ -1,0 +1,13 @@
+fal_test:
+  target: integration_tests
+  outputs:
+    integration_tests:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('KEYFILE_DIR') }}/keyfile.json"
+      project: "{{ env_var('GCLOUD_PROJECT') }}"
+      dataset: "{{ env_var('BQ_DATASET') }}"
+      threads: 1
+      timeout_seconds: 300
+      location: US
+      priority: interactive

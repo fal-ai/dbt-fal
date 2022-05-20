@@ -2,13 +2,11 @@
 name = "fal"
 version = "0.1.0"
 description = "fal allows you to run python scripts directly from your dbt project."
+homepage = "https://github.com/fal-ai/fal"
+documentation = "https://docs.fal.ai"
+repository = "https://github.com/fal-ai/fal"
 readme = "README.md"
-authors = [
-        "Meder Kamalov <meder@fal.ai>",
-        "Matteo Ferrando <matteo@fal.ai>",
-        "Burkay Gur <burkay@fal.ai>",
-        "Gorkem Yurtseven <gorkem@fal.ai>"
-]
+authors = [ "Features & Labels <hello@fal.ai>" ]
 packages = [
         { include = "fal", from = "src" },
         { include = "faldbt", from = "src" }
@@ -22,7 +20,6 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.7.1, <3.10"
 arrow = "^1.2.0"
-click = "^8.0.3"
 pandas = "^1.3.4"
 google-cloud-bigquery = "^2.28.1"
 google-cloud-bigquery-storage = "^2.9.1"
@@ -32,10 +29,18 @@ PyYAML = "^6.0"
 agate-sql = "^0.5.8"
 firebase-admin = "^5.1.0"
 sqlalchemy-bigquery = "^1.2.2"
+requests = "^2.27.1"
+posthog = "^1.4.5"
+snowflake-sqlalchemy = "^1.3.3"
+sqlalchemy-redshift = "^0.8.9"
+deprecation = "^2.1.0"
+astor = "^0.8.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 black = "^21.12b0"
+behave = "^1.2.6"
+mock = "^4.0.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

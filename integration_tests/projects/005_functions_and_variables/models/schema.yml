@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: results
+    database: "{{ env_var('DBT_DATABASE', 'test') }}"
+    schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
+    tables:
+      - name: some_source
+
+models:
+  - name: some_model
+    meta:
+      fal:
+        scripts:
+          after:
+            - fal_scripts/write_to_source_twice.py
+  - name: other_model
+    meta:
+      fal:
+        scripts:
+          after:
+            - fal_scripts/complete_other_model.py

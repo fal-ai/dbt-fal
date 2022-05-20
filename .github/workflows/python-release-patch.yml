@@ -1,0 +1,59 @@
+# This workflow will update the latest version and upload a Python Package using Artifactory on changes to main
+
+name: Publish Python Package
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+
+      - uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: "1.1.4"
+
+      - name: Get package version
+        run: |
+          pip install --upgrade pip
+          pip install fal
+          long_version=$(pip show fal | grep Version)
+          IFS=" " read -ra version_arr <<< $long_version
+          short_version=${version_arr[1]}
+          echo "short_version=${version_arr[1]}" >> $GITHUB_ENV
+
+      - name: Build package
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USER }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          poetry version ${{ env.short_version }}
+          poetry version patch
+          current_version=$(poetry version -s)
+          echo "current_version=$current_version" >> $GITHUB_ENV
+          poetry build
+
+      - name: Publish GitHub
+        uses: softprops/action-gh-release@v1
+        with:
+          name: fal ${{ env.current_version }}
+          body: Fal patch ${{ env.current_version }}
+          tag_name: v${{ env.current_version }}
+          files: |
+            dist/fal-${{env.current_version}}-py3-none-any.whl
+            dist/fal-${{env.current_version}}.tar.gz
+
+      - name: Publish PyPI
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USER }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: poetry publish -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n

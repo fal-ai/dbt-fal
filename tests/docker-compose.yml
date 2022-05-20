@@ -1,0 +1,12 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:12
+    container_name: fal_db
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: test
+    ports:
+      - 5432:5432

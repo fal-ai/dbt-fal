@@ -1,4 +1,4 @@
 from dbt.contracts.results import NodeStatus
 
-from faldbt.project import FalDbt
-from fal.run_scripts import Context, CurrentModel
+from faldbt.project import FalDbt, DbtModel
+from fal.fal_script import Context, CurrentModel

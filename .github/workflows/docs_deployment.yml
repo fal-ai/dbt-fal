@@ -1,0 +1,33 @@
+name: Deploy docs website
+
+on:
+  push:
+    branches: [main, release]
+    paths:
+      - "docsite/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+      - run: cd docsite && npm install
+      - uses: amondnet/vercel-action@v20
+        if: ${{ github.ref == 'refs/heads/release' }}
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: docsite
+      - uses: amondnet/vercel-action@v20
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: docsite

@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: orders_forecast
+    description: fal generated model that forecasts dollar amount and count of orders
+    meta:
+      fal:
+        scripts:
+          after:
+            - models/orders_forecast.py
