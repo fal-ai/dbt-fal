@@ -6,6 +6,7 @@ from typing import List, Dict, Optional, Union
 
 from dbt.contracts.project import Project as ProjectContract
 from dbt.config import RuntimeConfig, Project
+from dbt.config.utils import parse_cli_vars
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.results import RunResultsArtifact
 from dbt.contracts.project import UserConfig
@@ -73,16 +74,19 @@ def get_el_configs(
     return sync_configs
 
 
-def get_scripts_dir(project_dir: str) -> str:
-    path = os.path.join(project_dir, "dbt_project.yml")
+def get_scripts_dir(project_dir: str, args_vars: str) -> str:
+    project_contract = load_dbt_project_contract(project_dir)
 
     # This happens inside unit tests usually
-    if not os.path.exists(path):
+    if project_contract is None:
         return project_dir
 
-    yml = load_yaml(path)
-    # TODO: consider `vars` flag
-    scripts_dir = yml.get("vars", {}).get(FAL_SCRIPTS_PATH, project_dir)
+    cli_vars = parse_cli_vars(args_vars)
+    scripts_dir = cli_vars.get(FAL_SCRIPTS_PATH, None)
+
+    if scripts_dir is None:
+        vars = project_contract.vars or {}
+        scripts_dir = vars.get(FAL_SCRIPTS_PATH, project_dir)
 
     if not isinstance(scripts_dir, str):
         raise FalParseError("Error parsing scripts_dir")

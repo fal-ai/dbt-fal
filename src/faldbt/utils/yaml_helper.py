@@ -49,7 +49,7 @@ def contextualized_yaml_error(raw_contents, error):
     )
 
 
-def safe_load(contents) -> Optional[Dict[str, Any]]:
+def safe_load(contents) -> Dict[str, Any]:
     return yaml.load(contents, Loader=SafeLoader)
 
 
