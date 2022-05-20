@@ -1,9 +1,19 @@
 # fal: do more with dbt
 fal allows you to run python scripts directly from your [dbt](https://www.getdbt.com/) project.
 
-[![Downloads](https://static.pepy.tech/personalized-badge/fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads)](https://pepy.tech/project/fal)
+[February Roadmap](https://www.notion.so/featuresandlabels/February-Roadmap-e6521e39514a4ed598745aa71167de6b)
 
-[![Join Us on Discord](https://badgen.net/badge/icon/Join%20Us%20On%20Discord/red?icon=discord&label)](https://discord.com/invite/Fyc9PwrccF)
+<p align="center">
+  <a href="https://pepy.tech/project/fal">
+    <img src="https://static.pepy.tech/personalized-badge/fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads" alt="Total downloads" />
+  </a>&nbsp;
+  <a href="https://pypi.org/project/fal/">
+    <img src="https://badge.fury.io/py/fal.svg" alt="Angular on npm" />
+  </a>&nbsp;
+  <a href="https://discord.com/invite/Fyc9PwrccF">
+    <img src="https://badgen.net/badge/icon/Join%20Us%20On%20Discord/red?icon=discord&label" alt="Discord conversation" />
+  </a>
+</p>
 
 With fal, you can:
 - Send Slack notifications upon dbt model success or failure.
@@ -12,7 +22,7 @@ With fal, you can:
 
 and more...
 
-Check out our [Getting Started](#getting-started) guide to get a quickstart or play with [in-depth examples](#examples) to see how fal can help you get more done with dbt.
+Check out our [Getting Started](#getting-started) guide to get a quickstart, head to our [documentation site](https://docs.fal.ai/) for a deeper dive or play with [in-depth examples](#examples) to see how fal can help you get more done with dbt.
 
 [<img src="https://cdn.loom.com/sessions/thumbnails/bb49fffaa6f74e90b91d26c77f35ecdc-1637262660876-with-play.gif">](https://www.loom.com/share/bb49fffaa6f74e90b91d26c77f35ecdc)
 
@@ -79,17 +89,17 @@ $ fal run
 
 # Examples
 To explore what is possible with fal, take a look at the in-depth examples below. We will be adding more examples here over time:
-- [Example 1: Send Slack notifications](docs/slack-example.md)
-- [Example 2: Metric forecasting](docs/metric-forecast.md)
-- [Example 3: Sentiment analysis on support tickets](docs/sentiment-analysis.md)
-- [Example 4: Send event to Datadog](docs/datadog_event.md)
-- [Example 5: Incorporate fal in CI/CD workflow](docs/ci_example.md)
-- [Example 6: Send data to Firestore](docs/write_to_firestore.md)
-- [Example 7: Write dbt artifacts to GCS](docs/write_to_gcs.md)
-- [Example 8: Write dbt artifacts to AWS S3](docs/write_to_aws.md)
-- [Example 9: Use dbt from a Jupyter Notebook](docs/write_jupyter_notebook.md)
-- [Example 10: Read and parse dbt metadata](docs/read_dbt_metadata.md)
-- [Example 11: Anomaly Detection](docs/anomaly-detection.md)
+- [Example 1: Send Slack notifications](examples/slack-example.md)
+- [Example 2: Metric forecasting](examples/metric-forecast.md)
+- [Example 3: Sentiment analysis on support tickets](examples/sentiment-analysis.md)
+- [Example 4: Send event to Datadog](examples/datadog_event.md)
+- [Example 5: Incorporate fal in CI/CD workflow](examples/ci_example.md)
+- [Example 6: Send data to Firestore](examples/write_to_firestore.md)
+- [Example 7: Write dbt artifacts to GCS](examples/write_to_gcs.md)
+- [Example 8: Write dbt artifacts to AWS S3](examples/write_to_aws.md)
+- [Example 9: Use dbt from a Jupyter Notebook](examples/write_jupyter_notebook.md)
+- [Example 10: Read and parse dbt metadata](examples/read_dbt_metadata.md)
+- [Example 11: Anomaly Detection](examples/anomaly-detection.md)
 
 # How it works?
 `fal` is a command line tool that can read the state of your `dbt` project and help you run Python scripts after your `dbt run`s by leveraging the [`meta` config](https://docs.getdbt.com/reference/resource-configs/meta).
@@ -105,7 +115,28 @@ models:
           - another_python_script.py # will be ran after the first script
 ```
 
-By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run` (So if you are using model selectors, `fal` will only run on the selected models). If you want to run all Python scripts regardless, you can use the `--all` flag with the `fal` CLI.
+## Model scripts selection
+
+By default, the `fal run` command runs the Python scripts as a post-hook, **only** on the models that were ran on the last `dbt run`; that means that if you are using model selectors, `fal` will only run on the models `dbt` ran. To achieve this, fal needs the dbt-generated file `run_results.json` available.
+
+If you are running `fal` in a clean environment (no `run_results.json` available) or just want to specify which models you want to run the scripts for, `fal` handles [dbt's selection flags](https://docs.getdbt.com/reference/node-selection/syntax) for `dbt run` as well as offering an extra flag for just running _all_ models:
+
+```
+--all                    Run scripts for all models.
+-s, --select TEXT        Specify the nodes to include.
+-m, --models TEXT        Specify the nodes to include. (Deprecated)
+--exclude TEXT           Specify the models to exclude.
+--selector TEXT          The selector name to use, as defined in selectors.yml
+```
+
+For passing more than one selection or exlusion, you must specify the flag multiple times:
+
+```bash
+$ fal run -s model_alpha -s model_beta
+... | Starting fal run for following models and scripts:
+model_alpha: script.py
+model_beta: script.py, other.py
+```
 
 `fal` also provides useful helpers within the Python context to seamlessly interact with dbt models: `ref("my_dbt_model_name")` will pull a dbt model into your Python script as a [`pandas.DataFrame`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html).
 
@@ -150,6 +181,12 @@ context.current_model.status
 #= 'skipped'
 ```
 
+`context` object also has access to test information related to the current model. If the previous dbt command was either `test` or `build`, the `context.current_model.test` property is populated with a list of tests:
+```python
+context.current_model.tests
+#= [CurrentTest(name='not_null', modelname='historical_ozone_levels, column='ds', status='Pass')]
+```
+
 ### `ref` and `source` functions
 There are also available some familiar functions from `dbt`
 ```python
@@ -180,9 +217,9 @@ If you want to run all Python scripts regardless, you can do so by using the `--
 $ fal run --all
 ```
 
-## Importing fal as a Python package
+## Importing `fal` as a Python package
 You may be interested in accessing dbt models and sources easily from a Jupyter Notebook or another Python script.
-For that, just import the fal package and intantiate a FalDbt project:
+For that, just import the `fal` package and intantiate a FalDbt project:
 
 ```py
 from fal import FalDbt
@@ -204,6 +241,16 @@ sentiments = faldbt.source('results', 'ticket_data_sentiment_analysis')
 tickets = faldbt.ref('stg_zendesk_ticket_data')
 # pandas.DataFrame
 ```
+
+# Supported `dbt` versions
+
+Any extra configuration to work with different `dbt` versions is not needed, latest `fal` version currently supports:
+
+- 0.20.*
+- 0.21.*
+- 1.0.*
+
+If you need another version, [open an issue](https://github.com/fal-ai/fal/issues/new) and we will take a look!
 
 # Why are we building this?
 We think `dbt` is great because it empowers data people to get more done with the tools that they are already familiar with.

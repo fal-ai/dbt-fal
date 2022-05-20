@@ -1,14 +1,18 @@
-# NOTE: COPIED FROM https://github.com/dbt-labs/dbt-core/blob/40ae6b6bc860a30fa383756b7cdb63709ce829a8/core/dbt/lib.py
+# NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
 import six
-
 from datetime import datetime
+from dataclasses import dataclass
 from uuid import uuid4
 from typing import List, Tuple, Union
 
+import dbt.version
+import dbt.semver
+import dbt.flags as flags
+import dbt.adapters.factory as adapters_factory
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.graph.manifest import Manifest
-import dbt.adapters.factory as adapters_factory
+from dbt.parser.manifest import process_node
 from dbt.logger import GLOBAL_LOGGER as logger
 
 from . import parse
@@ -21,8 +25,49 @@ from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 from sqlalchemy.sql.schema import MetaData
 
-from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
-from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
+
+DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
+DBT_VCURRENT = dbt.version.get_installed_version()
+
+if DBT_VCURRENT.compare(DBT_V1) >= 0:
+    from dbt.parser.sql import SqlBlockParser
+    from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
+    from dbt.contracts.sql import ResultTable, RemoteRunResult
+else:
+    from faldbt.cp.parser.sql import SqlBlockParser
+    from faldbt.cp.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
+    from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
+
+
+@dataclass
+class FlagsArgs:
+    profiles_dir: str
+    use_colors: bool
+
+
+def initialize_dbt_flags(profiles_dir: str):
+    """
+    Initializes the flags module from dbt, since it's accessed from around their code.
+    """
+    args = FlagsArgs(profiles_dir, None)
+    user_config = parse.get_dbt_user_config(profiles_dir)
+    try:
+        flags.set_from_args(args, user_config)
+    except TypeError:
+        flags.set_from_args(args)
+
+    # Set invocation id
+    if DBT_VCURRENT.compare(DBT_V1) >= 0:
+        import dbt.events.functions as events_functions
+
+        events_functions.set_invocation_id()
+
+    # Re-enable logging for 1.0.0 through old API of logger
+    # TODO: migrate for 1.0.0 code to new event system
+    if DBT_VCURRENT.compare(DBT_V1) >= 0:
+        flags.ENABLE_LEGACY_LOGGER = "1"
+        if logger.disabled:
+            logger.enable()
 
 
 def register_adapters(config: RuntimeConfig):
@@ -33,8 +78,6 @@ def register_adapters(config: RuntimeConfig):
 
 
 def _get_operation_node(manifest: Manifest, project_path, profiles_dir, sql):
-    from dbt.parser.manifest import process_node
-    from faldbt.cp.parser.sql import SqlBlockParser
 
     config = parse.get_dbt_config(project_path, profiles_dir)
     block_parser = SqlBlockParser(
@@ -142,10 +185,7 @@ def write_target(
     relation = _get_target_relation(target, project_path, profiles_dir)
 
     engine = _alchemy_engine(adapter, target)
-    pddb = pdsql.SQLDatabase(
-        engine,
-        meta=MetaData(engine, schema=target.schema),
-    )
+    pddb = pdsql.SQLDatabase(engine, schema=target.schema)
     pdtable = pdsql.SQLTable(target.name, pddb, data, index=False)
     alchemy_table: sqlalchemy.Table = pdtable.table.to_metadata(pdtable.pd_sql.meta)
 
@@ -178,10 +218,14 @@ def _alchemy_engine(
     adapter: adapters_factory.Adapter,
     target: Union[ParsedModelNode, ParsedSourceDefinition],
 ):
+    url_string = f"{adapter.type()}://"
     if adapter.type() == "bigquery":
-        return sqlalchemy.create_engine(f"bigquery://{target.database}")
+        url_string = f"bigquery://{target.database}"
     if adapter.type() == "postgres":
-        return sqlalchemy.create_engine("postgresql://")
-    else:
-        # TODO: add special cases as needed
-        return sqlalchemy.create_engine(f"{adapter.type()}://")
+        url_string = "postgresql://"
+    # TODO: add special cases as needed
+
+    def null_dump(sql, *multiparams, **params):
+        pass
+
+    return sqlalchemy.create_mock_engine(url_string, executor=null_dump)

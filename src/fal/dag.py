@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, TypeVar, Dict
-from faldbt.project import DbtModel
+from faldbt.project import DbtModel, FalDbt
 from pathlib import Path
 import re
 
@@ -42,10 +42,7 @@ class FalScript:
         if dependency not in self.dependencies and dependency != self:
             self.dependencies.append(dependency)
 
-    def exec(
-        self, context, ref, source, write_to_source, write_to_firestore, list_models
-    ):
-
+    def exec(self, context, faldbt: FalDbt):
         """
         Executes the script
         """
@@ -55,39 +52,42 @@ class FalScript:
                 a_script,
                 {
                     "context": context,
-                    "ref": ref,
-                    "source": source,
-                    "write_to_source": write_to_source,
-                    "write_to_firestore": write_to_firestore,
-                    "list_models": list_models,
+                    "ref": faldbt.ref,
+                    "source": faldbt.source,
+                    "write_to_source": faldbt.write_to_source,
+                    "write_to_firestore": faldbt.write_to_firestore,
+                    "list_models": faldbt.list_models,
+                    "list_models_ids": faldbt.list_models_ids,
+                    "list_sources": faldbt.list_sources,
+                    "list_features": faldbt.list_features
                 },
             )
 
 
 @dataclass(frozen=True)
-class UniqueKey:
+class _ScriptUniqueKey:
     model: DbtModel
     script_path: Path
 
 
-class ScriptGraphBuilder:
+class _ScriptGraphBuilder:
     modelNameToModelLookup: Dict[str, DbtModel] = {}
     modelToScriptLookup: Dict[str, List[Path]] = {}
-    falScripts: Dict[UniqueKey, FalScript] = {}
+    falScripts: Dict[_ScriptUniqueKey, FalScript] = {}
 
-    def __init__(self, models: List[DbtModel], keyword: str, project_dir: str):
+    def __init__(self, models: List[DbtModel], keyword: str, project_dir: str, before: bool = False):
         for model in models:
-            self.modelToScriptLookup[model.name] = model.get_scripts(
-                keyword, project_dir
+            self.modelToScriptLookup[model.name] = model.get_script_paths(
+                keyword, project_dir, before=before
             )
             self.modelNameToModelLookup[model.name] = model
         for model_name, script_list in self.modelToScriptLookup.items():
             for script in script_list:
                 self.recursively_set_dependencies(
-                    UniqueKey(self.modelNameToModelLookup[model_name], script)
+                    _ScriptUniqueKey(self.modelNameToModelLookup[model_name], script)
                 )
 
-    def recursively_set_dependencies(self, key: UniqueKey):
+    def recursively_set_dependencies(self, key: _ScriptUniqueKey):
         if key in self.falScripts:
             return
         self.falScripts[key] = FalScript(key.model, key.script_path)
@@ -99,7 +99,7 @@ class ScriptGraphBuilder:
             dependency_scripts = self.modelToScriptLookup.get(model_name, [])
 
             for dependency_script in dependency_scripts:
-                dependency_key = UniqueKey(dependency_model, dependency_script)
+                dependency_key = _ScriptUniqueKey(dependency_model, dependency_script)
                 self.recursively_set_dependencies(dependency_key)
                 current_script.add_dependency(self.falScripts.get(dependency_key))
 
@@ -122,7 +122,7 @@ class ScriptGraph:
         if _graph:
             self.graph = _graph
         else:
-            self.graph = ScriptGraphBuilder(models, keyword, project_dir).get_values()
+            self.graph = _ScriptGraphBuilder(models, keyword, project_dir).get_values()
         self.incoming = dict(
             map(lambda script: [script, script.dependencies], self.graph)
         )

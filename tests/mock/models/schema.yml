@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: model_with_scripts
+    meta:
+      fal:
+        scripts:
+          - fal_scripts/test.py
+
+  - name: model_with_before_scripts
+    meta:
+      fal:
+        scripts:
+          before:
+            - fal_scripts/test.py
+
+  - name: model_feature_store
+    columns:
+      - name: a
+      - name: b
+      - name: c
+    meta:
+      fal:
+        feature_store:
+          entity_column: a
+          timestamp_column: b
+  - name: model_empty_scripts
+    meta: 
+      fal: 
+        scripts:
+  - name: model_no_fal
+    meta:
+      other: things
+
+# global
+fal:
+  scripts:

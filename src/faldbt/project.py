@@ -1,6 +1,7 @@
 import os
+import re
 from dataclasses import dataclass, field
-from typing import Dict, List, List, Any, Optional, TypeVar, Sequence, Union
+from typing import Dict, List, Any, Optional, Tuple, TypeVar, Sequence, Union
 from pathlib import Path
 
 from dbt.node_types import NodeType
@@ -9,11 +10,12 @@ from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.manifest import Manifest, MaybeNonSource, MaybeParsedSource
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput
 from dbt.logger import GLOBAL_LOGGER as logger
-from dbt.adapters.bigquery.connections import BigQueryConnectionManager
+from dbt.task.compile import CompileTask
 import dbt.tracking
 
 from . import parse
 from . import lib
+from fal.feature_store.feature import Feature
 
 import firebase_admin
 from firebase_admin import firestore
@@ -38,25 +40,71 @@ def normalize_directories(base: str, dirs: List[str]) -> List[Path]:
 
 
 @dataclass
+class DbtTest:
+    node: Any
+    name: str = field(init=False)
+    model: str = field(init=False)
+    column: str = field(init=False)
+    status: str = field(init=False)
+
+    def __post_init__(self):
+        node = self.node
+        self.unique_id = node.unique_id
+        if node.resource_type == NodeType.Test:
+            self.name = node.test_metadata.name
+
+            # node.test_metadata.kwargs looks like this:
+            # kwargs={'column_name': 'y', 'model': "{{ get_where_subquery(ref('boston')) }}"}
+            # and we want to get 'boston' is the model name that we want extract
+            self.model = re.findall(r"'([^']+)'", node.test_metadata.kwargs['model'])[0]
+            self.column = node.test_metadata.kwargs['column_name']
+
+    def set_status(self, status: str):
+        self.status = status
+
+
+@dataclass
 class DbtModel:
     node: ParsedModelNode
     name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
     status: str = field(init=False)
     columns: Dict[str, Any] = field(init=False)
+    tests: List[DbtTest] = field(init=False)
 
     def __post_init__(self):
-        self.name = self.node.name
-        self.meta = self.node.config.meta
-        self.columns = self.node.columns
-        self.unique_id = self.node.unique_id
+        node = self.node
+        self.name = node.name
+
+        # BACKWARDS: Change intorduced in XXX (0.20?)
+        # TODO: specify which version is for this
+        if hasattr(node.config, "meta"):
+            self.meta = node.config.meta
+        elif hasattr(node, "meta"):
+            self.meta = node.meta
+
+        self.columns = node.columns
+        self.unique_id = node.unique_id
+        self.tests = []
 
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
 
-    def get_scripts(self, keyword, project_dir) -> List[Path]:
-        scripts = self.node.config.meta[keyword]["scripts"]
-        return normalize_directories(project_dir, scripts)
+    def get_script_paths(self, keyword, project_dir, before) -> List[Path]:
+        return normalize_directories(project_dir, self.get_scripts(keyword, before))
+
+    def get_scripts(self, keyword, before) -> List[Path]:
+        # sometimes `scripts` can *be* there and still be None
+        scripts_node = self.meta[keyword].get("scripts")
+        if not scripts_node:
+            return []
+        if isinstance(scripts_node, list) and before:
+            return []
+        if before:
+            return scripts_node.get("before") or []
+        if isinstance(scripts_node, list):
+            return scripts_node
+        return scripts_node.get("after") or []
 
     def set_status(self, status: str):
         self.status = status
@@ -76,70 +124,111 @@ class DbtManifest:
             )
         )
 
+    def get_tests(self):
+        return list(
+            filter(
+                lambda test: test.node.resource_type == NodeType.Test,
+                map(
+                    lambda node: DbtTest(node=node), self.nativeManifest.nodes.values()
+                ),
+            )
+        )
+
     def get_sources(self) -> List[ParsedSourceDefinition]:
         return list(self.nativeManifest.sources.values())
 
 
-@dataclass
+@dataclass(init=False)
 class DbtRunResult:
     nativeRunResult: RunResultsArtifact
-    results: Sequence[RunResultOutput] = field(init=False)
+    results: Sequence[RunResultOutput]
 
-    def __post_init__(self):
-        self.results = self.nativeRunResult.results
+    def __init__(self, nativeRunResult: RunResultsArtifact):
+        self.results = []
+        self.nativeRunResult = nativeRunResult
+        if self.nativeRunResult:
+            self.results = nativeRunResult.results
 
+
+@dataclass
+class CompileArgs:
+    selector_name: str
+    select: Tuple[str]
+    models: Tuple[str]
+    exclude: Tuple[str]
+    state: any
+    single_threaded: bool
 
 @dataclass(init=False)
 class FalDbt:
     project_dir: str
     profiles_dir: str
+    keyword: str
+    features: List[Feature]
+    method: str
+    models: List[DbtModel]
+    tests: List[DbtTest]
 
     _config: RuntimeConfig
     _manifest: DbtManifest
     _run_results: DbtRunResult
+    # Could we instead extend it and create a FalRunTak?
+    _compile_task: CompileTask
 
-    _model_status_map: Dict[str, str]
-
-    _global_script_paths = List[str]
+    _global_script_paths: List[str]
 
     _firestore_client: Union[FirestoreClient, None]
 
-    def __init__(self, project_dir: str, profiles_dir: str):
+    def __init__(
+        self,
+        project_dir: str,
+        profiles_dir: str,
+        select: List[str] = tuple(),
+        exclude: List[str] = tuple(),
+        selector_name: str = None,
+        keyword: str = "fal",
+    ):
         self.project_dir = project_dir
         self.profiles_dir = profiles_dir
+        self.keyword = keyword
+        self._firestore_client = None
+
+        lib.initialize_dbt_flags(profiles_dir=profiles_dir)
 
         self._config = parse.get_dbt_config(project_dir, profiles_dir)
-        lib.register_adapters(self._config)
 
-        # Necessary for parse_to_manifest to not fail
+        # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(profiles_dir)
 
-        self._manifest = DbtManifest(parse.get_dbt_manifest(self._config))
+        args = CompileArgs(selector_name, select, select, exclude, None, None)
+        self._compile_task = CompileTask(args, self._config)
+        self._compile_task._runtime_initialize()
+
+        self._manifest = DbtManifest(self._compile_task.manifest)
 
         self._run_results = DbtRunResult(
             parse.get_dbt_results(self.project_dir, self._config)
         )
 
-        normalized_source_paths = normalize_directories(
-            project_dir, self._config.source_paths
-        )
+        self.method = 'run'
+
+        if self._run_results.nativeRunResult:
+            self.method = self._run_results.nativeRunResult.args['rpc_method']
+
+        self.models, self.tests = _map_nodes_to_models(self._run_results, self._manifest)
+
+        # BACKWARDS: Change intorduced in 1.0.0
+        if hasattr(self._config, "model_paths"):
+            model_paths = self._config.model_paths
+        elif hasattr(self._config, "source_paths"):
+            model_paths = self._config.source_paths
+        normalized_model_paths = normalize_directories(project_dir, model_paths)
 
         self._global_script_paths = parse.get_global_script_configs(
-            normalized_source_paths
+            normalized_model_paths
         )
 
-        self._model_status_map = dict(
-            map(
-                lambda res: [res.unique_id, res.status],
-                self._run_results.results,
-            )
-        )
-
-        self._setup_firestore()
-
-    def get_model_status(self, unique_id: str):
-        # Default to `skipped` status if not found, it means it did not run
-        return self._model_status_map.get(unique_id, "skipped")
+        self.features = self._find_features()
 
     def list_sources(self):
         """
@@ -156,9 +245,8 @@ class FalDbt:
         List model ids available for `ref` usage, formatting like `[ref_name, ...]`
         """
         res = {}
-        for model in self._manifest.get_models():
-            model.set_status(self.get_model_status(model.unique_id))
-            res[model.unique_id] = self.get_model_status(model.unique_id)
+        for model in self.models:
+            res[model.unique_id] = model.status
 
         return res
 
@@ -166,11 +254,47 @@ class FalDbt:
         """
         List models
         """
-        models = []
-        for model in self._manifest.get_models():
-            model.set_status(self.get_model_status(model.unique_id))
-            models.append(model)
-        return models
+        return self.models
+
+    def list_tests(self) -> List[DbtTest]:
+        """
+        List tests
+        """
+        return self.tests
+
+    def list_features(self) -> List[Feature]:
+        return self.features
+
+    def _find_features(self) -> List[Feature]:
+        """List features defined in schema.yml files."""
+        keyword = self.keyword
+        models = self.list_models()
+        models = list(
+            filter(
+                # Find models that have both feature store and column defs
+                lambda model: keyword in model.meta
+                and "feature_store" in model.meta[keyword]
+                and len(list(model.columns.keys())) > 0,
+                models,
+            )
+        )
+        features = []
+        for model in models:
+            for column_name in model.columns.keys():
+                if column_name == model.meta[keyword]["feature_store"]["entity_column"]:
+                    continue
+                if column_name == model.meta[keyword]["feature_store"]["timestamp_column"]:
+                    continue
+                features.append(
+                    Feature(
+                        model=model.name,
+                        column=column_name,
+                        description=model.columns[column_name].description,
+                        entity_column=model.meta[keyword]["feature_store"]["entity_column"],
+                        timestamp_column=model.meta[keyword]["feature_store"]["timestamp_column"],
+                    )
+                )
+        return features
 
     def ref(
         self, target_model_name: str, target_package_name: Optional[str] = None
@@ -195,7 +319,7 @@ class FalDbt:
             target_model,
         )
         return pd.DataFrame.from_records(
-            result.table.rows, columns=result.table.column_names
+            result.table.rows, columns=result.table.column_names, coerce_float=True
         )
 
     def source(self, target_source_name: str, target_table_name: str) -> pd.DataFrame:
@@ -251,6 +375,9 @@ class FalDbt:
         Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
         """
 
+        # Lazily setup Firestore
+        self._lazy_setup_firestore()
+
         if self._firestore_client is None:
             raise FalGeneralException(
                 "GCP credentials not setup correctly. Check warnings during initialization."
@@ -262,7 +389,17 @@ class FalDbt:
             data = _firestore_dict_to_document(data=item, key_column=key_column)
             self._firestore_client.collection(collection).document(str(key)).set(data)
 
-    def _setup_firestore(self):
+    def _lazy_setup_firestore(self):
+        if self._firestore_client is not None:
+            return
+
+        try:
+            from dbt.adapters.bigquery.connections import BigQueryConnectionManager
+        except ModuleNotFoundError as not_found:
+            raise FalGeneralException(
+                "To use firestore, please `pip install dbt-bigquery`"
+            ) from not_found
+
         app_name = f"fal-{uuid.uuid4()}"
         profile_cred = self._config.credentials
 
@@ -332,33 +469,66 @@ class FalProject:
     def __init__(
         self,
         faldbt: FalDbt,
-        keyword: str,
     ):
         self._faldbt = faldbt
-        self.keyword = keyword
+        self.keyword = faldbt.keyword
         self.scripts = parse.get_scripts_list(faldbt.project_dir)
-
-    def get_model_status(self, model: DbtModel):
-        return self._faldbt.get_model_status(model.unique_id)
-
-    def _result_model_ids(self) -> List[str]:
-        return list(map(lambda r: r.unique_id, self._faldbt._run_results.results))
 
     def _get_models_with_keyword(self, keyword) -> List[DbtModel]:
         return list(
-            filter(
-                lambda model: keyword in model.meta, self._faldbt._manifest.get_models()
-            )
+            filter(lambda model: keyword in model.meta, self._faldbt.list_models())
         )
 
-    def get_filtered_models(self, all) -> List[DbtModel]:
-        models_ids = self._result_model_ids()
+    def get_filtered_models(self, all, selected, before) -> List[DbtModel]:
+        selected_ids = _models_ids(self._faldbt._compile_task._flattened_nodes)
         filtered_models: List[DbtModel] = []
 
-        for node in self._get_models_with_keyword(self.keyword):
-            if all:
+        if (
+            not all
+            and not selected
+            and not before
+            and self._faldbt._run_results.nativeRunResult is None
+        ):
+            raise parse.FalParseError(
+                "Cannot define models to run without selection flags or dbt run_results artifact or --before flag"
+            )
+
+        models = self._get_models_with_keyword(self.keyword)
+
+        for node in models:
+            if selected:
+                if node.unique_id in selected_ids:
+                    filtered_models.append(node)
+            elif before:
+                if node.get_scripts(self.keyword, before) != []:
+                    filtered_models.append(node)
+            elif all:
                 filtered_models.append(node)
-            elif node.unique_id in models_ids:
+            elif node.status != "skipped":
                 filtered_models.append(node)
 
         return filtered_models
+
+
+def _models_ids(models):
+    return list(map(lambda r: r.unique_id, models))
+
+
+def _map_nodes_to_models(run_results, manifest):
+    models = manifest.get_models()
+    tests = manifest.get_tests()
+    status_map = dict(
+        map(
+            lambda res: [res.unique_id, res.status],
+            run_results.results,
+        )
+    )
+    for model in models:
+        model.set_status(status_map.get(model.unique_id, 'skipped'))
+        for test in tests:
+            if test.model == model.name:
+                model.tests.append(test)
+                test.set_status(status_map.get(test.unique_id, 'skipped'))
+                if test.status != 'skipped' and model.status == 'skipped':
+                    model.set_status('tested')
+    return (models, tests)

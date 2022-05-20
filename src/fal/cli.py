@@ -7,7 +7,7 @@ from dbt.config.profile import DEFAULT_PROFILES_DIR
 from fal.run_scripts import run_global_scripts, run_scripts
 from fal.dag import FalScript, ScriptGraph
 from fal.utils import print_run_info
-from faldbt.project import FalDbt, FalProject
+from faldbt.project import FalDbt, FalGeneralException, FalProject
 
 
 @click.group()
@@ -37,8 +37,54 @@ def cli():
 )
 @click.option(
     "--all",
-    help="Only run models that ran in the last dbt run.",
+    help="Run scripts for all models. By default, fal runs scripts for models that ran in the last dbt run.",
     is_flag=True,
+)
+@click.option(
+    "--select",
+    "-s",
+    multiple=True,
+    default=tuple(),
+    nargs=1,
+    help="Specify the nodes to include.",
+    type=click.STRING,
+)
+@click.option(
+    "--models",
+    "-m",
+    nargs=1,
+    multiple=True,
+    default=tuple(),
+    help="Specify the nodes to include.",
+    type=click.STRING,
+)
+@click.option(
+    "--exclude",
+    nargs=1,
+    multiple=True,
+    default=tuple(),
+    help="Specify the models to exclude.",
+    type=click.STRING,
+)
+@click.option(
+    "--selector",
+    nargs=1,
+    default=None,
+    help="The selector name to use, as defined in selectors.yml",
+    type=click.STRING,
+)
+@click.option(
+    "--script",
+    nargs=1,
+    default=None,
+    multiple=True,
+    help="Specify scripts to run, overrides schema.yml",
+    type=click.STRING,
+)
+@click.option(
+    "--before",
+    help="Run scripts specified in model `before` tag",
+    is_flag=True
 )
 @click.option(
     "--experimental-ordering",
@@ -50,7 +96,20 @@ def cli():
     help="Display debug logging during execution.",
     is_flag=True,
 )
-def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
+def run(
+    project_dir,
+    profiles_dir,
+    keyword,
+    all,
+    select,
+    models,
+    exclude,
+    selector,
+    script,
+    before,
+    experimental_ordering,
+    debug,
+):
     with log_manager.applicationbound():
         if debug:
             log_manager.set_debug()
@@ -66,17 +125,35 @@ def run(project_dir, profiles_dir, keyword, all, experimental_ordering, debug):
         else:
             real_profiles_dir = DEFAULT_PROFILES_DIR
 
-        faldbt = FalDbt(real_project_dir, real_profiles_dir)
-        project = FalProject(faldbt, keyword)
-        models = project.get_filtered_models(all)
-        print_run_info(models)
+        if not select and models:
+            select = models
+
+        selector_flags = select or exclude or selector
+        if all and selector_flags:
+            raise FalGeneralException(
+                "Cannot pass --all flag alongside selection flags (--select/--models, --exclude, --selector)"
+            )
+
+        faldbt = FalDbt(
+            real_project_dir, real_profiles_dir, select, exclude, selector, keyword
+        )
+        project = FalProject(faldbt)
+        models = project.get_filtered_models(all, selector_flags, before)
+        print_run_info(models, keyword, before)
+
+        if script:
+            scripts = []
+            for model in models:
+                for el in script:
+                    scripts.append(FalScript(model, el))
+            return run_scripts(scripts, project)
 
         if experimental_ordering:
             scripts = ScriptGraph(models, keyword, project_dir).sort()
         else:
             scripts = []
             for model in models:
-                for path in model.get_scripts(keyword, real_project_dir):
+                for path in model.get_script_paths(keyword, real_project_dir, before):
                     scripts.append(FalScript(model, path))
 
         # run model specific scripts first

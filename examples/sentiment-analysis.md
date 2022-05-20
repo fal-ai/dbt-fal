@@ -33,7 +33,7 @@ Alternatively you can load this data to your warehouse with in any way as you li
 Let's first install the transformer library from hugging face. Head to your terminal and the python environment that you have installed `fal` and run:
 
 ```
-pip install transformers pandas numpy
+pip install transformers pandas numpy tensorflow
 ```
 
 (We are working on better dependency managment, head over to this [github issue](https://github.com/fal-ai/fal/issues/10) if you run into any problems with this step)
@@ -44,11 +44,13 @@ Once the transformer dependency is installed create a python file in the locatio
 # models/zendesk_sentiment_analysis.py
 
 from transformers import pipeline
+import pandas as pd
+import numpy as np
 
 ticket_data = ref("stg_zendesk_ticket_data")
 ticket_descriptions = list(ticket_data.description)
 classifier = pipeline("sentiment-analysis")
-description_sentimet_analysis = classifier(ticket_descriptions)
+description_sentiment_analysis = classifier(ticket_descriptions)
 ```
 
 ## Writing the analysis results back to your warehouse
@@ -71,7 +73,7 @@ Then let's organize the resulting data frame before uploading it
 # models/zendesk_sentiment_analysis.py [continuation]
 
 rows = []
-for id, sentiment in zip(ticket_data.id, description_sentimet_analysis):
+for id, sentiment in zip(ticket_data.id, description_sentiment_analysis):
     rows.append((int(id), sentiment["label"], sentiment["score"]))
 
 records = np.array(rows, dtype=[("id", int), ("label", "U8"), ("score", float)])

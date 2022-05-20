@@ -2,14 +2,21 @@
 name = "fal"
 version = "0.1.0"
 description = "fal allows you to run python scripts directly from your dbt project."
+readme = "README.md"
 authors = [
         "Meder Kamalov <meder@fal.ai>",
         "Matteo Ferrando <matteo@fal.ai>",
         "Burkay Gur <burkay@fal.ai>",
-        "Gorkem Yurtseven <gorkem@fal.ai>"]
+        "Gorkem Yurtseven <gorkem@fal.ai>"
+]
 packages = [
-         { include = "fal", from = "src" },
-         { include = "faldbt", from = "src" }
+        { include = "fal", from = "src" },
+        { include = "faldbt", from = "src" }
+]
+
+keywords = [ "dbt", "pandas" ]
+classifiers = [
+    "Development Status :: 4 - Beta"
 ]
 
 [tool.poetry.dependencies]
@@ -22,17 +29,13 @@ google-cloud-bigquery-storage = "^2.9.1"
 pyarrow = "^5.0.0"
 pydantic = "^1.8.2"
 PyYAML = "^6.0"
-ninja = "^1.10.2"
-Jinja2 = "^2.11.3"
-dbt = "^0.21.1"
 agate-sql = "^0.5.8"
 firebase-admin = "^5.1.0"
-dbt-bigquery = "^0.21.1"
 sqlalchemy-bigquery = "^1.2.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
-black = "^21.11b1"
+black = "^21.12b0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
