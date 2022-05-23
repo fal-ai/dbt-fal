@@ -40,7 +40,10 @@ jobs:
         run: |
           dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
 
-      - name: Test
+      - name: Setup pytest
+        run: pip install pytest
+
+      - name: Run tests
         env:
           FAL_STATS_ENABLED: false
         run: pytest tests -s

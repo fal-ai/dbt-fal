@@ -38,6 +38,9 @@ jobs:
         working-directory: integration_tests
         run: docker-compose up -d
 
+      - name: Setup behave
+        run: pip install behave
+
       - name: Run tests
         working-directory: integration_tests
         env:
