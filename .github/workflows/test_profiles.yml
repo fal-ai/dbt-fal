@@ -7,117 +7,61 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.7", "3.8", "3.9"]
-        dbt: ["1.0.4"]
-        profile: ["postgres", "bigquery", "snowflake", "redshift"]
+  postgres_integration_tests:
+    uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
+    with:
+      python_versions: '["3.7", "3.8", "3.9"]'
+      dbt_versions: '["latest"]'
+      dbt_adapter: postgres
+      docker_db: true
 
-    steps:
-      - uses: actions/checkout@v2
+  bigquery_integration_tests:
+    uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
+    with:
+      python_versions: '["3.7", "3.8", "3.9"]'
+      dbt_versions: '["latest"]'
+      dbt_adapter: bigquery
+      dbt_profile_database: ${{ secrets.GCP_PROJECT_ID }}
+      dbt_profile_schema: ${{ secrets.BQ_DATASET }}
+    secrets:
+      env_vars: >
+        KEYFILE="${{ secrets.GCP_SA_KEY }}"
+        GCLOUD_PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+        BQ_DATASET="${{ secrets.BQ_DATASET }}"
 
-      # Avoid running against the same profile at the same time
-      - name: Set up mutex on profiles
-        uses: ben-z/gh-action-mutex@v1.0-alpha-4
-        if: matrix.profile != 'postgres'
-        with:
-          branch: gh-mutex-profile-${{ matrix.profile }}
+  snowflake_integration_tests:
+    uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
+    with:
+      python_versions: '["3.7", "3.8", "3.9"]'
+      dbt_versions: '["latest"]'
+      dbt_adapter: snowflake
+      dbt_profile_database: ${{ secrets.SF_DATABASE }}
+      dbt_profile_schema: ${{ secrets.SF_SCHEMA }}
+    secrets:
+      env_vars: >
+        SF_ACCOUNT="${{ secrets.SF_ACCOUNT }}"
+        SF_USER="${{ secrets.SF_USER }}"
+        SF_PASSWORD="${{ secrets.SF_PASSWORD }}"
+        SF_ROLE="${{ secrets.SF_ROLE }}"
+        SF_DATABASE="${{ secrets.SF_DATABASE }}"
+        SF_WAREHOUSE="${{ secrets.SF_WAREHOUSE }}"
+        SF_SCHEMA="${{ secrets.SF_SCHEMA }}"
 
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python }}
-
-      - uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: "1.1.4"
-
-      - name: Fix jinja
-        run: |
-          pip install markupsafe==2.0.1
-
-      - name: Install fal
-        run: |
-          poetry build
-          pip install dist/fal-0.1.0-py3-none-any.whl
-
-      - name: Install dbt
-        run: |
-          pip install dbt-${{ matrix.profile }}
-
-      - name: Setup environment
-        working-directory: integration_tests
-        if: matrix.profile == 'redshift' || matrix.profile == 'postgres'
-        run: docker-compose up -d
-
-      - name: Install dependencies
-        working-directory: integration_tests
-        run: |
-          pip install behave
-          (test -f requirements.txt && pip install -r requirements.txt) || echo "No requirements.txt"
-
-      - name: Run dbt and fal
-        id: test_run
-        working-directory: integration_tests
-        env:
-          FAL_STATS_ENABLED: false
-          # BigQuery
-          KEYFILE: ${{ secrets.GCP_SA_KEY }}
-          GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
-          BQ_DATASET: ${{ secrets.BQ_DATASET }}
-          # Redshift
-          RS_DB_NAME: ${{ secrets.RS_DB_NAME }}
-          # TODO: change to {{ secrets.RS_SCHEMA }} when testing with real Redshift
-          RS_SCHEMA: dbt_fal
-          RS_HOST: ${{ secrets.RS_HOST }}
-          RS_PASSWORD: ${{ secrets.RS_PASSWORD }}
-          RS_PORT: ${{ secrets.RS_PORT }}
-          RS_USER: ${{ secrets.RS_USER }}
-          # Snowflake
-          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
-          SF_USER: ${{ secrets.SF_USER }}
-          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
-          SF_ROLE: ${{ secrets.SF_ROLE }}
-          SF_DATABASE: ${{ secrets.SF_DATABASE }}
-          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
-          SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
-        run: |
-          # Database and schema setup for sources
-          if [[ '${{ matrix.profile }}' == "bigquery" ]]
-          then
-            export DBT_DATABASE="$GCLOUD_PROJECT" DBT_SCHEMA="$BQ_DATASET"
-          fi
-          if [[ '${{ matrix.profile }}' == "redshift" ]]
-          then
-            export DBT_DATABASE="$RS_DB_NAME" DBT_SCHEMA="$RS_SCHEMA"
-          fi
-          if [[ '${{ matrix.profile }}' == "snowflake" ]]
-          then
-            export DBT_DATABASE="$SF_DATABASE" DBT_SCHEMA="$SF_SCHEMA"
-          fi
-
-          if [[ '${{ matrix.profile }}' == "bigquery" ]]
-          then
-            echo $KEYFILE > $HOME/keyfile.json
-            ls -la $HOME/keyfile.json
-            export KEYFILE_DIR=$HOME
-            echo 'keyfile is ready'
-          fi
-
-          behave --tags=-broken_profile -D profile=${{ matrix.profile }}
-
-      - name: Send custom JSON data to Slack workflow
-        if: failure()
-        id: slack
-        uses: slackapi/slack-github-action@v1.18.0
-        with:
-          # For posting a rich message using Block Kit
-          payload: |
-            {
-              "text": "Integration tests failed for ${{ matrix.profile }}, Python version ${{ matrix.python }}. https://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+  redshift_integration_tests:
+    uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
+    with:
+      python_versions: '["3.7", "3.8", "3.9"]'
+      dbt_versions: '["latest"]'
+      dbt_adapter: redshift
+      dbt_profile_database: ${{ secrets.RS_DB_NAME }}
+      dbt_profile_schema: dbt_fal
+      # TODO: test against real Redshift
+      docker_db: true
+    secrets:
+      env_vars: >
+        RS_DB_NAME="${{ secrets.RS_DB_NAME }}"
+        RS_SCHEMA="dbt_fal"
+        RS_HOST="${{ secrets.RS_HOST }}"
+        RS_PASSWORD="${{ secrets.RS_PASSWORD }}"
+        RS_PORT="${{ secrets.RS_PORT }}"
+        RS_USER="${{ secrets.RS_USER }}"
