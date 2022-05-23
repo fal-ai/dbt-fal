@@ -21,10 +21,11 @@ jobs:
       python_versions: '["3.7", "3.8", "3.9"]'
       dbt_versions: '["latest"]'
       dbt_adapter: bigquery
-      dbt_profile_database: ${{ secrets.GCP_PROJECT_ID }}
-      dbt_profile_schema: ${{ secrets.BQ_DATASET }}
     secrets:
       env_vars: >
+        DBT_DATABASE="${{ secrets.GCP_PROJECT_ID }}"
+        DBT_SCHEMA="${{ secrets.BQ_DATASET }}"
+
         KEYFILE="${{ secrets.GCP_SA_KEY }}"
         GCLOUD_PROJECT="${{ secrets.GCP_PROJECT_ID }}"
         BQ_DATASET="${{ secrets.BQ_DATASET }}"
@@ -35,10 +36,11 @@ jobs:
       python_versions: '["3.7", "3.8", "3.9"]'
       dbt_versions: '["latest"]'
       dbt_adapter: snowflake
-      dbt_profile_database: ${{ secrets.SF_DATABASE }}
-      dbt_profile_schema: ${{ secrets.SF_SCHEMA }}
     secrets:
       env_vars: >
+        DBT_DATABASE="${{ secrets.SF_DATABASE }}"
+        DBT_SCHEMA="${{ secrets.SF_SCHEMA }}"
+
         SF_ACCOUNT="${{ secrets.SF_ACCOUNT }}"
         SF_USER="${{ secrets.SF_USER }}"
         SF_PASSWORD="${{ secrets.SF_PASSWORD }}"
@@ -53,12 +55,13 @@ jobs:
       python_versions: '["3.7", "3.8", "3.9"]'
       dbt_versions: '["latest"]'
       dbt_adapter: redshift
-      dbt_profile_database: ${{ secrets.RS_DB_NAME }}
-      dbt_profile_schema: dbt_fal
       # TODO: test against real Redshift
       docker_db: true
     secrets:
       env_vars: >
+        DBT_DATABASE="${{ secrets.RS_DB_NAME }}"
+        DBT_SCHEMA="dbt_fal"
+
         RS_DB_NAME="${{ secrets.RS_DB_NAME }}"
         RS_SCHEMA="dbt_fal"
         RS_HOST="${{ secrets.RS_HOST }}"
