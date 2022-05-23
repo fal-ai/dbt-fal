@@ -41,11 +41,26 @@ def _find_dbt_function_calls(calls: List[ast.Call], func_name: str) -> List[ast.
         if isinstance(call.func, ast.Name) and call.func.id == func_name
     ]
 
-    return [
-        call
-        for call in func_calls
-        if all(map(lambda arg: isinstance(arg, ast.Constant), call.args))
-    ]
+    def is_constant(arg: ast.expr):
+        import sys
+
+        if sys.version_info < (3, 8):
+            return isinstance(arg, ast.Str)
+        else:
+            return isinstance(arg, ast.Constant)
+
+    return [call for call in func_calls if all(map(is_constant, call.args))]
+
+
+def _print_node(node: ast.AST):
+    """
+    For temporary usage during debugging.
+    """
+    print(
+        node,
+        *((f, getattr(node, f)) for f in node._fields),
+        *((f, getattr(node, f)) for f in node._attributes),
+    )
 
 
 REF_RE = re.compile("ref\\([^)]*\\)")
