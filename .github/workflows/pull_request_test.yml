@@ -72,12 +72,12 @@ jobs:
         working-directory: tests
         run: docker-compose up -d
 
+      - name: Setup pytest
+        run: pip install pytest mock black
+
       - name: Run dbt
         run: |
           dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
-
-      - name: Setup pytest
-        run: pip install pytest mock
 
       - name: Run tests
         env:
