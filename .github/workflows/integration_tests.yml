@@ -14,13 +14,6 @@ on:
         required: true
         type: string
 
-      dbt_profile_database:
-        required: false
-        type: string
-      dbt_profile_schema:
-        required: false
-        type: string
-
       docker_db:
         required: false
         default: false
@@ -29,8 +22,6 @@ on:
       env_vars:
         required: false
         description: One liner to set adapter environment variables. (e.g. 'HOST=some SCHEMA=other')
-      bigquery_keyfile:
-        required: false
 
 jobs:
   run:
@@ -42,55 +33,21 @@ jobs:
         dbt: ${{fromJson(inputs.dbt_versions)}}
 
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-python@v2
+      - name: Setup local fal
+        uses: fal-ai/fal/.github/actions/setup-local-fal@dry-workflow
         with:
-          python-version: ${{ matrix.python }}
-
-      - uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: "1.1.4"
-
-      # TODO: check if still necessary
-      - name: Fix jinja
-        run: |
-          pip install markupsafe==2.0.1
-
-      - name: Install fal
-        run: |
-          poetry build
-          pip install dist/fal-0.1.0-py3-none-any.whl
-
-      - name: Install dbt
-        run: |
-          if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
-          then
-            pip install dbt==${{ matrix.dbt }}
-            pip install dbt-${{ inputs.dbt_adapter }}==${{ matrix.dbt }}
-          elif [[ '${{ matrix.dbt }}' =~ ^1.*$ ]]
-          then
-            pip install dbt-${{ inputs.dbt_adapter }}==${{ matrix.dbt }}
-          else
-            pip install dbt-${{ inputs.dbt_adapter }}
-          fi
+          python: ${{ matrix.python }}
+          dbt: ${{ matrix.dbt }}
 
       - name: Start test Docker database
         working-directory: integration_tests
         if: inputs.docker_db
         run: docker-compose up -d
 
-      - name: Install test dependencies
-        working-directory: integration_tests
-        run: |
-          pip install behave
-
       - name: Run tests
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
-          DBT_DATABASE: inputs.dbt_profile_database
-          DBT_SCHEMA: inputs.dbt_profile_schema
         run: |
           export ${{ secrets.env_vars }}
           if [ ! -z "$KEYFILE" ]
@@ -99,8 +56,6 @@ jobs:
             export KEYFILE_DIR=$HOME
           fi
 
-          export DBT_DATABASE=${{ inputs.dbt_profile_database }}
-          export DBT_SCHEMA=${{ inputs.dbt_profile_schema }}
           behave --tags=-broken_profile -D profile=${{ inputs.dbt_adapter }}
 
       - name: Send custom JSON data to Slack workflow
