@@ -1,16 +1,37 @@
 name: Run Integration Tests
 
 on:
-  pull_request:
-    types: [assigned, opened, synchronize, reopened]
-    paths-ignore:
-      - "examples/**"
-      - "docsite/**"
-      - "README.md"
-      - "LICENSE"
-  push:
-    branches: [main]
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      python_versions:
+        required: true
+        type: string
+      dbt_versions:
+        required: true
+        type: string
+      dbt_adapter:
+        required: true
+        type: string
+
+      dbt_profile_database:
+        required: false
+        type: string
+      dbt_profile_schema:
+        required: false
+        type: string
+
+      docker_db:
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      # set environment for different adapters
+      env_oneliner:
+        required: false
+        description: One liner to set adapter environment variables. (e.g. 'HOST=some SCHEMA=other')
+      bigquery_keyfile:
+        required: false
 
 jobs:
   run:
@@ -18,13 +39,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.8"]
-        dbt: ["0.20.1", "0.21.1", "1.0.4"]
-
-    # Run only the latest commit pushed to PR
-    concurrency:
-      group: "${{ github.ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
-      cancel-in-progress: true
+        python: ${{fromJson(inputs.python_versions)}}
+        dbt: ${{fromJson(inputs.dbt_versions)}}
 
     steps:
       - uses: actions/checkout@v2
@@ -37,6 +53,7 @@ jobs:
         with:
           poetry-version: "1.1.4"
 
+      # TODO: check if still necessary
       - name: Fix jinja
         run: |
           pip install markupsafe==2.0.1
@@ -51,22 +68,50 @@ jobs:
           if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
           then
             pip install dbt==${{ matrix.dbt }}
+            pip install dbt-${{ inputs.dbt_adapter }}==${{ matrix.dbt }}
+          elif [[ '${{ matrix.dbt }}' =~ ^1.*$ ]]
+          then
+            pip install dbt-${{ inputs.dbt_adapter }}==${{ matrix.dbt }}
           else
-            pip install dbt-postgres==${{ matrix.dbt }}
+            pip install dbt-${{ inputs.dbt_adapter }}
           fi
 
       - name: Start test Docker database
         working-directory: integration_tests
+        if: inputs.docker_db
         run: docker-compose up -d
 
       - name: Install test dependencies
         working-directory: integration_tests
         run: |
           pip install behave
-          (test -f requirements.txt && pip install -r requirements.txt) || echo "No requirements.txt"
 
-      - name: Run dbt and fal
+      - name: Run tests
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
-        run: behave
+          DBT_DATABASE: inputs.dbt_profile_database
+          DBT_SCHEMA: inputs.dbt_profile_schema
+        run: |
+          export $env_oneliner
+          if [ ! -z "$KEYFILE" ]
+            echo "$KEYFILE" > $HOME/keyfile.json
+            export KEYFILE_DIR=$HOME
+          fi
+
+          behave --tags=-broken_profile -D profile=${{ inputs.dbt_adapter }}
+          # behave
+
+      - name: Send custom JSON data to Slack workflow
+        if: failure()
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
+        with:
+          # For posting a rich message using Block Kit
+          payload: |
+            {
+              "text": "Integration tests failed for ${{ inputs.dbt_adapter }}, Python version ${{ matrix.python }}. https://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

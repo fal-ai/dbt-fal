@@ -1,0 +1,22 @@
+name: Run Integration Tests
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+    paths-ignore:
+      - "examples/**"
+      - "docsite/**"
+      - "README.md"
+      - "LICENSE"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  integration_tests:
+    uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
+    with:
+      python_versions: '["3.8"]'
+      dbt_versions: '["0.20", "0.21", "1.0", "latest"]'
+      dbt_adapter: postgres
+      docker_db: true
