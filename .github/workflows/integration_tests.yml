@@ -45,6 +45,9 @@ jobs:
         if: ${{ inputs.docker_db == 'true' }}
         run: docker-compose up -d
 
+      - name: Setup behave
+        run: pip install behave
+
         # Avoid running against the same profile at the same time
       - name: Set up mutex on profiles
         uses: ben-z/gh-action-mutex@v1.0-alpha-4
