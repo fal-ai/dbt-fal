@@ -23,7 +23,7 @@ jobs:
 
     # Run only the latest commit pushed to PR
     concurrency:
-      group: "${{ github.job }}-${{ github.ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      group: "behave-${{ github.head_ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
       cancel-in-progress: true
 
     steps:
@@ -57,7 +57,7 @@ jobs:
 
     # Run only the latest commit pushed to PR
     concurrency:
-      group: "${{ github.job }}-${{ github.ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      group: "pytest-${{ github.head_ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
       cancel-in-progress: true
 
     steps:
