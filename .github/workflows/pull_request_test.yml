@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
+  behave:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,7 +23,7 @@ jobs:
 
     # Run only the latest commit pushed to PR
     concurrency:
-      group: "${{ github.ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      group: "${{ github.job }}-${{ github.ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
       cancel-in-progress: true
 
     steps:
@@ -46,3 +46,40 @@ jobs:
         env:
           FAL_STATS_ENABLED: false
         run: behave
+
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.8"]
+        dbt: ["0.20", "0.21", "1.0", "latest"]
+
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.job }}-${{ github.ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      cancel-in-progress: true
+
+    steps:
+      - name: Setup local fal
+        uses: fal-ai/fal/.github/actions/setup-local-fal@dry-workflow
+        with:
+          python: ${{ matrix.python }}
+          dbt: ${{ matrix.dbt }}
+          adapter: postgres
+
+      - name: Start test Docker database
+        working-directory: tests
+        run: docker-compose up -d
+
+      - name: Run dbt
+        run: |
+          dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
+
+      - name: Setup pytest
+        run: pip install pytest mock
+
+      - name: Run tests
+        env:
+          FAL_STATS_ENABLED: false
+        run: pytest tests -s
