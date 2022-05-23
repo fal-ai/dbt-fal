@@ -94,6 +94,7 @@ jobs:
         run: |
           export ${{ secrets.env_vars }}
           if [ ! -z "$KEYFILE" ]
+          then
             echo "$KEYFILE" > $HOME/keyfile.json
             export KEYFILE_DIR=$HOME
           fi
