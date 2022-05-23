@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.8"]
-        dbt: ["0.20.1", "0.21.1", "1.0.4"]
+        dbt: ["0.20", "0.21", "1.0", "latest"]
 
     # Run only the latest commit pushed to PR
     concurrency:
@@ -25,42 +25,21 @@ jobs:
       cancel-in-progress: true
 
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-python@v2
+      - name: Setup local fal
+        uses: fal-ai/fal/.github/actions/setup-local-fal@dry-workflow
         with:
-          python-version: ${{ matrix.python }}
+          python: ${{ matrix.python }}
+          dbt: ${{ matrix.dbt }}
 
       - name: Start test Docker database
         working-directory: tests
         run: docker-compose up -d
 
-      - uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: "1.1.4"
-
-      - name: Fix jinja
-        run: |
-          poetry run pip install markupsafe==2.0.1
-
-      - name: Install fal
-        run: |
-          poetry install
-
-      - name: Install dbt
-        run: |
-          if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
-          then
-            poetry run pip install dbt==${{ matrix.dbt }}
-          else
-            poetry run pip install dbt-postgres==${{ matrix.dbt }}
-          fi
-
       - name: Run dbt
         run: |
-          poetry run dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
+          dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
 
       - name: Test
         env:
           FAL_STATS_ENABLED: false
-        run: poetry run pytest tests -s
+        run: pytest tests -s

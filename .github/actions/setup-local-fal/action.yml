@@ -1,0 +1,28 @@
+inputs:
+  python:
+    description: "Python version"
+  adapter:
+    description: "dbt adapter to use"
+runs:
+  using: "composite"
+  steps:
+    - name: Run tests
+      working-directory: integration_tests
+      env:
+        FAL_STATS_ENABLED: false
+      run: |
+        behave --tags=-broken_profile -D profile=${{ inputs.adapter }}
+
+    - name: Send custom JSON data to Slack workflow
+      if: failure()
+      id: slack
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        # For posting a rich message using Block Kit
+        payload: |
+          {
+            "text": "Integration tests failed for ${{ inputs.adapter }}, Python version ${{ iputs.python }}. https://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
