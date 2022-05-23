@@ -13,10 +13,32 @@ on:
   workflow_dispatch:
 
 jobs:
-  integration_tests:
-    uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
-    with:
-      python_versions: '["3.8"]'
-      dbt_versions: '["0.20", "0.21", "1.0", "latest"]'
-      dbt_adapter: postgres
-      docker_db: true
+  run:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.8"]
+        dbt: ["0.20", "0.21", "1.0", "latest"]
+
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.ref }}-${{ github.workflow }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      cancel-in-progress: true
+
+    steps:
+      - name: Setup local fal
+        uses: fal-ai/fal/.github/actions/setup-local-fal@dry-workflow
+        with:
+          python: ${{ matrix.python }}
+          dbt: ${{ matrix.dbt }}
+
+      - name: Start test Docker database
+        working-directory: integration_tests
+        run: docker-compose up -d
+
+      - name: Run tests
+        working-directory: integration_tests
+        env:
+          FAL_STATS_ENABLED: false
+        run: behave
