@@ -41,7 +41,7 @@ jobs:
 
       - name: Start test Docker database
         working-directory: integration_tests
-        if: ${{ inputs.docker_db == 'true' }}
+        if: ${{ inputs.docker_db }}
         run: docker-compose up -d
 
       - name: Setup behave
@@ -50,7 +50,7 @@ jobs:
         # Avoid running against the same profile at the same time
       - name: Set up mutex on profiles
         uses: ben-z/gh-action-mutex@v1.0-alpha-4
-        if: ${{ inputs.docker_db != 'true' }}
+        if: ${{ ! inputs.docker_db }}
         with:
           branch: gh-mutex-profile-${{ inputs.dbt_adapter }}
 
