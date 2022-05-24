@@ -25,9 +25,9 @@ jobs:
       env_vars: >-
         DBT_DATABASE="${{ secrets.GCP_PROJECT_ID }}"
         DBT_SCHEMA="${{ secrets.BQ_DATASET }}"
-        KEYFILE="${{ secrets.GCP_SA_KEY }}"
         GCLOUD_PROJECT="${{ secrets.GCP_PROJECT_ID }}"
         BQ_DATASET="${{ secrets.BQ_DATASET }}"
+      keyfile: ${{ secrets.GCP_SA_KEY }}
 
   snowflake:
     uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow

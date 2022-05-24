@@ -21,6 +21,8 @@ on:
       env_vars:
         required: false
         description: One liner to set adapter environment variables. (e.g. 'HOST=some SCHEMA=other')
+      keyfile:
+        required: false
 
 jobs:
   run:
@@ -58,11 +60,12 @@ jobs:
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
+        shell: bash
         run: |
           export ${{ secrets.env_vars }}
-          if [ ! -z "$KEYFILE" ]
+          if [ ! -z "${{ secrets.keyfile }}" ]
           then
-            echo "$KEYFILE" > $HOME/keyfile.json
+            echo "${{ secrets.keyfile }}" > $HOME/keyfile.json
             export KEYFILE_DIR=$HOME
           fi
 
