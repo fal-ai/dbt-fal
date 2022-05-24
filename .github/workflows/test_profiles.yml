@@ -12,9 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.7", "3.8", "3.9"]
-        dbt: ["1.0.4"]
         profile: ["postgres", "bigquery", "snowflake", "redshift"]
+        python: ["3.7", "3.8", "3.9"]
 
     steps:
       - uses: actions/checkout@v2
@@ -26,39 +25,22 @@ jobs:
         with:
           branch: gh-mutex-profile-${{ matrix.profile }}
 
-      - uses: actions/setup-python@v2
+      - name: Setup local fal
+        uses: fal-ai/fal/.github/actions/setup-local-fal@dry-workflow
         with:
-          python-version: ${{ matrix.python }}
+          python: ${{ matrix.python }}
+          adapter: ${{ matrix.profile }}
 
-      - uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: "1.1.4"
-
-      - name: Fix jinja
-        run: |
-          pip install markupsafe==2.0.1
-
-      - name: Install fal
-        run: |
-          poetry build
-          pip install dist/fal-0.1.0-py3-none-any.whl
-
-      - name: Install dbt
-        run: |
-          pip install dbt-${{ matrix.profile }}
-
-      - name: Setup environment
+      - name: Start Docker database
         working-directory: integration_tests
         if: matrix.profile == 'redshift' || matrix.profile == 'postgres'
         run: docker-compose up -d
 
-      - name: Install dependencies
+      - name: Setup behave
         working-directory: integration_tests
-        run: |
-          pip install behave
-          (test -f requirements.txt && pip install -r requirements.txt) || echo "No requirements.txt"
+        run: pip install behave
 
-      - name: Run dbt and fal
+      - name: Run tests
         id: test_run
         working-directory: integration_tests
         env:
