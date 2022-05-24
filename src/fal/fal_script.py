@@ -113,8 +113,7 @@ class FalScript:
 
     @property
     def id(self):
-        # TODO: maybe `self.path - project_dir`, to show only relevant path
-        return f"({self.model_name},{self.path})"
+        return f"({self.model_name},{self.path.relative_to(self._faldbt.scripts_dir)})"
 
     @property
     def is_global(self):
