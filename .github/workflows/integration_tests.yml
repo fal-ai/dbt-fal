@@ -37,7 +37,7 @@ jobs:
         with:
           python: ${{ matrix.python }}
           dbt: ${{ matrix.dbt }}
-          adapter: postgres
+          adapter: ${{ inputs.dbt_adapter }}
 
       - name: Start test Docker database
         working-directory: integration_tests
