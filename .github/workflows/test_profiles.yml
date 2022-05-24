@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  postgres_integration_tests:
+  postgres:
     uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
     with:
       python_versions: '["3.7", "3.8", "3.9"]'
@@ -15,7 +15,7 @@ jobs:
       dbt_adapter: postgres
       docker_db: true
 
-  bigquery_integration_tests:
+  bigquery:
     uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
     with:
       python_versions: '["3.7", "3.8", "3.9"]'
@@ -25,12 +25,11 @@ jobs:
       env_vars: >
         DBT_DATABASE="${{ secrets.GCP_PROJECT_ID }}"
         DBT_SCHEMA="${{ secrets.BQ_DATASET }}"
-
         KEYFILE="${{ secrets.GCP_SA_KEY }}"
         GCLOUD_PROJECT="${{ secrets.GCP_PROJECT_ID }}"
         BQ_DATASET="${{ secrets.BQ_DATASET }}"
 
-  snowflake_integration_tests:
+  snowflake:
     uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
     with:
       python_versions: '["3.7", "3.8", "3.9"]'
@@ -40,7 +39,6 @@ jobs:
       env_vars: >
         DBT_DATABASE="${{ secrets.SF_DATABASE }}"
         DBT_SCHEMA="${{ secrets.SF_SCHEMA }}"
-
         SF_ACCOUNT="${{ secrets.SF_ACCOUNT }}"
         SF_USER="${{ secrets.SF_USER }}"
         SF_PASSWORD="${{ secrets.SF_PASSWORD }}"
@@ -49,7 +47,7 @@ jobs:
         SF_WAREHOUSE="${{ secrets.SF_WAREHOUSE }}"
         SF_SCHEMA="${{ secrets.SF_SCHEMA }}"
 
-  redshift_integration_tests:
+  redshift:
     uses: fal-ai/fal/.github/workflows/integration_tests.yml@dry-workflow
     with:
       python_versions: '["3.7", "3.8", "3.9"]'
@@ -61,7 +59,6 @@ jobs:
       env_vars: >
         DBT_DATABASE="${{ secrets.RS_DB_NAME }}"
         DBT_SCHEMA="dbt_fal"
-
         RS_DB_NAME="${{ secrets.RS_DB_NAME }}"
         RS_SCHEMA="dbt_fal"
         RS_HOST="${{ secrets.RS_HOST }}"

@@ -52,7 +52,7 @@ jobs:
         uses: ben-z/gh-action-mutex@v1.0-alpha-4
         if: ${{ inputs.docker_db != 'true' }}
         with:
-          branch: gh-mutex-profile-${{ matrix.profile }}
+          branch: gh-mutex-profile-${{ inputs.dbt_adapter }}
 
       - name: Run tests
         working-directory: integration_tests
