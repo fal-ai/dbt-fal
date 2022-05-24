@@ -22,7 +22,7 @@ jobs:
       dbt_versions: '["latest"]'
       dbt_adapter: bigquery
     secrets:
-      env_vars: >
+      env_vars: >-
         DBT_DATABASE="${{ secrets.GCP_PROJECT_ID }}"
         DBT_SCHEMA="${{ secrets.BQ_DATASET }}"
         KEYFILE="${{ secrets.GCP_SA_KEY }}"
@@ -36,7 +36,7 @@ jobs:
       dbt_versions: '["latest"]'
       dbt_adapter: snowflake
     secrets:
-      env_vars: >
+      env_vars: >-
         DBT_DATABASE="${{ secrets.SF_DATABASE }}"
         DBT_SCHEMA="${{ secrets.SF_SCHEMA }}"
         SF_ACCOUNT="${{ secrets.SF_ACCOUNT }}"
@@ -56,7 +56,7 @@ jobs:
       # TODO: test against real Redshift
       docker_db: true
     secrets:
-      env_vars: >
+      env_vars: >-
         DBT_DATABASE="${{ secrets.RS_DB_NAME }}"
         DBT_SCHEMA="dbt_fal"
         RS_DB_NAME="${{ secrets.RS_DB_NAME }}"
