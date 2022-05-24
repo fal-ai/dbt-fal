@@ -16,7 +16,6 @@ on:
 
       docker_db:
         required: false
-        default: false
         type: boolean
     secrets:
       env_vars:
@@ -51,7 +50,7 @@ jobs:
         # Avoid running against the same profile at the same time
       - name: Set up mutex on profiles
         uses: ben-z/gh-action-mutex@v1.0-alpha-4
-        if: ${{ inputs.docker_db == 'false' }}
+        if: ${{ inputs.docker_db != 'true' }}
         with:
           branch: gh-mutex-profile-${{ matrix.profile }}
 
