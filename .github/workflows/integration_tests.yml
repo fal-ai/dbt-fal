@@ -63,9 +63,9 @@ jobs:
         shell: bash
         run: |
           export ${{ secrets.env_vars }}
-          if [ ! -z "${{ secrets.keyfile }}" ]
+          if [ ! -z '${{ secrets.keyfile }}' ]
           then
-            echo "${{ secrets.keyfile }}" > $HOME/keyfile.json
+            echo '${{ secrets.keyfile }}' > $HOME/keyfile.json
             export KEYFILE_DIR=$HOME
           fi
 
