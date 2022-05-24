@@ -164,6 +164,12 @@ def _build_table_from_parts(
 ):
     from dbt.contracts.relation import Path, RelationType
 
+    # Avoids automatic quoting by Snowflake
+    if adapter.type() == "snowflake":
+        database = database.lower()
+        schema = schema.lower()
+        identifier = identifier.lower()
+
     path = Path(database, schema, identifier)
 
     # NOTE: assuming we want TABLE relation if not found
