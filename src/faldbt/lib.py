@@ -193,7 +193,7 @@ def overwrite_target(
         relation = _build_table_from_target(adapter, target)
 
     temporal_relation = _build_table_from_parts(
-        adapter, relation.database, relation.schema, f"{relation.identifier}__F__"
+        adapter, relation.database, relation.schema, f"{relation.identifier}__f__"
     )
 
     results = _write_relation(
@@ -252,9 +252,23 @@ def _write_relation(
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    engine = _alchemy_engine(adapter, relation.database)
-    pddb = pdsql.SQLDatabase(engine, schema=relation.schema)
-    pdtable = pdsql.SQLTable(relation.identifier, pddb, data, index=False, dtype=dtype)
+    if adapter.type() == "snowflake":
+        database, schema, identifier = (
+            relation.database.lower(),
+            relation.schema.lower(),
+            relation.identifier.lower(),
+        )
+    else:
+        database, schema, identifier = (
+            relation.database,
+            relation.schema,
+            relation.identifier,
+        )
+
+    engine = _alchemy_engine(adapter, database)
+    pddb = pdsql.SQLDatabase(engine, schema=schema)
+    pdtable = pdsql.SQLTable(identifier, pddb, data, index=False, dtype=dtype)
+
     alchemy_table: sqlalchemy.Table = pdtable.table.to_metadata(pdtable.pd_sql.meta)
 
     # HACK: athena needs "location" property that is not passed by mock adapter
