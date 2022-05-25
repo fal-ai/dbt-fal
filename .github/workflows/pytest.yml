@@ -27,40 +27,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-python@v2
+      - name: Setup local fal
+        uses: ./.github/actions/setup-local-fal
         with:
-          python-version: ${{ matrix.python }}
+          python: ${{ matrix.python }}
+          dbt: ${{ matrix.dbt }}
+          adapter: postgres
 
-      - name: Start test Docker database
+      - name: Start Docker database
         working-directory: tests
         run: docker-compose up -d
 
-      - uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: "1.1.4"
-
-      - name: Fix jinja
-        run: |
-          poetry run pip install markupsafe==2.0.1
-
-      - name: Install fal
-        run: |
-          poetry install
-
-      - name: Install dbt
-        run: |
-          if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
-          then
-            poetry run pip install dbt==${{ matrix.dbt }}
-          else
-            poetry run pip install dbt-postgres==${{ matrix.dbt }}
-          fi
+      - name: Setup pytest
+        run: pip install pytest mock black
 
       - name: Run dbt
-        run: |
-          poetry run dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
+        run: dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
 
-      - name: Test
+      - name: Run tests
         env:
           FAL_STATS_ENABLED: false
-        run: poetry run pytest tests -s
+        run: pytest tests -s
