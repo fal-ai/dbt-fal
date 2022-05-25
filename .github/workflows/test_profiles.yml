@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         profile: ["postgres", "bigquery", "snowflake", "redshift"]
-        python: ["3.7", "3.8", "3.9"]
+        python: ["3.7", "3.8", "3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v2
@@ -91,7 +91,7 @@ jobs:
           behave --tags=-broken_profile -D profile=${{ matrix.profile }}
 
       - name: Send custom JSON data to Slack workflow
-        if: failure()
+        if: failure() && github.ref_name == 'main'
         id: slack
         uses: slackapi/slack-github-action@v1.18.0
         with:
