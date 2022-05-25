@@ -26,7 +26,7 @@ jobs:
           branch: gh-mutex-profile-${{ matrix.profile }}
 
       - name: Setup local fal
-        uses: fal-ai/fal/.github/actions/setup-local-fal@dry-workflow
+        uses: ./.github/actions/setup-local-fal
         with:
           python: ${{ matrix.python }}
           adapter: ${{ matrix.profile }}

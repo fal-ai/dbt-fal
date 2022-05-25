@@ -27,8 +27,10 @@ jobs:
       cancel-in-progress: true
 
     steps:
+      - uses: actions/checkout@v2
+
       - name: Setup local fal
-        uses: fal-ai/fal/.github/actions/setup-local-fal@dry-workflow
+        uses: ./.github/actions/setup-local-fal
         with:
           python: ${{ matrix.python }}
           dbt: ${{ matrix.dbt }}
