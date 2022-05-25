@@ -18,13 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Avoid running against the same profile at the same time
-      - name: Set up mutex on profiles
-        uses: ben-z/gh-action-mutex@v1.0-alpha-4
-        if: matrix.profile != 'postgres'
-        with:
-          branch: gh-mutex-profile-${{ matrix.profile }}
-
       - name: Setup local fal
         uses: ./.github/actions/setup-local-fal
         with:
@@ -39,6 +32,13 @@ jobs:
       - name: Setup behave
         working-directory: integration_tests
         run: pip install behave
+
+      # Avoid running against the same profile at the same time
+      - name: Set up mutex on profiles
+        uses: ben-z/gh-action-mutex@v1.0-alpha-4
+        if: matrix.profile != 'postgres'
+        with:
+          branch: gh-mutex-profile-${{ matrix.profile }}
 
       - name: Run tests
         id: test_run
