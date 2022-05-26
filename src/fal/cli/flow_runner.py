@@ -2,7 +2,7 @@ from functools import reduce
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, cast, Union
+from typing import Dict, List, Optional, cast, Union
 
 from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.cli.dbt_runner import dbt_run, raise_for_dbt_run_errors
@@ -11,7 +11,7 @@ from fal.cli.selectors import ExecutionPlan
 from fal.cli.model_generator import generate_python_dbt_models
 from fal.fal_script import FalScript
 from fal.node_graph import DbtModelNode, FalFlowNode, NodeGraph, ScriptNode
-from faldbt.project import FalDbt
+from faldbt.project import FalDbt, NodeStatus
 import argparse
 from fal.telemetry import telemetry
 
@@ -26,6 +26,7 @@ def fal_flow_run(parsed: argparse.Namespace):
         generated_models = generate_python_dbt_models(parsed.project_dir)
 
     fal_dbt = create_fal_dbt(parsed, generated_models)
+    _mark_dbt_nodes_status(fal_dbt, NodeStatus.Skipped)
 
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
@@ -85,6 +86,7 @@ def _run_sub_graph(
             index,
         )
         raise_for_dbt_run_errors(output)
+        _mark_dbt_nodes_status(fal_dbt, NodeStatus.Success, dbt_nodes)
 
         fal_nodes = []
         for n in dbt_nodes:
@@ -100,6 +102,17 @@ def _run_sub_graph(
     if len(after_scripts) != 0:
         results = run_scripts(after_scripts, fal_dbt)
         raise_for_run_results_failures(after_scripts, results)
+
+
+def _mark_dbt_nodes_status(
+    fal_dbt: FalDbt, status: NodeStatus, dbt_nodes: Optional[List[str]] = None
+):
+    for model in fal_dbt.models:
+        if dbt_nodes is not None:
+            if model.unique_id in dbt_nodes:
+                model.set_status(status)
+        else:
+            model.set_status(status)
 
 
 def _id_to_fal_scripts(
