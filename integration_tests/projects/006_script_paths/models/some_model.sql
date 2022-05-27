@@ -2,7 +2,10 @@
 
 with data as (
 
-    SELECT 1::INTEGER as my_int, 'some text'::text as my_text, 0.1::NUMERIC as my_float
+    SELECT
+        cast(1 AS integer) as my_int,
+        'some text' as my_text,
+        cast(0.1 AS numeric) as my_float
 )
 
 select *

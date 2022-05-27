@@ -8,11 +8,11 @@ models:
           after:
             - fal_scripts/check_extra.py
 
-  - name: model_a
+  - name: s_model_a
 
-  - name: model_b
+  - name: s_model_b
 
-  - name: model_c
+  - name: s_model_c
     meta:
       fal:
         scripts:
