@@ -89,11 +89,14 @@ def invoke_command(context):
 
 @then("it throws an {etype} exception with message '{msg}'")
 def invoke_command_error(context, etype: str, msg: str):
-    _etype, value, _tb = context.exc
+    _etype, exception, _tb = context.exc
     assert isinstance(
-        value, eval(etype)
-    ), f"Invalid exception - expected {type}, got {type(value)}"
-    assert msg in str(value), "Invalid message - expected " + msg
+        exception, eval(etype)
+    ), f"Invalid exception - expected {type}, got {type(exception)}"
+    assert msg in str(exception), "Invalid message - expected " + msg
+
+    # Clear the exception
+    context.exc = None
 
 
 @then("the following command will fail")
