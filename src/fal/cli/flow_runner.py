@@ -153,6 +153,10 @@ def _unique_ids_to_model_names(id_list: List[str]) -> List[str]:
 
 def _combine_fal_run_results(target_path):
     result_files = _get_fal_run_results(target_path)
+
+    if not result_files:
+        return
+
     all_results = reduce(
         lambda all, next: all.extend(_get_result_array(next)) or all,
         result_files,
