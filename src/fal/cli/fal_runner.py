@@ -13,24 +13,21 @@ from faldbt.project import DbtModel, FalDbt, FalGeneralException
 def create_fal_dbt(
     args: argparse.Namespace, generated_models: Dict[str, Path] = {}
 ) -> FalDbt:
-    real_project_dir = os.path.realpath(os.path.normpath(args.project_dir))
-    real_profiles_dir = None
     env_profiles_dir = os.getenv("DBT_PROFILES_DIR")
-    if args.profiles_dir is not None:
-        real_profiles_dir = os.path.realpath(os.path.normpath(args.profiles_dir))
-    elif env_profiles_dir:
-        real_profiles_dir = os.path.realpath(os.path.normpath(env_profiles_dir))
-    else:
-        real_profiles_dir = DEFAULT_PROFILES_DIR
 
+    profiles_dir = DEFAULT_PROFILES_DIR
+    if args.profiles_dir is not None:
+        profiles_dir = args.profiles_dir
+    elif env_profiles_dir:
+        profiles_dir = env_profiles_dir
+
+    real_state = None
     if hasattr(args, "state") and args.state is not None:
-        real_state = Path(os.path.realpath(os.path.normpath(args.state)))
-    else:
-        real_state = None
+        real_state = args.state
 
     return FalDbt(
-        real_project_dir,
-        real_profiles_dir,
+        args.project_dir,
+        profiles_dir,
         args.select,
         args.exclude,
         args.selector,

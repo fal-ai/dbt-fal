@@ -1,4 +1,5 @@
 from enum import Enum
+import os.path
 import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional, Tuple, Sequence
@@ -207,22 +208,26 @@ class FalDbt:
         selector_name: Optional[str] = None,
         keyword: str = "fal",
         threads: Optional[int] = None,
-        state: Optional[Path] = None,
+        state: Optional[str] = None,
         profile_target: Optional[str] = None,
         args_vars: str = "{}",
         generated_models: Dict[str, Path] = {},
     ):
-        self.project_dir = project_dir
-        self.profiles_dir = profiles_dir
+        self.project_dir = os.path.realpath(os.path.expanduser(project_dir))
+        self.profiles_dir = os.path.realpath(os.path.expanduser(profiles_dir))
         self.keyword = keyword
         self._firestore_client = None
-        self._state = state
+        self._state = None
+        if state is not None:
+            self._state = Path(os.path.realpath(os.path.expanduser(state)))
 
-        self.scripts_dir = parse.get_scripts_dir(project_dir, args_vars)
+        self.scripts_dir = parse.get_scripts_dir(self.project_dir, args_vars)
 
-        lib.initialize_dbt_flags(profiles_dir=profiles_dir)
+        lib.initialize_dbt_flags(profiles_dir=self.profiles_dir)
 
-        self._config = parse.get_dbt_config(project_dir, profiles_dir, threads)
+        self._config = parse.get_dbt_config(
+            self.project_dir, self.profiles_dir, threads
+        )
 
         self._run_results = DbtRunResult(
             parse.get_dbt_results(self.project_dir, self._config)
@@ -237,20 +242,23 @@ class FalDbt:
 
         if profile_target is not None:
             self._config = parse.get_dbt_config(
-                project_dir, profiles_dir, threads, profile_target=profile_target
+                self.project_dir,
+                self.profiles_dir,
+                threads,
+                profile_target=profile_target,
             )
 
         el_configs = parse.get_el_configs(
-            profiles_dir, self._config.profile_name, self._config.target_name
+            self.profiles_dir, self._config.profile_name, self._config.target_name
         )
 
         # Setup EL API clients
         self.el = FalElClient(el_configs)
 
         # Necessary for manifest loading to not fail
-        dbt.tracking.initialize_tracking(profiles_dir)
+        dbt.tracking.initialize_tracking(self.profiles_dir)
 
-        args = CompileArgs(selector_name, select, select, exclude, state, None)
+        args = CompileArgs(selector_name, select, select, exclude, self._state, None)
         self._compile_task = CompileTask(args, self._config)
 
         self._compile_task._runtime_initialize()
@@ -261,7 +269,9 @@ class FalDbt:
             self._run_results, self._manifest, generated_models
         )
 
-        normalized_model_paths = parse.normalize_paths(project_dir, self.source_paths)
+        normalized_model_paths = parse.normalize_paths(
+            self.project_dir, self.source_paths
+        )
 
         self._global_script_paths = parse.get_global_script_configs(
             normalized_model_paths
