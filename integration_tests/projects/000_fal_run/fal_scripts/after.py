@@ -14,6 +14,7 @@ df.info(buf=buf, memory_usage=False)
 info = buf.getvalue()
 
 output = output + f"\nModel dataframe information:\n{info}"
+output = output + f"\nModel alias is {context.current_model.alias}"
 temp_dir = os.environ["temp_dir"]
 write_dir = open(reduce(os.path.join, [temp_dir, model_name + ".after.txt"]), "w")
 write_dir.write(output)
