@@ -118,27 +118,17 @@ def _mark_dbt_nodes_status(
 def _id_to_fal_scripts(
     node_graph: NodeGraph, fal_dbt: FalDbt, id_list: List[str]
 ) -> List[FalScript]:
-    return _flow_node_to_fal_scripts(
-        fal_dbt,
-        list(
-            map(
-                lambda id: node_graph.get_node(id),
-                id_list,
-            )
-        ),
-    )
+    return [node_to_script(node_graph.get_node(id_), fal_dbt) for id_ in id_list]
 
 
-def _flow_node_to_fal_scripts(
-    fal_dbt: FalDbt, list: List[Union[FalFlowNode, None]]
-) -> List[FalScript]:
-    new_list: List[FalScript] = []
-    for item in list:
-        if item is not None and isinstance(item, ScriptNode):
-            new_list.append(cast(ScriptNode, item).script)
-        elif item is not None and isinstance(item, DbtModelNode):
-            new_list.append(FalScript.model_script(fal_dbt, item.model))
-    return new_list
+def node_to_script(node: Union[FalFlowNode, None], fal_dbt: FalDbt) -> FalScript:
+    """Convert dbt node into a FalScript."""
+    if node is not None and isinstance(node, ScriptNode):
+        return cast(ScriptNode, node).script
+    elif node is not None and isinstance(node, DbtModelNode):
+        return FalScript.model_script(fal_dbt, node.model)
+    else:
+        raise Exception(f"Cannot convert node to script. Node: {node}")
 
 
 def _unique_id_to_model_name(unique_id: str) -> str:
