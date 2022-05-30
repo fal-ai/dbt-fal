@@ -381,11 +381,20 @@ class FalDbt:
         target_model: MaybeNonSource = self._manifest.nativeManifest.resolve_ref(
             target_model_name, target_package_name, self.project_dir, self.project_dir
         )
-
         package_str = f"'{target_package_name}'." if target_package_name else ""
         model_str = f"{package_str}'{target_model_name}'"
         if target_model is None:
-            raise Exception(f"Could not find model {model_str}")
+            dbt_model = next(
+                (m for m in self.models if m.alias == target_model_name), None
+            )
+            if dbt_model is None:
+                raise Exception(f"Could not find model {model_str}")
+            dbt_model_name = dbt_model.name
+            target_model: MaybeNonSource = self._manifest.nativeManifest.resolve_ref(
+                dbt_model_name, target_package_name, self.project_dir, self.project_dir
+            )
+            if target_model is None:
+                raise Exception(f"Could not find model {model_str}")
 
         if isinstance(target_model, Disabled):
             raise RuntimeError(f"Model {model_str} is disabled")

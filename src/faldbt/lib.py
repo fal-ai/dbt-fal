@@ -16,6 +16,7 @@ from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.base import BaseRelation
 from dbt.contracts.graph.compiled import CompileResultNode
+from dbt.contracts.graph.parsed import ParsedModelNode
 
 from . import parse
 
@@ -128,9 +129,12 @@ def _get_target_relation(
         # HACK: Sometimes we cache an incomplete cache or create stuff without the cache noticing.
         #       Some adapters work without this. We should separate adapter solutions like dbt.
         adapter.set_relations_cache(manifest, True)
+        target_name = target.name
+        if isinstance(target, ParsedModelNode):
+            target_name = target.alias
 
         # This ROLLBACKs so it has to be a new connection
-        relation = adapter.get_relation(target.database, target.schema, target.name)
+        relation = adapter.get_relation(target.database, target.schema, target_name)
 
     return relation
 
