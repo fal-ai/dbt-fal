@@ -55,12 +55,15 @@ Feature: `run` command
     Then the following scripts are ran:
       | agent_wait_time.after.py |
 
-  Scenario: fal flow run provides model aliases
-    Given the project 001_flow_run_with_selectors
-    When the data is seeded
-    When the following command is invoked:
+  Scenario: fal run provides model aliases
+    When the following shell command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select agent_wait_time+
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir
+      """
+
+    And the following command is invoked:
+      """
+      fal run --profiles-dir $profilesDir --project-dir $baseDir
       """
     Then the following scripts are ran:
       | agent_wait_time.after.py |
