@@ -620,6 +620,17 @@ class FalDbt:
                     "Could not find acceptable Default GCP Application credentials"
                 )
 
+    @telemetry.log_call("execute_sql")
+    def execute_sql(self, sql: str) -> pd.DataFrame:
+        """Execute raw sql."""
+        result = lib.execute_sql(
+            self.project_dir, self.profiles_dir, sql, self._profile_target
+        )
+
+        return pd.DataFrame.from_records(
+            result.table.rows, columns=result.table.column_names, coerce_float=True
+        )
+
 
 def _firestore_dict_to_document(data: Dict, key_column: str):
     output = {}
