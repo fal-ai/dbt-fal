@@ -81,7 +81,9 @@ class DbtModel:
 
     def __post_init__(self):
         node = self.node
+
         self.name = node.name
+        self.alias = node.alias
 
         # BACKWARDS: Change intorduced in XXX (0.20?)
         # TODO: specify which version is for this

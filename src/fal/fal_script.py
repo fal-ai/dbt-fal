@@ -137,7 +137,7 @@ class FalScript:
 
         current_model = CurrentModel(
             name=model.name,
-            alias=model.node.config.alias,
+            alias=model.node.alias,
             status=model.status,
             columns=model.columns,
             tests=tests,
