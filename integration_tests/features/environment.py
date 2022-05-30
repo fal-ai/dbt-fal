@@ -19,4 +19,5 @@ def after_scenario(context, scenario):
         from traceback import print_exception
 
         print_exception(*context.exc)
-        delattr(context, "exc")
+        _etype, exception, _tb = context.exc
+        raise exception
