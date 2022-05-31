@@ -384,17 +384,7 @@ class FalDbt:
         package_str = f"'{target_package_name}'." if target_package_name else ""
         model_str = f"{package_str}'{target_model_name}'"
         if target_model is None:
-            # Check if target_model_name is actually an alias
-            dbt_model = next(
-                (m for m in self.models if m.alias == target_model_name), None
-            )
-            if dbt_model is None:
-                raise Exception(f"Could not find model {model_str}")
-            target_model: MaybeNonSource = self._manifest.nativeManifest.resolve_ref(
-                dbt_model.name, target_package_name, self.project_dir, self.project_dir
-            )
-            if target_model is None:
-                raise Exception(f"Could not find model {model_str}")
+            raise Exception(f"Could not find model {model_str}")
 
         if isinstance(target_model, Disabled):
             raise RuntimeError(f"Model {model_str} is disabled")

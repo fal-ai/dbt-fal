@@ -9,7 +9,7 @@ model_alias = context.current_model.alias
 output = f"Model name: {model_name}"
 output = output + f"\nStatus: {context.current_model.status}"
 
-df: pd.DataFrame = ref(model_alias)
+df: pd.DataFrame = ref(model_name)
 buf = io.StringIO()
 df.info(buf=buf, memory_usage=False)
 info = buf.getvalue()
