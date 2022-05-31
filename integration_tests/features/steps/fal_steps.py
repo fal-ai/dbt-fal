@@ -227,7 +227,8 @@ def _flatten_list(target_list):
 
 
 def _set_profiles_dir(context) -> Path:
-    available_profiles = ["postgres", "bigquery", "redshift", "snowflake"]
+    #TODO: Ideally this needs to change in just one place
+    available_profiles = ["postgres", "bigquery", "redshift", "snowflake", "duckdb"]
     if "profile" in context.config.userdata:
         profile = context.config.userdata["profile"]
         if profile not in available_profiles:

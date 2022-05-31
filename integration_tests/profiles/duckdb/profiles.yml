@@ -1,0 +1,6 @@
+fal_test:
+  target: integration_tests
+  outputs:
+    integration_tests:
+      type: duckdb
+      path: "{{ env_var('DB_PATH') }}"
