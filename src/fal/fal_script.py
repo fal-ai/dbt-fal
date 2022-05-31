@@ -23,6 +23,7 @@ else:
 @dataclass
 class CurrentModel:
     name: str
+    alias: str
     status: RunStatus
     columns: Dict[str, ColumnInfo]
     tests: List[Any]
@@ -136,6 +137,7 @@ class FalScript:
 
         current_model = CurrentModel(
             name=model.name,
+            alias=model.alias,
             status=model.status,
             columns=model.columns,
             tests=tests,

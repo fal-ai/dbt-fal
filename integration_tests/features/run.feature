@@ -55,6 +55,21 @@ Feature: `run` command
     Then the following scripts are ran:
       | agent_wait_time.after.py |
 
+  Scenario: fal run provides model aliases
+    When the following shell command is invoked:
+      """
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir
+      """
+
+    And the following command is invoked:
+      """
+      fal run --profiles-dir $profilesDir --project-dir $baseDir
+      """
+    Then the following scripts are ran:
+      | agent_wait_time.after.py |
+    And the script agent_wait_time.after.py output file has the lines:
+      | Model alias is wait_time |
+
   Scenario: when false script is selected, nothing runs
     When the following shell command is invoked:
       """
