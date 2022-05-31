@@ -18,6 +18,7 @@ from dbt.contracts.graph.manifest import (
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput, NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.task.compile import CompileTask
+from dbt.lib import compile_sql
 import dbt.tracking
 
 from . import parse
@@ -622,13 +623,22 @@ class FalDbt:
 
     @telemetry.log_call("execute_sql")
     def execute_sql(self, sql: str) -> pd.DataFrame:
-        """Execute raw sql."""
-        result = lib.execute_sql(
-            self.project_dir, self.profiles_dir, sql, self._profile_target
+        """Execute a sql query."""
+        compiled = compile_sql(
+            parse.get_dbt_manifest(self._config), self.project_dir, sql
+        )
+
+        query_result = lib.execute_sql(
+            self.project_dir,
+            self.profiles_dir,
+            compiled.compiled_sql,
+            self._profile_target,
         )
 
         return pd.DataFrame.from_records(
-            result.table.rows, columns=result.table.column_names, coerce_float=True
+            query_result.table.rows,
+            columns=query_result.table.column_names,
+            coerce_float=True,
         )
 
 
