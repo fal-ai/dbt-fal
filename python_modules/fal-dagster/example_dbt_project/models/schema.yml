@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: model_a
+    meta:
+      fal:
+        scripts:
+          before:
+            - before.py
+
+
+  - name: model_b
+    meta:
+      fal:
+        scripts:
+          after:
+            - after.py
+            - after2.py
+
+  - name: model_c # Python model
+
+  - name: model_d
+    meta:
+      fal:
+        scripts:
+          before:
+            - before.py
+          after:
+            - after.py

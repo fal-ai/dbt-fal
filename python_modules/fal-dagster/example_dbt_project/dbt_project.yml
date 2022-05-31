@@ -1,0 +1,12 @@
+name: "fal_test"
+version: "1.0.0"
+config-version: 2
+profile: "fal_test"
+source-paths: ["models"]
+data-paths: ["data"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+target-path: "/opt/dbt_project/target"
+
+vars:
+  fal-scripts-path: "scripts"
