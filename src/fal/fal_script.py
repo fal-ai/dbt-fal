@@ -88,6 +88,7 @@ class FalScript:
             program = compile(source_code, self.path, "exec")
 
             exec_globals = {
+                "__name__": "__main__",
                 "context": self._build_script_context(),
                 "ref": faldbt.ref,
                 "source": faldbt.source,
