@@ -2,9 +2,9 @@
 sidebar_position: 2
 ---
 
-# Making Python dbt models
+# Building Python dbt models
 
-> ⚠️ NOTE: This feature is enabled with the flag `--experimental-models`
+> ⚠️ NOTE: This feature is enabled with the flag `--experimental-models` when running the `fal flow run` command.
 
 There are some cases where a SQL transformation is either too complex or impossible. With `fal flow` you can build your dbt models in Python.
 
