@@ -19,6 +19,20 @@ write_to_source(df, "results", "some_source", mode="append")
 source_size = len(source("results", "some_source"))
 output += f"source size {source_size}\n"
 
+for source in list_sources():
+    output += (
+        f"source {source.name} has {len(source.tests)} tests,"
+        f" source status is {source.status},"
+        f" source has {len(source.tests)} tests\n"
+    )
+
+for model in list_models():
+    output += (
+        f"model {model.name} has {len(model.tests)} tests,"
+        f" model status is {model.status},"
+        f" model has {len(model.tests)} tests\n"
+    )
+
 path = reduce(
     os.path.join, [os.environ["temp_dir"], model_name + ".write_to_source_twice.txt"]
 )
