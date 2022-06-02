@@ -1,4 +1,4 @@
-name: "fal_test"
+name: "fal_004"
 version: "1.0.0"
 config-version: 2
 profile: "fal_test"
@@ -7,5 +7,3 @@ data-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 target-path: "{{ env_var('temp_dir') }}/target"
-vars:
-  prefix: "004"

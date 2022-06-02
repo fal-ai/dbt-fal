@@ -2,7 +2,7 @@
 
     {%- if custom_alias_name is none -%}
 
-        {{ var('prefix') }}_{{ node.name }}
+        {{ project_name }}_{{ node.name }}
 
     {%- else -%}
 
