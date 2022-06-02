@@ -42,12 +42,19 @@ class FalGeneralException(Exception):
 
 
 @dataclass
-class DbtTest:
-    node: Any
+class _DbtNode:
     name: str = field(init=False)
+    status: str = field(init=False)
+
+    def set_status(self, status: str):
+        self.status = status
+
+
+@dataclass
+class DbtTest(_DbtNode):
+    node: Any
     model: str = field(init=False)
     column: str = field(init=False)
-    status: str = field(init=False)
 
     def __post_init__(self):
         node = self.node
@@ -66,16 +73,17 @@ class DbtTest:
             else:
                 logger.debug(f"Non-generic test was not processed: {node.name}")
 
-    def set_status(self, status: str):
-        self.status = status
+
+@dataclass
+class DbtSource(_DbtNode):
+    table_name: str
+    tests: List[DbtTest]
 
 
 @dataclass
-class DbtModel:
+class DbtModel(_DbtNode):
     node: ParsedModelNode
-    name: str = field(init=False)
     meta: Dict[str, Any] = field(init=False)
-    status: NodeStatus = field(init=False)
     columns: Dict[str, Any] = field(init=False)
     tests: List[DbtTest] = field(init=False)
     python_model: Optional[Path] = field(init=False)
@@ -119,9 +127,6 @@ class DbtModel:
             return scripts_node.get("after") or []
         else:
             return []
-
-    def set_status(self, status: str):
-        self.status = status
 
 
 @dataclass
