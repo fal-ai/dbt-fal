@@ -624,15 +624,14 @@ class FalDbt:
     @telemetry.log_call("execute_sql")
     def execute_sql(self, sql: str) -> pd.DataFrame:
         """Execute a sql query."""
-        compiled = compile_sql(
-            parse.get_dbt_manifest(self._config), self.project_dir, sql
-        )
+        compiled = compile_sql(self._manifest.nativeManifest, self.project_dir, sql)
 
         query_result = lib.execute_sql(
-            self.project_dir,
-            self.profiles_dir,
-            compiled.compiled_sql,
-            self._profile_target,
+            project_dir=self.project_dir,
+            profiles_dir=self.profiles_dir,
+            sql=compiled.compiled_sql,
+            profile_target=self._profile_target,
+            config=self._config,
         )
 
         return pd.DataFrame.from_records(
