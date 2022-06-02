@@ -9,4 +9,5 @@ snapshot-paths: ["snapshots"]
 target-path: "{{ env_var('temp_dir') }}/target"
 
 vars:
+  prefix: "006"
   fal-scripts-path: "scripts"
