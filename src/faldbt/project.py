@@ -76,8 +76,13 @@ class DbtTest(_DbtNode):
 
 @dataclass
 class DbtSource(_DbtNode):
-    table_name: str
-    tests: List[DbtTest]
+    name: str = field()
+    table_name: str = field()
+    unique_id: str = field()
+    tests: List[DbtTest] = field(init=False)
+
+    def __post_init__(self):
+        self.tests = []
 
 
 @dataclass
@@ -272,7 +277,7 @@ class FalDbt:
 
         self._manifest = DbtManifest(self._compile_task.manifest)
 
-        self.models, self.tests = _map_nodes_to_models(
+        self.models, self.tests, self.sources = _map_nodes(
             self._run_results, self._manifest, generated_models
         )
 
@@ -315,13 +320,9 @@ class FalDbt:
     @telemetry.log_call("list_sources")
     def list_sources(self):
         """
-        List tables available for `source` usage, formatting like `[[source_name, table_name], ...]`
+        List tables available for `source` usage
         """
-        res = []
-        for source in self._manifest.get_sources():
-            res.append([source.source_name, source.name])
-
-        return res
+        return self.sources
 
     @telemetry.log_call("list_models_ids")
     def list_models_ids(self) -> Dict[str, str]:
@@ -639,32 +640,40 @@ def _firestore_dict_to_document(data: Dict, key_column: str):
     return output
 
 
-def _map_nodes_to_models(
+def _map_nodes(
     run_results: DbtRunResult, manifest: DbtManifest, generated_models: Dict[str, Path]
 ):
     models = manifest.get_models()
     tests = manifest.get_tests()
+    sources = [
+        DbtSource(
+            name=source.source_name, table_name=source.name, unique_id=source.unique_id
+        )
+        for source in manifest.get_sources()
+    ]
     status_map = dict(
         map(
             lambda res: [res.unique_id, res.status],
             run_results.results,
         )
     )
-    for model in models:
-        if model.name in generated_models:
-            model.python_model = generated_models[model.name]
+    for parent in models + sources:
+        if parent.name in generated_models:
+            parent.python_model = generated_models[parent.name]
 
-        model.set_status(status_map.get(model.unique_id, NodeStatus.Skipped))
+        parent.set_status(status_map.get(parent.unique_id, NodeStatus.Skipped))
         for test in tests:
-            if hasattr(test, "model") and test.model == model.name:
-                model.tests.append(test)
+            if (hasattr(test, "model") and test.model == parent.name) or (
+                hasattr(test, "source") and test.source == parent.name
+            ):
+                parent.tests.append(test)
                 test.set_status(status_map.get(test.unique_id, NodeStatus.Skipped))
                 if (
                     test.status != NodeStatus.Skipped
-                    and model.status == NodeStatus.Skipped
+                    and parent.status == NodeStatus.Skipped
                 ):
-                    model.set_status("tested")
-    return (models, tests)
+                    parent.set_status("tested")
+    return (models, tests, sources)
 
 
 def _get_custom_target(run_results: DbtRunResult):
