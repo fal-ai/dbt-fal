@@ -47,4 +47,10 @@ jobs:
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
-        run: behave
+        run: |
+          if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
+          then
+            behave --tags ~@dbtv1
+          else
+            behave
+          fi

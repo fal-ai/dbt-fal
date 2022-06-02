@@ -1,3 +1,4 @@
+@dbtv1
 Feature: `execute_sql` function
   Background: Project Setup
     Given the project 009_execute_sql_function
