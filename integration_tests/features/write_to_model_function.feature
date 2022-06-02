@@ -8,10 +8,12 @@ Feature: `write_to_model` function
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-flow
       """
     Then the following models are calculated:
-      | other_model | some_model |
+      | other_model | some_model | third_model |
     And the following scripts are ran:
-      | some_model.write_to_source_twice.py | other_model.complete_other_model.py |
-    And the script other_model.complete_other_model.py output file has the lines:
+      | some_model.write_to_source_twice.py | other_model.complete_model.py | third_model.complete_model.py |
+    And the script other_model.complete_model.py output file has the lines:
+      | my_float None | my_float 2.3 | size 1 |
+    And the script third_model.complete_model.py output file has the lines:
       | my_float None | my_float 2.3 | size 1 |
     And the script some_model.write_to_source_twice.py output file has the lines:
       | my_float 2.3 |

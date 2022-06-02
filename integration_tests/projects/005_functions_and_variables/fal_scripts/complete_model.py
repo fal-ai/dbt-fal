@@ -24,7 +24,7 @@ output += f"size {len(df)}\n"
 
 
 path = reduce(
-    os.path.join, [os.environ["temp_dir"], model_name + ".complete_other_model.txt"]
+    os.path.join, [os.environ["temp_dir"], model_name + ".complete_model.txt"]
 )
 with open(path, "w") as file:
     file.write(output)
