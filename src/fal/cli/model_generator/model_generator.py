@@ -20,7 +20,7 @@ __deps__
 
 */
 
-SELECT * FROM {{ target.schema }}.{{ model.name }}
+SELECT * FROM {{ target.schema }}.{{ model.alias }}
 """
 
 
