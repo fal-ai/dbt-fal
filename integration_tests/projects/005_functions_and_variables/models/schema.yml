@@ -19,4 +19,10 @@ models:
       fal:
         scripts:
           after:
-            - fal_scripts/complete_other_model.py
+            - fal_scripts/complete_model.py
+  - name: third_model
+    meta:
+      fal:
+        scripts:
+          after:
+            - fal_scripts/complete_model.py
