@@ -8,7 +8,7 @@ Feature: `write_to_source` function
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir
       """
     Then the following models are calculated:
-      | other_model | some_model |
+      | other_model | some_model | third_model |
     And the following scripts are ran:
       | some_model.write_to_source_twice.py |
     And the script some_model.write_to_source_twice.py output file has the lines:
