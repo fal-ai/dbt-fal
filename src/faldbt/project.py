@@ -18,7 +18,6 @@ from dbt.contracts.graph.manifest import (
 from dbt.contracts.results import RunResultsArtifact, RunResultOutput, NodeStatus
 from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.task.compile import CompileTask
-from dbt.lib import compile_sql
 import dbt.tracking
 
 from . import parse
@@ -624,8 +623,14 @@ class FalDbt:
     @telemetry.log_call("execute_sql")
     def execute_sql(self, sql: str) -> pd.DataFrame:
         """Execute a sql query."""
-        compiled = compile_sql(self._manifest.nativeManifest, self.project_dir, sql)
+        if lib.IS_DBT_V0:
+            raise NotImplementedError(
+                "execute_sql only supported in dbt version >= 1.0.0"
+            )
 
+        from dbt.lib import compile_sql
+
+        compiled = compile_sql(self._manifest.nativeManifest, self.project_dir, sql)
         query_result = lib.execute_sql(
             project_dir=self.project_dir,
             profiles_dir=self.profiles_dir,

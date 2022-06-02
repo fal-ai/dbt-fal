@@ -30,11 +30,12 @@ from sqlalchemy.sql import Insert
 
 DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.get_installed_version()
+IS_DBT_V0 = not DBT_VCURRENT.compare(DBT_V1) >= 0
 
-if DBT_VCURRENT.compare(DBT_V1) >= 0:
-    from dbt.contracts.sql import ResultTable, RemoteRunResult
-else:
+if IS_DBT_V0:
     from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
+else:
+    from dbt.contracts.sql import ResultTable, RemoteRunResult
 
 
 @dataclass
