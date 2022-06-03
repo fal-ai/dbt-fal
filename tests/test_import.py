@@ -27,7 +27,7 @@ def test_initialize():
     df = faldbt.ref("model_with_scripts")
 
     sources = faldbt.list_sources()
-    assert ["test_sources", "single_col"] in sources
+    assert "test_sources" in [source.name for source in sources]
 
     models = faldbt.list_models()
     assert "model_with_scripts" in [model.name for model in models]
