@@ -3,7 +3,7 @@ import io
 import os
 from functools import reduce
 
-df: pd.DataFrame = execute_sql('SELECT * FROM {{ ref("other_model")}}')
+df: pd.DataFrame = execute_sql('SELECT * FROM {{ ref("execute_sql_model_one")}}')
 
 buf = io.StringIO()
 df.info(buf=buf, memory_usage=False)

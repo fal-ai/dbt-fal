@@ -8,10 +8,10 @@ sources:
       - name: some_source
 
 models:
-  - name: some_model
+  - name: execute_sql_model_one
     meta:
       fal:
         scripts:
           after:
             - fal_scripts/query_other_model.py
-  - name: other_model
+  - name: execute_sql_model_two

@@ -50,7 +50,7 @@ jobs:
         run: |
           if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
           then
-            behave --tags ~@dbtv1
+            behave --tags=-dbtv1
           else
             behave
           fi

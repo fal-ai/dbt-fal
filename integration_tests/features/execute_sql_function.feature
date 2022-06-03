@@ -9,8 +9,8 @@ Feature: `execute_sql` function
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-flow
       """
     Then the following models are calculated:
-      | other_model | some_model |
+      | execute_sql_model_one | execute_sql_model_two |
     And the following scripts are ran:
-      | some_model.query_other_model.py |
-    And the script some_model.query_other_model.py output file has the lines:
+      | execute_sql_model_one.query_other_model.py |
+    And the script execute_sql_model_one.query_other_model.py output file has the lines:
       | Model dataframe information: | RangeIndex: 1 entries, 0 to 0 |
