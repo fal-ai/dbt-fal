@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - "examples/**"
       - "docsite/**"
+      - "python_modules/**"
       - "README.md"
       - "LICENSE"
       - "docker/**"
