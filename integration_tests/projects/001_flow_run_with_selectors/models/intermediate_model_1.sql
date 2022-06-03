@@ -1,2 +1,2 @@
--- {{ ref("s_model_c") }}
+-- {{ ref("model_c") }}
 select * from {{ ref('agent_wait_time') }}
