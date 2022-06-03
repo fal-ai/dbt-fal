@@ -18,22 +18,17 @@ import traceback
 def _prepare_exec_script(script: FalScript, faldbt: FalDbt) -> bool:
     success: bool = True
 
-    logger.debug("Running script {} for model {}", script.path, script.model_name)
+    logger.debug("Running script {}", script.id)
 
     try:
         script.exec(faldbt)
     except:
-        logger.error(
-            "Error in script {} with model {}:\n{}",
-            script.path,
-            script.model_name,
-            traceback.format_exc(),
-        )
+        logger.error("Error in script {}:\n{}", script.id, traceback.format_exc())
         # TODO: what else to do?
         success = False
 
     finally:
-        logger.debug("Finished script {} for model {}", script.path, script.model_name)
+        logger.debug("Finished script {}", script.id)
 
     return success
 

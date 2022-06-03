@@ -112,13 +112,27 @@ class FalScript:
             pass
 
     @property
+    def relative_path(self):
+        if self.is_model:
+            return self.path.relative_to(self._faldbt.project_dir)
+        else:
+            return self.path.relative_to(self._faldbt.scripts_dir)
+
+    @property
     def id(self):
-        # TODO: maybe `self.path - project_dir`, to show only relevant path
-        return f"({self.model_name},{self.path})"
+        if self.is_model:
+            return f"(model: {self.relative_path})"
+        else:
+            return f"({self.model_name}, {self.relative_path})"
 
     @property
     def is_global(self):
         return self.model is None
+
+    @property
+    def is_model(self):
+        if self.model is not None and self.model.python_model is not None:
+            return self.model.python_model == self.path
 
     @property
     def model_name(self):
