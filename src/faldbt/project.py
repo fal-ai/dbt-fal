@@ -631,6 +631,11 @@ class FalDbt:
         from dbt.lib import compile_sql
 
         compiled = compile_sql(self._manifest.nativeManifest, self.project_dir, sql)
+
+        # Hack: we need to pass config in because of weird behavior of execute_sql when
+        # ran from GitHub Actions. For some reason, it can not find the right profile.
+        # Haven't been able to reproduce this behavior locally and therefore developed
+        # this workaround.
         query_result = lib.execute_sql(
             project_dir=self.project_dir,
             profiles_dir=self.profiles_dir,
