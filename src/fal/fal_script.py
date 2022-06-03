@@ -99,6 +99,7 @@ class FalScript:
                 "list_sources": faldbt.list_sources,
                 "list_features": faldbt.list_features,
                 "el": faldbt.el,
+                "execute_sql": faldbt.execute_sql,
             }
 
             if self.model is not None:
