@@ -6,9 +6,24 @@ sources:
     schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
     tables:
       - name: some_source
+        columns:
+          - name: my_text
+            tests:
+              - not_null
+          - name: my_int
+            tests:
+              - not_null
 
 models:
   - name: some_model
+    columns:
+      - name: my_text
+        tests:
+          - not_null
+      - name: my_int
+        tests:
+          - not_null
+
     meta:
       fal:
         scripts:
