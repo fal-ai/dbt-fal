@@ -22,15 +22,13 @@ output += f"source size {source_size}\n"
 for source in list_sources():
     output += (
         f"source {source.name} has {len(source.tests)} tests,"
-        f" source status is {source.status},"
-        f" source has {len(source.tests)} tests\n"
+        f" source status is {source.status}\n"
     )
 
 for model in list_models():
     output += (
         f"model {model.name} has {len(model.tests)} tests,"
-        f" model status is {model.status},"
-        f" model has {len(model.tests)} tests\n"
+        f" model status is {model.status}\n"
     )
 
 path = reduce(

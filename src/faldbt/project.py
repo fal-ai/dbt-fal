@@ -92,6 +92,7 @@ class DbtModel(_DbtNode):
     columns: Dict[str, Any] = field(init=False)
     tests: List[DbtTest] = field(init=False)
     python_model: Optional[Path] = field(init=False)
+    unique_id: str = field(init=False)
 
     def __post_init__(self):
         node = self.node
