@@ -9,7 +9,7 @@ RUN pip install \
     dagster-docker \
     dagster-shell \
     dbt-postgres \
-    fal
+    fal==0.3.0
 
 # Add repository code
 
