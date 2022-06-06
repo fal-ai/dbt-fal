@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import re
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Iterator
 from fal.node_graph import NodeGraph
 from faldbt.project import CompileArgs, FalDbt
 from dbt.task.compile import CompileTask
@@ -66,36 +66,16 @@ def _filter_node_ids(
 ) -> List[str]:
     """Filter list of unique_ids according to a selector."""
     output = []
-    selector_plans = map(
-        lambda selector: SelectorPlan(selector, unique_ids, fal_dbt),
-        selected_nodes,
-    )
 
-    for selector_plan in selector_plans:
-        for id in selector_plan.unique_ids:
-            output.append(id)
-
-            if selector_plan.children:
-                if selector_plan.children_levels is None:
-                    children = nodeGraph.get_descendants(id)
-                else:
-                    children = nodeGraph.get_successors(
-                        id, selector_plan.children_levels
-                    )
-                output.extend(children)
-
-            if selector_plan.parents:
-                if selector_plan.parents_levels is None:
-                    parents = nodeGraph.get_ancestors(id)
-                else:
-                    parents = nodeGraph.get_predecessors(
-                        id, selector_plan.parents_levels
-                    )
-                output.extend(parents)
-
-            if selector_plan.children_with_parents:
-                ids = _get_children_with_parents(id, nodeGraph)
-                output.extend(ids)
+    for selector in selected_nodes:
+        selector_plans = map(
+            lambda sub_selector: SelectorPlan(sub_selector, unique_ids, fal_dbt),
+            SET_INTERSECTION.separate(selector),
+        )
+        selector_outputs = map(
+            lambda plan: set(plan.execute(nodeGraph)), selector_plans
+        )
+        output.extend(set.intersection(*selector_outputs))
 
     return output
 
@@ -174,6 +154,28 @@ class SelectorPlan:
                 f'Invalid node spec {self.raw} - "@" prefix and "+" suffix are incompatible'
             )
 
+    def execute(self, nodeGraph: NodeGraph) -> Iterator[str]:
+        for id in self.unique_ids:
+            yield id
+
+            if self.children:
+                if self.children_levels is None:
+                    children = nodeGraph.get_descendants(id)
+                else:
+                    children = nodeGraph.get_successors(id, self.children_levels)
+                yield from children
+
+            if self.parents:
+                if self.parents_levels is None:
+                    parents = nodeGraph.get_ancestors(id)
+                else:
+                    parents = nodeGraph.get_predecessors(id, self.parents_levels)
+                yield from parents
+
+            if self.children_with_parents:
+                ids = _get_children_with_parents(id, nodeGraph)
+                yield from ids
+
 
 def unique_ids_from_complex_selector(select, fal_dbt: FalDbt) -> List[str]:
     args = CompileArgs(None, [select], [select], tuple(), fal_dbt._state, None)
@@ -196,6 +198,14 @@ def _to_select_type(selector: str) -> SelectType:
 
 def _is_script_node(node_name: str) -> bool:
     return node_name.endswith(".py") or node_name.endswith(".ipynb")
+
+
+@dataclass
+class SetOperator:
+    separator: str
+
+    def separate(self, selector: str) -> List[str]:
+        return selector.split(self.separator)
 
 
 class SelectorGraphOp:
@@ -234,6 +244,8 @@ OP_CHILDREN_WITH_PARENTS = SelectorGraphOp(re.compile("^\\@(?P<rest>.*)"))
 OP_PARENTS = SelectorGraphOpDepth(re.compile("^(?P<depth>\\d*)\\+(?P<rest>.*)"))
 OP_CHILDREN = SelectorGraphOpDepth(re.compile("(?P<rest>.*)\\+(?P<depth>\\d*)$"))
 
+# Logic based set operators
+SET_INTERSECTION = SetOperator(",")
 
 IS_BEFORE_SCRIPT_REGEX = re.compile("^script.*.BEFORE.*.(ipynb|py)$")
 IS_AFTER_SCRIPT_REGEX = re.compile("^script.*.AFTER.*.(ipynb|py)$")

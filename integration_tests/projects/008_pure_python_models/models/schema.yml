@@ -9,3 +9,8 @@ models:
         scripts:
           - after.py
   - name: model_d
+  - name: model_e # Python (notebook) model
+    meta:
+      fal:
+        scripts:
+          - after.py
