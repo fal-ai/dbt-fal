@@ -164,6 +164,18 @@ def plan_python_nodes(context, dbt_run_results, graph_index):
             yield DynamicOutput(node, str(index))
 
 
+@op()
+def get_zero():
+    """Get int 0."""
+    return 0
+
+
+@op
+def increment_index(index, collected_results):
+    """Increment index number by 1."""
+    return index + 1
+
+
 @graph()
 def run_sub_graph(index):
     """Run part of the fal graph."""
@@ -180,18 +192,6 @@ def run_sub_graph(index):
 
     # Sub graph has to return a result of an op
     return increment_index(index, collected_results)
-
-
-@op()
-def get_zero():
-    """Get int 0."""
-    return 0
-
-
-@op
-def increment_index(index, collected_results):
-    """Increment index number by 1."""
-    return index + 1
 
 
 @graph

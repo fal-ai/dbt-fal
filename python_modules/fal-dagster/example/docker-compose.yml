@@ -26,6 +26,7 @@ services:
     container_name: dagster_user_code
     image: dagster_user_code_image
     restart: always
+    working_dir: /opt/dagster/app
     environment:
       DAGSTER_POSTGRES_USER: "postgres_user"
       DAGSTER_POSTGRES_PASSWORD: "postgres_password"
@@ -35,6 +36,7 @@ services:
     volumes:
       - ${DBT_PROJECT_DIR}:/opt/dbt_project
       - ${DAGSTER_PROJECT_DIR}:/opt/dagster/app
+      - ${TEMP_DIR}:/opt/dagster/dagster_home
     networks:
       - dagster_network
 

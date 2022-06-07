@@ -18,10 +18,13 @@ run_launcher:
     network: dagster_network
     container_kwargs:
       auto_remove: true
+      working_dir: /opt/dagster/app
       volumes:
         # TODO: Find a way to make this dynamic
         - ABSOLUTE_PATH_TO_DBT_PROJECT:/opt/dbt_project
         - ABSOLUTE_PATH_TO_DAGSTER_REPOSITORY:/opt/dagster/app
+        - TEMP_PATH:/opt/dagster/dagster_home
+        - /var/run/docker.sock:/var/run/docker.sock
 
 run_storage:
   module: dagster_postgres.run_storage

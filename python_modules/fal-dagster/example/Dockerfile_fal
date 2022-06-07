@@ -1,4 +1,4 @@
-FROM python:3.7-slim
+FROM python:3.8-slim
 
 # Install dbt, fal and dagster libraries needed to run the gRPC server
 # exposing your repository to dagit and dagster-daemon, and to load the DagsterInstance
@@ -9,7 +9,9 @@ RUN pip install \
     dagster-docker \
     dagster-shell \
     dbt-postgres \
-    fal==0.3.0
+    fal==0.3.0 \
+    fal-dagster
+
 
 # Add repository code
 
