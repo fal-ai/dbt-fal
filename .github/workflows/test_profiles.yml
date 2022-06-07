@@ -88,7 +88,7 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          behave --tags=-broken_profile -D profile=${{ matrix.profile }}
+          behave --tags=-broken_profile --tags=-TODO-${{ matrix.profile }} -D profile=${{ matrix.profile }}
 
       - name: Send custom JSON data to Slack workflow
         if: failure() && github.ref_name == 'main'
