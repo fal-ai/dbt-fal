@@ -70,6 +70,19 @@ The `source` function is used exactly like in `dbt`. You reference a source in y
 df = source('source_name', 'table_name')
 ```
 
+### `execute_sql` function
+
+You can execute artbitrary SQL from within your Python scripts and get results as pandas DataFrames:
+
+```python
+my_df = execute_sql('SELECT * FROM {{ ref("my_model") }}')
+```
+
+As you can see, the query strings support jinja.
+
+Note that the use of `ref` inside `execute_sql` does not create a node in a dbt dag. So in the case of Python models, you still need to specify dependencies in a comment at the top of the file. For more details, [see here](../Docs/fal-cli/python-models.md#dependencies-on-other-models).
+
+
 ## Write functions
 
 It is also possible to send data back to your data warehouse. This makes it easy to get the data, process it, and upload it back into dbt territory.
