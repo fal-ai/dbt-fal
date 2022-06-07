@@ -8,6 +8,7 @@ on:
       - "docsite/**"
       - "README.md"
       - "LICENSE"
+      - "docker/**"
   push:
     branches: [main]
   workflow_dispatch:
