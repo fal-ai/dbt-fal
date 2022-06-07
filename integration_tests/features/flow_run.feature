@@ -129,7 +129,8 @@ Feature: `flow run` command
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select after.py
       """
     Then it throws an RuntimeError exception with message 'Error in scripts'
-
+  
+  @TODO-duckdb
   Scenario: fal flow run with an error in dbt run
     Given the project 003_scripts_with_errors
     When the following command is invoked:

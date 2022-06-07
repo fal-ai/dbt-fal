@@ -2,6 +2,7 @@ Feature: `write_to_source` function
   Background: Project Setup
     Given the project 005_functions_and_variables
 
+  @TODO-duckdb
   Scenario: Use write_to_source function with mode append and overwrite
     When the following command is invoked:
       """

@@ -29,6 +29,7 @@ models:
         scripts:
           after:
             - fal_scripts/write_to_source_twice.py
+
   - name: other_model
     meta:
       fal:

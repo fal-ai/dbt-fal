@@ -34,5 +34,6 @@ for model in list_models():
 path = reduce(
     os.path.join, [os.environ["temp_dir"], model_name + ".write_to_source_twice.txt"]
 )
+
 with open(path, "w") as file:
     file.write(output)
