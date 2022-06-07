@@ -8,6 +8,7 @@ on:
       - "docsite/**"
       - "README.md"
       - "LICENSE"
+      - "Dockerfile"
   workflow_dispatch:
 
 jobs:
