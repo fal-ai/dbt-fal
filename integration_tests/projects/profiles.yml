@@ -9,4 +9,4 @@ fal_test:
       password: pass
       dbname: test
       schema: dbt_fal
-      threads: 4
+      threads: 1
