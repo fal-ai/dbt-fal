@@ -66,8 +66,8 @@ def _generate_python_dbt_models(model_path: Path):
 
         if not old_checksum or checksum != old_checksum:
             logger.warn(
-                f"File {sql_relative_path} generated from {py_relative_path}.\n"
-                "Please do not modify it. We recommend commmitting it to your repository."
+                f"File '{sql_relative_path}' was generated from '{py_relative_path}'.\n"
+                "Please do not modify it directly. We recommend committing it to your repository."
             )
 
     return python_paths
