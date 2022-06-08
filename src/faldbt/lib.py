@@ -209,11 +209,7 @@ def overwrite_target(
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    relation = _get_target_relation(
-        target, project_dir, profiles_dir, profile_target=profile_target
-    )
-    if relation is None:
-        relation = _build_table_from_target(adapter, target)
+    relation = _build_table_from_target(adapter, target)
 
     temporal_relation = _build_table_from_parts(
         adapter, relation.database, relation.schema, f"{relation.identifier}__f__"
@@ -254,11 +250,7 @@ def write_target(
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    relation = _get_target_relation(
-        target, project_dir, profiles_dir, profile_target=profile_target
-    )
-    if relation is None:
-        relation = _build_table_from_target(adapter, target)
+    relation = _build_table_from_target(adapter, target)
 
     return _write_relation(
         data, project_dir, profiles_dir, relation, dtype, profile_target=profile_target
@@ -357,12 +349,21 @@ def _replace_relation(
             original_relation.schema,
             original_relation.identifier,
         )
-        if original_exists:
+        if original_exists and adapter.type() != "bigquery":
             adapter.drop_relation(original_relation)
 
         # HACK: athena doesn't support renaming tables, we do it manually
         if adapter.type() == "athena":
             create_stmt = f"create table {original_relation} as select * from {new_relation} with data"
+            _execute_sql(
+                project_dir,
+                profiles_dir,
+                six.text_type(create_stmt).strip(),
+                profile_target=profile_target,
+            )
+            adapter.drop_relation(new_relation)
+        elif adapter.type() == "bigquery":
+            create_stmt = f"create or replace table {original_relation} as select * from {new_relation}"
             _execute_sql(
                 project_dir,
                 profiles_dir,
