@@ -80,3 +80,31 @@ Feature: `flow run` command with py nodes in the middle
       | customers |
     Then the following scripts are ran:
       | middle_2.middle_script.py | customers.send_slack_message.py |
+
+  Scenario: fal flow run command with intersection and union mixed as a single string
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select +customers +middle_script.py
+      """
+    And the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select "stg_customers+,stg_orders+,stg_payments+ middle_script.py"
+      """
+    Then the following models are calculated:
+      | customers |
+    Then the following scripts are ran:
+      | customers.send_slack_message.py | middle_2.middle_script.py |
+
+  # This is technically an outlier case (in the following case, the actual intersection is model_b but
+  # due to how DBT parses command line arguments the following works like a regular union) so we are
+  # simply mirroring the exact behavior from DBT.
+  Scenario: fal flow run command with quoted union groups with a distinct intersection operator
+    Given the project 008_pure_python_models
+    When the data is seeded
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select "model_a model_b" , "model_b model_c"
+      """
+    Then the following models are calculated:
+      | model_a | model_b | model_c.py |
