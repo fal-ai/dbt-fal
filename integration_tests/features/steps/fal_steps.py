@@ -1,6 +1,5 @@
 from functools import reduce
 import os
-from pyexpat import model
 from typing import Dict
 from behave import *
 from fal.cli import cli
