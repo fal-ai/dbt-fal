@@ -7,13 +7,27 @@ on:
   workflow_dispatch:
 
 jobs:
+  matrix-python:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.include-step.outputs.out }}
+    steps:
+      - id: include-step
+        run: |
+          echo '::set-output name=out::["3.8"]'
+          if [[ '${{ github.event_name }}' == 'scheduled' ]]
+          then
+            # overwrites the output
+            echo '::set-output name=out::["3.7", "3.8", "3.9", "3.10"]'
+          fi
   run:
+    needs: [matrix-python]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         profile: ["postgres", "bigquery", "snowflake", "redshift", "duckdb"]
-        python: ["3.7", "3.8", "3.9", "3.10"]
+        python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
 
     steps:
       - uses: actions/checkout@v2
