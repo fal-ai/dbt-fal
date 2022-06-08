@@ -11,4 +11,4 @@ Feature: `flow run` command
     Then the following models are calculated:
       | stg_customers | customers | stg_orders | stg_payments |
     And the following scripts are ran:
-      | customers.send_slack_message.py |
+      | stg_customers.load_data.py | customers.send_slack_message.py |

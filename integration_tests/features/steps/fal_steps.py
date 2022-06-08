@@ -71,10 +71,11 @@ def add_model(context, file):
 
 @when("the following command is invoked")
 def invoke_command(context):
+    _clear_all_artifacts(context.temp_dir.name)
     profiles_dir = _set_profiles_dir(context)
     args: str = context.text.replace("$baseDir", context.base_dir)
     args = args.replace("$profilesDir", str(profiles_dir))
-    args = args.replace("$tempDir", str(context.temp_dir.name))
+    args = args.replace("$tempDir", context.temp_dir.name)
 
     import shlex
 
@@ -114,30 +115,38 @@ def invoke_failing_fal_flow(context):
 
 @then("the following scripts are ran")
 def check_script_files_exist(context):
-    scripts_exist = _check_files_exist(context, context.table.headings)
-    if not all(scripts_exist.values()):
-        not_existent = map(
-            lambda t: t[0], filter(lambda t: not t[1], scripts_exist.items())
-        )
-        to_report = ", ".join(not_existent)
-        assert False, f"Script files {to_report} should BE present"
+    python_scripts = _get_all_python_scripts(context.temp_dir.name)
+    expected_scripts = list(map(_script_filename, context.table.headings))
+    unittest.TestCase().assertCountEqual(python_scripts, expected_scripts)
 
 
 @then("the following scripts are not ran")
 def check_script_files_dont_exist(context):
-    scripts_exist = _check_files_exist(context, context.table.headings)
-    if any(scripts_exist.values()):
-        existent = map(lambda t: t[0], filter(lambda t: t[1], scripts_exist.items()))
-        to_report = ", ".join(existent)
+    python_scripts = set(_get_all_python_scripts(context.temp_dir.name))
+    expected_scripts = set(map(_script_filename, context.table.headings))
+
+    unexpected_runs = expected_scripts & python_scripts
+    if unexpected_runs:
+        to_report = ", ".join(unexpected_runs)
         assert False, f"Script files {to_report} should NOT BE present"
 
 
-def _check_files_exist(context, scripts: str) -> Dict[str, bool]:
-    filenames = map(
-        lambda script: _temp_dir_path(context, _script_filename(script)), scripts
-    )
-    existing_filenames = map(exists, filenames)
-    return dict(zip(scripts, existing_filenames))
+def _get_all_python_scripts(dir_name):
+    directory = Path(dir_name)
+    return [
+        model.name
+        for model in directory.glob("*.txt")
+        # Pure Python models use <model_name>.txt and scripts use <model_name>.<script>.txt,
+        # so this check ensures that we are only capturing the scripts (and not models).
+        if len(model.suffixes) == 2
+    ]
+
+
+def _clear_all_artifacts(dir_name):
+    """Clear all artifacts that are left behind by Python scripts and models."""
+    directory = Path(dir_name)
+    for artifact in directory.glob("*.txt"):
+        artifact.unlink()
 
 
 @then("the script {script} output file has the lines")

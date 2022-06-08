@@ -13,7 +13,7 @@ Feature: Python nodes
     Then the following models are calculated:
       | model_a | model_b | model_d |
     Then the following scripts are ran:
-      | model_c.after.py |
+      | model_c.after.py | model_e.after.py |
 
   Scenario: Run a project with Python nodes only selecting the Python model
     When the following command is invoked:
@@ -23,6 +23,3 @@ Feature: Python nodes
     # TODO: Python generated models are not included in the run_results.json because they are ephemeral
     # Then the following models are calculated:
     #   | model_c |
-    Then the following scripts are not ran:
-      | model_c.after.py |
-

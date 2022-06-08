@@ -79,4 +79,4 @@ Feature: `flow run` command with py nodes in the middle
     Then the following models are calculated:
       | customers |
     Then the following scripts are ran:
-      | middle_2.middle_script.py |
+      | middle_2.middle_script.py | customers.send_slack_message.py |

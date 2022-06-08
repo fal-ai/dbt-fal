@@ -26,8 +26,6 @@ Feature: `run` command
       """
     Then the following scripts are ran:
       | agent_wait_time.after.py |
-    Then the following scripts are not ran:
-      | zendesk_ticket_data.after.py |
 
   Scenario: fal run works with model selection
     When the following shell command is invoked:
@@ -40,8 +38,6 @@ Feature: `run` command
       """
     Then the following scripts are ran:
       | zendesk_ticket_data.after.py |
-    Then the following scripts are not ran:
-      | agent_wait_time.after.py |
 
   Scenario: fal run works with script selection
     When the following shell command is invoked:
@@ -53,7 +49,7 @@ Feature: `run` command
       fal run --profiles-dir $profilesDir --project-dir $baseDir --script fal_scripts/after.py
       """
     Then the following scripts are ran:
-      | agent_wait_time.after.py |
+      | agent_wait_time.after.py | zendesk_ticket_data.after.py |
 
   Scenario: fal run provides model aliases
     When the following shell command is invoked:
@@ -66,7 +62,7 @@ Feature: `run` command
       fal run --profiles-dir $profilesDir --project-dir $baseDir
       """
     Then the following scripts are ran:
-      | agent_wait_time.after.py |
+      | agent_wait_time.after.py | zendesk_ticket_data.after.py |
     And the script agent_wait_time.after.py output file has the lines:
       | Model alias is wait_time |
 
