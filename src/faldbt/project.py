@@ -238,6 +238,7 @@ class FalDbt:
 
         lib.initialize_dbt_flags(profiles_dir=self.profiles_dir)
 
+        # Can be overwritten if profile_target is not None
         self._config = parse.get_dbt_config(
             self.project_dir, self.profiles_dir, threads
         )
