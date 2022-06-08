@@ -55,7 +55,7 @@ Feature: `flow run` command with py nodes in the middle
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_a+,model_c+ --experimental-models
       """
     Then the following models are calculated:
-      | model_d |
+      | model_c.py | model_d | model_e.ipynb |
     And the following scripts are ran:
       | model_c.after.py | model_e.after.py |
 

@@ -182,23 +182,40 @@ def no_scripts_are_run(context):
 
 @then("the following models are calculated")
 def check_model_results(context):
-    models = _get_models_from_result(
+    dbt_models = _get_models_from_result(
         context.temp_dir.name,
         reduce(os.path.join, [context.temp_dir.name, "target", "run_results.json"]),
     )
-    unittest.TestCase().assertCountEqual(_flatten_list(models), context.table.headings)
+    python_models = _get_python_models(
+        context.temp_dir.name,
+    )
+
+    models = dbt_models + python_models
+    expected_models = list(map(_script_filename, context.table.headings))
+    unittest.TestCase().assertCountEqual(models, expected_models)
 
 
 def _script_filename(script: str):
-    return script.replace(".py", ".txt")
+    return script.replace(".ipynb", ".txt").replace(".py", ".txt")
 
 
 def _temp_dir_path(context, file):
     return os.path.join(context.temp_dir.name, file)
 
 
+def _get_python_models(dir_name):
+    directory = Path(dir_name)
+    return [
+        model.name
+        for model in directory.glob("*.txt")
+        # Pure Python models use <model_name>.txt and scripts use <model_name>.<script>.txt,
+        # so this check ensures that we are only capturing the models (and not scripts).
+        if len(model.suffixes) == 1
+    ]
+
+
 def _get_models_from_result(dir_name, file_name):
-    return list(
+    return _flatten(
         map(
             lambda result: result["unique_id"].split(".")[2],
             _load_result(dir_name, file_name),
@@ -224,19 +241,18 @@ def _get_fal_results_file_name(context):
     return list(filter(lambda file: pattern.match(file), target_files))
 
 
-def _flatten_list(target_list):
+def _flatten(target_iterable):
     flat_list = []
-    for element in target_list:
-        if type(element) is list:
-            for item in element:
-                flat_list.append(item)
+    for element in target_iterable:
+        if isinstance(element, list):
+            flat_list.extend(element)
         else:
             flat_list.append(element)
     return flat_list
 
 
 def _set_profiles_dir(context) -> Path:
-    #TODO: Ideally this needs to change in just one place
+    # TODO: Ideally this needs to change in just one place
     available_profiles = ["postgres", "bigquery", "redshift", "snowflake", "duckdb"]
     if "profile" in context.config.userdata:
         profile = context.config.userdata["profile"]

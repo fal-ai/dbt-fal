@@ -7,11 +7,8 @@ Feature: Python nodes
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models
       """
-    # TODO: Python generated models are not included in the run_results.json because they are ephemeral
-    # Then the following models are calculated:
-    #   | model_a | model_b | model_c | model_d |
     Then the following models are calculated:
-      | model_a | model_b | model_d |
+      | model_a | model_b | model_c.py | model_d | model_e.ipynb |
     Then the following scripts are ran:
       | model_c.after.py | model_e.after.py |
 
@@ -20,6 +17,7 @@ Feature: Python nodes
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select model_c
       """
-    # TODO: Python generated models are not included in the run_results.json because they are ephemeral
-    # Then the following models are calculated:
-    #   | model_c |
+    Then the following models are calculated:
+      | model_c.py |
+    Then the following scripts are not ran:
+      | model_c.after.py |
