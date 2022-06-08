@@ -26,7 +26,8 @@ jobs:
 
       - name: Start Docker database
         working-directory: integration_tests
-        if: matrix.profile == 'redshift' || matrix.profile == 'postgres'
+        # TODO: make redshift use a real connection
+        if: contains(["redshift", "postgres"], matrix.profile)
         run: docker-compose up -d
 
       - name: Setup behave
@@ -36,7 +37,7 @@ jobs:
       # Avoid running against the same profile at the same time
       - name: Set up mutex on profiles
         uses: ben-z/gh-action-mutex@v1.0-alpha-5
-        if: matrix.profile != 'postgres' || matrix.profile != 'duckdb'
+        if: contains(["bigquery", "snowflake", "redshift"], matrix.profile)
         with:
           branch: gh-mutex-profile-${{ matrix.profile }}
 
