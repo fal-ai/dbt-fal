@@ -2,6 +2,7 @@ Feature: `write_to_source` function
   Background: Project Setup
     Given the project 005_functions_and_variables
 
+  @TODO-duckdb
   Scenario: Source tests are present in context
     When the following shell command is invoked:
       """
