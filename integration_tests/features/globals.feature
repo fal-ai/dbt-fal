@@ -24,8 +24,6 @@ Feature: global scripts
       """
     Then the following scripts are ran:
       | some_model.after.py |
-    Then the following scripts are not ran:
-      | GLOBAL.after.py |
 
   Scenario: fal run triggers globals with select flag
     Given the project 004_globals
@@ -57,5 +55,3 @@ Feature: global scripts
       """
     Then the following scripts are ran:
       | some_model.before.py | some_model.after.py |
-    Then the following scripts are not ran:
-      | GLOBAL.before.py | GLOBAL.after.py |

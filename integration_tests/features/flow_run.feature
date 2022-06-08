@@ -10,7 +10,7 @@ Feature: `flow run` command
     Then the following models are calculated:
       | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_c |
     And the following scripts are ran:
-      | agent_wait_time.before.py | agent_wait_time.after.py |
+      | agent_wait_time.before.py | agent_wait_time.after.py | model_c.before.py |
 
   Scenario: fal flow run command with selectors
     Given the project 001_flow_run_with_selectors
@@ -21,7 +21,7 @@ Feature: `flow run` command
       """
     Then no models are calculated
     And the following scripts are ran:
-      | agent_wait_time.before.py |
+      | agent_wait_time.before.py | model_c.before.py |
 
   Scenario: fal flow run command with complex selectors
     Given the project 001_flow_run_with_selectors
@@ -193,9 +193,7 @@ Feature: `flow run` command
     Then the following models are calculated:
       | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | zendesk_ticket_data | model_b | model_a | model_c |
     And the following scripts are ran:
-      | agent_wait_time.after.py |
-    And the following scripts are not ran:
-      | agent_wait_time.before.py |
+      | agent_wait_time.after.py | zendesk_ticket_data.check_extra.py |
 
   Scenario: fal flow run command with exclude arg with children
     Given the project 001_flow_run_with_selectors
@@ -220,8 +218,6 @@ Feature: `flow run` command
       | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_c |
     And the following scripts are not ran:
       | agent_wait_time.after.py |
-    And the following scripts are ran:
-      | agent_wait_time.before.py |
 
   Scenario: fal flow run command with select @
     Given the project 001_flow_run_with_selectors
@@ -233,7 +229,7 @@ Feature: `flow run` command
     Then the following models are calculated:
       | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
     And the following scripts are ran:
-      | model_c.before.py | agent_wait_time.after.py |
+      | model_c.before.py | agent_wait_time.before.py | agent_wait_time.after.py |
 
   Scenario: fal flow run with @ in the middle
     Given the project 001_flow_run_with_selectors
@@ -245,9 +241,7 @@ Feature: `flow run` command
     Then the following models are calculated:
       | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
     And the following scripts are ran:
-      | model_c.before.py |
-    And the following scripts are not ran:
-      | agent_wait_time.after.py |
+      | model_c.before.py | agent_wait_time.before.py |
 
   @broken_profile
   Scenario: fal flow run with target

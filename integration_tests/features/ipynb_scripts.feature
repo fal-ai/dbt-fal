@@ -67,8 +67,6 @@ Feature: fal works with ipynb features
       """
     Then the following scripts are ran:
       | zendesk_ticket_data.check_extra.py | zendesk_ticket_data.my_notebook.py |
-    Then the following scripts are not ran:
-      | agent_wait_time.after.py |
 
   Scenario: fal run works with script selection
     Given the project 007_ipynb_scripts

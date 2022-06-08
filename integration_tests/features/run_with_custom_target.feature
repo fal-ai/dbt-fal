@@ -27,8 +27,6 @@ Feature: `run` command with a custom profile target
       """
     Then the following scripts are ran:
       | agent_wait_time.after.py |
-    Then the following scripts are not ran:
-      | zendesk_ticket_data.after.py |
 
   Scenario: fal run works with model selection with custom target
     When the following shell command is invoked:
@@ -41,8 +39,6 @@ Feature: `run` command with a custom profile target
       """
     Then the following scripts are ran:
       | zendesk_ticket_data.after.py |
-    Then the following scripts are not ran:
-      | agent_wait_time.after.py |
 
   Scenario: fal run works with script selection with custom target
     When the following shell command is invoked:
@@ -54,4 +50,4 @@ Feature: `run` command with a custom profile target
       fal run --profiles-dir profiles/broken --project-dir $baseDir --script fal_scripts/after.py
       """
     Then the following scripts are ran:
-      | agent_wait_time.after.py |
+      | agent_wait_time.after.py | zendesk_ticket_data.after.py |
