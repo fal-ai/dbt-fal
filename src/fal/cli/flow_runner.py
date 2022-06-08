@@ -94,10 +94,9 @@ def _run_sub_graph(
             if mnode is not None and mnode.model.python_model is not None:
                 fal_nodes.append(n)
         if len(fal_nodes) != 0:
-            results = run_scripts(
-                _id_to_fal_scripts(node_graph, fal_dbt, fal_nodes), fal_dbt
-            )
-            raise_for_run_results_failures(after_scripts, results)
+            python_node_scripts = _id_to_fal_scripts(node_graph, fal_dbt, fal_nodes)
+            results = run_scripts(python_node_scripts, fal_dbt)
+            raise_for_run_results_failures(python_node_scripts, results)
 
     if len(after_scripts) != 0:
         results = run_scripts(after_scripts, fal_dbt)
