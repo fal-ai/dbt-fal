@@ -1,5 +1,4 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
-from time import sleep
 import six
 import os
 from datetime import datetime
@@ -128,10 +127,6 @@ def _get_target_relation(
         project_dir, profiles_dir, profile_target=profile_target
     )
     manifest = parse.get_dbt_manifest(config)
-
-    if adapter.type() == "bigquery":
-        # After creating a table, BigQuery takes some time to realize it is there
-        sleep(2)
 
     name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
