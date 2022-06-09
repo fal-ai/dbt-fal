@@ -43,8 +43,11 @@ class FalGeneralException(Exception):
 @dataclass
 class _DbtNode:
     node: Any = field(repr=False)
-    name: str = field(init=False, default=None)
     status: str = field(init=False, default=None)
+
+    @property
+    def name(self):
+        return self.node.name
 
     def set_status(self, status: str):
         self.status = status
@@ -90,28 +93,29 @@ class DbtSource:
 
 @dataclass
 class DbtModel(_DbtNode):
-    alias: str = field(init=False)
-    meta: Dict[str, Any] = field(init=False, default_factory=dict, repr=False)
-    columns: Dict[str, Any] = field(init=False, default_factory=dict)
     tests: List[DbtTest] = field(init=False, default_factory=list)
     python_model: Optional[Path] = field(init=False, default=None, repr=False)
-    unique_id: str = field(init=False)
 
-    def __post_init__(self):
-        node = self.node
+    @property
+    def columns(self):
+        return self.node.columns
 
-        self.name = node.name
-        self.alias = node.alias
+    @property
+    def unique_id(self):
+        return self.node.unique_id
 
+    @property
+    def alias(self):
+        return self.node.alias
+
+    @property
+    def meta(self):
         # BACKWARDS: Change intorduced in XXX (0.20?)
         # TODO: specify which version is for this
-        if hasattr(node.config, "meta"):
-            self.meta = node.config.meta
-        elif hasattr(node, "meta"):
-            self.meta = node.meta
-
-        self.columns = node.columns
-        self.unique_id = node.unique_id
+        if hasattr(self.node.config, "meta"):
+            return self.node.config.meta
+        elif hasattr(self.node, "meta"):
+            return self.node.meta
 
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
