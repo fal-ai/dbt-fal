@@ -6,7 +6,6 @@ from typing import Dict, List, Any, Optional, Tuple, Sequence
 from pathlib import Path
 
 from dbt.node_types import NodeType
-from dbt.config import RuntimeConfig
 from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.compiled import ManifestNode
 from dbt.contracts.graph.manifest import (
@@ -28,7 +27,7 @@ from fal.feature_store.feature import Feature
 
 import firebase_admin
 from firebase_admin import firestore
-from google.cloud.firestore import Client as FirestoreClient
+
 import uuid
 
 from decimal import Decimal
@@ -43,8 +42,16 @@ class FalGeneralException(Exception):
 
 @dataclass
 class _DbtNode:
-    name: str = field(init=False)
-    status: str = field(init=False)
+    node: Any = field(repr=False)
+    status: str = field(init=False, default=None)
+
+    @property
+    def name(self):
+        return self.node.name
+
+    @property
+    def unique_id(self):
+        return self.node.unique_id
 
     def set_status(self, status: str):
         self.status = status
@@ -52,16 +59,14 @@ class _DbtNode:
 
 @dataclass
 class DbtTest(_DbtNode):
-    node: Any
     model: str = field(init=False)
     column: str = field(init=False)
 
     def __post_init__(self):
         node = self.node
-        self.unique_id = node.unique_id
         if node.resource_type == NodeType.Test:
             if hasattr(node, "test_metadata"):
-                self.name = node.test_metadata.name
+                node.name = node.test_metadata.name
 
                 # node.test_metadata.kwargs looks like this:
                 # kwargs={'column_name': 'y', 'model': "{{ get_where_subquery(ref('boston')) }}"}
@@ -71,46 +76,54 @@ class DbtTest(_DbtNode):
                 self.model = [ref for ref in refs if ref != "where"][0]
                 self.column = node.test_metadata.kwargs.get("column_name", None)
             else:
-                logger.debug(f"Non-generic test was not processed: {node.name}")
+                logger.warn(f"Non-generic test was not processed: {node.name}")
 
 
 @dataclass
 class DbtSource(_DbtNode):
-    name: str = field()
-    table_name: str = field()
-    unique_id: str = field()
-    tests: List[DbtTest] = field(init=False)
+    tests: List[DbtTest] = field(init=False, default_factory=list)
+    status: str = field(init=False, default=None)
 
-    def __post_init__(self):
-        self.tests = []
+    def __repr__(self):
+        attrs = ["name", "tests", "status"]
+        props = ", ".join([f"{item}={repr(getattr(self, item))}" for item in attrs])
+        return f"DbtSource({props})"
+
+    @property
+    def table_name(self):
+        return self.node.name
+
+    @property
+    def name(self):
+        return self.node.source_name
 
 
 @dataclass
 class DbtModel(_DbtNode):
-    node: ParsedModelNode
-    meta: Dict[str, Any] = field(init=False)
-    columns: Dict[str, Any] = field(init=False)
-    tests: List[DbtTest] = field(init=False)
-    python_model: Optional[Path] = field(init=False)
-    unique_id: str = field(init=False)
+    tests: List[DbtTest] = field(init=False, default_factory=list)
+    python_model: Optional[Path] = field(init=False, default=None)
 
-    def __post_init__(self):
-        node = self.node
+    def __repr__(self):
+        attrs = ["name", "alias", "unique_id", "columns", "tests"]
+        props = ", ".join([f"{item}={repr(getattr(self, item))}" for item in attrs])
+        return f"DbtModel({props})"
 
-        self.name = node.name
-        self.alias = node.alias
+    @property
+    def columns(self):
+        return self.node.columns
 
+    @property
+    def alias(self):
+        return self.node.alias
+
+    @property
+    def meta(self):
         # BACKWARDS: Change intorduced in XXX (0.20?)
         # TODO: specify which version is for this
-        if hasattr(node.config, "meta"):
-            self.meta = node.config.meta
-        elif hasattr(node, "meta"):
-            self.meta = node.meta
-
-        self.columns = node.columns
-        self.unique_id = node.unique_id
-        self.tests = []
-        self.python_model = None
+        if hasattr(self.node.config, "meta"):
+            return self.node.config.meta
+        elif hasattr(self.node, "meta"):
+            return self.node.meta
 
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
@@ -162,7 +175,9 @@ class DbtManifest:
         )
 
     def get_sources(self) -> List[ParsedSourceDefinition]:
-        return list(self.nativeManifest.sources.values())
+        return list(
+            map(lambda node: DbtSource(node=node), self.nativeManifest.sources.values())
+        )
 
 
 @dataclass(init=False)
@@ -192,28 +207,10 @@ class WriteModeEnum(Enum):
     OVERWRITE = "overwrite"
 
 
-@dataclass(init=False)
 class FalDbt:
-    project_dir: str
-    profiles_dir: str
-    scripts_dir: str
-    keyword: str
-    features: List[Feature]
-    method: str
-    models: List[DbtModel]
-    tests: List[DbtTest]
-    el: FalElClient
+    """Holds the entire dbt project information."""
 
-    _config: RuntimeConfig
-    _manifest: DbtManifest
-    _run_results: DbtRunResult
-    # Could we instead extend it and create a FalRunTak?
-    _compile_task: CompileTask
-    _state: Optional[Path]
-    _global_script_paths: Dict[str, List[str]]
-
-    _firestore_client: Optional[FirestoreClient]
-
+    # TODO: figure out a meaningful __repr__ for this class
     def __init__(
         self,
         project_dir: str,
@@ -679,12 +676,7 @@ def _map_nodes(
 ):
     models = manifest.get_models()
     tests = manifest.get_tests()
-    sources = [
-        DbtSource(
-            name=source.source_name, table_name=source.name, unique_id=source.unique_id
-        )
-        for source in manifest.get_sources()
-    ]
+    sources = manifest.get_sources()
     status_map = dict(
         map(
             lambda res: [res.unique_id, res.status],

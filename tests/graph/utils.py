@@ -1,4 +1,5 @@
 from fal import DbtModel
+from copy import deepcopy
 from unittest.mock import MagicMock
 
 
@@ -15,8 +16,10 @@ def create_mock_model(
     depends_on_models,
     before_script_paths=[],
 ) -> DbtModel:
-    model = DbtModel(parsedNodeMockInstance)
-    model.unique_id = "model." + name
+    node = deepcopy(parsedNodeMockInstance)
+    node.unique_id = "model." + name
+    node.name = name
+    model = DbtModel(node)
 
     def script_calculations(keyword: str, before: bool = False):
         if before:
@@ -25,6 +28,5 @@ def create_mock_model(
             return script_paths
 
     model.get_scripts = MagicMock(side_effect=script_calculations)
-    model.name = name
     model.get_depends_on_nodes = MagicMock(return_value=depends_on_models)
     return model
