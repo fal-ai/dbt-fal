@@ -14,4 +14,5 @@ models:
         scripts:
           after:
             - fal_scripts/query_other_model.py
+            - fal_scripts/run_macro.py
   - name: execute_sql_model_two
