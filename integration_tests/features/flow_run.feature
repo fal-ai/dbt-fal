@@ -120,7 +120,7 @@ Feature: `flow run` command
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py
       """
-    Then it throws an RuntimeError exception with message 'Error in scripts'
+    Then it throws an exception RuntimeError with message 'Error in scripts'
 
   Scenario: fal flow run with an error in after
     Given the project 003_scripts_with_errors
@@ -128,8 +128,8 @@ Feature: `flow run` command
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select after.py
       """
-    Then it throws an RuntimeError exception with message 'Error in scripts'
-  
+    Then it throws an exception RuntimeError with message 'Error in scripts'
+
   @TODO-duckdb
   Scenario: fal flow run with an error in dbt run
     Given the project 003_scripts_with_errors
@@ -137,7 +137,7 @@ Feature: `flow run` command
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select some_model
       """
-    Then it throws an RuntimeError exception with message 'Error running dbt run'
+    Then it throws an exception RuntimeError with message 'Error running dbt run'
 
   Scenario: fal flow run command with selectors with complex selectors
     Given the project 001_flow_run_with_selectors
@@ -252,7 +252,7 @@ Feature: `flow run` command
       """
       fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data+ --threads 1
       """
-    Then it throws an RuntimeError exception with message 'Error running dbt run'
+    Then it throws an exception RuntimeError with message 'Error running dbt run'
 
     When the following command is invoked:
       """
