@@ -1,5 +1,5 @@
 import ast
-from typing import List
+from typing import Iterator, List
 import astor
 import re
 
@@ -10,11 +10,11 @@ def generate_dbt_dependencies(module: ast.Module) -> str:
     We do not modify them to let dbt decide if they make sense.
     """
 
-    function_calls = _find_function_calls(module)
+    function_calls = _find_function_calls(ast.walk(module))
+    ref_calls = _filter_function_calls_by_name(function_calls, "ref")
+    source_calls = _filter_function_calls_by_name(function_calls, "source")
 
-    dbt_ast_calls: List[ast.Call] = []
-    dbt_ast_calls.extend(_find_dbt_function_calls(function_calls, "ref"))
-    dbt_ast_calls.extend(_find_dbt_function_calls(function_calls, "source"))
+    dbt_ast_calls = _find_dbt_function_calls(ref_calls + source_calls)
 
     # Convert ast.Calls back to source code
     dbt_function_calls = list(map(astor.to_source, dbt_ast_calls))
@@ -26,22 +26,44 @@ def generate_dbt_dependencies(module: ast.Module) -> str:
     return "\n".join(map(lambda s: "{{ " + s.strip() + " }}", lines))
 
 
-def _find_function_calls(module: ast.Module) -> List[ast.Call]:
-    return [node for node in ast.walk(module) if isinstance(node, ast.Call)]
+def write_to_model_check(module: ast.Module):
+    """
+    Make sure a there is a single write_to_model function call on the top level
+    """
+
+    all_function_calls = _find_function_calls(ast.walk(module))
+    all_wtm_calls = _filter_function_calls_by_name(all_function_calls, "write_to_model")
+
+    top_level_function_calls = _find_function_calls(
+        stmt.value for stmt in module.body if isinstance(stmt, ast.Expr)
+    )
+    assert (
+        len(all_wtm_calls) == 1 and all_wtm_calls[0] in top_level_function_calls
+    ), "`write_to_model` must be called once on the top level of the Python Model script"
 
 
-def _find_dbt_function_calls(calls: List[ast.Call], func_name: str) -> List[ast.Call]:
+def _find_function_calls(nodes: Iterator[ast.AST]) -> List[ast.Call]:
+    return [node for node in nodes if isinstance(node, ast.Call)]
+
+
+def _filter_function_calls_by_name(calls: List[ast.Call], func_name: str):
     """
-    Analyze all function calls in the file to find the ones that call `func_name` with all literal arguments.
-    We ignore a `ref(var)` but accept a `ref('model_name')`
+    Analyze all function calls passed to find the ones that call `func_name`.
     """
-    func_calls = [
+    return [
         call
         for call in calls
         if isinstance(call.func, ast.Name) and call.func.id == func_name
     ]
 
-    def is_constant(arg: ast.expr):
+
+def _find_dbt_function_calls(calls: List[ast.Call]) -> List[ast.Call]:
+    """
+    Analyze all function calls passed to find the ones with all literal arguments.
+    We ignore a `_func(var)` but accept a `_func('model_name')`
+    """
+
+    def _is_constant(arg: ast.expr):
         import sys
 
         if sys.version_info < (3, 8):
@@ -49,7 +71,7 @@ def _find_dbt_function_calls(calls: List[ast.Call], func_name: str) -> List[ast.
         else:
             return isinstance(arg, ast.Constant)
 
-    return [call for call in func_calls if all(map(is_constant, call.args))]
+    return [call for call in calls if all(map(_is_constant, call.args))]
 
 
 def _print_node(node: ast.AST):
