@@ -141,20 +141,22 @@ class DbtManifest:
 
     def get_models(self) -> List[DbtModel]:
         return list(
-            filter(
-                lambda model: model.node.resource_type == NodeType.Model,
-                map(
-                    lambda node: DbtModel(node=node), self.nativeManifest.nodes.values()
+            map(
+                lambda node: DbtModel(node),
+                filter(
+                    lambda node: node.resource_type == NodeType.Model,
+                    self.nativeManifest.nodes.values(),
                 ),
             )
         )
 
     def get_tests(self) -> List[DbtTest]:
         return list(
-            filter(
-                lambda test: test.node.resource_type == NodeType.Test,
-                map(
-                    lambda node: DbtTest(node=node), self.nativeManifest.nodes.values()
+            map(
+                lambda node: DbtTest(node),
+                filter(
+                    lambda node: node.resource_type == NodeType.Test,
+                    self.nativeManifest.nodes.values(),
                 ),
             )
         )
