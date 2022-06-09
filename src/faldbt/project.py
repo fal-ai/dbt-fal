@@ -6,7 +6,6 @@ from typing import Dict, List, Any, Optional, Tuple, Sequence
 from pathlib import Path
 
 from dbt.node_types import NodeType
-from dbt.config import RuntimeConfig
 from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
 from dbt.contracts.graph.compiled import ManifestNode
 from dbt.contracts.graph.manifest import (
@@ -28,7 +27,7 @@ from fal.feature_store.feature import Feature
 
 import firebase_admin
 from firebase_admin import firestore
-from google.cloud.firestore import Client as FirestoreClient
+
 import uuid
 
 from decimal import Decimal
@@ -43,8 +42,9 @@ class FalGeneralException(Exception):
 
 @dataclass
 class _DbtNode:
-    name: str = field(init=False)
-    status: str = field(init=False)
+    node: Any = field(repr=False)
+    name: str = field(init=False, default=None)
+    status: str = field(init=False, default=None)
 
     def set_status(self, status: str):
         self.status = status
@@ -52,7 +52,6 @@ class _DbtNode:
 
 @dataclass
 class DbtTest(_DbtNode):
-    node: Any
     model: str = field(init=False)
     column: str = field(init=False)
 
@@ -75,23 +74,27 @@ class DbtTest(_DbtNode):
 
 
 @dataclass
-class DbtSource(_DbtNode):
+class DbtSource:
     name: str = field()
     table_name: str = field()
     unique_id: str = field()
-    tests: List[DbtTest] = field(init=False)
+    tests: List[DbtTest] = field(init=False, default_factory=list)
+    status: str = field(init=False, default=None)
 
     def __post_init__(self):
         self.tests = []
 
+    def set_status(self, status: str):
+        self.status = status
+
 
 @dataclass
 class DbtModel(_DbtNode):
-    node: ParsedModelNode
-    meta: Dict[str, Any] = field(init=False)
-    columns: Dict[str, Any] = field(init=False)
-    tests: List[DbtTest] = field(init=False)
-    python_model: Optional[Path] = field(init=False)
+    alias: str = field(init=False)
+    meta: Dict[str, Any] = field(init=False, default_factory=dict, repr=False)
+    columns: Dict[str, Any] = field(init=False, default_factory=dict)
+    tests: List[DbtTest] = field(init=False, default_factory=list)
+    python_model: Optional[Path] = field(init=False, default=None, repr=False)
     unique_id: str = field(init=False)
 
     def __post_init__(self):
@@ -109,8 +112,6 @@ class DbtModel(_DbtNode):
 
         self.columns = node.columns
         self.unique_id = node.unique_id
-        self.tests = []
-        self.python_model = None
 
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
@@ -190,28 +191,10 @@ class WriteModeEnum(Enum):
     OVERWRITE = "overwrite"
 
 
-@dataclass(init=False)
 class FalDbt:
-    project_dir: str
-    profiles_dir: str
-    scripts_dir: str
-    keyword: str
-    features: List[Feature]
-    method: str
-    models: List[DbtModel]
-    tests: List[DbtTest]
-    el: FalElClient
+    """Holds the entire dbt project information."""
 
-    _config: RuntimeConfig
-    _manifest: DbtManifest
-    _run_results: DbtRunResult
-    # Could we instead extend it and create a FalRunTak?
-    _compile_task: CompileTask
-    _state: Optional[Path]
-    _global_script_paths: Dict[str, List[str]]
-
-    _firestore_client: Optional[FirestoreClient]
-
+    # TODO: figure out a meaningful __repr__ for this class
     def __init__(
         self,
         project_dir: str,
