@@ -1,5 +1,8 @@
 import ast
-from fal.cli.model_generator.deps_generator import generate_dbt_dependencies
+from fal.cli.model_generator.module_check import (
+    generate_dbt_dependencies,
+    write_to_model_check,
+)
 from inspect import cleandoc
 
 
@@ -84,3 +87,82 @@ def test_finding_functions_in_docstring():
 
     assert "{{ ref('model_a') }}" in results
     assert "{{ source('db', 'table_a') }}" in results
+
+
+def test_write_to_model_once_top_level():
+    program = cleandoc(
+        """
+        df = ref('model')
+        write_to_model(df)
+        """
+    )
+    module = ast.parse(program)
+    try:
+        write_to_model_check(module)
+    except AssertionError:
+        assert False, "Should not have thrown"
+
+
+def test_write_to_model_never():
+    program = cleandoc(
+        """
+        df = ref('model')
+        """
+    )
+    module = ast.parse(program)
+    try:
+        write_to_model_check(module)
+        raise  # Should not have thrown
+    except AssertionError:
+        pass
+
+
+def test_write_to_model_inner_level():
+    program = cleandoc(
+        """
+        df = ref('model')
+        if True:
+            write_to_model(df)
+        """
+    )
+    module = ast.parse(program)
+    try:
+        write_to_model_check(module)
+        raise  # Should not have thrown
+    except AssertionError:
+        pass
+
+
+def test_write_to_model_once_top_level_once_inner_level():
+    program = cleandoc(
+        """
+        df = ref('model')
+        if True:
+            write_to_model(df)
+        write_to_model(df)
+        """
+    )
+    module = ast.parse(program)
+    try:
+        write_to_model_check(module)
+        raise  # Should not have thrown
+    except AssertionError:
+        pass
+
+
+def test_write_to_model_more_than_once_top_level():
+    program = cleandoc(
+        """
+        df = ref('model')
+        write_to_model(df)
+
+        df = ref('model')
+        write_to_model(df)
+        """
+    )
+    module = ast.parse(program)
+    try:
+        write_to_model_check(module)
+        raise  # Should not have thrown
+    except AssertionError:
+        pass
