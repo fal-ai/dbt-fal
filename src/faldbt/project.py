@@ -49,6 +49,10 @@ class _DbtNode:
     def name(self):
         return self.node.name
 
+    @property
+    def unique_id(self):
+        return self.node.unique_id
+
     def set_status(self, status: str):
         self.status = status
 
@@ -60,7 +64,6 @@ class DbtTest(_DbtNode):
 
     def __post_init__(self):
         node = self.node
-        self.unique_id = node.unique_id
         if node.resource_type == NodeType.Test:
             if hasattr(node, "test_metadata"):
                 self.name = node.test_metadata.name
@@ -73,22 +76,26 @@ class DbtTest(_DbtNode):
                 self.model = [ref for ref in refs if ref != "where"][0]
                 self.column = node.test_metadata.kwargs.get("column_name", None)
             else:
-                logger.debug(f"Non-generic test was not processed: {node.name}")
+                logger.warn(f"Non-generic test was not processed: {node.name}")
 
 
 @dataclass
-class DbtSource:
-    name: str = field()
-    table_name: str = field()
-    unique_id: str = field()
+class DbtSource(_DbtNode):
     tests: List[DbtTest] = field(init=False, default_factory=list)
     status: str = field(init=False, default=None)
 
-    def __post_init__(self):
-        self.tests = []
+    def __repr__(self):
+        attrs = ["name", "tests", "status"]
+        props = ", ".join([f"{item}={repr(getattr(self, item))}" for item in attrs])
+        return f"DbtSource({props})"
 
-    def set_status(self, status: str):
-        self.status = status
+    @property
+    def table_name(self):
+        return self.node.name
+
+    @property
+    def name(self):
+        return self.node.source_name
 
 
 @dataclass
@@ -96,13 +103,14 @@ class DbtModel(_DbtNode):
     tests: List[DbtTest] = field(init=False, default_factory=list)
     python_model: Optional[Path] = field(init=False, default=None, repr=False)
 
+    def __repr__(self):
+        attrs = ["name", "alias", "unique_id", "columns", "tests"]
+        props = ", ".join([f"{item}={repr(getattr(self, item))}" for item in attrs])
+        return f"DbtModel({props})"
+
     @property
     def columns(self):
         return self.node.columns
-
-    @property
-    def unique_id(self):
-        return self.node.unique_id
 
     @property
     def alias(self):
@@ -165,7 +173,9 @@ class DbtManifest:
         )
 
     def get_sources(self) -> List[ParsedSourceDefinition]:
-        return list(self.nativeManifest.sources.values())
+        return list(
+            map(lambda node: DbtSource(node=node), self.nativeManifest.sources.values())
+        )
 
 
 @dataclass(init=False)
@@ -663,12 +673,7 @@ def _map_nodes(
 ):
     models = manifest.get_models()
     tests = manifest.get_tests()
-    sources = [
-        DbtSource(
-            name=source.source_name, table_name=source.name, unique_id=source.unique_id
-        )
-        for source in manifest.get_sources()
-    ]
+    sources = manifest.get_sources()
     status_map = dict(
         map(
             lambda res: [res.unique_id, res.status],
