@@ -66,7 +66,7 @@ class DbtTest(_DbtNode):
         node = self.node
         if node.resource_type == NodeType.Test:
             if hasattr(node, "test_metadata"):
-                self.name = node.test_metadata.name
+                node.name = node.test_metadata.name
 
                 # node.test_metadata.kwargs looks like this:
                 # kwargs={'column_name': 'y', 'model': "{{ get_where_subquery(ref('boston')) }}"}
@@ -101,7 +101,7 @@ class DbtSource(_DbtNode):
 @dataclass
 class DbtModel(_DbtNode):
     tests: List[DbtTest] = field(init=False, default_factory=list)
-    python_model: Optional[Path] = field(init=False, default=None, repr=False)
+    python_model: Optional[Path] = field(init=False, default=None)
 
     def __repr__(self):
         attrs = ["name", "alias", "unique_id", "columns", "tests"]
