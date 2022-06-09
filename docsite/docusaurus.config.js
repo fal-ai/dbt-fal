@@ -15,7 +15,7 @@ const config = {
   favicon: 'img/fal-logo.svg',
   organizationName: 'fal-ai', // Usually your GitHub org/user name.
   projectName: 'fal', // Usually your repo name.
-
+  plugins: [require.resolve("@cmfcmf/docusaurus-search-local")],
   presets: [
     [
       'classic',
