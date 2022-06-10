@@ -1,14 +1,25 @@
 from functools import reduce
 import os
-from typing import Dict
+from typing import Dict, List
 from behave import *
 from fal.cli import cli
 import tempfile
 import json
 import unittest
 from os.path import exists
+from enum import Enum
 from pathlib import Path
+from datetime import datetime, timezone
 import re
+
+
+# The main distinction we can use on an artifact file to determine
+# whether it was created by a Python script or a Python model is the number
+# of suffixes it has. Models use <model_name>.txt and scripts use
+# <model_name>.<script_name>.txt
+
+FAL_MODEL = 1
+FAL_SCRIPT = 2
 
 
 @when("the following shell command is invoked")
@@ -115,31 +126,20 @@ def invoke_failing_fal_flow(context):
 
 @then("the following scripts are ran")
 def check_script_files_exist(context):
-    python_scripts = _get_all_python_scripts(context.temp_dir.name)
+    python_scripts = _get_fal_scripts(context)
     expected_scripts = list(map(_script_filename, context.table.headings))
     unittest.TestCase().assertCountEqual(python_scripts, expected_scripts)
 
 
 @then("the following scripts are not ran")
 def check_script_files_dont_exist(context):
-    python_scripts = set(_get_all_python_scripts(context.temp_dir.name))
+    python_scripts = set(_get_fal_scripts(context))
     expected_scripts = set(map(_script_filename, context.table.headings))
 
     unexpected_runs = expected_scripts & python_scripts
     if unexpected_runs:
         to_report = ", ".join(unexpected_runs)
         assert False, f"Script files {to_report} should NOT BE present"
-
-
-def _get_all_python_scripts(dir_name):
-    directory = Path(dir_name)
-    return [
-        model.name
-        for model in directory.glob("*.txt")
-        # Pure Python models use <model_name>.txt and scripts use <model_name>.<script>.txt,
-        # so this check ensures that we are only capturing the scripts (and not models).
-        if len(model.suffixes) == 2
-    ]
 
 
 def _clear_all_artifacts(dir_name):
@@ -182,17 +182,19 @@ def no_scripts_are_run(context):
 
 @then("the following models are calculated")
 def check_model_results(context):
-    dbt_models = _get_models_from_result(
-        context.temp_dir.name,
-        reduce(os.path.join, [context.temp_dir.name, "target", "run_results.json"]),
-    )
-    python_models = _get_python_models(
-        context.temp_dir.name,
-    )
-
-    models = dbt_models + python_models
+    models = _get_all_models(context)
     expected_models = list(map(_script_filename, context.table.headings))
     unittest.TestCase().assertCountEqual(models, expected_models)
+
+
+@then("the following nodes are calculated in the following order")
+def check_model_results(context):
+    models = _get_dated_dbt_models(context)
+    scripts = _get_dated_fal_artifacts(context, FAL_MODEL, FAL_SCRIPT)
+
+    ordered_nodes = _unpack_dated_result(models + scripts)
+    expected_nodes = list(map(_script_filename, context.table.headings))
+    unittest.TestCase().assertEqual(ordered_nodes, expected_nodes)
 
 
 def _script_filename(script: str):
@@ -203,35 +205,60 @@ def _temp_dir_path(context, file):
     return os.path.join(context.temp_dir.name, file)
 
 
-def _get_python_models(dir_name):
-    directory = Path(dir_name)
+def _get_all_models(context) -> List[str]:
+    """Retrieve all models (both DBT and Python)."""
+    dbt_models = _unpack_dated_result(_get_dated_dbt_models(context))
+    python_models = _unpack_dated_result(_get_dated_fal_artifacts(context, FAL_MODEL))
+
+    models = dbt_models + python_models
+    return models
+
+
+def _get_fal_scripts(context) -> List[str]:
+    return _unpack_dated_result(_get_dated_fal_artifacts(context, FAL_SCRIPT))
+
+
+def _unpack_dated_result(dated_result) -> List[str]:
+    if not dated_result:
+        return []
+
+    result, _ = zip(*sorted(dated_result, key=lambda node: node[1]))
+    return list(result)
+
+
+def _get_dated_dbt_models(context):
     return [
-        model.name
-        for model in directory.glob("*.txt")
-        # Pure Python models use <model_name>.txt and scripts use <model_name>.<script>.txt,
-        # so this check ensures that we are only capturing the models (and not scripts).
-        if len(model.suffixes) == 1
+        (
+            result["unique_id"].split(".")[-1],
+            datetime.fromisoformat(
+                result["timing"][-1]["completed_at"].replace("Z", "+00:00")
+            ),
+        )
+        for result in _load_dbt_result_file(context)
     ]
 
 
-def _get_models_from_result(dir_name, file_name):
-    return _flatten(
-        map(
-            lambda result: result["unique_id"].split(".")[2],
-            _load_result(dir_name, file_name),
+def _get_dated_fal_artifacts(context, *kinds):
+    assert kinds, "Specify at least one artifact kind."
+
+    directory = Path(context.temp_dir.name)
+    return [
+        # DBT run result files use UTC as the timezone for the timestamps, so
+        # we need to be careful on using the same method for the local files as well.
+        (
+            artifact.name,
+            datetime.fromtimestamp(artifact.stat().st_mtime, tz=timezone.utc),
         )
-    )
+        for artifact in directory.glob("*.txt")
+        if len(artifact.suffixes) in kinds
+    ]
 
 
-def _load_result(dir_name, file_name):
-    return json.load(
-        open(
-            reduce(
-                os.path.join,
-                [dir_name, "target", file_name],
-            )
-        )
-    )["results"]
+def _load_dbt_result_file(context):
+    with open(
+        os.path.join(context.temp_dir.name, "target", "run_results.json")
+    ) as stream:
+        return json.load(stream)["results"]
 
 
 def _get_fal_results_file_name(context):
@@ -239,16 +266,6 @@ def _get_fal_results_file_name(context):
     pattern = re.compile("fal_results_*.\\.json")
     target_files = list(os.walk(target_path))[0][2]
     return list(filter(lambda file: pattern.match(file), target_files))
-
-
-def _flatten(target_iterable):
-    flat_list = []
-    for element in target_iterable:
-        if isinstance(element, list):
-            flat_list.extend(element)
-        else:
-            flat_list.append(element)
-    return flat_list
 
 
 def _set_profiles_dir(context) -> Path:

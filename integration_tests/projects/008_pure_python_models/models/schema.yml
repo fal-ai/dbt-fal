@@ -2,6 +2,10 @@ version: 2
 
 models:
   - name: model_a
+    meta:
+      fal:
+        scripts:
+          - after.py
   - name: model_b
   - name: model_c # Python model
     meta:
