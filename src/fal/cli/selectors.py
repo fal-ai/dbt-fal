@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+import itertools
 import re
+from dataclasses import dataclass
 from typing import List, Optional, Union, Iterator
 from fal.node_graph import NodeGraph
 from faldbt.project import CompileArgs, FalDbt
@@ -58,26 +59,57 @@ class ExecutionPlan:
         return cls(list(set(ids_to_execute)), fal_dbt.project_name)
 
 
+@dataclass
+class SelectionUnion:
+    components: List[str]
+
+
+@dataclass
+class SelectionIntersection:
+    components: List[str]
+
+
+def parse_union(
+    components: List[str],
+) -> SelectionUnion:
+    # Based on the original implemention at dbt-core.
+
+    # turn ['a b', 'c'] -> ['a', 'b', 'c']
+    raw_specs = itertools.chain.from_iterable(r.split(OP_SET_UNION) for r in components)
+    union_components = []
+
+    # ['a', 'b', 'c,d'] -> union('a', 'b', intersection('c', 'd'))
+    for raw_spec in raw_specs:
+        union_components.append(
+            SelectionIntersection(
+                raw_spec.split(OP_SET_INTERSECTION),
+            )
+        )
+    return SelectionUnion(
+        union_components,
+    )
+
+
 def _filter_node_ids(
     unique_ids: List[str],
     fal_dbt: FalDbt,
-    selected_nodes: List[str],
+    selectors: List[str],
     nodeGraph: NodeGraph,
 ) -> List[str]:
     """Filter list of unique_ids according to a selector."""
-    output = []
+    output = set()
 
-    for selector in selected_nodes:
-        selector_plans = map(
-            lambda sub_selector: SelectorPlan(sub_selector, unique_ids, fal_dbt),
-            SET_INTERSECTION.separate(selector),
-        )
-        selector_outputs = map(
-            lambda plan: set(plan.execute(nodeGraph)), selector_plans
-        )
-        output.extend(set.intersection(*selector_outputs))
+    union = parse_union(selectors)
+    for intersection in union.components:
+        plan_outputs = [
+            set(SelectorPlan(selector, unique_ids, fal_dbt).execute(nodeGraph))
+            for selector in intersection.components
+            if selector
+        ]
+        if plan_outputs:
+            output |= set.intersection(*plan_outputs)
 
-    return output
+    return list(output)
 
 
 def _get_children_with_parents(node_id: str, nodeGraph: NodeGraph) -> List[str]:
@@ -200,14 +232,6 @@ def _is_script_node(node_name: str) -> bool:
     return node_name.endswith(".py") or node_name.endswith(".ipynb")
 
 
-@dataclass
-class SetOperator:
-    separator: str
-
-    def separate(self, selector: str) -> List[str]:
-        return selector.split(self.separator)
-
-
 class SelectorGraphOp:
     _regex: re.Pattern
 
@@ -245,7 +269,8 @@ OP_PARENTS = SelectorGraphOpDepth(re.compile("^(?P<depth>\\d*)\\+(?P<rest>.*)"))
 OP_CHILDREN = SelectorGraphOpDepth(re.compile("(?P<rest>.*)\\+(?P<depth>\\d*)$"))
 
 # Logic based set operators
-SET_INTERSECTION = SetOperator(",")
+OP_SET_UNION = " "
+OP_SET_INTERSECTION = ","
 
 IS_BEFORE_SCRIPT_REGEX = re.compile("^script.*.BEFORE.*.(ipynb|py)$")
 IS_AFTER_SCRIPT_REGEX = re.compile("^script.*.AFTER.*.(ipynb|py)$")
