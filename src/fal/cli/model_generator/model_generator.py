@@ -5,7 +5,10 @@ from pathlib import Path
 from fal.fal_script import python_from_file
 
 from faldbt.parse import load_dbt_project_contract
-from fal.cli.model_generator.deps_generator import generate_dbt_dependencies
+from fal.cli.model_generator.module_check import (
+    generate_dbt_dependencies,
+    write_to_model_check,
+)
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
@@ -55,7 +58,11 @@ def _generate_python_dbt_models(model_path: Path):
         source_code = python_from_file(py_path)
         module = ast.parse(source_code, str(py_path), "exec")
 
+        # Fails if it does not have write_to_model
+        write_to_model_check(module)
+
         dbt_deps: str = generate_dbt_dependencies(module)
+
         sql_contents = SQL_MODEL_TEMPLATE.replace("__deps__", dbt_deps)
         checksum, _ = _checksum(sql_contents)
         sql_contents = sql_contents.replace("__checksum__", checksum)

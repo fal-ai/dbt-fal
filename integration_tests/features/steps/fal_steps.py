@@ -99,7 +99,7 @@ def invoke_command(context):
         context.exc = sys.exc_info()
 
 
-@then("it throws an {etype} exception with message '{msg}'")
+@then("it throws an exception {etype} with message '{msg}'")
 def invoke_command_error(context, etype: str, msg: str):
     _etype, exception, _tb = context.exc
     assert isinstance(

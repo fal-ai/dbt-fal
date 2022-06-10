@@ -21,3 +21,11 @@ Feature: Python nodes
       | model_c.py |
     Then the following scripts are not ran:
       | model_c.after.py |
+
+  Scenario: Run a Python node without write to model should error
+    Given the project 003_scripts_with_errors
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select no_write_model
+      """
+    Then it throws an exception AssertionError with message 'There must be a single write_to_model call and it must be a top-level expression of the Python Model script'
