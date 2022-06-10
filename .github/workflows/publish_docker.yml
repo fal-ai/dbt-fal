@@ -23,14 +23,13 @@ jobs:
 
       - name: Build and push
         uses: docker/build-push-action@v3
-        working-directory: docker
         with:
+          context: docker
           push: true
           tags: falai/fal:latest
 
       - name: push README
         uses: christian-korneck/update-container-description-action@v1
-        working-directory: docker
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_PASS: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -38,4 +37,4 @@ jobs:
           destination_container_repo: falai/fal
           provider: dockerhub
           short_description: 'fal Docker image'
-          readme_file: 'README.md'
+          readme_file: 'docker/README.md'
