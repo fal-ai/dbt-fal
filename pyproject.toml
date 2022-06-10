@@ -9,7 +9,8 @@ readme = "README.md"
 authors = [ "Features & Labels <hello@fal.ai>" ]
 packages = [
         { include = "fal", from = "src" },
-        { include = "faldbt", from = "src" }
+        { include = "faldbt", from = "src" },
+        { include = "fal_planner", from = "src" }
 ]
 
 keywords = [ "dbt", "pandas" ]
