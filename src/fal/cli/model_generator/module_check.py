@@ -14,7 +14,7 @@ def generate_dbt_dependencies(module: ast.Module) -> str:
     ref_calls = _filter_function_calls_by_name(function_calls, "ref")
     source_calls = _filter_function_calls_by_name(function_calls, "source")
 
-    dbt_ast_calls = _find_dbt_function_calls(ref_calls + source_calls)
+    dbt_ast_calls = _filter_constant_calls(ref_calls + source_calls)
 
     # Convert ast.Calls back to source code
     dbt_function_calls = list(map(astor.to_source, dbt_ast_calls))
@@ -39,7 +39,7 @@ def write_to_model_check(module: ast.Module):
     )
     assert (
         len(all_wtm_calls) == 1 and all_wtm_calls[0] in top_level_function_calls
-    ), "`write_to_model` must be called once on the top level of the Python Model script"
+    ), "There must be a single write_to_model call and it must be a top-level expression of the Python Model script"
 
 
 def _find_function_calls(nodes: Iterator[ast.AST]) -> List[ast.Call]:
@@ -57,7 +57,7 @@ def _filter_function_calls_by_name(calls: List[ast.Call], func_name: str):
     ]
 
 
-def _find_dbt_function_calls(calls: List[ast.Call]) -> List[ast.Call]:
+def _filter_constant_calls(calls: List[ast.Call]) -> List[ast.Call]:
     """
     Analyze all function calls passed to find the ones with all literal arguments.
     We ignore a `_func(var)` but accept a `_func('model_name')`
