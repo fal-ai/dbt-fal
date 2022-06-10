@@ -1,5 +1,4 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
-from time import sleep
 import six
 import os
 from datetime import datetime
@@ -129,10 +128,6 @@ def _get_target_relation(
     )
     manifest = parse.get_dbt_manifest(config)
 
-    if adapter.type() == "bigquery":
-        # After creating a table, BigQuery takes some time to realize it is there
-        sleep(2)
-
     name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
     with adapter.connection_named(name):
@@ -209,11 +204,7 @@ def overwrite_target(
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    relation = _get_target_relation(
-        target, project_dir, profiles_dir, profile_target=profile_target
-    )
-    if relation is None:
-        relation = _build_table_from_target(adapter, target)
+    relation = _build_table_from_target(adapter, target)
 
     temporal_relation = _build_table_from_parts(
         adapter, relation.database, relation.schema, f"{relation.identifier}__f__"
@@ -254,11 +245,7 @@ def write_target(
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    relation = _get_target_relation(
-        target, project_dir, profiles_dir, profile_target=profile_target
-    )
-    if relation is None:
-        relation = _build_table_from_target(adapter, target)
+    relation = _build_table_from_target(adapter, target)
 
     return _write_relation(
         data, project_dir, profiles_dir, relation, dtype, profile_target=profile_target
@@ -357,12 +344,21 @@ def _replace_relation(
             original_relation.schema,
             original_relation.identifier,
         )
-        if original_exists:
+        if original_exists and adapter.type() != "bigquery":
             adapter.drop_relation(original_relation)
 
         # HACK: athena doesn't support renaming tables, we do it manually
         if adapter.type() == "athena":
             create_stmt = f"create table {original_relation} as select * from {new_relation} with data"
+            _execute_sql(
+                project_dir,
+                profiles_dir,
+                six.text_type(create_stmt).strip(),
+                profile_target=profile_target,
+            )
+            adapter.drop_relation(new_relation)
+        elif adapter.type() == "bigquery":
+            create_stmt = f"create or replace table {original_relation} as select * from {new_relation}"
             _execute_sql(
                 project_dir,
                 profiles_dir,
