@@ -6,7 +6,7 @@ Feature: `run` command
   Scenario: fal run works
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir $profilesDir --project-dir $baseDir --select agent_wait_time zendesk_ticket_data
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir --models agent_wait_time zendesk_ticket_data
       """
     And the following command is invoked:
       """
@@ -42,7 +42,7 @@ Feature: `run` command
   Scenario: fal run works with script selection
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir $profilesDir --project-dir $baseDir --select agent_wait_time
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir --models agent_wait_time
       """
     And the following command is invoked:
       """
@@ -54,7 +54,7 @@ Feature: `run` command
   Scenario: fal run provides model aliases
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir $profilesDir --project-dir $baseDir --select agent_wait_time zendesk_ticket_data
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir --models agent_wait_time zendesk_ticket_data
       """
 
     And the following command is invoked:
@@ -69,7 +69,7 @@ Feature: `run` command
   Scenario: when false script is selected, nothing runs
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir $profilesDir --project-dir $baseDir --select agent_wait_time
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir --models agent_wait_time
       """
     And the following command is invoked:
       """
@@ -81,7 +81,7 @@ Feature: `run` command
   Scenario: Post hooks with write_to_model will fail
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir $profilesDir --project-dir $baseDir --select some_model
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir --models some_model
       """
     And the following command is invoked:
       """
@@ -92,7 +92,7 @@ Feature: `run` command
   Scenario: Post hooks with write_to_source will fail
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir $profilesDir --project-dir $baseDir --select some_other_model
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir --models some_other_model
       """
     And the following command is invoked:
       """

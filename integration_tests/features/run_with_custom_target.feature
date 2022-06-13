@@ -7,7 +7,7 @@ Feature: `run` command with a custom profile target
   Scenario: fal run works with custom target
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir profiles/broken --project-dir $baseDir --select agent_wait_time zendesk_ticket_data --target custom
+      dbt run --profiles-dir profiles/broken --project-dir $baseDir --models agent_wait_time zendesk_ticket_data --target custom
       """
     And the following command is invoked:
       """
@@ -43,7 +43,7 @@ Feature: `run` command with a custom profile target
   Scenario: fal run works with script selection with custom target
     When the following shell command is invoked:
       """
-      dbt run --profiles-dir profiles/broken --project-dir $baseDir --target custom --select agent_wait_time
+      dbt run --profiles-dir profiles/broken --project-dir $baseDir --target custom --models agent_wait_time
       """
     And the following command is invoked:
       """
