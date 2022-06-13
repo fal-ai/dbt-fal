@@ -14,9 +14,8 @@ models:
       materialized: table
     meta:
       fal:
-        scripts:
-          after:
-            - fal_scripts/after.py
+        post-hook:
+          - fal_scripts/post_hook.py
   - name: agent_wait_time
     description: Agent wait time series
     config:
