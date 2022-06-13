@@ -96,7 +96,7 @@ def main():
 
     from fal_planner.plan import plan_graph
     from fal_planner.schedule import schedule_graph
-    from fal_planner.static_graph import graph
+    from fal_planner.static_graph_2 import graph
 
     for executor in [serial_executor, thread_based_executor]:
         task_queue = schedule_graph(plan_graph(graph))

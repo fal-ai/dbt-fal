@@ -3,8 +3,6 @@ from typing import Iterator
 
 import networkx as nx
 
-from fal_planner.static_graph_2 import graph
-
 
 def _find_subgraphs(graph: nx.DiGraph) -> Iterator[list[str]]:
     # Initially sort the graph, and split it
@@ -76,6 +74,3 @@ def plan_graph(graph: nx.DiGraph) -> nx.DiGraph:
         _reduce_subgraph(new_graph, nodes)
 
     return new_graph
-
-
-new_graph = plan_graph(graph)

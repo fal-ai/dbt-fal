@@ -58,7 +58,7 @@ class FalHookTask(Task):
 @dataclass
 class Node:
     task: Task
-    post_hooks: list[Task]
+    post_hooks: list[Task] = field(default_factory=list)
     dependencies: list[Node] = field(default_factory=list)
 
     @cached_property
@@ -127,8 +127,18 @@ class NodeQueue:
         # alltogether and unblock all of its dependencies.
         self._staged_nodes.remove(target_node)
 
-        assert status == SUCCESS
-        for node in self.nodes:
+        if status == FAILURE:
+            self._fail(target_node)
+        else:
+            self._succeed(target_node)
+
+    def _fail(self, target_node: Node) -> None:
+        for node in self.nodes.copy():
+            if target_node in node.dependencies:
+                self.nodes.remove(node)
+
+    def _succeed(self, target_node: Node) -> None:
+        for node in self.nodes.copy():
             if target_node in node.dependencies:
                 node.dependencies.remove(target_node)
 
