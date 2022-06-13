@@ -1,13 +1,12 @@
 from functools import reduce
 import os
-from typing import Dict, List
+from typing import List
 from behave import *
 from fal.cli import cli
 import tempfile
 import json
 import unittest
 from os.path import exists
-from enum import Enum
 from pathlib import Path
 from datetime import datetime, timezone
 import re
@@ -153,8 +152,8 @@ def _clear_all_artifacts(dir_name):
 def check_file_has_lines(context, script):
     filename = _script_filename(script)
     with open(_temp_dir_path(context, filename)) as handle:
-        handle_lines = [line.strip() for line in handle]
-        expected_lines = context.table.headings
+        handle_lines = [line.strip().lower() for line in handle]
+        expected_lines = [line.lower() for line in context.table.headings]
         for line in expected_lines:
             assert line in handle_lines, f"{line} not in {handle_lines}"
 
