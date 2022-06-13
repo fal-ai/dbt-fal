@@ -1,4 +1,5 @@
 import argparse
+from itertools import chain
 from pathlib import Path
 from typing import Dict, List
 import os
@@ -63,8 +64,11 @@ def fal_run(args: argparse.Namespace):
         raise_for_run_results_failures(scripts, results)
 
     else:
-        results = run_scripts(scripts, faldbt)
-        raise_for_run_results_failures(scripts, results)
+        results_after = run_scripts(scripts, faldbt)
+        raise_for_run_results_failures(scripts, results_after)
+
+        results_post_hook = run_scripts(_get_all_post_hooks(models, faldbt), faldbt)
+        raise_for_run_results_failures(scripts, results_post_hook)
 
         if not _scripts_flag(args):
             # run globals when no --script is passed
@@ -73,6 +77,16 @@ def fal_run(args: argparse.Namespace):
 
 def _scripts_flag(args: argparse.Namespace) -> bool:
     return bool(args.scripts)
+
+
+def _get_all_post_hooks(models: List[DbtModel], faldbt: FalDbt):
+    return list(chain(*(_get_model_post_hooks(model, faldbt) for model in models)))
+
+
+def _get_model_post_hooks(model: DbtModel, faldbt: FalDbt) -> List[FalScript]:
+    return (
+        FalScript(faldbt, model, path, True) for path in model.get_post_hook_paths()
+    )
 
 
 def _select_scripts(

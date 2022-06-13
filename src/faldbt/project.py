@@ -131,6 +131,9 @@ class DbtModel(_DbtNode):
     def get_depends_on_nodes(self) -> List[str]:
         return self.node.depends_on_nodes
 
+    def get_post_hook_paths(self, keyword: str = "fal") -> List[str]:
+        return self.meta.get(keyword, {}).get("post-hook", [])
+
     def get_scripts(self, keyword: str, before: bool) -> List[str]:
         # sometimes `scripts` can *be* there and still be None
         if self.meta.get(keyword):

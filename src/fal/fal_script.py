@@ -64,12 +64,20 @@ class FalScript:
     model: Optional[DbtModel]
     path: Path
     _faldbt: FalDbt
+    _is_post_hook: bool
 
-    def __init__(self, faldbt: FalDbt, model: Optional[DbtModel], path: str):
+    def __init__(
+        self,
+        faldbt: FalDbt,
+        model: Optional[DbtModel],
+        path: str,
+        is_post_hook: bool = False,
+    ):
         # Necessary because of frozen=True
         object.__setattr__(self, "model", model)
         object.__setattr__(self, "path", normalize_path(faldbt.scripts_dir, path))
         object.__setattr__(self, "_faldbt", faldbt)
+        object.__setattr__(self, "_is_post_hook", is_post_hook)
 
     @classmethod
     def model_script(cls, faldbt: FalDbt, model: DbtModel):
@@ -92,7 +100,6 @@ class FalScript:
                 "context": self._build_script_context(),
                 "ref": faldbt.ref,
                 "source": faldbt.source,
-                "write_to_source": faldbt.write_to_source,
                 "write_to_firestore": faldbt.write_to_firestore,
                 "list_models": faldbt.list_models,
                 "list_models_ids": faldbt.list_models_ids,
@@ -102,12 +109,22 @@ class FalScript:
                 "execute_sql": faldbt.execute_sql,
             }
 
-            if self.model is not None:
-                # Hard-wire the model
-                exec_globals["write_to_model"] = partial(
-                    faldbt.write_to_model, target_1=self.model.name, target_2=None
-                )
+            if not self._is_post_hook:
+                exec_globals["write_to_source"] = faldbt.write_to_source
 
+                if self.model is not None:
+                    # Hard-wire the model
+                    exec_globals["write_to_model"] = partial(
+                        faldbt.write_to_model, target_1=self.model.name, target_2=None
+                    )
+
+            else:
+                exec_globals["write_to_source"] = _not_allowed_function_maker(
+                    "write_to_source"
+                )
+                exec_globals["write_to_model"] = _not_allowed_function_maker(
+                    "write_to_model"
+                )
             exec(program, exec_globals)
         finally:
             pass
@@ -210,3 +227,15 @@ def _process_ipynb(raw_source_code: str) -> str:
     logger.debug(f"Joined .ipynb cells to:\n{joined_script}")
 
     return joined_script
+
+
+def _not_allowed_function_maker(function_name: str):
+    def not_allowed_function():
+        raise Exception(
+            (
+                f"{function_name} is not allowed in post-hooks."
+                " Consider using a Python model."
+            )
+        )
+
+    return not_allowed_function
