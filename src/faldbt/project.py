@@ -104,7 +104,7 @@ class DbtModel(_DbtNode):
     python_model: Optional[Path] = field(init=False, default=None)
 
     def __repr__(self):
-        attrs = ["name", "alias", "unique_id", "columns", "tests"]
+        attrs = ["name", "alias", "unique_id", "columns", "tests", "status"]
         props = ", ".join([f"{item}={repr(getattr(self, item))}" for item in attrs])
         return f"DbtModel({props})"
 
