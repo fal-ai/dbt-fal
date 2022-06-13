@@ -1,6 +1,5 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
 import six
-import os
 from datetime import datetime
 from dataclasses import dataclass
 from uuid import uuid4
@@ -219,6 +218,14 @@ def _build_table_from_parts(
 ):
     from dbt.contracts.relation import Path, RelationType
 
+    if adapter.type() == "snowflake":
+        if database is not None:
+            database = database.lower()
+        if schema is not None:
+            schema = schema.lower()
+        if identifier is not None:
+            identifier = identifier.lower()
+
     path = Path(database, schema, identifier)
 
     # NOTE: assuming we want TABLE relation if not found
@@ -299,18 +306,11 @@ def _write_relation(
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    if adapter.type() == "snowflake":
-        database, schema, identifier = (
-            relation.database.lower(),
-            relation.schema.lower(),
-            relation.identifier.lower(),
-        )
-    else:
-        database, schema, identifier = (
-            relation.database,
-            relation.schema,
-            relation.identifier,
-        )
+    database, schema, identifier = (
+        relation.database,
+        relation.schema,
+        relation.identifier,
+    )
 
     engine = _alchemy_engine(adapter, database)
     pddb = pdsql.SQLDatabase(engine, schema=schema)
