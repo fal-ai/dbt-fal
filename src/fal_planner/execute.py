@@ -8,7 +8,7 @@ from concurrent.futures import (
 from dataclasses import dataclass, field
 from typing import List
 
-from fal_planner.plan import FAILURE, SUCCESS, FalHookTask, Node, NodeQueue, Task
+from fal_planner.schedule import FAILURE, SUCCESS, FalHookTask, Node, NodeQueue, Task
 
 N_THREADS = 5
 
@@ -94,11 +94,12 @@ def thread_based_executor(queue: NodeQueue) -> None:
 def main():
     import time
 
-    from fal_planner.plan import load_graph
-    from fal_planner.static_graph_2 import graph
+    from fal_planner.plan import plan_graph
+    from fal_planner.schedule import schedule_graph
+    from fal_planner.static_graph import graph
 
     for executor in [serial_executor, thread_based_executor]:
-        task_queue = load_graph(graph)
+        task_queue = schedule_graph(plan_graph(graph))
         start_time = time.perf_counter()
         executor(task_queue)
         print(f"{executor.__name__!r} took: {time.perf_counter() - start_time}s")
