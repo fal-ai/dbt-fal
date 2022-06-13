@@ -87,13 +87,34 @@ def _execute_sql(
     sql: str,
     profile_target: str = None,
     config: RuntimeConfig = None,
+    adapter: Optional[SQLAdapter] = None
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
+    # TODO: DRY code
+    if adapter is None:
+        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
-    result = None
-    with adapter.connection_named(name):
+        # HACK: we need to include uniqueness (UUID4) to avoid clashes
+        name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
+        result = None
+        with adapter.connection_named(name):
+            response, execute_result = adapter.execute(sql, auto_begin=True, fetch=True)
+
+            table = ResultTable(
+                column_names=list(execute_result.column_names),
+                rows=[list(row) for row in execute_result],
+            )
+
+            result = RemoteRunResult(
+                raw_sql=sql,
+                compiled_sql=sql,
+                node=None,
+                table=table,
+                timing=[],
+                logs=[],
+                generated_at=datetime.utcnow(),
+            )
+            adapter.commit_if_has_connection()
+    else:
         response, execute_result = adapter.execute(sql, auto_begin=True, fetch=True)
 
         table = ResultTable(
@@ -110,7 +131,6 @@ def _execute_sql(
             logs=[],
             generated_at=datetime.utcnow(),
         )
-        adapter.commit_if_has_connection()
 
     return response, result
 
@@ -376,12 +396,8 @@ def _replace_relation(
     with adapter.connection_named(name):
         adapter.connections.begin()
 
-        original_exists = adapter.get_relation(
-            original_relation.database,
-            original_relation.schema,
-            original_relation.identifier,
-        )
-        if original_exists and adapter.type() != "bigquery":
+        if adapter.type() != "bigquery" and adapter.type() != "snowflake":
+            # NOTE: this is a 'DROP ... IF EXISTS', so it always passes
             adapter.drop_relation(original_relation)
 
         # HACK: athena doesn't support renaming tables, we do it manually
@@ -392,6 +408,7 @@ def _replace_relation(
                 profiles_dir,
                 six.text_type(create_stmt).strip(),
                 profile_target=profile_target,
+                adapter=adapter,
             )
             adapter.drop_relation(new_relation)
         elif adapter.type() == "bigquery":
@@ -401,10 +418,29 @@ def _replace_relation(
                 profiles_dir,
                 six.text_type(create_stmt).strip(),
                 profile_target=profile_target,
+                adapter=adapter,
+            )
+            adapter.drop_relation(new_relation)
+        elif adapter.type() == "snowflake":
+            create_stmt = (
+                f"create or replace table {original_relation} clone {new_relation}"
+            )
+            _execute_sql(
+                project_dir,
+                profiles_dir,
+                six.text_type(create_stmt).strip(),
+                profile_target=profile_target,
+                adapter=adapter,
             )
             adapter.drop_relation(new_relation)
         else:
             adapter.rename_relation(new_relation, original_relation)
+
+        config = parse.get_dbt_config(
+            project_dir, profiles_dir, profile_target=profile_target
+        )
+        manifest = parse.get_dbt_manifest(config)
+        adapter.set_relations_cache(manifest, True)
         adapter.connections.commit_if_has_connection()
 
 
