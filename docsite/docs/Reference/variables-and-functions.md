@@ -82,6 +82,20 @@ As you can see, the query strings support jinja.
 
 Note that the use of `ref` inside `execute_sql` does not create a node in a dbt dag. So in the case of Python models, you still need to specify dependencies in a comment at the top of the file. For more details, [see here](../Docs/fal-cli/python-models.md#dependencies-on-other-models).
 
+### `list_models` function
+You can access model information for all models in the dbt project:
+
+```python
+my_models = list_models()
+
+my_models[0].status
+# <NodeStatus.Success: 'success'>
+
+my_models[0].name
+# 'zendesk_ticket_data'
+```
+
+`list_models` returns a list of `DbtModel` objects that contain model and related test information.
 
 ## Write functions
 
@@ -140,10 +154,10 @@ from fal import FalDbt
 faldbt = FalDbt(profiles_dir="~/.dbt", project_dir="../my_project")
 
 faldbt.list_models()
-# {
-#   'zendesk_ticket_metrics': <RunStatus.Success: 'success'>,
-#   'stg_zendesk_ticket_data': <RunStatus.Success: 'success'>,
-# }
+# [
+#    DbtModel(name='zendesk_ticket_data' ...),
+#    DbtModel(name='agent_wait_time' ...)
+# ]
 
 df = faldbt.ref('stg_zendesk_ticket_data')
 df = add_zendesk_metrics_info(df)
