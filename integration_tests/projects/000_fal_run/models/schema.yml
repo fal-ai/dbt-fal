@@ -5,7 +5,7 @@ sources:
     database: "{{ env_var('DBT_DATABASE', 'test') }}"
     schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
     tables:
-      - name: john_source
+      - name: some_source
 
 models:
   - name: zendesk_ticket_data
@@ -14,9 +14,10 @@ models:
       materialized: table
     meta:
       fal:
-        scripts:
-          after:
-            - fal_scripts/after.py
+        post-hook:
+          - fal_scripts/post_hook.py
+          - fal_scripts/post_hook2.py
+
   - name: agent_wait_time
     description: Agent wait time series
     config:
@@ -38,3 +39,15 @@ models:
             - fal_scripts/before.py
           after:
             - fal_scripts/after.py
+
+  - name: some_model
+    meta:
+      fal:
+        post-hook:
+          - fal_scripts/write_to_model.py
+
+  - name: some_other_model
+    meta:
+      fal:
+        post-hook:
+          - fal_scripts/write_to_source.py
