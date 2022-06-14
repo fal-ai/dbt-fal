@@ -106,7 +106,7 @@ def _run_sub_graph(
             results = run_scripts(python_node_scripts, fal_dbt)
             raise_for_run_results_failures(python_node_scripts, results)
 
-        if len(post_hooks):
+        if post_hooks:
             results = run_scripts(post_hooks, fal_dbt)
             raise_for_run_results_failures(post_hooks, results)
 
