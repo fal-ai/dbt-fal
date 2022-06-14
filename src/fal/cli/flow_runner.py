@@ -85,18 +85,31 @@ def _run_sub_graph(
             fal_dbt.target_path,
             index,
         )
+        # TODO: Make sure post hooks run even if dbt nodes fail
         raise_for_dbt_run_errors(output)
         _mark_dbt_nodes_status(fal_dbt, NodeStatus.Success, dbt_nodes)
 
         fal_nodes = []
+        post_hooks = []
         for n in dbt_nodes:
             mnode = cast(DbtModelNode, node_graph.get_node(n))
             if mnode is not None and mnode.model.python_model is not None:
                 fal_nodes.append(n)
+
+            if mnode is not None:
+                model_hooks = [
+                    FalScript(fal_dbt, mnode.model, path, True)
+                    for path in mnode.model.get_post_hook_paths()
+                ]
+                post_hooks.extend(model_hooks)
         if len(fal_nodes) != 0:
             python_node_scripts = _id_to_fal_scripts(node_graph, fal_dbt, fal_nodes)
             results = run_scripts(python_node_scripts, fal_dbt)
             raise_for_run_results_failures(python_node_scripts, results)
+
+        if post_hooks:
+            results = run_scripts(post_hooks, fal_dbt)
+            raise_for_run_results_failures(post_hooks, results)
 
     if len(after_scripts) != 0:
         results = run_scripts(after_scripts, fal_dbt)

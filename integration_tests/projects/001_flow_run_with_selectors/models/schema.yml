@@ -4,9 +4,8 @@ models:
   - name: zendesk_ticket_data
     meta:
       fal:
-        scripts:
-          after:
-            - fal_scripts/check_extra.py
+        post-hook:
+          - fal_scripts/check_extra.py
 
   - name: model_a
 
