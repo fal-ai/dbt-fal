@@ -49,9 +49,10 @@ def initialize_dbt_flags(profiles_dir: str):
     """
     args = FlagsArgs(profiles_dir, None)
     user_config = parse.get_dbt_user_config(profiles_dir)
-    try:
+
+    if DBT_VCURRENT.compare(DBT_V1) >= 0:
         flags.set_from_args(args, user_config)
-    except TypeError:
+    else:
         flags.set_from_args(args)
 
     # Set invocation id
