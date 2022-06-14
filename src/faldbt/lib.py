@@ -160,10 +160,12 @@ def compile_sql(
             project_dir, profiles_dir, profile_target=profile_target
         )
 
-    from dbt.lib import get_dbt_config
-
     manifest = parse.get_dbt_manifest(config)
-    config = get_dbt_config(project_dir)
+
+    # HACK: to avoid 'Node package named <profile> not found'
+    adapters_factory.reset_adapters()
+    adapters_factory.register_adapter(config)
+
     adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
 
     block_parser = SqlBlockParser(
