@@ -177,7 +177,9 @@ def no_models_are_run(context):
 
 @then("no scripts are run")
 def no_scripts_are_run(context):
-    assert len(os.listdir(context.temp_dir.name)) == 0
+    results = os.listdir(context.temp_dir.name)
+
+    assert len(results) == 0 or (len(results) == 1 and results[0] == "target")
 
 
 @then("the following models are calculated")

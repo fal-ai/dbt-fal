@@ -1,5 +1,15 @@
 Feature: `flow run` command
 
+  Scenario: post hooks cannot be selected
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select check_extra.py
+      """
+    Then no models are calculated
+    And no scripts are run
+
   Scenario: fal flow run command with selectors
     Given the project 001_flow_run_with_selectors
     When the data is seeded
@@ -161,13 +171,26 @@ Feature: `flow run` command
     And the following scripts are ran:
       | agent_wait_time.after.py |
 
+  Scenario: fal flow run post-hooks run with parent model without +
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data --threads 1
+      """
+    Then the following models are calculated:
+      | zendesk_ticket_data |
+    And the following scripts are ran:
+      | zendesk_ticket_data.check_extra.py |
+
   Scenario: fal flow run command with vars
     Given the project 001_flow_run_with_selectors
     When the data is seeded
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data --threads 1
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
@@ -176,7 +199,7 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --vars 'extra_col: true' --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data --vars 'extra_col: true' --threads 1
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
@@ -250,13 +273,13 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data+ --threads 1
+      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data --threads 1
       """
     Then it throws an exception RuntimeError with message 'Error running dbt run'
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data+ --threads 1 --target custom
+      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data --threads 1 --target custom
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
