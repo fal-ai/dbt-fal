@@ -144,6 +144,37 @@ def _get_target_relation(
     return relation
 
 
+def compile_sql(
+    project_dir: str,
+    profiles_dir: str,
+    sql: str,
+    profile_target: str = None,
+    config: RuntimeConfig = None,
+):
+    from dbt.parser.manifest import process_node
+    from dbt.task.sql import SqlCompileRunner
+    from dbt.parser.sql import SqlBlockParser
+
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+    if config is None:
+        config = parse.get_dbt_config(
+            project_dir, profiles_dir, profile_target=profile_target
+        )
+
+    manifest = parse.get_dbt_manifest(config)
+    block_parser = SqlBlockParser(
+        project=config,
+        manifest=manifest,
+        root_project=config,
+    )
+
+    name = "compile_sql:" + str(hash(str(sql))) + ":" + str(uuid4())
+    sql_node = block_parser.parse_remote(sql, name)
+    process_node(config, manifest, sql_node)
+    runner = SqlCompileRunner(config, adapter, sql_node, 1, 1)
+    return runner.safe_run(manifest)
+
+
 def execute_sql(
     project_dir: str,
     profiles_dir: str,
