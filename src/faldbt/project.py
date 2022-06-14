@@ -642,7 +642,13 @@ class FalDbt:
         # ran from GitHub Actions. For some reason, it can not find the right profile.
         # Haven't been able to reproduce this behavior locally and therefore developed
         # this workaround.
-        compiled = lib.compile_sql(self.project_dir, self.profiles_dir, sql, self._profile_target, self._config)
+        compiled = lib.compile_sql(
+            project_dir=self.project_dir,
+            profiles_dir=self.profiles_dir,
+            sql=sql,
+            profile_target=self._profile_target,
+            config=self._config,
+        )
 
         # HACK: we need to pass config in because of weird behavior of execute_sql when
         # ran from GitHub Actions. For some reason, it can not find the right profile.

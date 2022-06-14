@@ -155,11 +155,11 @@ def compile_sql(
     from dbt.task.sql import SqlCompileRunner
     from dbt.parser.sql import SqlBlockParser
 
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
     if config is None:
         config = parse.get_dbt_config(
             project_dir, profiles_dir, profile_target=profile_target
         )
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
 
     manifest = parse.get_dbt_manifest(config)
     block_parser = SqlBlockParser(
