@@ -1,14 +1,12 @@
-from concurrent.futures import (
-    FIRST_COMPLETED,
-    Executor,
-    Future,
-    ThreadPoolExecutor,
-    wait,
-)
+import argparse
+from concurrent.futures import (FIRST_COMPLETED, Executor, Future,
+                                ThreadPoolExecutor, wait)
 from dataclasses import dataclass, field
 from typing import List
 
-from fal_planner.schedule import FAILURE, SUCCESS, FalHookTask, Node, NodeQueue, Task
+from fal.planner.schedule import SUCCESS, NodeQueue
+from fal.planner.tasks import FalHookTask, Node, Task
+from faldbt.project import FalDbt
 
 N_THREADS = 5
 
@@ -25,6 +23,8 @@ def serial_executor(queue: NodeQueue) -> None:
 
 @dataclass
 class FutureGroup:
+    args: argparse.Namespace
+    fal_dbt: FalDbt
     node: Node
     executor: Executor
     futures: list[Future] = field(default_factory=list)
@@ -48,7 +48,11 @@ class FutureGroup:
 
     def _add_tasks(self, *tasks: Task) -> None:
         for task in tasks:
-            future = self.executor.submit(task.execute)
+            future = self.executor.submit(
+                task.execute,
+                args=self.args,
+                fal_dbt=self.fal_dbt,
+            )
             future.task, future.group = task, self
             self.futures.append(future)
 
@@ -57,7 +61,9 @@ class FutureGroup:
         return len(self.futures) == 0
 
 
-def thread_based_executor(queue: NodeQueue) -> None:
+def parallel_executor(
+    args: argparse.Namespace, fal_dbt: FalDbt, queue: NodeQueue
+) -> None:
     def get_futures(future_groups):
         return {
             # Unpack all running futures into a single set
@@ -71,7 +77,12 @@ def thread_based_executor(queue: NodeQueue) -> None:
         return [
             # FutureGroup's are the secondary layer of the executor,
             # managing the parallelization of tasks.
-            FutureGroup(node, executor)
+            FutureGroup(
+                args,
+                fal_dbt,
+                node=node,
+                executor=executor,
+            )
             for node in queue.iter_available_nodes()
         ]
 
@@ -89,21 +100,3 @@ def thread_based_executor(queue: NodeQueue) -> None:
 
             # And load all the tasks that were blocked by those futures.
             future_groups.extend(create_futures(executor))
-
-
-def main():
-    import time
-
-    from fal_planner.plan import plan_graph
-    from fal_planner.schedule import schedule_graph
-    from fal_planner.static_graph_2 import graph
-
-    for executor in [serial_executor, thread_based_executor]:
-        task_queue = schedule_graph(plan_graph(graph))
-        start_time = time.perf_counter()
-        executor(task_queue)
-        print(f"{executor.__name__!r} took: {time.perf_counter() - start_time}s")
-
-
-if __name__ == "__main__":
-    main()

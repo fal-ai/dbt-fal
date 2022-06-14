@@ -1,7 +1,8 @@
-import itertools
+import copy
 from typing import Iterator
 
 import networkx as nx
+from fal.node_graph import NodeKind
 
 
 def _find_subgraphs(graph: nx.DiGraph) -> Iterator[list[str]]:
@@ -26,7 +27,7 @@ def _find_subgraphs(graph: nx.DiGraph) -> Iterator[list[str]]:
 
     for node in nx.topological_sort(graph):
         properties = graph.nodes[node]
-        if properties["kind"] == "python model":
+        if properties["kind"] is NodeKind.FAL_MODEL:
             yield from split()
             continue
 
@@ -68,9 +69,39 @@ def _reduce_subgraph(
 
 def plan_graph(graph: nx.DiGraph) -> nx.DiGraph:
     # Implementation of Gorkem's Algorithm
-    new_graph = graph.copy()
+    new_graph = copy.deepcopy(graph)
 
     for nodes in _find_subgraphs(new_graph):
         _reduce_subgraph(new_graph, nodes)
 
     return new_graph
+
+
+def __test_reorder_graph(graph: nx.DiGraph) -> nx.DiGraph:
+    # Temporarily re-order the graph for testing purposes. Eliminates the
+    # before scripts and makes all after scripts post-hooks.
+
+    from fal.cli.selectors import _is_before_script
+
+    new_graph = copy.deepcopy(graph)
+
+    for node, properties in graph.nodes(data=True):
+        kind = properties["kind"]
+        if kind is not NodeKind.FAL_SCRIPT:
+            continue
+
+        if _is_before_script(node):
+            [model] = new_graph.successors(node)
+            assert len(list(new_graph.predecessors(node))) == 0
+            new_graph.remove_node(node)
+        else:
+            [model] = new_graph.predecessors(node)
+            assert len(list(graph.successors(node))) == 0
+            new_graph.remove_node(node)
+            new_graph.nodes[model].setdefault("post-hook", []).append(node)
+
+    return new_graph
+
+
+def _dump_graph(graph: nx.DiGraph) -> None:
+    nx.nx_agraph.view_pygraphviz(graph)

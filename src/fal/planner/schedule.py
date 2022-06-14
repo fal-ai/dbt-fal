@@ -1,86 +1,33 @@
 from __future__ import annotations
 
-import time
-import uuid
-from collections import defaultdict
 from dataclasses import dataclass, field
-from functools import cached_property
-from typing import Any, Iterator
+from typing import Iterator
 
 import networkx as nx
-
-# For testing purposes, each task takes 0.2 seconds
-TIMEOUT = 0.2
-DBT_OVERHEAD = 0.02
-
-SUCCESS = 0
-FAILURE = 1
+from fal.node_graph import NodeGraph
+from fal.planner.tasks import SUCCESS, DBTTask, FalHookTask, FalModelTask, Node
 
 
-class Task:
-    def execute(self) -> int:
-        raise NotImplementedError
-
-
-@dataclass
-class DBTTask(Task):
-    selectors: list[str]
-
-    def execute(self) -> int:
-        print(f"$ dbt run --select {' '.join(self.selectors)}")
-        time.sleep(DBT_OVERHEAD + TIMEOUT * len(self.selectors))
-        print("(DONE) $ dbt run --select {}".format(" ".join(self.selectors)))
-        return SUCCESS
-
-
-@dataclass
-class FalModelTask(Task):
-    model_name: str
-
-    def execute(self) -> int:
-        print(f"$ fal run {self.model_name}")
-        time.sleep(TIMEOUT)
-        print(f"(DONE) $ fal run {self.model_name}")
-        return SUCCESS
-
-
-@dataclass
-class FalHookTask(Task):
-    hook_name: str
-
-    def execute(self) -> int:
-        print(f"$ ./scripts/{self.hook_name}.py")
-        time.sleep(TIMEOUT)
-        print(f"(DONE) $ ./scripts/{self.hook_name}.py")
-        return SUCCESS
-
-
-@dataclass
-class Node:
-    task: Task
-    post_hooks: list[Task] = field(default_factory=list)
-    dependencies: list[Node] = field(default_factory=list)
-
-    @cached_property
-    def id(self) -> str:
-        return str(uuid.uuid4())
-
-
-def create_node(node: str | nx.DiGraph, properties: dict) -> Node:
+def create_node(
+    node: str | nx.DiGraph, properties: dict, node_graph: NodeGraph
+) -> Node:
     kind = properties["kind"]
 
     if kind == "dbt model":
         if isinstance(node, str):
-            selectors = [node]
+            model_ids = [node]
         else:
-            selectors = list(node)
-        task = DBTTask(selectors=selectors)
+            model_ids = list(node)
+        task = DBTTask(model_ids=model_ids)
     else:
         assert isinstance(node, str)
         task = FalModelTask(model_name=node)
 
     post_hooks = [
-        FalHookTask(hook_name=hook_name)
+        FalHookTask(
+            hook_name=hook_name,
+            bound_node=node_graph.get_node(hook_name),
+        )
         for hook_name in properties.get("post-hook", [])
     ]
     return Node(task, post_hooks=post_hooks)
@@ -90,6 +37,7 @@ def create_node(node: str | nx.DiGraph, properties: dict) -> Node:
 class NodeQueue:
     nodes: list[Node]
     _staged_nodes: list[Node] = field(default_factory=list)
+    _counter: int = 0
 
     def _calculate_node_score(self, target_node: Node) -> tuple[int, int]:
         # Determine the priority of the node by doing a bunch
@@ -119,6 +67,9 @@ class NodeQueue:
         # just yet (since that would unblock all of its dependencies). So
         # we temporarily add it to a separate group of nodes (staged).
 
+        self._counter += 1
+        target_node.set_run_index(self._counter)
+
         self.nodes.remove(target_node)
         self._staged_nodes.append(target_node)
 
@@ -127,10 +78,12 @@ class NodeQueue:
         # alltogether and unblock all of its dependencies.
         self._staged_nodes.remove(target_node)
 
-        if status == FAILURE:
-            self._fail(target_node)
-        else:
+        if status == SUCCESS:
             self._succeed(target_node)
+        else:
+            self._fail(target_node)
+
+        target_node.exit(status)
 
     def _fail(self, target_node: Node) -> None:
         for node in self.nodes.copy():
@@ -154,9 +107,9 @@ class NodeQueue:
             yield node
 
 
-def schedule_graph(graph: nx.DiGraph) -> NodeQueue:
+def schedule_graph(graph: nx.DiGraph, node_graph: NodeGraph) -> NodeQueue:
     tasks = {
-        node: create_node(node, properties)
+        node: create_node(node, properties, node_graph)
         for node, properties in graph.nodes(data=True)
     }
 

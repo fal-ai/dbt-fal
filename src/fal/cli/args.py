@@ -136,6 +136,18 @@ def _add_experimental_python_models_option(parser: argparse.ArgumentParser):
     )
 
 
+def _add_experimental_threading(parser: argparse.ArgumentParser):
+    # Testing only (this option might be removed when the PR becomes stable).
+    parser.add_argument(
+        "--experimental-threads",
+        default=1,
+        type=int,
+        help="""
+        Run the built dag in parallel. Implies --experimental-flow and --experimental-models.
+        """,
+    )
+
+
 def _build_dbt_selectors(sub: argparse.ArgumentParser):
 
     # fmt: off
@@ -213,6 +225,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _add_state_option(flow_run_parser)
     _add_experimental_flow_option(flow_run_parser)
     _add_experimental_python_models_option(flow_run_parser)
+    _add_experimental_threading(flow_run_parser)
     _add_vars_option(flow_run_parser)
     _add_target_option(flow_run_parser)
 
