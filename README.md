@@ -271,7 +271,11 @@ from fal import FalDbt
 faldbt = FalDbt(profiles_dir="~/.dbt", project_dir="../my_project")
 
 faldbt.list_sources()
-# [['results', 'ticket_data_sentiment_analysis']]
+# [
+#    DbtSource(name='results' ...),
+#    DbtSource(name='ticket_data_sentiment_analysis' ...)
+#    ...
+# ]
 
 faldbt.list_models()
 # [
