@@ -33,6 +33,7 @@ class RuntimeArgs:
     profiles_dir: str
     threads: Optional[int]
     single_threaded: bool
+    profile: Optional[str]
     target: Optional[str]
 
 
@@ -50,6 +51,7 @@ def get_dbt_config(
     project_dir: str,
     profiles_dir: str,
     threads: Optional[int] = None,
+    profile: Optional[str] = None,
     profile_target: Optional[str] = None,
 ) -> RuntimeConfig:
     # Construct a phony config
@@ -58,6 +60,7 @@ def get_dbt_config(
         profiles_dir=profiles_dir,
         threads=threads,
         single_threaded=False,
+        profile=profile,
         target=profile_target,
     )
     return RuntimeConfig.from_args(args)
