@@ -2,6 +2,7 @@ from functools import reduce
 import os
 from typing import List
 from behave import *
+import glob
 from fal.cli import cli
 import tempfile
 import json
@@ -176,7 +177,9 @@ def no_models_are_run(context):
 
 @then("no scripts are run")
 def no_scripts_are_run(context):
-    assert len(os.listdir(context.temp_dir.name)) == 0
+    results = glob.glob(f"{context.temp_dir.name}/*.txt")
+
+    assert len(results) == 0
 
 
 @then("the following models are calculated")
