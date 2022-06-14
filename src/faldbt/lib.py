@@ -159,9 +159,13 @@ def compile_sql(
         config = parse.get_dbt_config(
             project_dir, profiles_dir, profile_target=profile_target
         )
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
+
+    from dbt.lib import get_dbt_config
 
     manifest = parse.get_dbt_manifest(config)
+    config = get_dbt_config(project_dir)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
+
     block_parser = SqlBlockParser(
         project=config,
         manifest=manifest,
@@ -425,7 +429,7 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
         url_string = f"bigquery://{database}"
     if adapter.type() == "postgres":
         url_string = "postgresql://"
-        
+
     # TODO: add special cases as needed
 
     def null_dump(sql, *multiparams, **params):
