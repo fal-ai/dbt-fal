@@ -178,12 +178,19 @@ class NodeGraph:
                 return inode.model.python_model
             return False
 
+        def has_post_hooks(node_id: str):
+            inode = self.get_node(node_id)
+            if isinstance(inode, DbtModelNode):
+                return bool(inode.model.get_post_hook_paths())
+            return False
+
         is_model_pred = lambda node_name: node_name.split(".")[0] == "model"
         # fmt:off
         return (
             (any(_is_script(i) for i in successors) and
             any(is_model_pred(i) for i in successors)) or
-            is_python_model(node)
+            is_python_model(node) or
+            has_post_hooks(node)
         )
         # fmt:on
 
