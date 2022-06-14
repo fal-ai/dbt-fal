@@ -87,35 +87,12 @@ def _execute_sql(
     sql: str,
     profile_target: str = None,
     config: RuntimeConfig = None,
-    adapter: Optional[SQLAdapter] = None
+    adapter: Optional[SQLAdapter] = None,
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
-    # TODO: DRY code
-    if adapter is None:
-        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
-
-        # HACK: we need to include uniqueness (UUID4) to avoid clashes
-        name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
-        result = None
-        with adapter.connection_named(name):
-            response, execute_result = adapter.execute(sql, auto_begin=True, fetch=True)
-
-            table = ResultTable(
-                column_names=list(execute_result.column_names),
-                rows=[list(row) for row in execute_result],
-            )
-
-            result = RemoteRunResult(
-                raw_sql=sql,
-                compiled_sql=sql,
-                node=None,
-                table=table,
-                timing=[],
-                logs=[],
-                generated_at=datetime.utcnow(),
-            )
-            adapter.commit_if_has_connection()
-    else:
-        response, execute_result = adapter.execute(sql, auto_begin=True, fetch=True)
+    def __exec(adapter: SQLAdapter, transaction: bool):
+        response, execute_result = adapter.execute(
+            sql, auto_begin=transaction, fetch=True
+        )
 
         table = ResultTable(
             column_names=list(execute_result.column_names),
@@ -132,6 +109,21 @@ def _execute_sql(
             generated_at=datetime.utcnow(),
         )
 
+        if transaction:
+            adapter.commit_if_has_connection()
+
+        return response, result
+
+    response, result = None, None
+    if adapter is None:
+        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
+
+        # HACK: we need to include uniqueness (UUID4) to avoid clashes
+        name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
+        with adapter.connection_named(name):
+            response, result = __exec(adapter, True)
+    else:
+        response, result = __exec(adapter, False)
     return response, result
 
 
