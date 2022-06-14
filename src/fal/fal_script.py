@@ -1,6 +1,6 @@
 import os
 import json
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional, Union, Callable
 from pathlib import Path
 from functools import partial
 from dataclasses import dataclass
@@ -64,6 +64,8 @@ class FalScript:
     model: Optional[DbtModel]
     path: Path
     _faldbt: FalDbt
+
+    # TODO: delete this property once we deprecate after scripts
     _is_post_hook: bool
 
     def __init__(
@@ -229,7 +231,7 @@ def _process_ipynb(raw_source_code: str) -> str:
     return joined_script
 
 
-def _not_allowed_function_maker(function_name: str):
+def _not_allowed_function_maker(function_name: str) -> Callable[[Any], None]:
     def not_allowed_function():
         raise Exception(
             (
