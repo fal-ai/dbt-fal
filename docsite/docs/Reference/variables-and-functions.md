@@ -97,6 +97,21 @@ my_models[0].name
 
 `list_models` returns a list of `DbtModel` objects that contain model and related test information.
 
+### `list_sources` function
+You can access source information for all sources in the dbt project:
+
+```python
+my_sources = list_sources()
+
+my_sources[0].name
+# 'zendesk_ticket_data'
+
+my_sources[0].tests
+# []
+```
+
+`list_sources` returns a list of `DbtSource` objects that contain source and related test information.
+
 ## Write functions
 
 It is also possible to send data back to your data warehouse. This makes it easy to get the data, process it, and upload it back into dbt territory.
