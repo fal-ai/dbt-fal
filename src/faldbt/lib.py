@@ -388,12 +388,12 @@ def _replace_relation(
     with adapter.connection_named(name):
         adapter.connections.begin()
 
-        if adapter.type() != "bigquery" and adapter.type() != "snowflake":
-            # NOTE: this is a 'DROP ... IF EXISTS', so it always passes
+        if adapter.type() not in ("bigquery", "snowflake"):
+            # This is a 'DROP ... IF EXISTS', so it always works
             adapter.drop_relation(original_relation)
 
-        # HACK: athena doesn't support renaming tables, we do it manually
         if adapter.type() == "athena":
+            # HACK: athena doesn't support renaming tables, we do it manually
             create_stmt = f"create table {original_relation} as select * from {new_relation} with data"
             _execute_sql(
                 project_dir,
@@ -428,12 +428,13 @@ def _replace_relation(
         else:
             adapter.rename_relation(new_relation, original_relation)
 
+        adapter.connections.commit_if_has_connection()
+
         config = parse.get_dbt_config(
             project_dir, profiles_dir, profile_target=profile_target
         )
         manifest = parse.get_dbt_manifest(config)
         adapter.set_relations_cache(manifest, True)
-        adapter.connections.commit_if_has_connection()
 
 
 def _drop_relation(
