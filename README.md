@@ -274,12 +274,12 @@ faldbt.list_sources()
 # [['results', 'ticket_data_sentiment_analysis']]
 
 faldbt.list_models()
-# {
-#   'zendesk_ticket_metrics': <RunStatus.Success: 'success'>,
-#   'stg_o3values': <RunStatus.Success: 'success'>,
-#   'stg_zendesk_ticket_data': <RunStatus.Success: 'success'>,
-#   'stg_counties': <RunStatus.Success: 'success'>
-# }
+# [
+#    DbtModel(name='zendesk_ticket_data' ...),
+#    DbtModel(name='agent_wait_time' ...)
+#    ...
+# ]
+
 
 sentiments = faldbt.source('results', 'ticket_data_sentiment_analysis')
 # pandas.DataFrame
