@@ -1,6 +1,13 @@
+from __future__ import annotations
+
 import argparse
-from concurrent.futures import (FIRST_COMPLETED, Executor, Future,
-                                ThreadPoolExecutor, wait)
+from concurrent.futures import (
+    FIRST_COMPLETED,
+    Executor,
+    Future,
+    ThreadPoolExecutor,
+    wait,
+)
 from dataclasses import dataclass, field
 from typing import List
 

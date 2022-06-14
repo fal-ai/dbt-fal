@@ -45,6 +45,10 @@ def _add_after_scripts(
 ) -> Tuple[nx.DiGraph, Dict[str, FalFlowNode]]:
     "Add dbt node to after scripts edges to the graph"
     after_scripts = model.get_scripts(faldbt.keyword, False)
+    # TEMPORARY!!!
+    # Make all after scripts a post-hook for testing purposes!!!
+    graph.nodes[upstream_fal_node_unique_id]["post-hook"].extend(after_scripts)
+
     after_fal_scripts = map(
         lambda script_path: FalScript(faldbt, model, script_path), after_scripts
     )
@@ -112,6 +116,7 @@ class NodeGraph:
             graph.add_node(
                 model_fal_node.unique_id,
                 kind=NodeKind.FAL_MODEL if model.python_model else NodeKind.DBT_MODEL,
+                **{"post-hook": model.get_post_hook_paths()}
             )
 
             # Add dbt model dependencies

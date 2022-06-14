@@ -7,11 +7,10 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Union, cast
 
 from dbt.logger import GLOBAL_LOGGER as logger
-from fal.node_graph import DbtModelNode, FalFlowNode, FalScript, ScriptNode
-from faldbt.project import FalDbt
+from fal.node_graph import FalScript
+from faldbt.project import DbtModel, FalDbt
 
 SUCCESS = 0
 FAILURE = 1
@@ -32,16 +31,6 @@ def _unique_ids_to_model_names(id_list: list[str]) -> list[str]:
     return list(map(_unique_id_to_model_name, id_list))
 
 
-def node_to_script(node: Union[FalFlowNode, None], fal_dbt: FalDbt) -> FalScript:
-    """Convert dbt node into a FalScript."""
-    if node is not None and isinstance(node, ScriptNode):
-        return cast(ScriptNode, node).script
-    elif node is not None and isinstance(node, DbtModelNode):
-        return FalScript.model_script(fal_dbt, node.model)
-    else:
-        raise Exception(f"Cannot convert node to script. Node: {node}")
-
-
 @dataclass
 class DBTTask(Task):
     model_ids: list[str]
@@ -58,6 +47,7 @@ class DBTTask(Task):
             model_names,
             fal_dbt.target_path,
             self._run_index,
+            use_temp_dirs=True,
         )
         return output.return_code
 
@@ -74,11 +64,11 @@ class FalModelTask(Task):
 
 @dataclass
 class FalHookTask(Task):
-    hook_name: str
-    bound_node: FalScript
+    hook_path: str
+    bound_model: Optional[DbtModel] = None
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        script = node_to_script(self.bound_node, fal_dbt)
+        script = FalScript(fal_dbt, self.bound_model, self.hook_path, True)
         logger.debug("Running script {}", script.id)
         try:
             with self._modify_path(fal_dbt):

@@ -13,22 +13,27 @@ def create_node(
 ) -> Node:
     kind = properties["kind"]
 
+    model_ids = [node]
     if kind == "dbt model":
-        if isinstance(node, str):
-            model_ids = [node]
-        else:
-            model_ids = list(node)
+        if isinstance(node, nx.DiGraph):
+            model_ids = sorted(
+                list(node),
+                key=lambda node: node == properties["exit_node"],
+            )
         task = DBTTask(model_ids=model_ids)
     else:
         assert isinstance(node, str)
         task = FalModelTask(model_name=node)
 
+    model_node = node_graph.get_node(model_ids[-1])
+    assert model_node is not None
+
     post_hooks = [
         FalHookTask(
-            hook_name=hook_name,
-            bound_node=node_graph.get_node(hook_name),
+            hook_path=hook_path,
+            bound_model=model_node.model,
         )
-        for hook_name in properties.get("post-hook", [])
+        for hook_path in properties.get("post-hook", [])
     ]
     return Node(task, post_hooks=post_hooks)
 

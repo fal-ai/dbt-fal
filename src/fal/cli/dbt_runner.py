@@ -7,6 +7,7 @@ from dbt.logger import GLOBAL_LOGGER as logger
 import os
 import shutil
 from os.path import exists
+import tempfile
 import argparse
 
 
@@ -88,7 +89,11 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> Li
 
 
 def dbt_run(
-    args: argparse.Namespace, models_list: List[str], target_path: str, run_index: int
+    args: argparse.Namespace,
+    models_list: List[str],
+    target_path: str,
+    run_index: int,
+    use_temp_dirs: bool = False,
 ):
     "Run the dbt run command in a subprocess"
 
@@ -103,8 +108,16 @@ def dbt_run(
     logs = []
     output = []
 
+    extra_args = {}
+    if use_temp_dirs:
+        extra_args['env'] = os.environ.copy()
+        extra_args['env']['temp_dir'] = temp_dir = tempfile.mkdtemp()
+
     process = subprocess.Popen(
-        command_list, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        command_list,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        **extra_args
     )
 
     for raw_line in process.stdout or []:
@@ -126,10 +139,18 @@ def dbt_run(
 
     raw_output = "\n".join(output)
 
-    _create_fal_result_file(target_path, run_index)
+    base_dir, target_dir_name = os.path.split(target_path)
+    if use_temp_dirs:
+        base_dir = temp_dir
+
+    run_results_file = os.path.join(base_dir, target_dir_name, "run_results.json")
+    _create_fal_result_file(run_results_file, target_path, run_index)
 
     # Remove run_result.json files in between dbt runs during the same fal flow run
-    os.remove(_get_run_result_file(target_path))
+    if use_temp_dirs:
+        shutil.rmtree(temp_dir)
+    else:
+        os.remove(run_results_file)
 
     return DbtCliOutput(
         command=full_command,
@@ -139,13 +160,9 @@ def dbt_run(
     )
 
 
-def _get_run_result_file(target_path: str) -> str:
-    return os.path.join(target_path, "run_results.json")
 
-
-def _create_fal_result_file(target_path: str, run_index: int):
-    fal_run_result = _get_run_result_file(target_path)
-    if exists(fal_run_result):
+def _create_fal_result_file(run_results_file: str, target_path: str, run_index: int):
+    if exists(run_results_file):
         shutil.copy(
-            fal_run_result, os.path.join(target_path, f"fal_results_{run_index}.json")
+            run_results_file, os.path.join(target_path, f"fal_results_{run_index}.json")
         )

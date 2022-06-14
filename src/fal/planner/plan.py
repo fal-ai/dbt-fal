@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 from typing import Iterator
 
@@ -55,7 +57,11 @@ def _reduce_subgraph(
 
     # Use the same set of properties as the last
     # node, since only it can have post hooks.
-    graph.add_node(subgraph, **graph.nodes[nodes[-1]].copy())
+    graph.add_node(
+        subgraph,
+        **graph.nodes[nodes[-1]].copy(),
+        exit_node=nodes[-1],
+    )
 
     for node in nodes:
         for predecessor in graph.predecessors(node):
@@ -77,9 +83,10 @@ def plan_graph(graph: nx.DiGraph) -> nx.DiGraph:
     return new_graph
 
 
+# TEMPORARY!!!
 def __test_reorder_graph(graph: nx.DiGraph) -> nx.DiGraph:
     # Temporarily re-order the graph for testing purposes. Eliminates the
-    # before scripts and makes all after scripts post-hooks.
+    # before and after scripts.
 
     from fal.cli.selectors import _is_before_script
 
@@ -91,14 +98,10 @@ def __test_reorder_graph(graph: nx.DiGraph) -> nx.DiGraph:
             continue
 
         if _is_before_script(node):
-            [model] = new_graph.successors(node)
             assert len(list(new_graph.predecessors(node))) == 0
-            new_graph.remove_node(node)
         else:
-            [model] = new_graph.predecessors(node)
             assert len(list(graph.successors(node))) == 0
-            new_graph.remove_node(node)
-            new_graph.nodes[model].setdefault("post-hook", []).append(node)
+        new_graph.remove_node(node)
 
     return new_graph
 
