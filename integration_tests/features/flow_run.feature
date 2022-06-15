@@ -283,3 +283,17 @@ Feature: `flow run` command
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
+
+  Scenario: post hooks run after both successful and failed dbt models
+    Given the project 003_scripts_with_errors
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude before.py
+      """
+    Then it throws an exception RuntimeError with message 'Error running dbt run'
+    And the following scripts are ran:
+      | 003_working_model.post_hook.py | some_model.post_hook.py |
+    And the script 003_working_model.post_hook.py output file has the lines:
+      | Status: success |
+    And the script some_model.post_hook.py output file has the lines:
+      | Status: error |

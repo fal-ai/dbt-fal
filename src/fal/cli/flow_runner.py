@@ -132,6 +132,8 @@ def _mark_dbt_nodes_status(
 def _map_cli_output_model_statuses(
     cli_output: DbtCliOutput,
 ) -> Iterator[Tuple[str, NodeStatus]]:
+    # Right now we only check for errors and mark everything else as successful
+    # TODO: Include other statuses
     for line in cli_output.logs:
         unique_id = line.get("data", {}).get("node_info", {}).get("unique_id")
         if unique_id and line["data"].get("status") == "error":
