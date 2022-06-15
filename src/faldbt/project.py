@@ -365,6 +365,7 @@ class FalDbt:
             filter(
                 # Find models that have both feature store and column defs
                 lambda model: keyword in model.meta
+                and isinstance(model.meta[keyword], dict)
                 and "feature_store" in model.meta[keyword]
                 and len(list(model.columns.keys())) > 0,
                 models,
