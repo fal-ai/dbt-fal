@@ -5,11 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, cast, Union, Tuple, Any, Iterator
 
 from fal.run_scripts import raise_for_run_results_failures, run_scripts
-from fal.cli.dbt_runner import (
-    dbt_run,
-    raise_for_dbt_run_errors,
-    get_index_run_results,
-)
+from fal.cli.dbt_runner import dbt_run, raise_for_dbt_run_errors
 from fal.cli.fal_runner import create_fal_dbt
 from fal.cli.selectors import ExecutionPlan
 from fal.cli.model_generator import generate_python_dbt_models
@@ -90,8 +86,7 @@ def _run_sub_graph(
             index,
         )
 
-        run_results = get_index_run_results(fal_dbt.target_path, index)
-        for node, status in _map_cli_output_model_statuses(run_results):
+        for node, status in _map_cli_output_model_statuses(output.run_results):
             _mark_dbt_nodes_status(fal_dbt, status, node)
 
         fal_nodes = []
@@ -140,6 +135,7 @@ def _map_cli_output_model_statuses(
 ) -> Iterator[Tuple[str, NodeStatus]]:
     if type(run_results.get("results")) != list:
         raise Exception("Could not read dbt run results")
+
     for result in run_results["results"]:
         if not result.get("unique_id") or not result.get("status"):
             continue
