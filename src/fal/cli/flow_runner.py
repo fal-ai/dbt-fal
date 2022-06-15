@@ -103,16 +103,35 @@ def _run_sub_graph(
                 ]
                 post_hooks.extend(model_hooks)
 
+        fal_nodes_results = ()
+        if fal_nodes:
+            python_node_scripts = _id_to_fal_scripts(node_graph, fal_dbt, fal_nodes)
+            results = run_scripts(python_node_scripts, fal_dbt)
+            # We need to hold on to results until after we run post-hooks
+            fal_nodes_results = python_node_scripts, results
+            for i, r in enumerate(results):
+                if r is False:
+                    _mark_dbt_nodes_status(
+                        fal_dbt,
+                        NodeStatus.Error,
+                        python_node_scripts[i].model.unique_id,
+                    )
+                else:
+                    _mark_dbt_nodes_status(
+                        fal_dbt,
+                        NodeStatus.Success,
+                        python_node_scripts[i].model.unique_id,
+                    )
+
         if post_hooks:
             results = run_scripts(post_hooks, fal_dbt)
             raise_for_run_results_failures(post_hooks, results)
 
+        if fal_nodes_results:
+            raise_for_run_results_failures(
+                scripts=fal_nodes_results[0], results=fal_nodes_results[1]
+            )
         raise_for_dbt_run_errors(output)
-
-        if fal_nodes:
-            python_node_scripts = _id_to_fal_scripts(node_graph, fal_dbt, fal_nodes)
-            results = run_scripts(python_node_scripts, fal_dbt)
-            raise_for_run_results_failures(python_node_scripts, results)
 
     if after_scripts:
         results = run_scripts(after_scripts, fal_dbt)
@@ -133,7 +152,7 @@ def _mark_dbt_nodes_status(
 def _map_cli_output_model_statuses(
     run_results: Dict[Any, Any]
 ) -> Iterator[Tuple[str, NodeStatus]]:
-    if type(run_results.get("results")) != list:
+    if not isinstance(run_results.get("results"), list):
         raise Exception("Could not read dbt run results")
 
     for result in run_results["results"]:
@@ -213,3 +232,13 @@ def _get_fal_run_results(target_path) -> List[str]:
         filter(lambda p: p.is_file(), Path(target_path).glob("fal_results_*.json")),
     )
     return list(run_result_files)
+
+
+def _get_failed_python_model_ids(
+    scripts: List[FalScript], results: List[bool]
+) -> Iterator[str]:
+    """Get a list of failed model ids from results data, scripts and results are 1:1."""
+    if False in results:
+        for i, r in enumerate(results):
+            if r is False:
+                yield scripts[i].model.unique_id
