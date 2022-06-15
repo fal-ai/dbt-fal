@@ -14,7 +14,7 @@ from dbt.contracts.results import RunStatus
 from dbt.config.runtime import RuntimeConfig
 from dbt.logger import GLOBAL_LOGGER as logger
 
-if lib.DBT_VCURRENT.compare(lib.DBT_V1) >= 0:
+if lib.IS_DBT_V1PLUS:
     from dbt.contracts.graph.parsed import ColumnInfo
 else:
     from faldbt.cp.contracts.graph.parsed import ColumnInfo

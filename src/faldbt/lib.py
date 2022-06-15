@@ -29,7 +29,9 @@ from sqlalchemy.sql import Insert
 
 DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.get_installed_version()
-IS_DBT_V0 = not DBT_VCURRENT.compare(DBT_V1) >= 0
+
+IS_DBT_V1PLUS = DBT_VCURRENT.compare(DBT_V1) >= 0
+IS_DBT_V0 = not IS_DBT_V1PLUS
 
 if IS_DBT_V0:
     from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
@@ -49,20 +51,21 @@ def initialize_dbt_flags(profiles_dir: str):
     """
     args = FlagsArgs(profiles_dir, None)
     user_config = parse.get_dbt_user_config(profiles_dir)
-    try:
+
+    if IS_DBT_V1PLUS:
         flags.set_from_args(args, user_config)
-    except TypeError:
+    else:
         flags.set_from_args(args)
 
     # Set invocation id
-    if DBT_VCURRENT.compare(DBT_V1) >= 0:
+    if IS_DBT_V1PLUS:
         import dbt.events.functions as events_functions
 
         events_functions.set_invocation_id()
 
     # Re-enable logging for 1.0.0 through old API of logger
     # TODO: migrate for 1.0.0 code to new event system
-    if DBT_VCURRENT.compare(DBT_V1) >= 0:
+    if IS_DBT_V1PLUS:
         flags.ENABLE_LEGACY_LOGGER = "1"
 
 
