@@ -232,7 +232,7 @@ def _process_ipynb(raw_source_code: str) -> str:
 
 
 def _not_allowed_function_maker(function_name: str) -> Callable[[Any], None]:
-    def not_allowed_function():
+    def not_allowed_function(*args):
         raise Exception(
             (
                 f"{function_name} is not allowed in post-hooks."
