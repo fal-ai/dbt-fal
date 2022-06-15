@@ -10,7 +10,7 @@ def test_get_dbt_command_list_with_select():
     parsed = parse_args(["flow", "run"])
     models = ["modelA", "modelB"]
     command_list = get_dbt_command_list(parsed, models)
-    if not lib.DBT_VCURRENT.compare(lib.DBT_V1) < 0:
+    if lib.IS_DBT_V1PLUS:
         assert_contains_only(
             command_list,
             [

@@ -2,7 +2,7 @@ from typing import List
 import sys
 
 from fal.cli.flow_runner import fal_flow_run
-from faldbt.lib import DBT_VCURRENT, DBT_V1
+import faldbt.lib as lib
 from .args import parse_args
 from .fal_runner import fal_run
 from fal.telemetry import telemetry
@@ -31,7 +31,7 @@ def _cli(argv: List[str]):
     if parsed.disable_logging:
         logger.disable()
     # Re-enable logging for 1.0.0 through old API of logger
-    elif DBT_VCURRENT.compare(DBT_V1) >= 0:
+    elif lib.IS_DBT_V1PLUS:
         if logger.disabled:
             logger.enable()
 
