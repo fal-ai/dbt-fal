@@ -11,7 +11,7 @@ models:
             - fal_scripts/before.py
           after:
             - fal_scripts/after.py
-  - name: 003_working_model
+  - name: working_model
     meta:
       fal:
         post-hook:

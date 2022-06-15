@@ -292,8 +292,8 @@ Feature: `flow run` command
       """
     Then it throws an exception RuntimeError with message 'Error running dbt run'
     And the following scripts are ran:
-      | 003_working_model.post_hook.py | some_model.post_hook.py |
-    And the script 003_working_model.post_hook.py output file has the lines:
+      | working_model.post_hook.py | some_model.post_hook.py |
+    And the script working_model.post_hook.py output file has the lines:
       | Status: success |
     And the script some_model.post_hook.py output file has the lines:
       | Status: error |

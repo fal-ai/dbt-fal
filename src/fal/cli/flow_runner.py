@@ -85,7 +85,7 @@ def _run_sub_graph(
             fal_dbt.target_path,
             index,
         )
-        for node, status in _map_cli_output_model_statuses(output):
+        for node, status in _map_cli_output_model_statuses(output).items():
             _mark_dbt_nodes_status(fal_dbt, status, node)
 
         fal_nodes = []
@@ -131,15 +131,24 @@ def _mark_dbt_nodes_status(
 
 def _map_cli_output_model_statuses(
     cli_output: DbtCliOutput,
-) -> Iterator[Tuple[str, NodeStatus]]:
+) -> Dict[str, NodeStatus]:
     # Right now we only check for errors and mark everything else as successful
     # TODO: Include other statuses
+    status_map = {}
     for line in cli_output.logs:
-        unique_id = line.get("data", {}).get("node_info", {}).get("unique_id")
-        if unique_id and line["data"].get("status") == "error":
-            yield line["data"]["node_info"]["unique_id"], NodeStatus.Error
-        elif unique_id and line["data"].get("status"):
-            yield line["data"]["node_info"]["unique_id"], NodeStatus.Success
+        if line.get("data"):
+            # dbt version above 1.1
+            unique_id = line["data"].get("node_info", {}).get("unique_id")
+            status = line["data"].get("status")
+        else:
+            # dbt version below 1.1
+            unique_id = line.get("extra", {}).get("unique_id")
+            status = line.get("levelname")
+        if unique_id and str(status).lower() == "error":
+            status_map[unique_id] = NodeStatus.Error
+        elif unique_id and status:
+            status_map[unique_id] = NodeStatus.Success
+    return status_map
 
 
 def _id_to_fal_scripts(
