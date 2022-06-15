@@ -1,6 +1,5 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
 import six
-import os
 from datetime import datetime
 from dataclasses import dataclass
 from uuid import uuid4
@@ -91,14 +90,10 @@ def _execute_sql(
     sql: str,
     profile_target: str = None,
     config: RuntimeConfig = None,
+    adapter: Optional[SQLAdapter] = None,
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
-
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
-    result = None
-    with adapter.connection_named(name):
-        response, execute_result = adapter.execute(sql, auto_begin=True, fetch=True)
+    def _exec(adapter: SQLAdapter):
+        response, execute_result = adapter.execute(sql, fetch=True)
 
         table = ResultTable(
             column_names=list(execute_result.column_names),
@@ -114,9 +109,30 @@ def _execute_sql(
             logs=[],
             generated_at=datetime.utcnow(),
         )
-        adapter.commit_if_has_connection()
+
+        return response, result
+
+    response, result = None, None
+    if adapter is None:
+        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
+
+        # HACK: we need to include uniqueness (UUID4) to avoid clashes
+        name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
+        with adapter.connection_named(name):
+            adapter.connections.begin()
+            response, result = _exec(adapter)
+            adapter.commit_if_has_connection()
+    else:
+        response, result = _exec(adapter)
 
     return response, result
+
+
+def _clear_relations_cache(adapter: SQLAdapter, config: RuntimeConfig):
+    # HACK: Sometimes we cache an incomplete cache or create stuff without the cache noticing.
+    #       Some adapters work without this. We should separate adapter solutions like dbt.
+    manifest = parse.get_dbt_manifest(config)
+    adapter.set_relations_cache(manifest, True)
 
 
 def _get_target_relation(
@@ -129,14 +145,11 @@ def _get_target_relation(
     config = parse.get_dbt_config(
         project_dir, profiles_dir, profile_target=profile_target
     )
-    manifest = parse.get_dbt_manifest(config)
 
     name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
     with adapter.connection_named(name):
-        # HACK: Sometimes we cache an incomplete cache or create stuff without the cache noticing.
-        #       Some adapters work without this. We should separate adapter solutions like dbt.
-        adapter.set_relations_cache(manifest, True)
+        _clear_relations_cache(adapter, config)
         target_name = target.name
         if isinstance(target, ParsedModelNode):
             target_name = target.alias
@@ -222,6 +235,14 @@ def _build_table_from_parts(
 ):
     from dbt.contracts.relation import Path, RelationType
 
+    if adapter.type() == "snowflake":
+        if database is not None:
+            database = database.lower()
+        if schema is not None:
+            schema = schema.lower()
+        if identifier is not None:
+            identifier = identifier.lower()
+
     path = Path(database, schema, identifier)
 
     # NOTE: assuming we want TABLE relation if not found
@@ -302,18 +323,11 @@ def _write_relation(
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    if adapter.type() == "snowflake":
-        database, schema, identifier = (
-            relation.database.lower(),
-            relation.schema.lower(),
-            relation.identifier.lower(),
-        )
-    else:
-        database, schema, identifier = (
-            relation.database,
-            relation.schema,
-            relation.identifier,
-        )
+    database, schema, identifier = (
+        relation.database,
+        relation.schema,
+        relation.identifier,
+    )
 
     engine = _alchemy_engine(adapter, database)
     pddb = pdsql.SQLDatabase(engine, schema=schema)
@@ -379,22 +393,19 @@ def _replace_relation(
     with adapter.connection_named(name):
         adapter.connections.begin()
 
-        original_exists = adapter.get_relation(
-            original_relation.database,
-            original_relation.schema,
-            original_relation.identifier,
-        )
-        if original_exists and adapter.type() != "bigquery":
+        if adapter.type() not in ("bigquery", "snowflake"):
+            # This is a 'DROP ... IF EXISTS', so it always works
             adapter.drop_relation(original_relation)
 
-        # HACK: athena doesn't support renaming tables, we do it manually
         if adapter.type() == "athena":
+            # HACK: athena doesn't support renaming tables, we do it manually
             create_stmt = f"create table {original_relation} as select * from {new_relation} with data"
             _execute_sql(
                 project_dir,
                 profiles_dir,
                 six.text_type(create_stmt).strip(),
                 profile_target=profile_target,
+                adapter=adapter,
             )
             adapter.drop_relation(new_relation)
         elif adapter.type() == "bigquery":
@@ -404,11 +415,30 @@ def _replace_relation(
                 profiles_dir,
                 six.text_type(create_stmt).strip(),
                 profile_target=profile_target,
+                adapter=adapter,
+            )
+            adapter.drop_relation(new_relation)
+        elif adapter.type() == "snowflake":
+            create_stmt = (
+                f"create or replace table {original_relation} clone {new_relation}"
+            )
+            _execute_sql(
+                project_dir,
+                profiles_dir,
+                six.text_type(create_stmt).strip(),
+                profile_target=profile_target,
+                adapter=adapter,
             )
             adapter.drop_relation(new_relation)
         else:
             adapter.rename_relation(new_relation, original_relation)
-        adapter.connections.commit_if_has_connection()
+
+        adapter.commit_if_has_connection()
+
+        config = parse.get_dbt_config(
+            project_dir, profiles_dir, profile_target=profile_target
+        )
+        _clear_relations_cache(adapter, config)
 
 
 def _drop_relation(
@@ -424,7 +454,7 @@ def _drop_relation(
     with adapter.connection_named(name):
         adapter.connections.begin()
         adapter.drop_relation(relation)
-        adapter.connections.commit_if_has_connection()
+        adapter.commit_if_has_connection()
 
 
 def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
@@ -432,16 +462,11 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
     if adapter.type() == "bigquery":
         assert database is not None
         url_string = f"bigquery://{database}"
+
     if adapter.type() == "postgres":
         url_string = "postgresql://"
 
-    # TODO: add special cases as needed
-
-    def null_dump(sql, *multiparams, **params):
-        pass
-
     if adapter.type() == "athena":
-
         SCHEMA_NAME = adapter.config.credentials.schema
         S3_STAGING_DIR = adapter.config.credentials.s3_staging_dir
         AWS_REGION = adapter.config.credentials.region_name
@@ -456,5 +481,10 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
             schema_name=SCHEMA_NAME,
             s3_staging_dir=quote_plus(S3_STAGING_DIR),
         )
+
+    # TODO: add special cases as needed
+
+    def null_dump(sql, *multiparams, **params):
+        pass
 
     return sqlalchemy.create_mock_engine(url_string, executor=null_dump)
