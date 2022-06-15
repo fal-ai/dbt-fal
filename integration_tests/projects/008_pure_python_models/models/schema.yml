@@ -10,6 +10,8 @@ models:
   - name: model_c # Python model
     meta:
       fal:
+        post-hook:
+          - post_hook.py
         scripts:
           - after.py
   - name: model_d
@@ -18,3 +20,8 @@ models:
       fal:
         scripts:
           - after.py
+  - name: broken_model # Python model that will throw an exception
+    meta:
+      fal:
+        post-hook:
+          - post_hook.py

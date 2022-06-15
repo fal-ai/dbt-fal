@@ -17,11 +17,13 @@ class DbtCliOutput:
         return_code: int,
         raw_output: str,
         logs: List[Dict[str, Any]],
+        run_results: Dict[str, Any],
     ):
         self._command = command
         self._return_code = return_code
         self._raw_output = raw_output
         self._logs = logs
+        self._run_results = run_results
 
     @property
     def docs_url(self) -> Optional[str]:
@@ -42,6 +44,10 @@ class DbtCliOutput:
     @property
     def logs(self) -> List[Dict[str, Any]]:
         return self._logs
+
+    @property
+    def run_results(self) -> Dict[str, Any]:
+        return self._run_results
 
 
 def raise_for_dbt_run_errors(output: DbtCliOutput):
@@ -128,6 +134,8 @@ def dbt_run(
 
     _create_fal_result_file(target_path, run_index)
 
+    run_results = _get_index_run_results(target_path, run_index)
+
     # Remove run_result.json files in between dbt runs during the same fal flow run
     os.remove(_get_run_result_file(target_path))
 
@@ -136,7 +144,16 @@ def dbt_run(
         return_code=return_code,
         raw_output=raw_output,
         logs=logs,
+        run_results=run_results,
     )
+
+
+def _get_index_run_results(target_path: str, run_index: int) -> Dict[Any, Any]:
+    """Get run results for a given run index."""
+    with open(
+        os.path.join(target_path, f"fal_results_{run_index}.json")
+    ) as raw_results:
+        return json.load(raw_results)
 
 
 def _get_run_result_file(target_path: str) -> str:

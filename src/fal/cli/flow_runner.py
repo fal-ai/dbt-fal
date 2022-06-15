@@ -2,7 +2,7 @@ from functools import reduce
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, cast, Union
+from typing import Dict, List, Optional, cast, Union, Tuple, Any, Iterator
 
 from fal.run_scripts import raise_for_run_results_failures, run_scripts
 from fal.cli.dbt_runner import dbt_run, raise_for_dbt_run_errors
@@ -74,20 +74,20 @@ def _run_sub_graph(
         list(filter(lambda node: node in nodes, plan.after_scripts)),
     )
 
-    if len(before_scripts) != 0:
+    if before_scripts:
         results = run_scripts(before_scripts, fal_dbt)
         raise_for_run_results_failures(before_scripts, results)
 
-    if len(dbt_nodes) != 0:
+    if dbt_nodes:
         output = dbt_run(
             parsed,
             _unique_ids_to_model_names(dbt_nodes),
             fal_dbt.target_path,
             index,
         )
-        # TODO: Make sure post hooks run even if dbt nodes fail
-        raise_for_dbt_run_errors(output)
-        _mark_dbt_nodes_status(fal_dbt, NodeStatus.Success, dbt_nodes)
+
+        for node, status in _map_cli_output_model_statuses(output.run_results):
+            _mark_dbt_nodes_status(fal_dbt, status, node)
 
         fal_nodes = []
         post_hooks = []
@@ -102,29 +102,59 @@ def _run_sub_graph(
                     for path in mnode.model.get_post_hook_paths()
                 ]
                 post_hooks.extend(model_hooks)
-        if len(fal_nodes) != 0:
+
+        fal_nodes_results = {}
+        if fal_nodes:
             python_node_scripts = _id_to_fal_scripts(node_graph, fal_dbt, fal_nodes)
             results = run_scripts(python_node_scripts, fal_dbt)
-            raise_for_run_results_failures(python_node_scripts, results)
+            # We need to hold on to results until after we run post-hooks
+            fal_nodes_results = {"scripts": python_node_scripts, "results": results}
+
+            # Update dbt node status of Python nodes
+            for script, success in zip(python_node_scripts, results):
+                status = NodeStatus.Success if success else NodeStatus.Error
+                _mark_dbt_nodes_status(
+                    fal_dbt,
+                    status,
+                    script.model.unique_id,
+                )
 
         if post_hooks:
             results = run_scripts(post_hooks, fal_dbt)
             raise_for_run_results_failures(post_hooks, results)
 
-    if len(after_scripts) != 0:
+        if fal_nodes_results:
+            raise_for_run_results_failures(**fal_nodes_results)
+
+        raise_for_dbt_run_errors(output)
+
+    if after_scripts:
         results = run_scripts(after_scripts, fal_dbt)
         raise_for_run_results_failures(after_scripts, results)
 
 
 def _mark_dbt_nodes_status(
-    fal_dbt: FalDbt, status: NodeStatus, dbt_nodes: Optional[List[str]] = None
+    fal_dbt: FalDbt, status: NodeStatus, dbt_node: Optional[str] = None
 ):
     for model in fal_dbt.models:
-        if dbt_nodes is not None:
-            if model.unique_id in dbt_nodes:
+        if dbt_node is not None:
+            if model.unique_id == dbt_node:
                 model.set_status(status)
         else:
             model.set_status(status)
+
+
+def _map_cli_output_model_statuses(
+    run_results: Dict[Any, Any]
+) -> Iterator[Tuple[str, NodeStatus]]:
+    if not isinstance(run_results.get("results"), list):
+        raise Exception("Could not read dbt run results")
+
+    for result in run_results["results"]:
+        if not result.get("unique_id") or not result.get("status"):
+            continue
+
+        yield result["unique_id"], NodeStatus(result["status"])
 
 
 def _id_to_fal_scripts(
