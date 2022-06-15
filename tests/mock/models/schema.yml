@@ -39,12 +39,15 @@ models:
           entity_column: a
           timestamp_column: b
   - name: model_empty_scripts
-    meta: 
-      fal: 
+    meta:
+      fal:
         scripts:
   - name: model_no_fal
     meta:
       other: things
+  - name: model_empty_fal
+    meta:
+      fal:
 
 # global
 fal:

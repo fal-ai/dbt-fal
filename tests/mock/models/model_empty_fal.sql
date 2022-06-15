@@ -1,3 +1,3 @@
 {{ config(materialized='table') }}
 
-SELECT 6 AS a
+SELECT 7 AS a
