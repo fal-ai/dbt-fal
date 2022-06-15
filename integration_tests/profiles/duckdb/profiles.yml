@@ -1,3 +1,6 @@
+config:
+  send_anonymous_usage_stats: False
+
 fal_test:
   target: integration_tests
   outputs:
