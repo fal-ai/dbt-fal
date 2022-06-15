@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Iterator
 
 import networkx as nx
-from fal.node_graph import NodeGraph
+from fal.node_graph import NodeGraph, NodeKind
 from fal.planner.tasks import SUCCESS, DBTTask, FalHookTask, FalModelTask, Node
 
 
@@ -12,9 +12,9 @@ def create_node(
     node: str | nx.DiGraph, properties: dict, node_graph: NodeGraph
 ) -> Node:
     kind = properties["kind"]
-
     model_ids = [node]
-    if kind == "dbt model":
+
+    if kind is NodeKind.DBT_MODEL:
         if isinstance(node, nx.DiGraph):
             model_ids = sorted(
                 list(node),
@@ -22,11 +22,14 @@ def create_node(
             )
         task = DBTTask(model_ids=model_ids)
     else:
+        assert kind is NodeKind.FAL_MODEL
         assert isinstance(node, str)
-        task = FalModelTask(model_name=node)
+        task = FalModelTask(model_ids=model_ids)
 
     model_node = node_graph.get_node(model_ids[-1])
     assert model_node is not None
+    if isinstance(task, FalModelTask):
+        task.bound_model = model_node.model
 
     post_hooks = [
         FalHookTask(

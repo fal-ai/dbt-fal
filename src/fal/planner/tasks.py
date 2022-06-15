@@ -10,7 +10,8 @@ from functools import cached_property
 
 from dbt.logger import GLOBAL_LOGGER as logger
 from fal.node_graph import FalScript
-from faldbt.project import DbtModel, FalDbt
+from faldbt.project import DbtModel, FalDbt, NodeStatus
+from fal.utils import print_run_info
 
 SUCCESS = 0
 FAILURE = 1
@@ -31,6 +32,44 @@ def _unique_ids_to_model_names(id_list: list[str]) -> list[str]:
     return list(map(_unique_id_to_model_name, id_list))
 
 
+def _mark_dbt_nodes_status(
+    fal_dbt: FalDbt,
+    status: NodeStatus,
+    dbt_nodes: list[str] | None = None,
+):
+    for model in fal_dbt.models:
+        if dbt_nodes is not None:
+            if model.unique_id in dbt_nodes:
+                model.set_status(status)
+        else:
+            model.set_status(status)
+
+
+def _run_script(script: FalScript, fal_dbt: FalDbt):
+    print_run_info([script])
+    logger.debug("Running script {}", script.id)
+    try:
+        with _modify_path(fal_dbt):
+            script.exec(fal_dbt)
+    except:
+        logger.error("Error in script {}:\n{}", script.id, traceback.format_exc())
+        # TODO: what else to do?
+        status = FAILURE
+    else:
+        status = SUCCESS
+    finally:
+        logger.debug("Finished script {}", script.id)
+
+    return status
+
+
+@contextmanager
+def _modify_path(fal_dbt: FalDbt):
+    sys.path.append(fal_dbt.scripts_dir)
+    yield
+    sys.path.remove(fal_dbt.scripts_dir)
+
+
 @dataclass
 class DBTTask(Task):
     model_ids: list[str]
@@ -49,46 +88,40 @@ class DBTTask(Task):
             self._run_index,
             use_temp_dirs=True,
         )
+        _mark_dbt_nodes_status(fal_dbt, NodeStatus.Success, self.model_ids)
         return output.return_code
 
 
 @dataclass
-class FalModelTask(Task):
-    model_name: str
+class FalModelTask(DBTTask):
+    bound_model: DbtModel | None = None
+
+    def __post_init__(self):
+        assert (
+            len(self.model_ids) == 1
+        ), "Python model tasks can't contain multiple selectors"
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        print(f"$ fal run {self.model_name}")
-        print(f"(DONE) $ fal run {self.model_name}")
-        return SUCCESS
+        # Run the ephemeral model
+        dbt_result = super().execute(args, fal_dbt)
+
+        # And then run the Python script if it didn't fail.
+        if dbt_result != SUCCESS:
+            return dbt_result
+
+        assert self.bound_model is not None
+        bound_script = FalScript.model_script(fal_dbt, self.bound_model)
+        return _run_script(bound_script, fal_dbt=fal_dbt)
 
 
 @dataclass
 class FalHookTask(Task):
     hook_path: str
-    bound_model: Optional[DbtModel] = None
+    bound_model: DbtModel | None = None
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         script = FalScript(fal_dbt, self.bound_model, self.hook_path, True)
-        logger.debug("Running script {}", script.id)
-        try:
-            with self._modify_path(fal_dbt):
-                script.exec(fal_dbt)
-        except:
-            logger.error("Error in script {}:\n{}", script.id, traceback.format_exc())
-            # TODO: what else to do?
-            status = FAILURE
-        else:
-            status = SUCCESS
-        finally:
-            logger.debug("Finished script {}", script.id)
-
-        return status
-
-    @contextmanager
-    def _modify_path(self, fal_dbt: FalDbt):
-        sys.path.append(fal_dbt.scripts_dir)
-        yield
-        sys.path.remove(fal_dbt.scripts_dir)
+        return _run_script(script, fal_dbt=fal_dbt)
 
 
 @dataclass

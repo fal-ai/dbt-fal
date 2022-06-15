@@ -20,13 +20,17 @@ RUN_RESULTS_FILE_NAME = "run_results.json"
 RUN_RESULTS_KEY = "results"
 
 
+def _is_experimental_features_enabled(parsed: argparse.Namespace):
+    return parsed.experimental_python_models or parsed.experimental_threads > 1
+
+
 def run_serial(
     fal_dbt: FalDbt,
     parsed: argparse.Namespace,
     node_graph: NodeGraph,
 ):
     main_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    if parsed.experimental_flow or parsed.experimental_python_models:
+    if parsed.experimental_flow or _is_experimental_features_enabled(parsed):
         sub_graphs = main_graph.generate_sub_graphs()
     else:
         sub_graphs = [main_graph]
@@ -63,7 +67,7 @@ def run_threaded(
 
 def fal_flow_run(parsed: argparse.Namespace):
     generated_models: Dict[str, Path] = {}
-    if parsed.experimental_python_models:
+    if _is_experimental_features_enabled(parsed):
         telemetry.log_call("experimental_python_models")
         generated_models = generate_python_dbt_models(parsed.project_dir)
 

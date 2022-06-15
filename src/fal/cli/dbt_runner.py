@@ -111,6 +111,10 @@ def dbt_run(
     extra_args = {}
     if use_temp_dirs:
         extra_args['env'] = os.environ.copy()
+        # TEMPORARY!!!
+        # Instead of using temp_dir ENV variable, this should change
+        # do something that works on all DBT projects not on FAL (change)
+        # the actual target dir somehow with flags etc.
         extra_args['env']['temp_dir'] = temp_dir = tempfile.mkdtemp()
 
     process = subprocess.Popen(
