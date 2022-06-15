@@ -5,7 +5,7 @@ Feature: Python nodes
   Scenario: Run a project with Python nodes
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --exclude 008_broken_model
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --exclude broken_model
       """
     Then the following models are calculated:
       | model_a | model_b | model_c.py | model_d | model_e.ipynb |
@@ -29,13 +29,13 @@ Feature: Python nodes
   Scenario: Python model post hooks run even when model script fails
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select 008_broken_model
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select broken_model
       """
     Then the following scripts are ran:
-      | 008_broken_model.post_hook.py |
-    And the script 008_broken_model.post_hook.py output file has the lines:
+      | broken_model.post_hook.py |
+    And the script broken_model.post_hook.py output file has the lines:
       | Status: error |
-    And it throws an exception RuntimeError with message 'Error in scripts (model: models/staging/008_broken_model.py)'
+    And it throws an exception RuntimeError with message 'Error in scripts (model: models/staging/broken_model.py)'
 
   Scenario: Run a Python node without write to model should error
     Given the project 003_scripts_with_errors

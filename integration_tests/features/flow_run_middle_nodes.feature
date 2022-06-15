@@ -48,7 +48,7 @@ Feature: `flow run` command with py nodes in the middle
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --exclude broken_model
       """
     And the following command is invoked:
       """
@@ -57,7 +57,7 @@ Feature: `flow run` command with py nodes in the middle
     Then the following models are calculated:
       | model_c.py | model_d | model_e.ipynb |
     And the following scripts are ran:
-      | model_c.after.py | model_e.after.py |
+      | model_c.after.py | model_e.after.py | model_c.post_hook.py |
 
   Scenario: fal flow run command with triple intersection selectors on parents
     When the following command is invoked:

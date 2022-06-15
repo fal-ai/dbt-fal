@@ -20,7 +20,7 @@ models:
       fal:
         scripts:
           - after.py
-  - name: 008_broken_model # Python model that will throw an exception
+  - name: broken_model # Python model that will throw an exception
     meta:
       fal:
         post-hook:
