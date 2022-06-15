@@ -139,6 +139,14 @@ def dbt_run(
     )
 
 
+def get_index_run_results(target_path: str, run_index: int) -> Dict[Any, Any]:
+    """Get run results for a given run index."""
+    with open(
+        os.path.join(target_path, f"fal_results_{run_index}.json")
+    ) as raw_results:
+        return json.load(raw_results)
+
+
 def _get_run_result_file(target_path: str) -> str:
     return os.path.join(target_path, "run_results.json")
 
