@@ -89,10 +89,8 @@ def _execute_sql(
     config: RuntimeConfig = None,
     adapter: Optional[SQLAdapter] = None,
 ) -> Tuple[AdapterResponse, RemoteRunResult]:
-    def __exec(adapter: SQLAdapter, transaction: bool):
-        response, execute_result = adapter.execute(
-            sql, auto_begin=transaction, fetch=True
-        )
+    def _exec(adapter: SQLAdapter):
+        response, execute_result = adapter.execute(sql, fetch=True)
 
         table = ResultTable(
             column_names=list(execute_result.column_names),
@@ -109,9 +107,6 @@ def _execute_sql(
             generated_at=datetime.utcnow(),
         )
 
-        if transaction:
-            adapter.commit_if_has_connection()
-
         return response, result
 
     response, result = None, None
@@ -121,10 +116,20 @@ def _execute_sql(
         # HACK: we need to include uniqueness (UUID4) to avoid clashes
         name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
         with adapter.connection_named(name):
-            response, result = __exec(adapter, True)
+            adapter.connections.begin()
+            response, result = _exec(adapter)
+            adapter.commit_if_has_connection()
     else:
-        response, result = __exec(adapter, False)
+        response, result = _exec(adapter)
+
     return response, result
+
+
+def _clear_relations_cache(adapter: SQLAdapter, config: RuntimeConfig):
+    # HACK: Sometimes we cache an incomplete cache or create stuff without the cache noticing.
+    #       Some adapters work without this. We should separate adapter solutions like dbt.
+    manifest = parse.get_dbt_manifest(config)
+    adapter.set_relations_cache(manifest, True)
 
 
 def _get_target_relation(
@@ -137,14 +142,11 @@ def _get_target_relation(
     config = parse.get_dbt_config(
         project_dir, profiles_dir, profile_target=profile_target
     )
-    manifest = parse.get_dbt_manifest(config)
 
     name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
     with adapter.connection_named(name):
-        # HACK: Sometimes we cache an incomplete cache or create stuff without the cache noticing.
-        #       Some adapters work without this. We should separate adapter solutions like dbt.
-        adapter.set_relations_cache(manifest, True)
+        _clear_relations_cache(adapter, config)
         target_name = target.name
         if isinstance(target, ParsedModelNode):
             target_name = target.alias
@@ -428,13 +430,12 @@ def _replace_relation(
         else:
             adapter.rename_relation(new_relation, original_relation)
 
-        adapter.connections.commit_if_has_connection()
+        adapter.commit_if_has_connection()
 
         config = parse.get_dbt_config(
             project_dir, profiles_dir, profile_target=profile_target
         )
-        manifest = parse.get_dbt_manifest(config)
-        adapter.set_relations_cache(manifest, True)
+        _clear_relations_cache(adapter, config)
 
 
 def _drop_relation(
@@ -450,7 +451,7 @@ def _drop_relation(
     with adapter.connection_named(name):
         adapter.connections.begin()
         adapter.drop_relation(relation)
-        adapter.connections.commit_if_has_connection()
+        adapter.commit_if_has_connection()
 
 
 def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
@@ -458,16 +459,11 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
     if adapter.type() == "bigquery":
         assert database is not None
         url_string = f"bigquery://{database}"
+
     if adapter.type() == "postgres":
         url_string = "postgresql://"
 
-    # TODO: add special cases as needed
-
-    def null_dump(sql, *multiparams, **params):
-        pass
-
     if adapter.type() == "athena":
-
         SCHEMA_NAME = adapter.config.credentials.schema
         S3_STAGING_DIR = adapter.config.credentials.s3_staging_dir
         AWS_REGION = adapter.config.credentials.region_name
@@ -482,5 +478,10 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
             schema_name=SCHEMA_NAME,
             s3_staging_dir=quote_plus(S3_STAGING_DIR),
         )
+
+    # TODO: add special cases as needed
+
+    def null_dump(sql, *multiparams, **params):
+        pass
 
     return sqlalchemy.create_mock_engine(url_string, executor=null_dump)
