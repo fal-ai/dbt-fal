@@ -96,11 +96,6 @@ class DBTTask(Task):
 class FalModelTask(DBTTask):
     bound_model: DbtModel | None = None
 
-    def __post_init__(self):
-        assert (
-            len(self.model_ids) == 1
-        ), "Python model tasks can't contain multiple selectors"
-
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         # Run the ephemeral model
         dbt_result = super().execute(args, fal_dbt)

@@ -29,10 +29,6 @@ def _find_subgraphs(graph: nx.DiGraph) -> Iterator[list[str]]:
 
     for node in nx.topological_sort(graph):
         properties = graph.nodes[node]
-        if properties["kind"] is NodeKind.FAL_MODEL:
-            yield from split()
-            continue
-
         ancestors = nx.ancestors(graph, node)
         if not current_stack:
             allowed_ancestors = ancestors
@@ -43,7 +39,10 @@ def _find_subgraphs(graph: nx.DiGraph) -> Iterator[list[str]]:
         current_stack.append(node)
         allowed_ancestors |= {node, *ancestors}
 
-        if properties.get("post-hook"):
+        if (
+            properties["kind"] is NodeKind.FAL_MODEL
+            or properties.get("post-hook")
+        ):
             yield from split()
 
     yield from split()
