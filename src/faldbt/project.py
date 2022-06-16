@@ -87,14 +87,19 @@ class DbtTest(_DbtNode):
                 # except in dbt v 0.20.1, where we need to filter 'where' string out
                 self.column = metadata.kwargs.get("column_name", None)
 
-                found = re.findall(r"'([^']+)'", metadata.kwargs["model"])
-                res = [r for r in found if r != "where"]
+                # TODO: Handle package models?
+                refs = re.findall(r"ref\('([^']+)'\)", metadata.kwargs["model"])
 
-                if len(res) == 1:
-                    self.model = res[0]
+                if refs:
+                    self.model = refs[0]
 
-                if len(res) == 2:
-                    self.source = (res[0], res[1])
+                print(metadata.kwargs["model"])
+                sources = re.findall(
+                    r"source\('([^']+)', *'([^']+)'\)", metadata.kwargs["model"]
+                )
+                print(sources)
+                if sources:
+                    self.source = sources[0]
             else:
                 logger.warn(f"Non-generic test was not processed: {node.name}")
 
