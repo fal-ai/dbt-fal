@@ -9,6 +9,13 @@ import networkx as nx
 import os as os
 import copy
 from functools import reduce
+from enum import Enum
+
+
+class NodeKind(str, Enum):
+    DBT_MODEL = "dbt model"
+    FAL_MODEL = "fal model"
+    FAL_SCRIPT = "fal script"
 
 
 @dataclass
@@ -50,7 +57,7 @@ def _add_after_scripts(
         )
     )
     for fal_script_node in after_fal_script_nodes:
-        graph.add_node(fal_script_node.unique_id)
+        graph.add_node(fal_script_node.unique_id, kind=NodeKind.FAL_SCRIPT)
         nodeLookup[fal_script_node.unique_id] = fal_script_node
         # model_fal_node depends on fal_script_node
         graph.add_edge(upstream_fal_node_unique_id, fal_script_node.unique_id)
@@ -78,7 +85,7 @@ def _add_before_scripts(
     )
 
     for fal_script_node in before_fal_script_node:
-        graph.add_node(fal_script_node.unique_id)
+        graph.add_node(fal_script_node.unique_id, kind=NodeKind.FAL_SCRIPT)
         nodeLookup[fal_script_node.unique_id] = fal_script_node
         # fal_script_node depends on model_fal_node
         graph.add_edge(fal_script_node.unique_id, downstream_fal_node_unique_id)
@@ -102,11 +109,15 @@ class NodeGraph:
         for model in fal_dbt.list_models():
             model_fal_node = DbtModelNode(model.unique_id, model)
             node_lookup[model_fal_node.unique_id] = model_fal_node
-            graph.add_node(model_fal_node.unique_id)
+            graph.add_node(
+                model_fal_node.unique_id,
+                kind=NodeKind.FAL_MODEL if model.python_model else NodeKind.DBT_MODEL,
+                **{"post-hook": model.get_post_hook_paths()},
+            )
 
             # Add dbt model dependencies
             for dbt_dependency_unique_id in model_fal_node.model.get_depends_on_nodes():
-                graph.add_node(dbt_dependency_unique_id)
+                graph.add_node(dbt_dependency_unique_id, kind=NodeKind.DBT_MODEL)
                 graph.add_edge(dbt_dependency_unique_id, model_fal_node.unique_id)
 
             _add_after_scripts(
