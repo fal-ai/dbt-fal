@@ -6,6 +6,22 @@ sources:
     schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
     tables:
       - name: some_source
+  - name: freshness_test
+    database: "{{ env_var('DBT_DATABASE', 'test') }}"
+    schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
+    freshness:
+      warn_after: { "count": 5, "period": minute }
+      error_after: { "count": 30, "period": minute }
+    tables:
+      - name: freshness_table
+        loaded_at_field: cast(loaded_at as timestamptz)
+        columns:
+          - name: info
+            tests:
+              - unique
+
+      - name: freshness_other # does not exist (run time error)
+        loaded_at_field: cast(loaded_at as timestamptz)
 
 models:
   - name: zendesk_ticket_data
@@ -51,3 +67,7 @@ models:
       fal:
         post-hook:
           - fal_scripts/write_to_source.py
+
+fal:
+  scripts:
+    - fal_scripts/freshness.py

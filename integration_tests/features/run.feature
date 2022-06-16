@@ -51,6 +51,25 @@ Feature: `run` command
     Then the following scripts are ran:
       | agent_wait_time.after.py |
 
+  Scenario: fal run is aware of source freshness
+    When the following shell command is invoked:
+      """
+      python $baseDir/load_freshness_table.py $baseDir $profilesDir
+      """
+    And the following shell command is invoked:
+      """
+      dbt source freshness --profiles-dir $profilesDir --project-dir $baseDir
+      """
+    And the following command is invoked:
+      """
+      fal run --profiles-dir $profilesDir --project-dir $baseDir --exclude '*'
+      """
+    Then the following scripts are ran:
+      | GLOBAL.freshness.py |
+    And the script GLOBAL.freshness.py output file has the lines:
+      | (freshness_test, freshness_table) pass          |
+      | (freshness_test, freshness_other) runtime error |
+
   Scenario: fal run provides model aliases
     When the following shell command is invoked:
       """
@@ -62,7 +81,7 @@ Feature: `run` command
       fal run --profiles-dir $profilesDir --project-dir $baseDir
       """
     Then the following scripts are ran:
-      | agent_wait_time.after.py | zendesk_ticket_data.post_hook.py | zendesk_ticket_data.post_hook2.py  |
+      | agent_wait_time.after.py | zendesk_ticket_data.post_hook.py | zendesk_ticket_data.post_hook2.py |
     And the script agent_wait_time.after.py output file has the lines:
       | Model alias is wait_time |
 
@@ -76,7 +95,6 @@ Feature: `run` command
       fal run --profiles-dir $profilesDir --project-dir $baseDir --script fal_scripts/notthere.py
       """
     Then no scripts are run
-
 
   Scenario: Post hooks with write_to_model will fail
     When the following shell command is invoked:
