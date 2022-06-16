@@ -19,9 +19,47 @@ RUN_RESULTS_FILE_NAME = "run_results.json"
 RUN_RESULTS_KEY = "results"
 
 
+def _is_experimental_models_enabled(parsed: argparse.Namespace):
+    """Whether experimental models are enabled or not."""
+    return parsed.experimental_python_models or parsed.experimental_threads is not None
+
+
+def run_serial(
+    fal_dbt: FalDbt,
+    parsed: argparse.Namespace,
+    node_graph: NodeGraph,
+) -> None:
+    main_graph = NodeGraph.from_fal_dbt(fal_dbt)
+    if parsed.experimental_flow or _is_experimental_models_enabled(parsed):
+        sub_graphs = main_graph.generate_sub_graphs()
+    else:
+        sub_graphs = [main_graph]
+
+    if len(sub_graphs) > 1:
+        telemetry.log_call("fal_in_the_middle")
+
+    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
+    for index, node_graph in enumerate(sub_graphs):
+        if index > 0:
+            # we want to run all the nodes if we are not running the first subgraph
+            parsed.select = None
+        _run_sub_graph(index, parsed, node_graph, execution_plan, fal_dbt)
+
+
+def run_threaded(
+    fal_dbt: FalDbt,
+    parsed: argparse.Namespace,
+    node_graph: NodeGraph,
+) -> None:
+    if parsed.experimental_threads <= 0:
+        raise ValueError("Number of specified threads must be greater than 0")
+
+    raise NotImplementedError("This feature is not available at the moment.")
+
+
 def fal_flow_run(parsed: argparse.Namespace):
     generated_models: Dict[str, Path] = {}
-    if parsed.experimental_python_models:
+    if _is_experimental_models_enabled(parsed):
         telemetry.log_call("experimental_python_models")
         generated_models = generate_python_dbt_models(parsed.project_dir)
 
@@ -29,20 +67,11 @@ def fal_flow_run(parsed: argparse.Namespace):
     _mark_dbt_nodes_status(fal_dbt, NodeStatus.Skipped)
 
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
-    main_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    sub_graphs = [main_graph]
-    if parsed.experimental_flow or parsed.experimental_python_models:
-        sub_graphs = main_graph.generate_sub_graphs()
-
-    if len(sub_graphs) > 1:
-        telemetry.log_call("fal_in_the_middle")
-
-    for index, node_graph in enumerate(sub_graphs):
-        if index > 0:
-            # we want to run all the nodes if we are not running the first subgraph
-            parsed.select = None
-        _run_sub_graph(index, parsed, node_graph, execution_plan, fal_dbt)
+    if parsed.experimental_threads is not None:
+        telemetry.log_call("experimental_threads")
+        run_threaded(fal_dbt=fal_dbt, parsed=parsed, node_graph=node_graph)
+    else:
+        run_serial(fal_dbt=fal_dbt, parsed=parsed, node_graph=node_graph)
 
     # each dbt run creates its own run_results file, here we are combining
     # these files in a single run_results file that fits dbt file format
