@@ -132,23 +132,43 @@ class DbtModel(_DbtNode):
         return self.node.depends_on_nodes
 
     def get_post_hook_paths(self, keyword: str = "fal") -> List[str]:
-        return self.meta.get(keyword, {}).get("post-hook", [])
+        meta = self.meta or {}
+
+        keyword_dict = meta.get(keyword) or {}
+        if not isinstance(keyword_dict, dict):
+            return []
+
+        post_hooks = keyword_dict.get("post-hook") or []
+        if not isinstance(post_hooks, list):
+            return []
+
+        return post_hooks
 
     def get_scripts(self, keyword: str, before: bool) -> List[str]:
-        # sometimes `scripts` can *be* there and still be None
-        if self.meta.get(keyword):
-            scripts_node = self.meta[keyword].get("scripts")
-            if not scripts_node:
-                return []
-            if isinstance(scripts_node, list) and before:
-                return []
-            if before:
-                return scripts_node.get("before") or []
-            if isinstance(scripts_node, list):
-                return scripts_node
-            return scripts_node.get("after") or []
-        else:
+        # sometimes properties can *be* there and still be None
+        meta = self.meta or {}
+
+        keyword_dict = meta.get(keyword) or {}
+        if not isinstance(keyword_dict, dict):
             return []
+
+        scripts_node = keyword_dict.get("scripts") or []
+        if not scripts_node:
+            return []
+
+        if isinstance(scripts_node, list):
+            if before:
+                return []
+            else:
+                return scripts_node
+
+        if not isinstance(scripts_node, dict):
+            return []
+
+        if before:
+            return scripts_node.get("before") or []
+        else:
+            return scripts_node.get("after") or []
 
 
 @dataclass
@@ -365,6 +385,7 @@ class FalDbt:
             filter(
                 # Find models that have both feature store and column defs
                 lambda model: keyword in model.meta
+                and isinstance(model.meta[keyword], dict)
                 and "feature_store" in model.meta[keyword]
                 and len(list(model.columns.keys())) > 0,
                 models,
