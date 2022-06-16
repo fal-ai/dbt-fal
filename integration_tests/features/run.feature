@@ -72,6 +72,24 @@ Feature: `run` command
       | (freshness_test, freshness_table) pass          |
       | (freshness_test, freshness_other) runtime error |
 
+  Scenario: fal run works after dbt test
+    Given the project 000_fal_run
+    When the data is seeded
+    And the following shell command is invoked:
+      """
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir
+      """
+    And the following shell command is invoked:
+      """
+      dbt test --profiles-dir $profilesDir --project-dir $baseDir
+      """
+    And the following command is invoked:
+      """
+      fal run --profiles-dir $profilesDir --project-dir $baseDir
+      """
+    Then the following scripts are ran:
+      | agent_wait_time.after.py |
+
   Scenario: fal run provides model aliases
     When the following shell command is invoked:
       """
