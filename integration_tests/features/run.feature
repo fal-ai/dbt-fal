@@ -52,6 +52,7 @@ Feature: `run` command
       | agent_wait_time.after.py |
 
   Scenario: fal run is aware of source freshness
+    Given the project 010_source_freshness
     When the following shell command is invoked:
       """
       python $baseDir/load_freshness_table.py $baseDir $profilesDir
