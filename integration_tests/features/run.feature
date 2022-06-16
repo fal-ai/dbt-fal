@@ -51,6 +51,7 @@ Feature: `run` command
     Then the following scripts are ran:
       | agent_wait_time.after.py |
 
+  @dbtv1
   Scenario: fal run is aware of source freshness
     Given the project 010_source_freshness
     When the following shell command is invoked:
