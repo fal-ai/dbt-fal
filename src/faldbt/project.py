@@ -14,7 +14,13 @@ from dbt.contracts.graph.manifest import (
     MaybeParsedSource,
     Disabled,
 )
-from dbt.contracts.results import RunResultsArtifact, RunResultOutput, NodeStatus
+from dbt.contracts.results import (
+    RunResultsArtifact,
+    RunResultOutput,
+    NodeStatus,
+    FreshnessExecutionResultArtifact,
+    FreshnessNodeOutput,
+)
 from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.task.compile import CompileTask
 import dbt.tracking
@@ -82,7 +88,7 @@ class DbtTest(_DbtNode):
 @dataclass
 class DbtSource(_DbtNode):
     tests: List[DbtTest] = field(init=False, default_factory=list)
-    status: str = field(init=False, default=None)
+    freshness: Optional[FreshnessNodeOutput] = field(init=False)
 
     def __repr__(self):
         attrs = ["name", "tests", "status"]
@@ -90,11 +96,11 @@ class DbtSource(_DbtNode):
         return f"DbtSource({props})"
 
     @property
-    def table_name(self):
+    def table_name(self) -> str:
         return self.node.name
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.node.source_name
 
 
@@ -178,7 +184,7 @@ class DbtManifest:
     def get_models(self) -> List[DbtModel]:
         return list(
             map(
-                lambda node: DbtModel(node),
+                DbtModel,
                 filter(
                     lambda node: node.resource_type == NodeType.Model,
                     self.nativeManifest.nodes.values(),
@@ -189,7 +195,7 @@ class DbtManifest:
     def get_tests(self) -> List[DbtTest]:
         return list(
             map(
-                lambda node: DbtTest(node),
+                DbtTest,
                 filter(
                     lambda node: node.resource_type == NodeType.Test,
                     self.nativeManifest.nodes.values(),
@@ -197,22 +203,38 @@ class DbtManifest:
             )
         )
 
-    def get_sources(self) -> List[ParsedSourceDefinition]:
-        return list(
-            map(lambda node: DbtSource(node=node), self.nativeManifest.sources.values())
-        )
+    def get_sources(self) -> List[DbtSource]:
+        return list(map(DbtSource, self.nativeManifest.sources.values()))
 
 
 @dataclass(init=False)
 class DbtRunResult:
     nativeRunResult: Optional[RunResultsArtifact]
-    results: Sequence[RunResultOutput]
 
     def __init__(self, nativeRunResult: Optional[RunResultsArtifact]):
-        self.results = []
         self.nativeRunResult = nativeRunResult
+
+    @property
+    def results(self) -> Sequence[RunResultOutput]:
         if self.nativeRunResult:
-            self.results = nativeRunResult.results
+            return self.nativeRunResult.results
+        else:
+            return []
+
+
+@dataclass(init=False)
+class DbtFreshnessExecutionResult:
+    _artifact: Optional[FreshnessExecutionResultArtifact]
+
+    def __init__(self, artifact: Optional[FreshnessExecutionResultArtifact]):
+        self._artifact = artifact
+
+    @property
+    def results(self) -> Sequence[FreshnessNodeOutput]:
+        if self._artifact:
+            return self._artifact.results
+        else:
+            return []
 
 
 @dataclass
@@ -301,8 +323,15 @@ class FalDbt:
 
         self._manifest = DbtManifest(self._compile_task.manifest)
 
+        freshness_execution_results = DbtFreshnessExecutionResult(
+            parse.get_dbt_sources_artifact(self.project_dir, self._config)
+        )
+
         self.models, self.tests, self.sources = _map_nodes(
-            self._run_results, self._manifest, generated_models
+            self._run_results,
+            freshness_execution_results,
+            self._manifest,
+            generated_models,
         )
 
         normalized_model_paths = parse.normalize_paths(
@@ -704,33 +733,51 @@ def _firestore_dict_to_document(data: Dict, key_column: str):
 
 
 def _map_nodes(
-    run_results: DbtRunResult, manifest: DbtManifest, generated_models: Dict[str, Path]
+    run_results: DbtRunResult,
+    freshness_results: DbtFreshnessExecutionResult,
+    manifest: DbtManifest,
+    generated_models: Dict[str, Path],
 ):
     models = manifest.get_models()
     tests = manifest.get_tests()
     sources = manifest.get_sources()
     status_map = dict(
         map(
-            lambda res: [res.unique_id, res.status],
+            lambda res: (res.unique_id, res.status),
             run_results.results,
         )
     )
-    for parent in models + sources:
-        if parent.name in generated_models:
-            parent.python_model = generated_models[parent.name]
+    for model in models:
+        if model.name in generated_models:
+            model.python_model = generated_models[model.name]
 
-        parent.set_status(status_map.get(parent.unique_id, NodeStatus.Skipped))
+        model.set_status(status_map.get(model.unique_id, NodeStatus.Skipped))
         for test in tests:
-            if (hasattr(test, "model") and test.model == parent.name) or (
-                hasattr(test, "source") and test.source == parent.name
-            ):
-                parent.tests.append(test)
+            if test.model == model.name:
+                model.tests.append(test)
                 test.set_status(status_map.get(test.unique_id, NodeStatus.Skipped))
                 if (
                     test.status != NodeStatus.Skipped
-                    and parent.status == NodeStatus.Skipped
+                    and model.status == NodeStatus.Skipped
                 ):
-                    parent.set_status("tested")
+                    model.set_status("tested")
+
+    source_freshness_map = dict(
+        map(lambda res: (res.unique_id, res), freshness_results.results)
+    )
+
+    for source in sources:
+        source.set_status(status_map.get(source.unique_id, NodeStatus.Skipped))
+        source.freshness = source_freshness_map.get(source.unique_id)
+        for test in tests:
+            if test.model == source.name:
+                source.tests.append(test)
+                test.set_status(status_map.get(test.unique_id, NodeStatus.Skipped))
+                if (
+                    test.status != NodeStatus.Skipped
+                    and source.status == NodeStatus.Skipped
+                ):
+                    source.set_status("tested")
     return (models, tests, sources)
 
 
