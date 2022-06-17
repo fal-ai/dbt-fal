@@ -7,7 +7,7 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Iterator, Any
+from typing import Any, Iterator
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
@@ -100,7 +100,7 @@ class DBTTask(Task):
             args,
             model_names,
             fal_dbt.target_path,
-            self._run_index
+            self._run_index,
         )
 
         for node, status in _map_cli_output_model_statuses(output.run_results):
