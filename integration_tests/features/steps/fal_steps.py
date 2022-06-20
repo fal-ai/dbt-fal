@@ -1,6 +1,6 @@
 from functools import reduce
 import os
-from typing import List
+from typing import List, Sequence, Iterator
 from behave import *
 import glob
 from fal.cli import cli
@@ -188,15 +188,33 @@ def check_model_results(context):
     expected_models = list(map(_script_filename, context.table.headings))
     unittest.TestCase().assertCountEqual(models, expected_models)
 
+LAYOUT_PARSER = re.compile(
+    r"\d+\."
+    r" (?P<subjects>[\w.]+(, [\w.]+)*)"
+)
+
+def _parse_ordered_layout(source) -> Iterator[Sequence[str]]:
+    for match in LAYOUT_PARSER.finditer(source):
+        yield set(map(_script_filename, match["subjects"].split(", ")))
+
 
 @then("the following nodes are calculated in the following order")
 def check_model_results(context):
     models = _get_dated_dbt_models(context)
     scripts = _get_dated_fal_artifacts(context, FAL_MODEL, FAL_SCRIPT)
-
     ordered_nodes = _unpack_dated_result(models + scripts)
-    expected_nodes = list(map(_script_filename, context.table.headings))
-    unittest.TestCase().assertEqual(ordered_nodes, expected_nodes)
+
+    for row in _parse_ordered_layout(context.text):
+        nodes = type(row)(ordered_nodes.pop(0) for _ in range(len(row)))
+        unittest.TestCase().assertEqual(
+            row,
+            nodes
+        )
+
+    unittest.TestCase().assertEqual(
+        ordered_nodes,
+        []
+    )
 
 
 def _script_filename(script: str):
