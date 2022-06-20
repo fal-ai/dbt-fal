@@ -93,11 +93,9 @@ class DbtTest(_DbtNode):
                 if refs:
                     self.model = refs[0]
 
-                print(metadata.kwargs["model"])
                 sources = re.findall(
                     r"source\('([^']+)', *'([^']+)'\)", metadata.kwargs["model"]
                 )
-                print(sources)
                 if sources:
                     self.source = sources[0]
             else:
