@@ -168,9 +168,9 @@ def _mark_dbt_nodes_status(
     for model in fal_dbt.models:
         if dbt_node is not None:
             if model.unique_id == dbt_node:
-                model.set_status(status)
+                model.status = status
         else:
-            model.set_status(status)
+            model.status = status
 
 
 def _map_cli_output_model_statuses(

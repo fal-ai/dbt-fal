@@ -60,12 +60,13 @@ class _DbtNode:
     def unique_id(self):
         return self.node.unique_id
 
-    @property
-    def status(self):
+    def _get_status(self):
         return self._status
 
-    def set_status(self, status: str):
+    def _set_status(self, status: str):
         self._status = status
+
+    status = property(_get_status, _set_status)
 
 
 @dataclass
@@ -94,14 +95,15 @@ class DbtTest(_DbtNode):
 class DbtTestableNode(_DbtNode):
     tests: List[DbtTest] = field(default_factory=list)
 
-    @property
-    def status(self):
+    def _get_status(self):
         if self._status == NodeStatus.Skipped and any(
             map(lambda test: test != NodeStatus.Skipped, self.tests)
         ):
             return "tested"
         else:
             return self._status
+
+    status = property(_get_status, _DbtNode._set_status)
 
 
 @dataclass
