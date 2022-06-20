@@ -207,12 +207,9 @@ class DbtManifest:
         return list(map(DbtSource, self.nativeManifest.sources.values()))
 
 
-@dataclass(init=False)
+@dataclass
 class DbtRunResult:
     nativeRunResult: Optional[RunResultsArtifact]
-
-    def __init__(self, nativeRunResult: Optional[RunResultsArtifact]):
-        self.nativeRunResult = nativeRunResult
 
     @property
     def results(self) -> Sequence[RunResultOutput]:
@@ -222,12 +219,9 @@ class DbtRunResult:
             return []
 
 
-@dataclass(init=False)
+@dataclass
 class DbtFreshnessExecutionResult:
     _artifact: Optional[FreshnessExecutionResultArtifact]
-
-    def __init__(self, artifact: Optional[FreshnessExecutionResultArtifact]):
-        self._artifact = artifact
 
     @property
     def results(self) -> Sequence[FreshnessNodeOutput]:
