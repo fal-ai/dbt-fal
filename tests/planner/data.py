@@ -38,6 +38,10 @@ GRAPHS = [
     {"graph": to_graph(GRAPH_1), "subgraphs": set()},
     {
         "graph": to_graph(GRAPH_2),
-        "subgraphs": {frozenset(("B1", "B2")), frozenset(("E", "F", "G"))},
+        "subgraphs": {
+            frozenset(("B1", "B2")),
+            frozenset(("E", "F", "G", "H")),
+            frozenset(("J", "K")),
+        },
     },
 ]

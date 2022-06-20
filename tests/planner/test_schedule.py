@@ -69,7 +69,9 @@ def test_scheduler_task_separation(graph_info):
     all_dbt_tasks, all_fal_tasks, all_post_hooks = set(), set(), set()
     for node in node_queue.nodes:
         if isinstance(node.task, FalModelTask):
-            all_fal_tasks.update(node.task.model_ids)
+            *dbt_tasks, python_task = node.task.model_ids
+            all_dbt_tasks.update(dbt_tasks)
+            all_fal_tasks.add(python_task)
         elif isinstance(node.task, DBTTask):
             all_dbt_tasks.update(node.task.model_ids)
 

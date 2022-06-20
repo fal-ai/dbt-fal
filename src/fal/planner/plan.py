@@ -7,6 +7,12 @@ import networkx as nx
 from fal.node_graph import NodeKind
 
 
+def _is_critical_node(properties: dict) -> bool:
+    """Check whether this node can be the exit of a subgraph. If there is any Python
+    code execution (fal interruption) then we'll end it there."""
+    return properties["kind"] is NodeKind.FAL_MODEL or properties.get("post-hook")
+
+
 def _find_subgraphs(graph: nx.DiGraph) -> Iterator[list[str]]:
     # Initially sort the graph, and split it
     # into chunks by using the critical node
@@ -29,10 +35,6 @@ def _find_subgraphs(graph: nx.DiGraph) -> Iterator[list[str]]:
 
     for node in nx.topological_sort(graph):
         properties = graph.nodes[node]
-        if properties["kind"] is NodeKind.FAL_MODEL:
-            yield from split()
-            continue
-
         ancestors = nx.ancestors(graph, node)
         if not current_stack:
             allowed_ancestors = ancestors
@@ -43,7 +45,7 @@ def _find_subgraphs(graph: nx.DiGraph) -> Iterator[list[str]]:
         current_stack.append(node)
         allowed_ancestors |= {node, *ancestors}
 
-        if properties.get("post-hook"):
+        if _is_critical_node(properties):
             yield from split()
 
     yield from split()
@@ -65,9 +67,13 @@ def _reduce_subgraph(
 
     for node in nodes:
         for predecessor in graph.predecessors(node):
+            if predecessor is subgraph:
+                continue
             graph.add_edge(predecessor, subgraph)
 
         for successor in graph.successors(node):
+            if successor is subgraph:
+                continue
             graph.add_edge(subgraph, successor)
 
         graph.remove_node(node)
