@@ -70,7 +70,7 @@ const config = {
             position: 'left'
           },
           {
-            to: 'https://www.notion.so/featuresandlabels/February-Roadmap-e6521e39514a4ed598745aa71167de6b',
+            to: 'https://featuresandlabels.notion.site/Public-Roadmaps-be3edf2bd5e841c490b7a228a5fc58c9',
             label: 'Roadmap',
             position: 'left'
           },
