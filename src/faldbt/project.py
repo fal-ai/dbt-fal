@@ -92,12 +92,12 @@ class DbtTest(_DbtNode):
 
 
 @dataclass
-class DbtTestableNode(_DbtNode):
+class _DbtTestableNode(_DbtNode):
     tests: List[DbtTest] = field(default_factory=list)
 
     def _get_status(self):
         if self._status == NodeStatus.Skipped and any(
-            map(lambda test: test != NodeStatus.Skipped, self.tests)
+            test.status != NodeStatus.Skipped for test in self.tests
         ):
             return "tested"
         else:
@@ -107,7 +107,7 @@ class DbtTestableNode(_DbtNode):
 
 
 @dataclass
-class DbtSource(DbtTestableNode):
+class DbtSource(_DbtTestableNode):
     freshness: Optional[FreshnessNodeOutput] = field(default=None)
 
     def __repr__(self):
@@ -125,7 +125,7 @@ class DbtSource(DbtTestableNode):
 
 
 @dataclass
-class DbtModel(DbtTestableNode):
+class DbtModel(_DbtTestableNode):
     python_model: Optional[Path] = field(default=None)
 
     def __repr__(self):
@@ -225,15 +225,17 @@ class DbtManifest:
     nativeManifest: Manifest
 
     def get_model_nodes(self) -> Iterable[ManifestNode]:
-        return filter(
-            lambda node: node.resource_type == NodeType.Model,
-            self.nativeManifest.nodes.values(),
+        return (
+            node
+            for node in self.nativeManifest.nodes.values()
+            if node.resource_type == NodeType.Model
         )
 
     def get_test_nodes(self) -> Iterable[ManifestNode]:
-        return filter(
-            lambda node: node.resource_type == NodeType.Test,
-            self.nativeManifest.nodes.values(),
+        return (
+            node
+            for node in self.nativeManifest.nodes.values()
+            if node.resource_type == NodeType.Test
         )
 
     def get_source_nodes(self) -> Iterable[ParsedSourceDefinition]:
@@ -245,12 +247,7 @@ class DbtManifest:
         freshness_results: DbtFreshnessExecutionResult,
         generated_models: Dict[str, Path],
     ) -> Tuple[List[DbtModel], List[DbtSource], List[DbtTest]]:
-        status_map = dict(
-            map(
-                lambda res: (res.unique_id, res.status),
-                run_results.results,
-            )
-        )
+        status_map = {r.unique_id: r.status for r in run_results.results}
 
         tests: List[DbtTest] = []
         tests_dict: Dict[str, List[DbtTest]] = defaultdict(list)
@@ -273,9 +270,7 @@ class DbtManifest:
             )
             models.append(model)
 
-        source_freshness_map = dict(
-            map(lambda res: (res.unique_id, res), freshness_results.results)
-        )
+        source_freshness_map = {r.unique_id: r for r in freshness_results.results}
 
         sources: List[DbtSource] = []
         for node in self.get_source_nodes():

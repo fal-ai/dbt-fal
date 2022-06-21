@@ -115,6 +115,7 @@ def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
             return FreshnessExecutionResultArtifact.read(sources_path)
 
     except IncompatibleSchemaException as exc:
+        # TODO: add test for this case
         exc.add_filename(sources_path)
         raise
     except RuntimeException as exc:
@@ -132,7 +133,9 @@ def get_dbt_results(
             return RunResultsArtifact.read_and_check_versions(results_path)
         else:
             return RunResultsArtifact.read(results_path)
+
     except IncompatibleSchemaException as exc:
+        # TODO: add test for this case
         exc.add_filename(results_path)
         raise
     except RuntimeException as exc:
