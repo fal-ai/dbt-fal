@@ -36,6 +36,7 @@ def init_fal(line="", local_ns={}):
         "list_models_ids": faldbt.list_models_ids,
         "list_sources": faldbt.list_sources,
         "list_features": faldbt.list_features,
+        "execute_sql": faldbt.execute_sql,
         "el": faldbt.el,
     }
 
