@@ -1,4 +1,4 @@
-Feature: `write_to_source` function
+Feature: `dbt test` awareness
   Background: Project Setup
     Given the project 005_functions_and_variables
 

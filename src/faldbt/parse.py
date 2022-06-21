@@ -8,7 +8,7 @@ from dbt.contracts.project import Project as ProjectContract
 from dbt.config import RuntimeConfig, Project
 from dbt.config.utils import parse_cli_vars
 from dbt.contracts.graph.manifest import Manifest
-from dbt.contracts.results import RunResultsArtifact
+from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultArtifact
 from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
 from dbt.exceptions import IncompatibleSchemaException, RuntimeException
@@ -103,6 +103,26 @@ def get_dbt_manifest(config) -> Manifest:
     return ManifestLoader.get_full_manifest(config)
 
 
+def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
+    sources_path = os.path.join(project_dir, config.target_path, "sources.json")
+    try:
+        # BACKWARDS: Change intorduced in 1.0.0
+        if hasattr(FreshnessExecutionResultArtifact, "read_and_check_versions"):
+            return FreshnessExecutionResultArtifact.read_and_check_versions(
+                sources_path
+            )
+        else:
+            return FreshnessExecutionResultArtifact.read(sources_path)
+
+    except IncompatibleSchemaException as exc:
+        # TODO: add test for this case
+        exc.add_filename(sources_path)
+        raise
+    except RuntimeException as exc:
+        logger.warn("Could not read dbt sources artifact")
+        return None
+
+
 def get_dbt_results(
     project_dir: str, config: RuntimeConfig
 ) -> Optional[RunResultsArtifact]:
@@ -113,7 +133,9 @@ def get_dbt_results(
             return RunResultsArtifact.read_and_check_versions(results_path)
         else:
             return RunResultsArtifact.read(results_path)
+
     except IncompatibleSchemaException as exc:
+        # TODO: add test for this case
         exc.add_filename(results_path)
         raise
     except RuntimeException as exc:

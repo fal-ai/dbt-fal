@@ -1,8 +1,9 @@
+from collections import defaultdict
 from enum import Enum
 import os.path
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional, Tuple, Sequence
+from typing import Dict, Iterable, List, Any, Optional, Tuple, Sequence
 from pathlib import Path
 
 from dbt.node_types import NodeType
@@ -14,7 +15,13 @@ from dbt.contracts.graph.manifest import (
     MaybeParsedSource,
     Disabled,
 )
-from dbt.contracts.results import RunResultsArtifact, RunResultOutput, NodeStatus
+from dbt.contracts.results import (
+    RunResultsArtifact,
+    RunResultOutput,
+    NodeStatus,
+    FreshnessExecutionResultArtifact,
+    FreshnessNodeOutput,
+)
 from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.task.compile import CompileTask
 import dbt.tracking
@@ -43,7 +50,7 @@ class FalGeneralException(Exception):
 @dataclass
 class _DbtNode:
     node: Any = field(repr=False)
-    status: str = field(init=False, default=None)
+    _status: str = field(default=NodeStatus.Skipped.value)
 
     @property
     def name(self):
@@ -53,8 +60,13 @@ class _DbtNode:
     def unique_id(self):
         return self.node.unique_id
 
-    def set_status(self, status: str):
-        self.status = status
+    def _get_status(self):
+        return self._status
+
+    def _set_status(self, status: str):
+        self._status = status
+
+    status = property(_get_status, _set_status)
 
 
 @dataclass
@@ -80,9 +92,23 @@ class DbtTest(_DbtNode):
 
 
 @dataclass
-class DbtSource(_DbtNode):
-    tests: List[DbtTest] = field(init=False, default_factory=list)
-    status: str = field(init=False, default=None)
+class _DbtTestableNode(_DbtNode):
+    tests: List[DbtTest] = field(default_factory=list)
+
+    def _get_status(self):
+        if self._status == NodeStatus.Skipped and any(
+            test.status != NodeStatus.Skipped for test in self.tests
+        ):
+            return "tested"
+        else:
+            return self._status
+
+    status = property(_get_status, _DbtNode._set_status)
+
+
+@dataclass
+class DbtSource(_DbtTestableNode):
+    freshness: Optional[FreshnessNodeOutput] = field(default=None)
 
     def __repr__(self):
         attrs = ["name", "tests", "status"]
@@ -90,18 +116,17 @@ class DbtSource(_DbtNode):
         return f"DbtSource({props})"
 
     @property
-    def table_name(self):
+    def table_name(self) -> str:
         return self.node.name
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.node.source_name
 
 
 @dataclass
-class DbtModel(_DbtNode):
-    tests: List[DbtTest] = field(init=False, default_factory=list)
-    python_model: Optional[Path] = field(init=False, default=None)
+class DbtModel(_DbtTestableNode):
+    python_model: Optional[Path] = field(default=None)
 
     def __repr__(self):
         attrs = ["name", "alias", "unique_id", "columns", "tests", "status"]
@@ -172,47 +197,92 @@ class DbtModel(_DbtNode):
 
 
 @dataclass
+class DbtRunResult:
+    nativeRunResult: Optional[RunResultsArtifact]
+
+    @property
+    def results(self) -> Sequence[RunResultOutput]:
+        if self.nativeRunResult:
+            return self.nativeRunResult.results
+        else:
+            return []
+
+
+@dataclass
+class DbtFreshnessExecutionResult:
+    _artifact: Optional[FreshnessExecutionResultArtifact]
+
+    @property
+    def results(self) -> Sequence[FreshnessNodeOutput]:
+        if self._artifact:
+            return self._artifact.results
+        else:
+            return []
+
+
+@dataclass
 class DbtManifest:
     nativeManifest: Manifest
 
-    def get_models(self) -> List[DbtModel]:
-        return list(
-            map(
-                lambda node: DbtModel(node),
-                filter(
-                    lambda node: node.resource_type == NodeType.Model,
-                    self.nativeManifest.nodes.values(),
-                ),
+    def get_model_nodes(self) -> Iterable[ManifestNode]:
+        return (
+            node
+            for node in self.nativeManifest.nodes.values()
+            if node.resource_type == NodeType.Model
+        )
+
+    def get_test_nodes(self) -> Iterable[ManifestNode]:
+        return (
+            node
+            for node in self.nativeManifest.nodes.values()
+            if node.resource_type == NodeType.Test
+        )
+
+    def get_source_nodes(self) -> Iterable[ParsedSourceDefinition]:
+        return self.nativeManifest.sources.values()
+
+    def _map_nodes(
+        self,
+        run_results: DbtRunResult,
+        freshness_results: DbtFreshnessExecutionResult,
+        generated_models: Dict[str, Path],
+    ) -> Tuple[List[DbtModel], List[DbtSource], List[DbtTest]]:
+        status_map = {r.unique_id: r.status for r in run_results.results}
+
+        tests: List[DbtTest] = []
+        tests_dict: Dict[str, List[DbtTest]] = defaultdict(list)
+        for node in self.get_test_nodes():
+            test = DbtTest(
+                node=node,
+                _status=status_map.get(node.unique_id, NodeStatus.Skipped).value,
             )
-        )
+            tests.append(test)
 
-    def get_tests(self) -> List[DbtTest]:
-        return list(
-            map(
-                lambda node: DbtTest(node),
-                filter(
-                    lambda node: node.resource_type == NodeType.Test,
-                    self.nativeManifest.nodes.values(),
-                ),
+            tests_dict[test.model].append(test)
+
+        models: List[DbtModel] = []
+        for node in self.get_model_nodes():
+            model = DbtModel(
+                node=node,
+                _status=status_map.get(node.unique_id, NodeStatus.Skipped).value,
+                tests=tests_dict[node.name],
+                python_model=generated_models.get(node.name),
             )
-        )
+            models.append(model)
 
-    def get_sources(self) -> List[ParsedSourceDefinition]:
-        return list(
-            map(lambda node: DbtSource(node=node), self.nativeManifest.sources.values())
-        )
+        source_freshness_map = {r.unique_id: r for r in freshness_results.results}
 
+        sources: List[DbtSource] = []
+        for node in self.get_source_nodes():
+            source = DbtSource(
+                node=node,
+                _status=status_map.get(node.unique_id, NodeStatus.Skipped).value,
+                tests=tests_dict[node.source_name],
+                freshness=source_freshness_map.get(node.unique_id),
+            )
+            sources.append(source)
 
-@dataclass(init=False)
-class DbtRunResult:
-    nativeRunResult: Optional[RunResultsArtifact]
-    results: Sequence[RunResultOutput]
-
-    def __init__(self, nativeRunResult: Optional[RunResultsArtifact]):
-        self.results = []
-        self.nativeRunResult = nativeRunResult
-        if self.nativeRunResult:
-            self.results = nativeRunResult.results
+        return models, sources, tests
 
 
 @dataclass
@@ -301,8 +371,14 @@ class FalDbt:
 
         self._manifest = DbtManifest(self._compile_task.manifest)
 
-        self.models, self.tests, self.sources = _map_nodes(
-            self._run_results, self._manifest, generated_models
+        freshness_execution_results = DbtFreshnessExecutionResult(
+            parse.get_dbt_sources_artifact(self.project_dir, self._config)
+        )
+
+        self.models, self.sources, self.tests = self._manifest._map_nodes(
+            self._run_results,
+            freshness_execution_results,
+            generated_models,
         )
 
         normalized_model_paths = parse.normalize_paths(
@@ -701,37 +777,6 @@ def _firestore_dict_to_document(data: Dict, key_column: str):
         else:
             output[k] = v
     return output
-
-
-def _map_nodes(
-    run_results: DbtRunResult, manifest: DbtManifest, generated_models: Dict[str, Path]
-):
-    models = manifest.get_models()
-    tests = manifest.get_tests()
-    sources = manifest.get_sources()
-    status_map = dict(
-        map(
-            lambda res: [res.unique_id, res.status],
-            run_results.results,
-        )
-    )
-    for parent in models + sources:
-        if parent.name in generated_models:
-            parent.python_model = generated_models[parent.name]
-
-        parent.set_status(status_map.get(parent.unique_id, NodeStatus.Skipped))
-        for test in tests:
-            if (hasattr(test, "model") and test.model == parent.name) or (
-                hasattr(test, "source") and test.source == parent.name
-            ):
-                parent.tests.append(test)
-                test.set_status(status_map.get(test.unique_id, NodeStatus.Skipped))
-                if (
-                    test.status != NodeStatus.Skipped
-                    and parent.status == NodeStatus.Skipped
-                ):
-                    parent.set_status("tested")
-    return (models, tests, sources)
 
 
 def _get_custom_target(run_results: DbtRunResult):
