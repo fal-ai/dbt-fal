@@ -14,4 +14,9 @@ df = DataFrame({"loaded_at": dt.now(tz=tz.utc).isoformat(), "info": range(0, 10)
 print(df)
 faldbt.write_to_source(df, "freshness_test", "freshness_table", mode="overwrite")
 
+from time import sleep
+
+# Let BigQuery cache load it
+sleep(10)
+
 print("Lodaded")
