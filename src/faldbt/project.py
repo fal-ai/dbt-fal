@@ -3,11 +3,11 @@ from enum import Enum
 import os.path
 import re
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Any, Optional, Tuple, Sequence
+from typing import Dict, Iterable, List, Any, Optional, Tuple, Sequence, Union
 from pathlib import Path
 
 from dbt.node_types import NodeType
-from dbt.contracts.graph.parsed import ParsedModelNode, ParsedSourceDefinition
+from dbt.contracts.graph.parsed import ParsedSourceDefinition, TestMetadata
 from dbt.contracts.graph.compiled import ManifestNode
 from dbt.contracts.graph.manifest import (
     Manifest,
@@ -53,11 +53,11 @@ class _DbtNode:
     _status: str = field(default=NodeStatus.Skipped.value)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.node.name
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str:
         return self.node.unique_id
 
     def _get_status(self):
@@ -71,24 +71,40 @@ class _DbtNode:
 
 @dataclass
 class DbtTest(_DbtNode):
-    model: str = field(init=False)
     column: str = field(init=False)
+    source: Optional[Tuple[str, str]] = field(init=False, default=None)
+    model: Optional[str] = field(init=False, default=None)
 
     def __post_init__(self):
         node = self.node
         if node.resource_type == NodeType.Test:
             if hasattr(node, "test_metadata"):
-                node.name = node.test_metadata.name
+                metadata: TestMetadata = self.node.test_metadata
 
-                # node.test_metadata.kwargs looks like this:
+                # metadata.kwargs looks like this:
                 # kwargs={'column_name': 'y', 'model': "{{ get_where_subquery(ref('boston')) }}"}
                 # and we want to get 'boston' is the model name that we want extract
                 # except in dbt v 0.20.1, where we need to filter 'where' string out
-                refs = re.findall(r"'([^']+)'", node.test_metadata.kwargs["model"])
-                self.model = [ref for ref in refs if ref != "where"][0]
-                self.column = node.test_metadata.kwargs.get("column_name", None)
+                self.column = metadata.kwargs.get("column_name", None)
+
+                # TODO: Handle package models?
+                refs = re.findall(r"ref\('([^']+)'\)", metadata.kwargs["model"])
+
+                if refs:
+                    self.model = refs[0]
+
+                sources = re.findall(
+                    r"source\('([^']+)', *'([^']+)'\)", metadata.kwargs["model"]
+                )
+                if sources:
+                    self.source = sources[0]
             else:
                 logger.warn(f"Non-generic test was not processed: {node.name}")
+
+    @property
+    def name(self) -> str:
+        metadata: TestMetadata = self.node.test_metadata
+        return metadata.name
 
 
 @dataclass
@@ -250,7 +266,7 @@ class DbtManifest:
         status_map = {r.unique_id: r.status for r in run_results.results}
 
         tests: List[DbtTest] = []
-        tests_dict: Dict[str, List[DbtTest]] = defaultdict(list)
+        tests_dict: Dict[Union[Tuple[str, str], str], List[DbtTest]] = defaultdict(list)
         for node in self.get_test_nodes():
             test = DbtTest(
                 node=node,
@@ -258,7 +274,10 @@ class DbtManifest:
             )
             tests.append(test)
 
-            tests_dict[test.model].append(test)
+            if test.model:
+                tests_dict[test.model].append(test)
+            if test.source:
+                tests_dict[test.source].append(test)
 
         models: List[DbtModel] = []
         for node in self.get_model_nodes():
@@ -277,7 +296,7 @@ class DbtManifest:
             source = DbtSource(
                 node=node,
                 _status=status_map.get(node.unique_id, NodeStatus.Skipped).value,
-                tests=tests_dict[node.source_name],
+                tests=tests_dict[(node.source_name, node.name)],
                 freshness=source_freshness_map.get(node.unique_id),
             )
             sources.append(source)

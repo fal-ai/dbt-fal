@@ -21,7 +21,7 @@ output += f"source size {source_size}\n"
 
 for source in list_sources():
     output += (
-        f"source {source.name} has {len(source.tests)} tests,"
+        f"source {source.name}.{source.table_name} has {len(source.tests)} tests,"
         f" source status is {source.status}\n"
     )
 
