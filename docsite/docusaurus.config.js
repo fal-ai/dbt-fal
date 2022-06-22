@@ -65,6 +65,12 @@ const config = {
             label: 'Reference',
           },
           {
+            type: 'docSidebar',
+            position: 'left',
+            sidebarId: 'guides',
+            label: 'Guides',
+          },
+          {
             to: 'https://blog.fal.ai',
             label: 'Blog',
             position: 'left'
