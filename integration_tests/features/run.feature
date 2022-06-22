@@ -52,6 +52,8 @@ Feature: `run` command
       | agent_wait_time.after.py |
 
   @dbtv1
+  @TODO-redshift
+  # TODO: use real redshift instance for testing
   Scenario: fal run is aware of source freshness
     Given the project 010_source_freshness
     When the following shell command is invoked:
