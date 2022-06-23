@@ -9,14 +9,14 @@ sources:
       error_after: { "count": 30, "period": minute }
     tables:
       - name: freshness_table
-        loaded_at_field: cast(loaded_at as timestamptz)
+        loaded_at_field: "current_timestamp"
         columns:
           - name: info
             tests:
               - unique
 
-      - name: freshness_other # does not exist (run time error)
-        loaded_at_field: cast(loaded_at as timestamptz)
+      - name: freshness_xther # does not exist (run time error)
+        loaded_at_field: "current_timestamp"
 fal:
   scripts:
     - fal_scripts/freshness.py
