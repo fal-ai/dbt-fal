@@ -17,6 +17,6 @@ faldbt.write_to_source(df, "freshness_test", "freshness_table", mode="overwrite"
 from time import sleep
 
 # Let BigQuery cache load it
-sleep(10)
+sleep(5)
 
 print("Lodaded")
