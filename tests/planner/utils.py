@@ -9,7 +9,8 @@ def to_graph(data: list[tuple[str, dict[str, Any]]]) -> nx.DiGraph:
     graph = nx.DiGraph()
 
     nodes, edges = [], []
-    for node, properties in data:
+    for node, _properties in data:
+        properties = _properties.copy()
         edges.extend((node, edge) for edge in properties.pop("to", []))
         nodes.append((node, properties))
 
