@@ -11,6 +11,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v2
         with:
@@ -40,11 +42,30 @@ jobs:
           echo "current_version=$current_version" >> $GITHUB_ENV
           poetry build
 
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v1
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: v${{ env.short_version }}..HEAD
+        env:
+          OUTPUT: CHANGES.md
+
+      - name: Set the release body
+        id: release
+        shell: bash
+        run: |
+          r=$(cat ${{ steps.git-cliff.outputs.changelog }})
+          r="${r//'%'/'%25'}"     # Multiline escape sequences for %
+          r="${r//$'\n'/'%0A'}"   # Multiline escape sequences for '\n'
+          r="${r//$'\r'/'%0D'}"   # Multiline escape sequences for '\r'
+          echo "::set-output name=RELEASE_BODY::$r"
+
       - name: Publish GitHub
         uses: softprops/action-gh-release@v1
         with:
           name: fal ${{ env.current_version }}
-          body: Fal minor release ${{ env.current_version }}
+          body: ${{ steps.release.outputs.RELEASE_BODY }}
           tag_name: v${{ env.current_version }}
           files: |
             dist/fal-${{env.current_version}}-py3-none-any.whl
