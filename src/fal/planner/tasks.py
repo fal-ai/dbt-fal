@@ -138,10 +138,10 @@ class FalHookTask(Task):
 
 
 @dataclass
-class Node:
+class TaskGroup:
     task: DBTTask
     post_hooks: List[FalHookTask] = field(default_factory=list)
-    dependencies: List[Node] = field(default_factory=list)
+    dependencies: List[TaskGroup] = field(default_factory=list)
 
     def exit(self, status: int) -> None:
         # When the node is finalized (when all tasks are ran),
