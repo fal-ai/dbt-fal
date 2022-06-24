@@ -7,7 +7,7 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Iterator, List, Union, Any
+from typing import Iterator, List, Union, Any, Optional, Dict, Tuple
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
@@ -37,19 +37,19 @@ def _unique_ids_to_model_names(id_list: List[str]) -> List[str]:
 def _mark_dbt_nodes_status(
     fal_dbt: FalDbt,
     status: NodeStatus,
-    dbt_node: Union[str, None] = None,
+    dbt_node: Optional[str] = None,
 ):
     for model in fal_dbt.models:
         if dbt_node is not None:
             if model.unique_id == dbt_node:
-                model.set_status(status)
+                model.status = status
         else:
-            model.set_status(status)
+            model.status = status
 
 
 def _map_cli_output_model_statuses(
-    run_results: dict[Any, Any]
-) -> Iterator[tuple[str, NodeStatus]]:
+    run_results: Dict[Any, Any]
+) -> Iterator[Tuple[str, NodeStatus]]:
     if not isinstance(run_results.get("results"), list):
         raise Exception("Could not read dbt run results")
 
@@ -93,12 +93,14 @@ class DBTTask(Task):
     _run_index: int = -1
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        from fal.cli.dbt_runner import dbt_run
+        from fal.cli.dbt_runner import dbt_run_through_python
 
         assert self._run_index != -1
 
         model_names = _unique_ids_to_model_names(self.model_ids)
-        output = dbt_run(args, model_names, fal_dbt.target_path, self._run_index)
+        output = dbt_run_through_python(
+            args, model_names, fal_dbt.target_path, self._run_index
+        )
 
         for node, status in _map_cli_output_model_statuses(output.run_results):
             _mark_dbt_nodes_status(fal_dbt, status, node)

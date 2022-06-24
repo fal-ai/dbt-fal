@@ -33,7 +33,7 @@ def create_group(
     else:
         assert kind is NodeKind.FAL_MODEL
         assert isinstance(model_node, DbtModelNode)
-        task = FalModelTask(model_ids=model_ids, bound_model=model_node)
+        task = FalModelTask(model_ids=model_ids, bound_model=model_node.model)
 
     post_hooks = [
         FalHookTask(

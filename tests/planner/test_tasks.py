@@ -26,7 +26,7 @@ class FakeScript:
 
 def mock_dbt_run(mocker, return_code):
     mocker.patch(
-        "fal.cli.dbt_runner.dbt_run",
+        "fal.cli.dbt_runner.dbt_run_through_python",
         return_value=FakeCLIOutput(return_code, {}),
     )
     mocker.patch(
