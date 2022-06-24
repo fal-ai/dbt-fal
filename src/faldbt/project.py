@@ -373,6 +373,8 @@ class FalDbt:
                 profile_target=profile_target,
             )
 
+        lib.register_adapters(self._config)
+
         el_configs = parse.get_el_configs(
             self.profiles_dir, self._config.profile_name, self._config.target_name
         )
