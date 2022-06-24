@@ -267,8 +267,14 @@ def overwrite_target(
 
     relation = _build_table_from_target(adapter, target)
 
+    # With some writing functions, it could be called twice at the same time for the same identifier
+    # so we avoid overwriting temporal tables by attaching uniqueness to the name
+    unique_str = str(uuid4())[0:8]
     temporal_relation = _build_table_from_parts(
-        adapter, relation.database, relation.schema, f"{relation.identifier}__f__"
+        adapter,
+        relation.database,
+        relation.schema,
+        f"{relation.identifier}__f__{unique_str}",
     )
 
     results = _write_relation(
