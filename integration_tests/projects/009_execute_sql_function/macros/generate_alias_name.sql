@@ -1,0 +1,1 @@
+../../default/macros/generate_alias_name.sql
