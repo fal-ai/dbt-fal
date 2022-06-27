@@ -68,6 +68,12 @@ def initialize_dbt_flags(profiles_dir: str):
         flags.ENABLE_LEGACY_LOGGER = "1"
 
 
+def register_adapters(config: RuntimeConfig):
+    # HACK: to avoid 'Node package named <profile> not found'
+    adapters_factory.reset_adapters()
+    adapters_factory.register_adapter(config)
+
+
 # NOTE: Once we get an adapter, we must call `connection_for` or `connection_named` to use it
 def _get_adapter(
     project_dir: str,
@@ -177,10 +183,6 @@ def compile_sql(
         )
 
     manifest = parse.get_dbt_manifest(config)
-
-    # HACK: to avoid 'Node package named <profile> not found'
-    adapters_factory.reset_adapters()
-    adapters_factory.register_adapter(config)
 
     adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
 

@@ -275,7 +275,7 @@ Feature: `flow run` command
       """
       fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data --threads 1
       """
-    Then it throws an exception RuntimeError with message 'Error running dbt run'
+    Then it throws an exception RuntimeError with message 'Error in script'
 
     When the following command is invoked:
       """
