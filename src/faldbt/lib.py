@@ -1,5 +1,6 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
 import six
+from enum import Enum
 from datetime import datetime
 from dataclasses import dataclass
 from uuid import uuid4
@@ -25,6 +26,12 @@ from pandas.io import sql as pdsql
 import sqlalchemy
 from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
+
+
+class WriteModeEnum(Enum):
+    APPEND = "append"
+    OVERWRITE = "overwrite"
+
 
 DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.get_installed_version()

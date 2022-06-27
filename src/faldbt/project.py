@@ -1,5 +1,4 @@
 from collections import defaultdict
-from enum import Enum
 import os.path
 import re
 from dataclasses import dataclass, field
@@ -26,6 +25,7 @@ from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.task.compile import CompileTask
 import dbt.tracking
 
+from .lib import WriteModeEnum
 from . import parse
 from . import lib
 from .el_client import FalElClient
@@ -312,11 +312,6 @@ class CompileArgs:
     exclude: Tuple[str]
     state: Optional[Path]
     single_threaded: Optional[bool]
-
-
-class WriteModeEnum(Enum):
-    APPEND = "append"
-    OVERWRITE = "overwrite"
 
 
 class FalDbt:
