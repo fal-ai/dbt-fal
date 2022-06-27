@@ -220,7 +220,10 @@ def execute_sql(
 
 
 def fetch_target(
-    project_dir: str, profiles_dir: str, target: CompileResultNode, profile_target=None
+    project_dir: str,
+    profiles_dir: str,
+    target: CompileResultNode,
+    profile_target: str,
 ) -> RemoteRunResult:
     relation = _get_target_relation(
         target, project_dir, profiles_dir, profile_target=profile_target
@@ -229,6 +232,12 @@ def fetch_target(
     if relation is None:
         raise Exception(f"Could not get relation for '{target.unique_id}'")
 
+    return _fetch_relation(project_dir, profiles_dir, profile_target, relation)
+
+
+def _fetch_relation(
+    project_dir: str, profiles_dir: str, profile_target: str, relation: BaseRelation
+) -> RemoteRunResult:
     query = f"SELECT * FROM {relation}"
     _, result = _execute_sql(
         project_dir, profiles_dir, query, profile_target=profile_target
@@ -275,6 +284,16 @@ def overwrite_target(
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     relation = _build_table_from_target(adapter, target)
+
+    if adapter.type() == "bigquery":
+        return _bigquery_write_relation(
+            data,
+            project_dir,
+            profiles_dir,
+            relation,
+            profile_target,
+            mode=WriteModeEnum.OVERWRITE,
+        )
 
     # With some writing functions, it could be called twice at the same time for the same identifier
     # so we avoid overwriting temporal tables by attaching uniqueness to the name
@@ -323,6 +342,16 @@ def write_target(
 
     relation = _build_table_from_target(adapter, target)
 
+    if adapter.type() == "bigquery":
+        return _bigquery_write_relation(
+            data,
+            project_dir,
+            profiles_dir,
+            relation,
+            profile_target,
+            mode=WriteModeEnum.APPEND,
+        )
+
     return _write_relation(
         data, project_dir, profiles_dir, relation, dtype, profile_target=profile_target
     )
@@ -337,6 +366,8 @@ def _write_relation(
     profile_target: str = None,
 ) -> RemoteRunResult:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+
+    assert adapter.type() != "bigquery", "Should not have reached here with bigquery"
 
     database, schema, identifier = (
         relation.database,
@@ -503,3 +534,56 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
         pass
 
     return sqlalchemy.create_mock_engine(url_string, executor=null_dump)
+
+
+def _bigquery_write_relation(
+    data: pd.DataFrame,
+    project_dir: str,
+    profiles_dir: str,
+    relation: BaseRelation,
+    profile_target: str,
+    mode: WriteModeEnum,
+) -> RemoteRunResult:
+    import google.cloud.bigquery as bigquery
+    from google.cloud.bigquery.job import WriteDisposition
+    from dbt.adapters.bigquery import BigQueryAdapter
+
+    adapter: BigQueryAdapter = _get_adapter(project_dir, profiles_dir, profile_target)  # type: ignore
+    assert adapter.type() == "bigquery"
+
+    disposition = (
+        WriteDisposition.WRITE_TRUNCATE
+        if WriteModeEnum.OVERWRITE == mode
+        else WriteDisposition.WRITE_APPEND
+    )
+
+    project: str = relation.database  # type: ignore
+    dataset: str = relation.schema  # type: ignore
+    table: str = relation.identifier  # type: ignore
+
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    name = "bigquery:write_relation:" + str(relation) + ":" + str(uuid4())
+    with adapter.connection_named(name):
+        conn = adapter.connections.get_thread_connection()
+        client: bigquery.Client = conn.handle  # type: ignore
+
+        table_ref = bigquery.TableReference(
+            bigquery.DatasetReference(project, dataset), table
+        )
+
+        job_config = bigquery.LoadJobConfig(
+            # Specify a (partial) schema. All columns are always written to the
+            # table. The schema is used to assist in data type definitions.
+            # TODO: use `dtype` for this? Offer a specialized option for BQ?
+            schema=[],
+            write_disposition=disposition,
+        )
+
+        job = client.load_table_from_dataframe(data, table_ref, job_config=job_config)
+
+    timeout = adapter.connections.get_job_execution_timeout_seconds(conn) or 300
+    with adapter.connections.exception_handler("LOAD TABLE"):
+        adapter.poll_until_job_completes(job, timeout)
+
+    # TODO: Do we really need this?
+    return _fetch_relation(project_dir, profiles_dir, profile_target, relation)
