@@ -537,14 +537,11 @@ class FalDbt:
 
         target_model = self._model(target_model_name, target_package_name)
 
-        result = lib.fetch_target(
+        return lib.fetch_target(
             self.project_dir,
             self.profiles_dir,
             target_model,
             profile_target=self._profile_target,
-        )
-        return pd.DataFrame.from_records(
-            result.table.rows, columns=result.table.column_names, coerce_float=True
         )
 
     def _source(
@@ -574,14 +571,11 @@ class FalDbt:
 
         target_source = self._source(target_source_name, target_table_name)
 
-        result = lib.fetch_target(
+        return lib.fetch_target(
             self.project_dir,
             self.profiles_dir,
             target_source,
             profile_target=self._profile_target,
-        )
-        return pd.DataFrame.from_records(
-            result.table.rows, columns=result.table.column_names
         )
 
     @telemetry.log_call("write_to_source", ["mode"])
@@ -767,18 +761,12 @@ class FalDbt:
         # ran from GitHub Actions. For some reason, it can not find the right profile.
         # Haven't been able to reproduce this behavior locally and therefore developed
         # this workaround.
-        query_result = lib.execute_sql(
+        return lib.execute_sql(
             project_dir=self.project_dir,
             profiles_dir=self.profiles_dir,
             sql=compiled.compiled_sql,
             profile_target=self._profile_target,
             config=self._config,
-        )
-
-        return pd.DataFrame.from_records(
-            query_result.table.rows,
-            columns=query_result.table.column_names,
-            coerce_float=True,
         )
 
 

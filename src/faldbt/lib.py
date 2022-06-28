@@ -1,10 +1,10 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
+from contextlib import contextmanager
 import six
 from enum import Enum
-from datetime import datetime
 from dataclasses import dataclass
 from uuid import uuid4
-from typing import List, Optional, Tuple
+from typing import Iterator, List, Optional, Tuple
 from urllib.parse import quote_plus
 
 import dbt.version
@@ -13,7 +13,7 @@ import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLAdapter
-from dbt.adapters.base import BaseRelation
+from dbt.adapters.base import BaseRelation, BaseAdapter, BaseConnectionManager
 from dbt.contracts.graph.compiled import CompileResultNode
 from dbt.contracts.graph.parsed import ParsedModelNode
 from dbt.config import RuntimeConfig
@@ -23,6 +23,7 @@ from . import parse
 import pandas as pd
 from pandas.io import sql as pdsql
 
+import agate
 import sqlalchemy
 from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
@@ -86,7 +87,7 @@ def _get_adapter(
     project_dir: str,
     profiles_dir: str,
     profile_target: str,
-    config: RuntimeConfig = None,
+    config: Optional[RuntimeConfig] = None,
 ) -> SQLAdapter:
     if config is None:
         config = parse.get_dbt_config(
@@ -101,44 +102,27 @@ def _execute_sql(
     project_dir: str,
     profiles_dir: str,
     sql: str,
-    profile_target: str = None,
-    config: RuntimeConfig = None,
+    profile_target: str,
+    *,
+    config: Optional[RuntimeConfig] = None,
     adapter: Optional[SQLAdapter] = None,
-) -> Tuple[AdapterResponse, RemoteRunResult]:
-    def _exec(adapter: SQLAdapter):
-        response, execute_result = adapter.execute(sql, fetch=True)
-
-        table = ResultTable(
-            column_names=list(execute_result.column_names),
-            rows=[list(row) for row in execute_result],
-        )
-
-        result = RemoteRunResult(
-            raw_sql=sql,
-            compiled_sql=sql,
-            node=None,
-            table=table,
-            timing=[],
-            logs=[],
-            generated_at=datetime.utcnow(),
-        )
-
-        return response, result
-
-    response, result = None, None
+) -> Tuple[AdapterResponse, pd.DataFrame]:
+    open_conn = adapter is None
     if adapter is None:
         adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
 
-        # HACK: we need to include uniqueness (UUID4) to avoid clashes
-        name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
-        with adapter.connection_named(name):
-            adapter.connections.begin()
-            response, result = _exec(adapter)
-            adapter.commit_if_has_connection()
-    else:
-        response, result = _exec(adapter)
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
+    with _existing_or_new_connection(adapter, name, open_conn) as is_new:
+        exec_response: Tuple[AdapterResponse, agate.Table] = adapter.execute(
+            sql, auto_begin=is_new, fetch=True
+        )
+        response, agate_table = exec_response
 
-    return response, result
+        if is_new:
+            adapter.commit_if_has_connection()
+
+    return response, _agate_table_to_df(agate_table)
 
 
 def _clear_relations_cache(adapter: SQLAdapter, config: RuntimeConfig):
@@ -203,7 +187,8 @@ def compile_sql(
     sql_node = block_parser.parse_remote(sql, name)
     process_node(config, manifest, sql_node)
     runner = SqlCompileRunner(config, adapter, sql_node, 1, 1)
-    return runner.safe_run(manifest)
+    result: RemoteRunResult = runner.safe_run(manifest)
+    return result
 
 
 def execute_sql(
@@ -212,11 +197,18 @@ def execute_sql(
     sql: str,
     profile_target: str = None,
     config: RuntimeConfig = None,
-) -> RemoteRunResult:
-    _, result = _execute_sql(
+) -> pd.DataFrame:
+    return _execute_sql(
         project_dir, profiles_dir, sql, profile_target=profile_target, config=config
-    )
-    return result
+    )[1]
+
+
+def _agate_table_to_df(table: agate.Table) -> pd.DataFrame:
+    column_names = list(table.column_names)
+    rows = [list(row) for row in table]
+
+    # TODO: better type matching?
+    return pd.DataFrame.from_records(data=rows, columns=column_names, coerce_float=True)
 
 
 def fetch_target(
@@ -224,7 +216,7 @@ def fetch_target(
     profiles_dir: str,
     target: CompileResultNode,
     profile_target: str,
-) -> RemoteRunResult:
+) -> pd.DataFrame:
     relation = _get_target_relation(
         target, project_dir, profiles_dir, profile_target=profile_target
     )
@@ -237,12 +229,12 @@ def fetch_target(
 
 def _fetch_relation(
     project_dir: str, profiles_dir: str, profile_target: str, relation: BaseRelation
-) -> RemoteRunResult:
+) -> pd.DataFrame:
     query = f"SELECT * FROM {relation}"
-    _, result = _execute_sql(
+    _, df = _execute_sql(
         project_dir, profiles_dir, query, profile_target=profile_target
     )
-    return result
+    return df
 
 
 def _build_table_from_parts(
@@ -250,7 +242,7 @@ def _build_table_from_parts(
     database: Optional[str],
     schema: Optional[str],
     identifier: Optional[str],
-):
+) -> BaseRelation:
     from dbt.contracts.relation import Path, RelationType
 
     if adapter.type() == "snowflake":
@@ -280,7 +272,7 @@ def overwrite_target(
     target: CompileResultNode,
     dtype=None,
     profile_target: str = None,
-) -> RemoteRunResult:
+) -> AdapterResponse:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     relation = _build_table_from_target(adapter, target)
@@ -338,7 +330,7 @@ def write_target(
     target: CompileResultNode,
     dtype=None,
     profile_target: str = None,
-) -> RemoteRunResult:
+) -> AdapterResponse:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     relation = _build_table_from_target(adapter, target)
@@ -366,7 +358,7 @@ def _write_relation(
     relation: BaseRelation,
     dtype=None,
     profile_target: str = None,
-) -> RemoteRunResult:
+) -> AdapterResponse:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
     assert adapter.type() != "bigquery", "Should not have reached here with bigquery"
@@ -418,13 +410,13 @@ def _write_relation(
         bind=engine, compile_kwargs={"literal_binds": True}
     )
 
-    _, result = _execute_sql(
+    response, _ = _execute_sql(
         project_dir,
         profiles_dir,
         six.text_type(insert_stmt).strip(),
         profile_target=profile_target,
     )
-    return result
+    return response
 
 
 def _replace_relation(
@@ -538,6 +530,20 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
     return sqlalchemy.create_mock_engine(url_string, executor=null_dump)
 
 
+@contextmanager
+def _existing_or_new_connection(
+    adapter: BaseAdapter,
+    name: str,
+    open_conn: bool,  # TODO: open_conn solution feels hacky
+) -> Iterator[bool]:
+    if open_conn:
+        with adapter.connection_named(name):
+            yield True
+    else:
+        yield False
+
+
+# Adapter: BigQuery
 def _bigquery_write_relation(
     data: pd.DataFrame,
     project_dir: str,
@@ -547,7 +553,7 @@ def _bigquery_write_relation(
     *,
     mode: WriteModeEnum,
     fields_schema: Optional[List[dict]] = None,
-) -> RemoteRunResult:
+) -> AdapterResponse:
     import google.cloud.bigquery as bigquery
     from google.cloud.bigquery.job import WriteDisposition
     from dbt.adapters.bigquery import BigQueryAdapter, BigQueryConnectionManager
@@ -590,9 +596,12 @@ def _bigquery_write_relation(
 
         job = client.load_table_from_dataframe(data, table_ref, job_config=job_config)
 
-    timeout = connection_manager.get_job_execution_timeout_seconds(conn) or 300
-    with connection_manager.exception_handler("LOAD TABLE"):
-        adapter.poll_until_job_completes(job, timeout)
+        timeout = connection_manager.get_job_execution_timeout_seconds(conn) or 300
+        with connection_manager.exception_handler("LOAD TABLE"):
+            adapter.poll_until_job_completes(job, timeout)
 
-    # TODO: Do we really need this?
-    return _fetch_relation(project_dir, profiles_dir, profile_target, relation)
+        query_table = client.get_table(job.destination)
+        num_rows = query_table.num_rows
+
+    # TODO: better AdapterResponse
+    return AdapterResponse("OK", rows_affected=num_rows)
