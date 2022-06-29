@@ -172,20 +172,15 @@ def _create_fal_result_file(target_path: str, run_index: int):
 # but rather use 'multiprocessing' to run it in a real system Process to
 # imitate the existing behavior of `dbt_run()` (in terms of performance).
 
-# dbt-core is currently using the spawn as its mulitprocessing context
-# so we'll mirror it.
-multiprocessing.set_start_method("spawn", force=True)
-
-
 def _dbt_run_through_python(args: List[str], target_path: str, run_index: int):
     from dbt.main import handle_and_check
 
+    run_results = exc = None
     try:
         run_results, success = handle_and_check(args)
-    except BaseException as exc:
-        run_results = None
+    except BaseException as _exc:
         return_code = getattr(exc, "code", 1)
-        traceback.print_exc()
+        exc = _exc
     else:
         return_code = 0 if success else 1
 
@@ -197,7 +192,7 @@ def _dbt_run_through_python(args: List[str], target_path: str, run_index: int):
     if run_results is not None:
         run_results.write(os.path.join(target_path, f"fal_results_{run_index}.json"))
     else:
-        raise RuntimeError("Error running dbt run")
+        raise RuntimeError("Error running dbt run") from exc
 
     return return_code
 
@@ -206,6 +201,11 @@ def dbt_run_through_python(
     args: argparse.Namespace, models_list: List[str], target_path: str, run_index: int
 ) -> DbtCliOutput:
     """Run DBT from the Python entry point in a subprocess."""
+    # dbt-core is currently using the spawn as its mulitprocessing context
+    # so we'll mirror it.
+    if multiprocessing.get_start_method() != "spawn":
+        multiprocessing.set_start_method("spawn", force=True)
+
     args = get_dbt_command_list(args, models_list, include_cli_only_args=False)
     args_as_text = " ".join(args)
     logger.info(f"Running DBT with these options: {args_as_text}")
