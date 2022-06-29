@@ -49,7 +49,7 @@ else:
 @dataclass
 class FlagsArgs:
     profiles_dir: str
-    use_colors: bool
+    use_colors: Optional[bool]
 
 
 def initialize_dbt_flags(profiles_dir: str):
@@ -87,11 +87,14 @@ def _get_adapter(
     project_dir: str,
     profiles_dir: str,
     profile_target: str,
+    *,
     config: Optional[RuntimeConfig] = None,
 ) -> SQLAdapter:
     if config is None:
         config = parse.get_dbt_config(
-            project_dir, profiles_dir, profile_target=profile_target
+            project_dir=project_dir,
+            profiles_dir=profiles_dir,
+            profile_target=profile_target,
         )
     adapter: SQLAdapter = adapters_factory.get_adapter(config)  # type: ignore
 
@@ -109,7 +112,7 @@ def _execute_sql(
 ) -> Tuple[AdapterResponse, pd.DataFrame]:
     open_conn = adapter is None
     if adapter is None:
-        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
+        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
@@ -136,11 +139,13 @@ def _get_target_relation(
     target: CompileResultNode,
     project_dir: str,
     profiles_dir: str,
-    profile_target: str = None,
+    profile_target: str,
 ) -> Optional[BaseRelation]:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
     config = parse.get_dbt_config(
-        project_dir, profiles_dir, profile_target=profile_target
+        project_dir=project_dir,
+        profiles_dir=profiles_dir,
+        profile_target=profile_target,
     )
 
     name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
@@ -160,9 +165,10 @@ def _get_target_relation(
 def compile_sql(
     project_dir: str,
     profiles_dir: str,
+    profile_target: str,
     sql: str,
-    profile_target: str = None,
-    config: RuntimeConfig = None,
+    *,
+    config: Optional[RuntimeConfig] = None,
 ):
     from dbt.parser.manifest import process_node
     from dbt.task.sql import SqlCompileRunner
@@ -170,12 +176,14 @@ def compile_sql(
 
     if config is None:
         config = parse.get_dbt_config(
-            project_dir, profiles_dir, profile_target=profile_target
+            project_dir=project_dir,
+            profiles_dir=profiles_dir,
+            profile_target=profile_target,
         )
 
     manifest = parse.get_dbt_manifest(config)
 
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target, config)
+    adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
 
     block_parser = SqlBlockParser(
         project=config,
@@ -194,9 +202,10 @@ def compile_sql(
 def execute_sql(
     project_dir: str,
     profiles_dir: str,
+    profile_target: str,
     sql: str,
-    profile_target: str = None,
-    config: RuntimeConfig = None,
+    *,
+    config: Optional[RuntimeConfig] = None,
 ) -> pd.DataFrame:
     return _execute_sql(
         project_dir, profiles_dir, sql, profile_target=profile_target, config=config
@@ -269,9 +278,10 @@ def overwrite_target(
     data: pd.DataFrame,
     project_dir: str,
     profiles_dir: str,
+    profile_target: str,
     target: CompileResultNode,
+    *,
     dtype=None,
-    profile_target: str = None,
 ) -> AdapterResponse:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
@@ -282,8 +292,8 @@ def overwrite_target(
             data,
             project_dir,
             profiles_dir,
-            relation,
             profile_target,
+            relation,
             mode=WriteModeEnum.OVERWRITE,
             fields_schema=dtype,
         )
@@ -302,17 +312,17 @@ def overwrite_target(
         data,
         project_dir,
         profiles_dir,
+        profile_target,
         temporal_relation,
-        dtype,
-        profile_target=profile_target,
+        dtype=dtype,
     )
     try:
         _replace_relation(
             project_dir,
             profiles_dir,
+            profile_target,
             relation,
             temporal_relation,
-            profile_target=profile_target,
         )
 
         return results
@@ -327,9 +337,10 @@ def write_target(
     data: pd.DataFrame,
     project_dir: str,
     profiles_dir: str,
+    profile_target: str,
     target: CompileResultNode,
+    *,
     dtype=None,
-    profile_target: str = None,
 ) -> AdapterResponse:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
@@ -340,14 +351,14 @@ def write_target(
             data,
             project_dir,
             profiles_dir,
-            relation,
             profile_target,
+            relation,
             mode=WriteModeEnum.APPEND,
             fields_schema=dtype,
         )
 
     return _write_relation(
-        data, project_dir, profiles_dir, relation, dtype, profile_target=profile_target
+        data, project_dir, profiles_dir, profile_target, relation, dtype=dtype
     )
 
 
@@ -355,9 +366,10 @@ def _write_relation(
     data: pd.DataFrame,
     project_dir: str,
     profiles_dir: str,
+    profile_target: str,
     relation: BaseRelation,
+    *,
     dtype=None,
-    profile_target: str = None,
 ) -> AdapterResponse:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
@@ -422,9 +434,9 @@ def _write_relation(
 def _replace_relation(
     project_dir: str,
     profiles_dir: str,
+    profile_target: str,
     original_relation: BaseRelation,
     new_relation: BaseRelation,
-    profile_target: str = None,
 ):
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
@@ -476,7 +488,9 @@ def _replace_relation(
         adapter.commit_if_has_connection()
 
         config = parse.get_dbt_config(
-            project_dir, profiles_dir, profile_target=profile_target
+            project_dir=project_dir,
+            profiles_dir=profiles_dir,
+            profile_target=profile_target,
         )
         _clear_relations_cache(adapter, config)
 
@@ -485,7 +499,7 @@ def _drop_relation(
     project_dir: str,
     profiles_dir: str,
     relation: BaseRelation,
-    profile_target: str = None,
+    profile_target: str,
 ):
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
@@ -548,8 +562,8 @@ def _bigquery_write_relation(
     data: pd.DataFrame,
     project_dir: str,
     profiles_dir: str,
-    relation: BaseRelation,
     profile_target: str,
+    relation: BaseRelation,
     *,
     mode: WriteModeEnum,
     fields_schema: Optional[List[dict]] = None,
