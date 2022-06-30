@@ -4,11 +4,15 @@ DEPENDENCY: ref("model_b")
 """
 import os
 from functools import reduce
+from datetime import datetime
 
-# weird way to call, but added in the docstring
+# does not get picked up, so we put it in the docstring
 df = ref(*["model_b"])
 
 df["my_bool"] = True
+
+# BigQuery only:
+# df["my_ts"] = datetime(2022, 6, 27, 17, 12, 25)
 
 write_to_model(df)
 

@@ -9,6 +9,7 @@ output = ""
 
 df: pd.DataFrame = ref(model_name)
 df.columns = df.columns.str.lower()  # Snowflake has uppercase columns
+
 output += f"my_float {df.my_float[0]}\n"
 
 write_to_source(df, "results", "some_source", mode="overwrite")
