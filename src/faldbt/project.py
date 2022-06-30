@@ -346,7 +346,9 @@ class FalDbt:
 
         # Can be overwritten if profile_target is not None
         self._config = parse.get_dbt_config(
-            self.project_dir, self.profiles_dir, threads
+            project_dir=self.project_dir,
+            profiles_dir=self.profiles_dir,
+            threads=threads,
         )
 
         self._run_results = DbtRunResult(
@@ -362,9 +364,9 @@ class FalDbt:
 
         if profile_target is not None:
             self._config = parse.get_dbt_config(
-                self.project_dir,
-                self.profiles_dir,
-                threads,
+                project_dir=self.project_dir,
+                profiles_dir=self.profiles_dir,
+                threads=threads,
                 profile_target=profile_target,
             )
 
@@ -537,14 +539,11 @@ class FalDbt:
 
         target_model = self._model(target_model_name, target_package_name)
 
-        result = lib.fetch_target(
+        return lib.fetch_target(
             self.project_dir,
             self.profiles_dir,
             target_model,
-            profile_target=self._profile_target,
-        )
-        return pd.DataFrame.from_records(
-            result.table.rows, columns=result.table.column_names, coerce_float=True
+            self._profile_target,
         )
 
     def _source(
@@ -574,14 +573,11 @@ class FalDbt:
 
         target_source = self._source(target_source_name, target_table_name)
 
-        result = lib.fetch_target(
+        return lib.fetch_target(
             self.project_dir,
             self.profiles_dir,
             target_source,
-            profile_target=self._profile_target,
-        )
-        return pd.DataFrame.from_records(
-            result.table.rows, columns=result.table.column_names
+            self._profile_target,
         )
 
     @telemetry.log_call("write_to_source", ["mode"])
@@ -607,9 +603,9 @@ class FalDbt:
                 data,
                 self.project_dir,
                 self.profiles_dir,
+                self._profile_target,
                 target_source,
-                dtype,
-                profile_target=self._profile_target,
+                dtype=dtype,
             )
 
         elif write_mode == WriteModeEnum.OVERWRITE:
@@ -617,9 +613,9 @@ class FalDbt:
                 data,
                 self.project_dir,
                 self.profiles_dir,
+                self._profile_target,
                 target_source,
-                dtype,
-                profile_target=self._profile_target,
+                dtype=dtype,
             )
 
         else:
@@ -652,9 +648,9 @@ class FalDbt:
                 data,
                 self.project_dir,
                 self.profiles_dir,
+                self._profile_target,
                 target_model,
-                dtype,
-                profile_target=self._profile_target,
+                dtype=dtype,
             )
 
         elif write_mode == WriteModeEnum.OVERWRITE:
@@ -662,9 +658,9 @@ class FalDbt:
                 data,
                 self.project_dir,
                 self.profiles_dir,
+                self._profile_target,
                 target_model,
-                dtype,
-                profile_target=self._profile_target,
+                dtype=dtype,
             )
 
         else:
@@ -755,11 +751,11 @@ class FalDbt:
         # ran from GitHub Actions. For some reason, it can not find the right profile.
         # Haven't been able to reproduce this behavior locally and therefore developed
         # this workaround.
-        compiled = lib.compile_sql(
-            project_dir=self.project_dir,
-            profiles_dir=self.profiles_dir,
-            sql=sql,
-            profile_target=self._profile_target,
+        compiled_result = lib.compile_sql(
+            self.project_dir,
+            self.profiles_dir,
+            self._profile_target,
+            sql,
             config=self._config,
         )
 
@@ -767,18 +763,12 @@ class FalDbt:
         # ran from GitHub Actions. For some reason, it can not find the right profile.
         # Haven't been able to reproduce this behavior locally and therefore developed
         # this workaround.
-        query_result = lib.execute_sql(
-            project_dir=self.project_dir,
-            profiles_dir=self.profiles_dir,
-            sql=compiled.compiled_sql,
-            profile_target=self._profile_target,
+        return lib.execute_sql(
+            self.project_dir,
+            self.profiles_dir,
+            self._profile_target,
+            compiled_result.compiled_sql,  # type: ignore
             config=self._config,
-        )
-
-        return pd.DataFrame.from_records(
-            query_result.table.rows,
-            columns=query_result.table.column_names,
-            coerce_float=True,
         )
 
 

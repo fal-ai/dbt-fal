@@ -48,11 +48,12 @@ def load_dbt_project_contract(project_dir: str) -> ProjectContract:
 
 
 def get_dbt_config(
+    *,
     project_dir: str,
     profiles_dir: str,
+    profile_target: Optional[str] = None,
     threads: Optional[int] = None,
     profile: Optional[str] = None,
-    profile_target: Optional[str] = None,
 ) -> RuntimeConfig:
     # Construct a phony config
     args = RuntimeArgs(
