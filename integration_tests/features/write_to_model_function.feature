@@ -13,9 +13,9 @@ Feature: `write_to_model` function
     And the following scripts are ran:
       | some_model.write_to_source_twice.py | other_model.complete_model.py | third_model.complete_model.py |
     And the script other_model.complete_model.py output file has the lines:
-      | my_int None | my_int 3.0 | size 1 |
+      | my_int 0.0 | my_int 3.0 | size 1 |
     And the script third_model.complete_model.py output file has the lines:
-      | my_int None | my_int 3.0 | size 1 |
+      | my_int 0.0 | my_int 3.0 | size 1 |
     And the script some_model.write_to_source_twice.py output file has the lines:
       | my_float 1.2 |
 
@@ -29,7 +29,7 @@ Feature: `write_to_model` function
     And the following scripts are ran:
       | other_model.complete_model.py |
     And the script other_model.complete_model.py output file has the lines:
-      | my_int None | my_int 3.0 | size 1 |
+      | my_int 0.0 | my_int 3.0 | size 1 |
 
   @TODO-postgres
   @TODO-snowflake
@@ -57,4 +57,4 @@ Feature: `write_to_model` function
     Then the following models are calculated:
       | model_with_array.py |
     And the script model_with_array.py output file has the lines:
-      | my_array: ["some", "other"] | other_array: [1, 2, 3] |
+      | my_array: ['some', 'other'] | other_array: [1, 2, 3] |
