@@ -29,11 +29,6 @@ from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 
 
-class WriteModeEnum(Enum):
-    APPEND = "append"
-    OVERWRITE = "overwrite"
-
-
 DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.get_installed_version()
 
@@ -41,9 +36,14 @@ IS_DBT_V1PLUS = DBT_VCURRENT.compare(DBT_V1) >= 0
 IS_DBT_V0 = not IS_DBT_V1PLUS
 
 if IS_DBT_V0:
-    from faldbt.cp.contracts.sql import ResultTable, RemoteRunResult
+    from faldbt.cp.contracts.sql import RemoteRunResult
 else:
-    from dbt.contracts.sql import ResultTable, RemoteRunResult
+    from dbt.contracts.sql import RemoteRunResult
+
+
+class WriteModeEnum(Enum):
+    APPEND = "append"
+    OVERWRITE = "overwrite"
 
 
 @dataclass
@@ -113,6 +113,9 @@ def _execute_sql(
     open_conn = adapter is None
     if adapter is None:
         adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
+
+    if adapter.type() == "bigquery":
+        return _bigquery_execute_sql(adapter, sql, open_conn)
 
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
@@ -558,6 +561,32 @@ def _existing_or_new_connection(
 
 
 # Adapter: BigQuery
+def _bigquery_execute_sql(
+    adapter: BaseAdapter, sql: str, open_conn: bool
+) -> Tuple[AdapterResponse, pd.DataFrame]:
+    assert adapter.type() == "bigquery"
+
+    import google.cloud.bigquery as bigquery
+
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    name = "bigquery:execute_sql:" + str(hash(sql)) + ":" + str(uuid4())
+    with _existing_or_new_connection(adapter, name, open_conn):
+        conection_manager: BaseConnectionManager = adapter.connections  # type: ignore
+        conn = conection_manager.get_thread_connection()
+        client: bigquery.Client = conn.handle  # type: ignore
+
+        job = client.query(sql)
+        df = job.to_dataframe()
+        if job.destination:
+            query_table = client.get_table(job.destination)
+            num_rows = query_table.num_rows
+        else:
+            num_rows = df.size
+
+    # TODO: better AdapterResponse
+    return AdapterResponse("OK", rows_affected=num_rows), df
+
+
 def _bigquery_write_relation(
     data: pd.DataFrame,
     project_dir: str,

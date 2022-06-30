@@ -25,4 +25,4 @@ Feature: `execute_sql` function
     And the following scripts are ran:
       | execute_sql_model_one.run_macro.py |
     And the script execute_sql_model_one.run_macro.py output file has the lines:
-      | Model dataframe first row: | my_int_times_ten    10.0 |
+      | Model dataframe first row: | my_int_times_ten    10 |
