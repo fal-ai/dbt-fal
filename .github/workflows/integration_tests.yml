@@ -49,7 +49,7 @@ jobs:
         env:
           FAL_STATS_ENABLED: false
         run: |
-          BEHAVE_ARGS=""
+          BEHAVE_ARGS="--tags=-TODO-postgres"
           if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
           then
             BEHAVE_ARGS="$BEHAVE_ARGS --tags=-dbtv1"
