@@ -18,7 +18,7 @@ Feature: `flow run` command with py nodes in the middle
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select middle_1+ --experimental-flow
       """
-    Then the following models are calculated:
+    Then the following models are calculated in order:
       | middle_1 | middle_2 | after_middle |
     And the following scripts are ran:
       | middle_2.middle_script.py |
@@ -54,7 +54,7 @@ Feature: `flow run` command with py nodes in the middle
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_a+,model_c+ --experimental-models
       """
-    Then the following models are calculated:
+    Then the following models are calculated in order:
       | model_c.py | model_d | model_e.ipynb |
     And the following scripts are ran:
       | model_c.after.py | model_e.after.py | model_c.post_hook.py |
@@ -106,5 +106,5 @@ Feature: `flow run` command with py nodes in the middle
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select "model_a model_b" , "model_b model_c"
       """
-    Then the following models are calculated:
+    Then the following models are calculated in order:
       | model_a | model_b | model_c.py |
