@@ -293,6 +293,7 @@ def overwrite_target(
             relation,
             profile_target,
             mode=WriteModeEnum.OVERWRITE,
+            fields_schema=dtype,
         )
 
     # With some writing functions, it could be called twice at the same time for the same identifier
@@ -350,6 +351,7 @@ def write_target(
             relation,
             profile_target,
             mode=WriteModeEnum.APPEND,
+            fields_schema=dtype,
         )
 
     return _write_relation(
@@ -542,11 +544,13 @@ def _bigquery_write_relation(
     profiles_dir: str,
     relation: BaseRelation,
     profile_target: str,
+    *,
     mode: WriteModeEnum,
+    fields_schema: Optional[List[dict]] = None,
 ) -> RemoteRunResult:
     import google.cloud.bigquery as bigquery
     from google.cloud.bigquery.job import WriteDisposition
-    from dbt.adapters.bigquery import BigQueryAdapter
+    from dbt.adapters.bigquery import BigQueryAdapter, BigQueryConnectionManager
 
     adapter: BigQueryAdapter = _get_adapter(project_dir, profiles_dir, profile_target)  # type: ignore
     assert adapter.type() == "bigquery"
@@ -564,7 +568,8 @@ def _bigquery_write_relation(
     # HACK: we need to include uniqueness (UUID4) to avoid clashes
     name = "bigquery:write_relation:" + str(relation) + ":" + str(uuid4())
     with adapter.connection_named(name):
-        conn = adapter.connections.get_thread_connection()
+        connection_manager: BigQueryConnectionManager = adapter.connections
+        conn = connection_manager.get_thread_connection()
         client: bigquery.Client = conn.handle  # type: ignore
 
         table_ref = bigquery.TableReference(
@@ -574,15 +579,19 @@ def _bigquery_write_relation(
         job_config = bigquery.LoadJobConfig(
             # Specify a (partial) schema. All columns are always written to the
             # table. The schema is used to assist in data type definitions.
-            # TODO: use `dtype` for this? Offer a specialized option for BQ?
-            schema=[],
+            schema=[
+                # field_types is a list of API-representation of BigQuery.FieldSchema
+                bigquery.SchemaField.from_api_repr(field)
+                for field in (fields_schema or [])
+            ],
+            source_format="PARQUET",
             write_disposition=disposition,
         )
 
         job = client.load_table_from_dataframe(data, table_ref, job_config=job_config)
 
-    timeout = adapter.connections.get_job_execution_timeout_seconds(conn) or 300
-    with adapter.connections.exception_handler("LOAD TABLE"):
+    timeout = connection_manager.get_job_execution_timeout_seconds(conn) or 300
+    with connection_manager.exception_handler("LOAD TABLE"):
         adapter.poll_until_job_completes(job, timeout)
 
     # TODO: Do we really need this?
