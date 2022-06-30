@@ -24,7 +24,6 @@ models:
       - name: my_int
         tests:
           - not_null
-
     meta:
       fal:
         scripts:
@@ -37,6 +36,7 @@ models:
         scripts:
           after:
             - fal_scripts/complete_model.py
+
   - name: third_model
     meta:
       fal:

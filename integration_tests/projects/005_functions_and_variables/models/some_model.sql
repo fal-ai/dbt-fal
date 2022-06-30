@@ -2,10 +2,10 @@
 
 WITH data AS (
     SELECT 
-        cast(1 AS integer) AS my_int,
+        1.2 AS my_float,
         my_text, 
         -- the after script value should reflect here
-        my_float
+        my_int
     FROM {{ ref('other_model') }}
 )
 
