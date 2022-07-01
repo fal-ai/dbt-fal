@@ -7,6 +7,8 @@ from faldbt.project import CompileArgs, FalDbt
 from dbt.task.compile import CompileTask
 from enum import Enum
 from functools import reduce
+import networkx as nx
+from dbt.logger import GLOBAL_LOGGER as logger
 
 
 class ExecutionPlan:
@@ -101,11 +103,17 @@ def _filter_node_ids(
 
     union = parse_union(selectors)
     for intersection in union.components:
-        plan_outputs = [
-            set(SelectorPlan(selector, unique_ids, fal_dbt).execute(nodeGraph))
-            for selector in intersection.components
-            if selector
-        ]
+        try:
+            plan_outputs = [
+                set(SelectorPlan(selector, unique_ids, fal_dbt).execute(nodeGraph))
+                for selector in intersection.components
+                if selector
+            ]
+        except nx.NetworkXError:
+            # When the user selects a non-existent node, don't fail immediately
+            # but rather just continue processing the rest of selectors.
+            plan_outputs = []
+
         if plan_outputs:
             output |= set.intersection(*plan_outputs)
 
