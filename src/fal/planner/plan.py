@@ -77,3 +77,26 @@ def plan_graph(graph: nx.DiGraph) -> nx.DiGraph:
         _reduce_subgraph(new_graph, nodes)
 
     return new_graph
+
+
+# TEMPORARY!!!
+def __test_reorder_graph(graph: nx.DiGraph) -> nx.DiGraph:
+    # Temporarily re-order the graph for testing purposes. Eliminates the
+    # before and after scripts.
+
+    from fal.cli.selectors import _is_before_script
+
+    new_graph = graph.copy()
+
+    for node, properties in graph.nodes(data=True):
+        kind = properties["kind"]
+        if kind is not NodeKind.FAL_SCRIPT:
+            continue
+
+        if _is_before_script(node):
+            assert len(list(new_graph.predecessors(node))) == 0
+        else:
+            assert len(list(graph.successors(node))) == 0
+        new_graph.remove_node(node)
+
+    return new_graph

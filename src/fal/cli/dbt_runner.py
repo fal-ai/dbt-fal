@@ -1,4 +1,5 @@
-from pathlib import Path
+import multiprocessing
+from multiprocessing import Pool
 from typing import Any, Dict, Optional, List
 import subprocess
 import json
@@ -6,6 +7,7 @@ import faldbt.lib as lib
 from dbt.logger import GLOBAL_LOGGER as logger
 import os
 import shutil
+import traceback
 from os.path import exists
 import argparse
 
@@ -15,8 +17,8 @@ class DbtCliOutput:
         self,
         command: str,
         return_code: int,
-        raw_output: str,
-        logs: List[Dict[str, Any]],
+        raw_output: Optional[str],
+        logs: Optional[List[Dict[str, Any]]],
         run_results: Dict[str, Any],
     ):
         self._command = command
@@ -38,11 +40,11 @@ class DbtCliOutput:
         return self._return_code
 
     @property
-    def raw_output(self) -> str:
+    def raw_output(self) -> Optional[str]:
         return self._raw_output
 
     @property
-    def logs(self) -> List[Dict[str, Any]]:
+    def logs(self) -> Optional[List[Dict[str, Any]]]:
         return self._logs
 
     @property
@@ -55,8 +57,13 @@ def raise_for_dbt_run_errors(output: DbtCliOutput):
         raise RuntimeError("Error running dbt run")
 
 
-def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> List[str]:
-    command_list = ["dbt", "--log-format", "json"]
+def get_dbt_command_list(
+    args: argparse.Namespace, models_list: List[str], include_cli_only_args: bool = True
+) -> List[str]:
+    if include_cli_only_args:
+        command_list = ["dbt", "--log-format", "json"]
+    else:
+        command_list = []
 
     if args.debug:
         command_list += ["--debug"]
@@ -148,14 +155,6 @@ def dbt_run(
     )
 
 
-def _get_index_run_results(target_path: str, run_index: int) -> Dict[Any, Any]:
-    """Get run results for a given run index."""
-    with open(
-        os.path.join(target_path, f"fal_results_{run_index}.json")
-    ) as raw_results:
-        return json.load(raw_results)
-
-
 def _get_run_result_file(target_path: str) -> str:
     return os.path.join(target_path, "run_results.json")
 
@@ -166,3 +165,76 @@ def _create_fal_result_file(target_path: str, run_index: int):
         shutil.copy(
             fal_run_result, os.path.join(target_path, f"fal_results_{run_index}.json")
         )
+
+
+# This is the Python implementation of the `dbt_run()` function, in which
+# we directly use dbt-core as a Python library. We don't run it directly
+# but rather use 'multiprocessing' to run it in a real system Process to
+# imitate the existing behavior of `dbt_run()` (in terms of performance).
+
+def _dbt_run_through_python(args: List[str], target_path: str, run_index: int):
+    from dbt.main import handle_and_check
+
+    run_results = exc = None
+    try:
+        run_results, success = handle_and_check(args)
+    except BaseException as _exc:
+        return_code = getattr(exc, "code", 1)
+        exc = _exc
+    else:
+        return_code = 0 if success else 1
+
+    logger.debug(f"dbt exited with return code {return_code}")
+
+    # The 'run_results' object has a 'write()' method which is basically json.dump().
+    # We'll dump it directly to the fal results file (instead of first dumping it to
+    # run results and then copying it over).
+    if run_results is not None:
+        run_results.write(os.path.join(target_path, f"fal_results_{run_index}.json"))
+    else:
+        raise RuntimeError("Error running dbt run") from exc
+
+    return return_code
+
+
+def dbt_run_through_python(
+    args: argparse.Namespace, models_list: List[str], target_path: str, run_index: int
+) -> DbtCliOutput:
+    """Run DBT from the Python entry point in a subprocess."""
+    # dbt-core is currently using the spawn as its mulitprocessing context
+    # so we'll mirror it.
+    if multiprocessing.get_start_method() != "spawn":
+        multiprocessing.set_start_method("spawn", force=True)
+
+    args = get_dbt_command_list(args, models_list, include_cli_only_args=False)
+    args_as_text = " ".join(args)
+    logger.info(f"Running DBT with these options: {args_as_text}")
+
+    # We are going to use multiprocessing module to spawn a new
+    # process that will run the sub-function we have here. We
+    # don't really need a process pool, since we are only going
+    # to spawn a single process but it provides a nice abstraction
+    # over retrieving values from the process.
+
+    with Pool(processes=1) as pool:
+        return_code = pool.apply(
+            _dbt_run_through_python,
+            (args, target_path, run_index),
+        )
+
+    run_results = _get_index_run_results(target_path, run_index)
+    return DbtCliOutput(
+        command="dbt " + args_as_text,
+        return_code=return_code,
+        raw_output=None,
+        logs=None,
+        run_results=run_results,
+    )
+
+
+def _get_index_run_results(target_path: str, run_index: int) -> Dict[Any, Any]:
+    """Get run results for a given run index."""
+    with open(
+        os.path.join(target_path, f"fal_results_{run_index}.json")
+    ) as raw_results:
+        return json.load(raw_results)
