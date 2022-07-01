@@ -188,33 +188,72 @@ def check_model_results(context):
     expected_models = list(map(_script_filename, context.table.headings))
     unittest.TestCase().assertCountEqual(models, expected_models)
 
-LAYOUT_PARSER = re.compile(
-    r"\d+\."
-    r" (?P<subjects>[\w.]+(, [\w.]+)*)"
-)
 
-def _parse_ordered_layout(source) -> Iterator[Sequence[str]]:
-    for match in LAYOUT_PARSER.finditer(source):
-        yield set(map(_script_filename, match["subjects"].split(", ")))
-
-
-@then("the following nodes are calculated in the following order")
+@then("the following models are calculated in order")
 def check_model_results(context):
-    models = _get_dated_dbt_models(context)
-    scripts = _get_dated_fal_artifacts(context, FAL_MODEL, FAL_SCRIPT)
-    ordered_nodes = _unpack_dated_result(models + scripts)
+    models = _get_all_models(context)
+    expected_models = list(map(_script_filename, context.table.headings))
+    unittest.TestCase().assertCountEqual(models, expected_models)
+    _verify_node_order(context)
 
-    for row in _parse_ordered_layout(context.text):
-        nodes = type(row)(ordered_nodes.pop(0) for _ in range(len(row)))
-        unittest.TestCase().assertEqual(
-            row,
-            nodes
-        )
 
-    unittest.TestCase().assertEqual(
-        ordered_nodes,
-        []
+def _verify_node_order(context):
+    import networkx as nx
+    from fal import FalDbt
+    from fal.node_graph import NodeGraph
+
+    fal_dbt = FalDbt(
+        profiles_dir=_set_profiles_dir(context), project_dir=context.base_dir
     )
+    node_graph = NodeGraph.from_fal_dbt(fal_dbt)
+    ordered_nodes = list(map(_as_name, _get_all_models(context)))
+
+    graph = node_graph.graph
+    node_to_ancestors, node_to_post_hook = {}, {}
+    for node, data in graph.nodes(data=True):
+        name = _as_name(node)
+        node_to_ancestors[name] = [
+            _as_name(ancestor)
+            for ancestor in nx.ancestors(graph, node)
+            if _as_name(ancestor) in ordered_nodes
+        ]
+        node_to_post_hook[name] = [
+            _script_filename(post_hook)
+            for post_hook in data.get("post_hook", [])
+            if _script_filename(post_hook) in ordered_nodes
+        ]
+
+    for node in ordered_nodes:
+        if _is_script(node):
+            continue
+
+        # Ancestors must precede the node
+        for ancestor in node_to_ancestors[node]:
+            _assert_precedes(ordered_nodes, ancestor, node)
+            # Post-hooks of ancestors also must precede the node
+            for post_hook in node_to_post_hook[ancestor]:
+                _assert_precedes(ordered_nodes, post_hook, node)
+
+        # The node itself must precede the post-hooks
+        for post_hook in node_to_post_hook[node]:
+            _assert_precedes(ordered_nodes, node, post_hook)
+
+
+def _assert_precedes(nodes, ancestor, node):
+    assert nodes.index(ancestor) < nodes.index(
+        node
+    ), f"{ancestor} must come before {node}"
+
+
+def _as_name(node):
+    if node.endswith(".txt"):
+        return node.split(".")[-2]
+    else:
+        return node.split(".")[-1]
+
+
+def _is_script(script: str):
+    return len(Path(script).suffixes) == FAL_SCRIPT
 
 
 def _script_filename(script: str):
@@ -227,11 +266,8 @@ def _temp_dir_path(context, file):
 
 def _get_all_models(context) -> List[str]:
     """Retrieve all models (both DBT and Python)."""
-    dbt_models = _unpack_dated_result(_get_dated_dbt_models(context))
-    python_models = _unpack_dated_result(_get_dated_fal_artifacts(context, FAL_MODEL))
-
-    models = dbt_models + python_models
-    return models
+    all_models = _get_dated_dbt_models(context) + _get_dated_fal_artifacts(context, FAL_MODEL)
+    return _unpack_dated_result(all_models)
 
 
 def _get_fal_scripts(context) -> List[str]:
