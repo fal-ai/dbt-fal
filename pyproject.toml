@@ -10,7 +10,7 @@ authors = [ "Features & Labels <hello@fal.ai>" ]
 packages = [
         { include = "fal", from = "src" },
         { include = "faldbt", from = "src" },
-        { include = "_fal_testing", from = "src" }
+        { include = "_fal_testing", from = "tests" }
 ]
 
 keywords = [ "dbt", "pandas" ]
