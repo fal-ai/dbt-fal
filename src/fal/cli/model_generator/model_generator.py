@@ -1,7 +1,5 @@
 import ast
 import re
-import shutil
-import os
 from typing import List, cast
 from pathlib import Path
 from fal.fal_script import python_from_file
@@ -28,8 +26,6 @@ __deps__
 SELECT * FROM {{ target.schema }}.{{ model.alias }}
 """
 
-GENERATED_DIR = Path("fal")
-
 
 def generate_python_dbt_models(project_dir: str):
     project_contract = load_dbt_project_contract(project_dir)
@@ -40,13 +36,12 @@ def generate_python_dbt_models(project_dir: str):
 
     python_paths: List[Path] = []
     for model_path in model_paths:
-        # Delete old generated sql models
-        if os.path.isdir(model_path / GENERATED_DIR):
-            shutil.rmtree(model_path / GENERATED_DIR)
-
         python_paths.extend(_generate_python_dbt_models(model_path))
 
     return dict([(path.stem, path) for path in python_paths])
+
+
+GENERATED_DIR = Path("fal")
 
 
 def _generate_python_dbt_models(model_path: Path):
