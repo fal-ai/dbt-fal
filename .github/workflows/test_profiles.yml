@@ -20,13 +20,28 @@ jobs:
             # overwrites the output
             echo '::set-output name=out::["3.7", "3.8", "3.9", "3.10"]'
           fi
+
+  matrix-dbt:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.include-step.outputs.out }}
+    steps:
+      - id: include-step
+        run: |
+          echo '::set-output name=out::["latest"]'
+          if [[ '${{ github.event_name }}' == 'schedule' ]]
+          then
+            # overwrites the output
+            echo '::set-output name=out::["1.1", "1.0"]'
+          fi
   run:
-    needs: [matrix-python]
+    needs: [matrix-python, matrix-dbt]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         profile: ["postgres", "bigquery", "snowflake", "redshift", "duckdb"]
+        dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
 
     steps:
@@ -36,6 +51,7 @@ jobs:
         uses: ./.github/actions/setup-local-fal
         with:
           python: ${{ matrix.python }}
+          dbt: ${{ matrix.dbt }}
           adapter: ${{ matrix.profile }}
 
       - name: Start Docker database
