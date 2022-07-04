@@ -297,3 +297,35 @@ Feature: `flow run` command
       | Status: success |
     And the script some_model.post_hook.py output file has the lines:
       | Status: error |
+
+  Scenario: fal flow run command with non-existent selectors
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select xxx yyy
+      """
+    Then no models are calculated
+
+  Scenario: fal flow run command with mixed non-existent selectors
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1 xxx yyy
+      """
+    Then the following models are calculated:
+      | intermediate_model_1 |
+
+  Scenario: fal flow run command with mixed non-existent selectors intersection
+    Given the project 001_flow_run_with_selectors
+    When the data is seeded
+
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1,xxx yyy intermediate_model_2
+      """
+    Then the following models are calculated:
+      | intermediate_model_2 |
