@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: model_a1
+  - name: model_b1
+  - name: model_c1
+    meta:
+      fal:
+        post-hook:
+          - post_hook1.py
+          - post_hook2.py
+          - post_hook3.py
+  - name: model_d1
+  - name: model_e1
+    meta:
+      fal:
+        post-hook:
+          - post_hook1.py
+  - name: model_a2
+  - name: model_b2
+    meta:
+      fal:
+        post-hook:
+          - post_hook1.py
+  - name: model_c2
+    meta:
+      fal:
+        post-hook:
+          - post_hook1.py
+  - name: model_d2
+  - name: model_e2
+    meta:
+      fal:
+        post-hook:
+          - post_hook1.py
+          - post_hook2.py
+  - name: model_f2
+    meta:
+      fal:
+        post-hook:
+          - post_hook1.py
+          - post_hook2.py
+  - name: model_g2
+  - name: model_h2
+    meta:
+      fal:
+        post-hook:
+          - post_hook1.py
+          - post_hook2.py
+          - post_hook3.py
+  - name: model_i2
+    meta:
+      fal:
+        post-hook:
+          - post_hook1.py
+          - post_hook2.py
+          - post_hook3.py
+  - name: model_j2
+  - name: final
+    meta:
+      fal:
+        post-hook:
+          - post_hook1.py
