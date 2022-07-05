@@ -9,7 +9,7 @@ from urllib.parse import quote_plus
 import threading
 
 import dbt.version
-import dbt.semver
+from dbt.semver import VersionSpecifier
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -32,10 +32,10 @@ from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 
 
-DBT_V1 = dbt.semver.VersionSpecifier.from_version_string("1.0.0")
-DBT_VCURRENT = dbt.version.get_installed_version()
+_DBT_V1 = VersionSpecifier.from_version_string("1.0.0")
+DBT_VCURRENT = dbt.version.installed
 
-IS_DBT_V1PLUS = DBT_VCURRENT.compare(DBT_V1) >= 0
+IS_DBT_V1PLUS = DBT_VCURRENT.compare(_DBT_V1) >= 0
 IS_DBT_V0 = not IS_DBT_V1PLUS
 
 if IS_DBT_V0:
@@ -682,7 +682,15 @@ def _bigquery_write_relation(
 
         job = client.load_table_from_dataframe(data, table_ref, job_config=job_config)
 
-        timeout = connection_manager.get_job_execution_timeout_seconds(conn) or 300
+        from dbt.adapters.bigquery.__version__ import version as bigquery_version
+
+        ADAPTER_VCURRENT = VersionSpecifier.from_version_string(bigquery_version)
+        # https://github.com/dbt-labs/dbt-bigquery/commit/141b86749df813cf3a3a90a90e7a7dfc401ba9b0
+        if ADAPTER_VCURRENT.compare(VersionSpecifier.from_version_string("1.1.0")) >= 0:
+            timeout = connection_manager.get_job_execution_timeout_seconds(conn) or 300
+        else:
+            timeout = connection_manager.get_timeout(conn) or 300
+
         with connection_manager.exception_handler("LOAD TABLE"):
             adapter.poll_until_job_completes(job, timeout)
 
