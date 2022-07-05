@@ -14,12 +14,12 @@ jobs:
     steps:
       - id: include-step
         run: |
-          echo '::set-output name=out::["3.8"]'
+          OUTPUT='"3.8"'
           if [[ '${{ github.event_name }}' == 'schedule' ]]
           then
-            # overwrites the output
-            echo '::set-output name=out::["3.7", "3.8", "3.9", "3.10"]'
+            OUTPUT='"3.7", "3.8", "3.9", "3.10"'
           fi
+          echo "::set-output name=out::[$OUTPUT]"
 
   matrix-dbt:
     runs-on: ubuntu-latest
@@ -28,12 +28,13 @@ jobs:
     steps:
       - id: include-step
         run: |
-          echo '::set-output name=out::["latest"]'
+          OUTPUT='"latest"'
           if [[ '${{ github.event_name }}' == 'schedule' ]]
           then
-            # overwrites the output
-            echo '::set-output name=out::["1.1", "1.0"]'
+            OUTPUT='"1.1", "1.0"'
           fi
+          echo "::set-output name=out::[$OUTPUT]"
+
   run:
     needs: [matrix-python, matrix-dbt]
     runs-on: ubuntu-latest
