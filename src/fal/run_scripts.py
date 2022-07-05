@@ -11,7 +11,6 @@ from faldbt.project import FalDbt
 from fal.fal_script import FalScript
 from fal.utils import print_run_info
 
-
 import traceback
 
 
@@ -20,9 +19,17 @@ def _prepare_exec_script(script: FalScript, faldbt: FalDbt) -> bool:
 
     logger.debug("Running script {}", script.id)
 
+    # Is there a tidier way to do this?
     try:
-        script.exec(faldbt)
+        from fal_runtime.client import runtime_run
     except:
+        def runtime_run(script: FalScript):
+            script.exec(faldbt)
+
+    try:
+        runtime_run(script)
+
+    except Exception:
         logger.error("Error in script {}:\n{}", script.id, traceback.format_exc())
         # TODO: what else to do?
         success = False
