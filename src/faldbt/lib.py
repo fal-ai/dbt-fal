@@ -101,6 +101,11 @@ def _get_adapter(
     return adapter
 
 
+def _connection_name(prefix: str, obj, _hash: bool = True):
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    return f"{prefix}:{hash(str(obj)) if _hash else obj}:{uuid4()}"
+
+
 def _execute_sql(
     project_dir: str,
     profiles_dir: str,
@@ -117,9 +122,9 @@ def _execute_sql(
     if adapter.type() == "bigquery":
         return _bigquery_execute_sql(adapter, sql, open_conn)
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
-    with _existing_or_new_connection(adapter, name, open_conn) as is_new:
+    with _existing_or_new_connection(
+        adapter, _connection_name("execute_sql", sql), open_conn
+    ) as is_new:
         exec_response: Tuple[AdapterResponse, agate.Table] = adapter.execute(
             sql, auto_begin=is_new, fetch=True
         )
@@ -151,9 +156,8 @@ def _get_target_relation(
         profile_target=profile_target,
     )
 
-    name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
-    with adapter.connection_named(name):
+    with adapter.connection_named(_connection_name("relation", target)):
         _clear_relations_cache(adapter, config)
         target_name = target.name
         if isinstance(target, ParsedModelNode):
@@ -194,8 +198,7 @@ def compile_sql(
         root_project=config,
     )
 
-    name = "compile_sql:" + str(hash(str(sql))) + ":" + str(uuid4())
-    sql_node = block_parser.parse_remote(sql, name)
+    sql_node = block_parser.parse_remote(sql, _connection_name("compile_sql", sql))
     process_node(config, manifest, sql_node)
     runner = SqlCompileRunner(config, adapter, sql_node, 1, 1)
     result: RemoteRunResult = runner.safe_run(manifest)
@@ -443,9 +446,9 @@ def _replace_relation(
 ):
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "replace_relation:" + str(hash(str(original_relation))) + ":" + str(uuid4())
-    with adapter.connection_named(name):
+    with adapter.connection_named(
+        _connection_name("replace_relation", original_relation)
+    ):
         adapter.connections.begin()
 
         if adapter.type() not in ("bigquery", "snowflake"):
@@ -506,9 +509,7 @@ def _drop_relation(
 ):
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "drop_relation:" + str(hash(str(relation))) + ":" + str(uuid4())
-    with adapter.connection_named(name):
+    with adapter.connection_named(_connection_name("drop_relation", relation)):
         adapter.connections.begin()
         adapter.drop_relation(relation)
         adapter.commit_if_has_connection()
@@ -568,9 +569,9 @@ def _bigquery_execute_sql(
 
     import google.cloud.bigquery as bigquery
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "bigquery:execute_sql:" + str(hash(sql)) + ":" + str(uuid4())
-    with _existing_or_new_connection(adapter, name, open_conn):
+    with _existing_or_new_connection(
+        adapter, _connection_name("bigquery:execute_sql", sql), open_conn
+    ):
         conection_manager: BaseConnectionManager = adapter.connections  # type: ignore
         conn = conection_manager.get_thread_connection()
         client: bigquery.Client = conn.handle  # type: ignore
@@ -614,9 +615,9 @@ def _bigquery_write_relation(
     dataset: str = relation.schema  # type: ignore
     table: str = relation.identifier  # type: ignore
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "bigquery:write_relation:" + str(relation) + ":" + str(uuid4())
-    with adapter.connection_named(name):
+    with adapter.connection_named(
+        _connection_name("bigquery:write_relation", relation, _hash=False)
+    ):
         connection_manager: BigQueryConnectionManager = adapter.connections
         conn = connection_manager.get_thread_connection()
         client: bigquery.Client = conn.handle  # type: ignore
