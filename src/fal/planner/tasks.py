@@ -145,13 +145,6 @@ class TaskGroup:
     post_hooks: List[FalHookTask] = field(default_factory=list)
     dependencies: List[TaskGroup] = field(default_factory=list)
 
-    def exit(self, status: int) -> None:
-        # When the node is finalized (when all tasks are ran),
-        # the scheduler will pass the status code for this node
-        # and we'll process it here.
-        if status != SUCCESS:
-            raise RuntimeError("Error !!!")
-
     def set_run_index(self, run_index: int) -> None:
         self.task._run_index = run_index
 

@@ -1,25 +1,15 @@
-from collections import defaultdict
-
 import networkx as nx
 import pytest
 
-from fal.node_graph import DbtModelNode, NodeGraph, NodeKind
-from fal.planner.schedule import SUCCESS, schedule_graph
+from fal.node_graph import NodeKind
+from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalModelTask
 from fal.planner.tasks import DBTTask, FalModelTask
 from tests.planner.data import GRAPH_1, GRAPHS
-from tests.planner.utils import to_graph, to_plan, plan_graph
-
-
-class ModelDict(defaultdict):
-    def get(self, key) -> None:
-        return super().__getitem__(key)
+from tests.planner.utils import to_scheduler
 
 
 def test_scheduler():
-    graph = to_graph(GRAPH_1)
-    new_graph = plan_graph(graph, to_plan(graph))
-    node_graph = NodeGraph(graph, ModelDict(lambda: DbtModelNode("...", None)))
-    scheduler = schedule_graph(new_graph, node_graph)
+    scheduler = to_scheduler(GRAPH_1)
 
     # A -> B \
     #          -> E -> F
@@ -58,12 +48,60 @@ def test_scheduler():
     assert group_F.task.model_ids == ["F"]
 
 
+def assert_skipped(scheduler, *tasks):
+    assert {
+        skipped_model
+        for group in scheduler.skipped_groups
+        for skipped_model in group.task.model_ids
+    } == set(tasks)
+
+
+def assert_failed(scheduler, *tasks):
+    assert {
+        failed_model
+        for group in scheduler.failed_groups
+        for failed_model in group.task.model_ids
+    } == set(tasks)
+
+
+def test_scheduler_error_handling():
+    scheduler = to_scheduler(GRAPH_1)
+
+    # A -> B \
+    #          -> E -> F
+    # C -> D /
+
+    # Run A and C as usual
+    group_A, group_C = scheduler.iter_available_groups()
+    assert group_A.task.model_ids == ["A"]
+    assert group_C.task.model_ids == ["C"]
+    scheduler.finish(group_A, SUCCESS)
+
+    # But once A is completed, take B and make it fail.
+    (group_B,) = scheduler.iter_available_groups()
+    assert group_B.task.model_ids == ["B"]
+    scheduler.finish(group_B, FAILURE)
+
+    # B's failure shouldn't affect C or D, since they are
+    # completely independant.
+    scheduler.finish(group_C, SUCCESS)
+    (group_D,) = scheduler.iter_available_groups()
+    assert group_D.task.model_ids == ["D"]
+
+    # When D is done, we won't have any more tasks to continue
+    # since E and F rrequires B which just failed.
+    scheduler.finish(group_D, SUCCESS)
+    assert len(list(scheduler.iter_available_groups())) == 0
+
+    # Ensure that only B has failed.
+    assert_failed(scheduler, "B")
+    assert_skipped(scheduler, "E", "F")
+
+
 @pytest.mark.parametrize("graph_info", GRAPHS)
 def test_scheduler_task_separation(graph_info):
     graph = graph_info["graph"]
-    new_graph = plan_graph(graph, to_plan(graph))
-    node_graph = NodeGraph(graph, ModelDict(lambda: DbtModelNode("...", None)))
-    scheduler = schedule_graph(new_graph, node_graph)
+    scheduler = to_scheduler(graph)
 
     all_dbt_tasks, all_fal_tasks, all_post_hooks = set(), set(), set()
     for group in scheduler.groups:
@@ -95,10 +133,7 @@ def test_scheduler_task_separation(graph_info):
 
 @pytest.mark.parametrize("graph_info", GRAPHS)
 def test_scheduler_dependency_management(graph_info):
-    graph = graph_info["graph"]
-    new_graph = plan_graph(graph, to_plan(graph))
-    node_graph = NodeGraph(graph, ModelDict(lambda: DbtModelNode("...", None)))
-    scheduler = schedule_graph(new_graph, node_graph)
+    scheduler = to_scheduler(graph_info["graph"])
 
     while scheduler:
         for group in scheduler.iter_available_groups():
