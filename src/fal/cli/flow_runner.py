@@ -51,17 +51,28 @@ def run_threaded(
     parsed: argparse.Namespace,
     node_graph: NodeGraph,
 ) -> None:
-    from fal.planner.plan import plan_graph, __test_reorder_graph
+    from fal.planner.plan import (
+        OriginGraph,
+        FilteredGraph,
+        PlannedGraph,
+        __test_reorder_graph,
+    )
     from fal.planner.schedule import schedule_graph
     from fal.planner.executor import parallel_executor
 
     if parsed.experimental_threads <= 0:
         raise ValueError("Number of specified threads must be greater than 0")
 
-    graph = __test_reorder_graph(node_graph.graph)
-    # The planner is temporarily disabled because of the thread exceeding problem.
-    # graph = plan_graph(node_graph.graph)
-    scheduler = schedule_graph(graph, node_graph)
+    execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
+
+    origin_graph = OriginGraph(__test_reorder_graph(node_graph.graph))
+    filtered_graph = FilteredGraph.from_execution_plan(
+        origin_graph, execution_plan=execution_plan
+    )
+    planned_graph = PlannedGraph.from_filtered_graph(
+        filtered_graph, enable_chunking=False
+    )
+    scheduler = schedule_graph(planned_graph.graph, node_graph)
     parallel_executor(
         args=parsed,
         fal_dbt=fal_dbt,
