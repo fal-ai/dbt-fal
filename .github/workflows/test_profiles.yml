@@ -151,7 +151,13 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          behave --tags=-broken_profile --tags=-TODO-${{ matrix.profile }} -D profile=${{ matrix.profile }}
+          BEHAVE_ARGS="--tags=-broken_profile --tags=-TODO-${{ matrix.profile }}"
+          if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
+          then
+            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-dbtv1"
+          fi
+
+          behave $BEHAVE_ARGS -D profile=${{ matrix.profile }}
 
       - name: Send custom JSON data to Slack workflow
         if: (failure() || cancelled()) && github.event_name == 'schedule'
