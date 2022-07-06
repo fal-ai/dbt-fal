@@ -15,27 +15,22 @@ jobs:
       list: ${{ steps.include-step.outputs.out }}
     steps:
       - id: include-step
-        shell: bash
+        shell: python
         run: |
-          OUTPUT='"postgres", "bigquery", "snowflake", "redshift", "duckdb"'
+          ADAPTERS = ['postgres', 'bigquery', 'snowflake', 'redshift', 'duckdb']
+          OUTPUT = ADAPTERS
 
-          if [[ '${{ github.event_name }}' == 'pull_request' ]]
-          then
-            OUTPUT=''
-            # Only test adapters mentioned in the pull request title.
+          if '${{ github.event_name }}' == 'pull_request':
+
+            PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
+            PR_BRANCH = '${{ github.event.pull_request.head.ref }}'.lower()
+
+            # Only test adapters mentioned in the pull request title or branch.
             # If no adapter is mentioned, we do not test at all.
-            for ADAPTER in postgres bigquery snowflake redshift duckdb
-            do
-              if [[ '${{ github.event.pull_request.title }}' =~ $ADAPTER ]]
-              then
-                OUTPUT=$OUTPUT', "'$ADAPTER'"'
-              fi
-            done
-            # Remove dangling comma
-            OUTPUT=${OUTPUT:2}
-          fi
+            OUTPUT = [a for a in ADAPTERS if a in PR_TITLE or a in PR_BRANCH]
 
-          echo "::set-output name=out::[$OUTPUT]"
+          import json
+          print("::set-output name=out::" + json.dumps(OUTPUT))
 
   matrix-python:
     runs-on: ubuntu-latest
