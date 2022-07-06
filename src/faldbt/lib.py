@@ -114,21 +114,17 @@ def _cache_lock(info: str = ""):
     operationId = uuid4()
     logger.debug("Locking  {} {}", operationId, info)
 
-    _exc = None
     _lock.acquire()
     logger.debug("Acquired {}", operationId)
 
     try:
         yield
-    except BaseException as exc:
-        _exc = exc
-
-    _lock.release()
-    logger.debug("Released {}", operationId)
-    if _exc:
-        raise RuntimeError(
-            f"Error during cache lock (operation: {operationId})"
-        ) from _exc
+    except:
+        logger.debug("Error during lock operation {}", operationId)
+        raise
+    finally:
+        _lock.release()
+        logger.debug("Released {}", operationId)
 
 
 def _connection_name(prefix: str, obj, _hash: bool = True):
