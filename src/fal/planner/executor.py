@@ -17,7 +17,7 @@ from faldbt.project import FalDbt
 from dbt.logger import GLOBAL_LOGGER as logger
 
 
-# Since we construct multiprocessing pools for each DBT run, it leaves a trace
+# HACK: Since we construct multiprocessing pools for each DBT run, it leaves a trace
 # of shared memory warnings behind. In reality, there isn't anything we can do to
 # get rid of them since everything is closed properly and gets destroyed at the end.
 # As of now, it is just a known problem of using multiprocessing like this, and for
