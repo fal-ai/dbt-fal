@@ -1,6 +1,8 @@
-import pytest
 from dataclasses import dataclass, field
-from fal.planner.tasks import SUCCESS, FAILURE, DBTTask, FalModelTask, FalHookTask
+
+import pytest
+
+from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalHookTask, FalModelTask
 
 
 @dataclass

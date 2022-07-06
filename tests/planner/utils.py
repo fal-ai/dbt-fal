@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Any
 
 import networkx as nx
+
 from fal.cli.selectors import ExecutionPlan
-from fal.planner.plan import OriginGraph, FilteredGraph, PlannedGraph
+from fal.node_graph import DbtModelNode, NodeGraph
+from fal.planner.plan import FilteredGraph, OriginGraph, PlannedGraph
+from fal.planner.schedule import schedule_graph
+
+
+class ModelDict(defaultdict):
+    def get(self, key) -> None:
+        return super().__getitem__(key)
 
 
 def to_graph(data: list[tuple[str, dict[str, Any]]]) -> nx.DiGraph:
@@ -36,3 +45,11 @@ def plan_graph(
         filtered_graph, enable_chunking=enable_chunking
     )
     return planned_graph.graph
+
+
+def to_scheduler(graph):
+    if isinstance(graph, list):
+        graph = to_graph(graph)
+    new_graph = plan_graph(graph, to_plan(graph))
+    node_graph = NodeGraph(graph, ModelDict(lambda: DbtModelNode("...", None)))
+    return schedule_graph(new_graph, node_graph)

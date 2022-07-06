@@ -1,11 +1,12 @@
 from cgitb import enable
 from platform import node
+
 import networkx as nx
 import pytest
-from tests.planner.data import GRAPHS, GRAPH_1, GRAPH_2
-from tests.planner.utils import to_graph, to_plan, plan_graph
 
 from fal.cli.selectors import ExecutionPlan
+from tests.planner.data import GRAPH_1, GRAPH_2, GRAPHS
+from tests.planner.utils import plan_graph, to_graph, to_plan
 
 
 @pytest.mark.parametrize("graph_info", GRAPHS)

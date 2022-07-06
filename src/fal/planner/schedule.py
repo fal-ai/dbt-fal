@@ -47,7 +47,9 @@ def create_group(
 
 @dataclass
 class Scheduler:
-    groups: list[TaskGroup]
+    groups: List[TaskGroup]
+    failed_groups: List[TaskGroup] = field(default_factory=list)
+    skipped_groups: List[TaskGroup] = field(default_factory=list)
     _counter: int = 0
 
     def __bool__(self) -> bool:
@@ -95,12 +97,12 @@ class Scheduler:
         else:
             self._fail(target_group)
 
-        target_group.exit(status)
-
     def _fail(self, target_group: TaskGroup) -> None:
+        self.failed_groups.append(target_group)
         for group in self.groups.copy():
             if target_group in group.dependencies:
                 self.groups.remove(group)
+                self.skipped_groups.append(group)
 
     def _succeed(self, target_group: TaskGroup) -> None:
         for group in self.groups.copy():
