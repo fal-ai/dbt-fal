@@ -6,6 +6,7 @@ import traceback
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from functools import cached_property
 from typing import Iterator, List, Union, Any, Optional, Dict, Tuple
 
@@ -22,6 +23,14 @@ FAILURE = 1
 class Task:
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         raise NotImplementedError
+
+
+class GroupStatus(Enum):
+    PENDING = auto()
+    RUNNING = auto()
+    SKIPPED = auto()
+    SUCCESS = auto()
+    FAILURE = auto()
 
 
 def _unique_id_to_model_name(unique_id: str) -> str:
@@ -144,6 +153,7 @@ class TaskGroup:
     task: DBTTask
     post_hooks: List[FalHookTask] = field(default_factory=list)
     dependencies: List[TaskGroup] = field(default_factory=list)
+    status: GroupStatus = GroupStatus.PENDING
 
     def set_run_index(self, run_index: int) -> None:
         self.task._run_index = run_index
