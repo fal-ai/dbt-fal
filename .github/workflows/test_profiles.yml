@@ -31,7 +31,7 @@ jobs:
           OUTPUT='"latest"'
           if [[ '${{ github.event_name }}' == 'schedule' ]]
           then
-            OUTPUT='"1.1", "1.0"'
+            OUTPUT='"0.20.*", "0.21.*", "1.0.*", "1.1.*"'
           fi
           echo "::set-output name=out::[$OUTPUT]"
 
