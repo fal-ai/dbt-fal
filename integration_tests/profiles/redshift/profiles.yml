@@ -12,7 +12,7 @@ fal_test:
       password: pass
       dbname: test
       schema: dbt_fal
-      threads: 1
+      threads: 4
     integration_tests:
       type: redshift
       host: "{{ env_var('RS_HOST') }}"
@@ -21,4 +21,4 @@ fal_test:
       password: "{{ env_var('RS_PASSWORD') }}"
       dbname: "{{ env_var('RS_DB_NAME') }}"
       schema: "{{ env_var('RS_SCHEMA') }}"
-      threads: 1
+      threads: 4

@@ -13,4 +13,4 @@ fal_test:
       warehouse: "{{ env_var('SF_WAREHOUSE') }}"
       database: "{{ env_var('SF_DATABASE') }}"
       schema: "{{ env_var('SF_SCHEMA') }}"
-      threads: 1
+      threads: 4

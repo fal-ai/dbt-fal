@@ -12,4 +12,4 @@ fal_test:
       password: pass
       dbname: test
       schema: dbt_fal
-      threads: 1
+      threads: 4

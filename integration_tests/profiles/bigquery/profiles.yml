@@ -10,7 +10,7 @@ fal_test:
       keyfile: "{{ env_var('KEYFILE_DIR') }}/keyfile.json"
       project: "{{ env_var('GCLOUD_PROJECT') }}"
       dataset: "{{ env_var('BQ_DATASET') }}"
-      threads: 1
+      threads: 4
       timeout_seconds: 300
       location: US
       priority: interactive

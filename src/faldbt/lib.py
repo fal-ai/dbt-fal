@@ -6,11 +6,14 @@ from dataclasses import dataclass
 from uuid import uuid4
 from typing import Iterator, List, Optional, Tuple
 from urllib.parse import quote_plus
+import threading
 
 import dbt.version
 import dbt.semver
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
+from dbt.logger import GLOBAL_LOGGER as logger
+
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.base import BaseRelation, BaseAdapter, BaseConnectionManager
@@ -101,6 +104,34 @@ def _get_adapter(
     return adapter
 
 
+global _lock
+# RLock supports recursive locking by the same thread
+_lock = threading.RLock()
+
+
+@contextmanager
+def _cache_lock(info: str = ""):
+    operationId = uuid4()
+    logger.debug("Locking  {} {}", operationId, info)
+
+    _lock.acquire()
+    logger.debug("Acquired {}", operationId)
+
+    try:
+        yield
+    except:
+        logger.debug("Error during lock operation {}", operationId)
+        raise
+    finally:
+        _lock.release()
+        logger.debug("Released {}", operationId)
+
+
+def _connection_name(prefix: str, obj, _hash: bool = True):
+    # HACK: we need to include uniqueness (UUID4) to avoid clashes
+    return f"{prefix}:{hash(str(obj)) if _hash else obj}:{uuid4()}"
+
+
 def _execute_sql(
     project_dir: str,
     profiles_dir: str,
@@ -117,9 +148,9 @@ def _execute_sql(
     if adapter.type() == "bigquery":
         return _bigquery_execute_sql(adapter, sql, open_conn)
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "SQL:" + str(hash(sql)) + ":" + str(uuid4())
-    with _existing_or_new_connection(adapter, name, open_conn) as is_new:
+    with _existing_or_new_connection(
+        adapter, _connection_name("execute_sql", sql), open_conn
+    ) as is_new:
         exec_response: Tuple[AdapterResponse, agate.Table] = adapter.execute(
             sql, auto_begin=is_new, fetch=True
         )
@@ -131,7 +162,7 @@ def _execute_sql(
     return response, _agate_table_to_df(agate_table)
 
 
-def _clear_relations_cache(adapter: SQLAdapter, config: RuntimeConfig):
+def _clear_relations_cache(adapter: BaseAdapter, config: RuntimeConfig):
     # HACK: Sometimes we cache an incomplete cache or create stuff without the cache noticing.
     #       Some adapters work without this. We should separate adapter solutions like dbt.
     manifest = parse.get_dbt_manifest(config)
@@ -151,16 +182,17 @@ def _get_target_relation(
         profile_target=profile_target,
     )
 
-    name = "relation:" + str(hash(str(target))) + ":" + str(uuid4())
     relation = None
-    with adapter.connection_named(name):
-        _clear_relations_cache(adapter, config)
-        target_name = target.name
-        if isinstance(target, ParsedModelNode):
-            target_name = target.alias
+    with adapter.connection_named(_connection_name("relation", target)):
+        with _cache_lock("_get_target_relation"):
+            _clear_relations_cache(adapter, config)
 
-        # This ROLLBACKs so it has to be a new connection
-        relation = adapter.get_relation(target.database, target.schema, target_name)
+            target_name = target.name
+            if isinstance(target, ParsedModelNode):
+                target_name = target.alias
+
+            # This ROLLBACKs so it has to be a new connection
+            relation = adapter.get_relation(target.database, target.schema, target_name)
 
     return relation
 
@@ -194,8 +226,7 @@ def compile_sql(
         root_project=config,
     )
 
-    name = "compile_sql:" + str(hash(str(sql))) + ":" + str(uuid4())
-    sql_node = block_parser.parse_remote(sql, name)
+    sql_node = block_parser.parse_remote(sql, _connection_name("compile_sql", sql))
     process_node(config, manifest, sql_node)
     runner = SqlCompileRunner(config, adapter, sql_node, 1, 1)
     result: RemoteRunResult = runner.safe_run(manifest)
@@ -331,7 +362,10 @@ def overwrite_target(
         return results
     except:
         _drop_relation(
-            project_dir, profiles_dir, temporal_relation, profile_target=profile_target
+            project_dir,
+            profiles_dir,
+            temporal_relation,
+            profile_target=profile_target,
         )
         raise
 
@@ -442,60 +476,61 @@ def _replace_relation(
     new_relation: BaseRelation,
 ):
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+    config = parse.get_dbt_config(
+        project_dir=project_dir,
+        profiles_dir=profiles_dir,
+        profile_target=profile_target,
+    )
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "replace_relation:" + str(hash(str(original_relation))) + ":" + str(uuid4())
-    with adapter.connection_named(name):
-        adapter.connections.begin()
+    with adapter.connection_named(
+        _connection_name("replace_relation", original_relation, _hash=False)
+    ):
+        with _cache_lock("_replace_relation"):
+            adapter.connections.begin()
 
-        if adapter.type() not in ("bigquery", "snowflake"):
-            # This is a 'DROP ... IF EXISTS', so it always works
-            adapter.drop_relation(original_relation)
+            _clear_relations_cache(adapter, config)
 
-        if adapter.type() == "athena":
-            # HACK: athena doesn't support renaming tables, we do it manually
-            create_stmt = f"create table {original_relation} as select * from {new_relation} with data"
-            _execute_sql(
-                project_dir,
-                profiles_dir,
-                six.text_type(create_stmt).strip(),
-                profile_target=profile_target,
-                adapter=adapter,
-            )
-            adapter.drop_relation(new_relation)
-        elif adapter.type() == "bigquery":
-            create_stmt = f"create or replace table {original_relation} as select * from {new_relation}"
-            _execute_sql(
-                project_dir,
-                profiles_dir,
-                six.text_type(create_stmt).strip(),
-                profile_target=profile_target,
-                adapter=adapter,
-            )
-            adapter.drop_relation(new_relation)
-        elif adapter.type() == "snowflake":
-            create_stmt = (
-                f"create or replace table {original_relation} clone {new_relation}"
-            )
-            _execute_sql(
-                project_dir,
-                profiles_dir,
-                six.text_type(create_stmt).strip(),
-                profile_target=profile_target,
-                adapter=adapter,
-            )
-            adapter.drop_relation(new_relation)
-        else:
-            adapter.rename_relation(new_relation, original_relation)
+            if adapter.type() not in ("bigquery", "snowflake"):
+                # This is a 'DROP ... IF EXISTS', so it always works
+                adapter.drop_relation(original_relation)
 
-        adapter.commit_if_has_connection()
+            if adapter.type() == "athena":
+                # HACK: athena doesn't support renaming tables, we do it manually
+                create_stmt = f"create table {original_relation} as select * from {new_relation} with data"
+                _execute_sql(
+                    project_dir,
+                    profiles_dir,
+                    six.text_type(create_stmt).strip(),
+                    profile_target=profile_target,
+                    adapter=adapter,
+                )
+                adapter.drop_relation(new_relation)
+            elif adapter.type() == "bigquery":
+                create_stmt = f"create or replace table {original_relation} as select * from {new_relation}"
+                _execute_sql(
+                    project_dir,
+                    profiles_dir,
+                    six.text_type(create_stmt).strip(),
+                    profile_target=profile_target,
+                    adapter=adapter,
+                )
+                adapter.drop_relation(new_relation)
+            elif adapter.type() == "snowflake":
+                create_stmt = (
+                    f"create or replace table {original_relation} clone {new_relation}"
+                )
+                _execute_sql(
+                    project_dir,
+                    profiles_dir,
+                    six.text_type(create_stmt).strip(),
+                    profile_target=profile_target,
+                    adapter=adapter,
+                )
+                adapter.drop_relation(new_relation)
+            else:
+                adapter.rename_relation(new_relation, original_relation)
 
-        config = parse.get_dbt_config(
-            project_dir=project_dir,
-            profiles_dir=profiles_dir,
-            profile_target=profile_target,
-        )
-        _clear_relations_cache(adapter, config)
+            adapter.commit_if_has_connection()
 
 
 def _drop_relation(
@@ -505,13 +540,21 @@ def _drop_relation(
     profile_target: str,
 ):
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+    config = parse.get_dbt_config(
+        project_dir=project_dir,
+        profiles_dir=profiles_dir,
+        profile_target=profile_target,
+    )
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "drop_relation:" + str(hash(str(relation))) + ":" + str(uuid4())
-    with adapter.connection_named(name):
-        adapter.connections.begin()
-        adapter.drop_relation(relation)
-        adapter.commit_if_has_connection()
+    with adapter.connection_named(_connection_name("drop_relation", relation)):
+        with _cache_lock("_drop_relation"):
+            adapter.connections.begin()
+
+            _clear_relations_cache(adapter, config)
+
+            adapter.drop_relation(relation)
+
+            adapter.commit_if_has_connection()
 
 
 def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
@@ -568,9 +611,9 @@ def _bigquery_execute_sql(
 
     import google.cloud.bigquery as bigquery
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "bigquery:execute_sql:" + str(hash(sql)) + ":" + str(uuid4())
-    with _existing_or_new_connection(adapter, name, open_conn):
+    with _existing_or_new_connection(
+        adapter, _connection_name("bigquery:execute_sql", sql), open_conn
+    ):
         conection_manager: BaseConnectionManager = adapter.connections  # type: ignore
         conn = conection_manager.get_thread_connection()
         client: bigquery.Client = conn.handle  # type: ignore
@@ -614,9 +657,9 @@ def _bigquery_write_relation(
     dataset: str = relation.schema  # type: ignore
     table: str = relation.identifier  # type: ignore
 
-    # HACK: we need to include uniqueness (UUID4) to avoid clashes
-    name = "bigquery:write_relation:" + str(relation) + ":" + str(uuid4())
-    with adapter.connection_named(name):
+    with adapter.connection_named(
+        _connection_name("bigquery:write_relation", relation, _hash=False)
+    ):
         connection_manager: BigQueryConnectionManager = adapter.connections
         conn = connection_manager.get_thread_connection()
         client: bigquery.Client = conn.handle  # type: ignore
