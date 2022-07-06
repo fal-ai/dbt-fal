@@ -5,6 +5,7 @@ from typing import Iterator, List
 import networkx as nx
 from fal.node_graph import NodeKind
 from fal.cli.selectors import ExecutionPlan
+from dbt.logger import GLOBAL_LOGGER as logger
 from dataclasses import dataclass
 
 
@@ -28,8 +29,17 @@ class FilteredGraph(OriginGraph):
     ) -> FilteredGraph:
         graph = origin_graph.copy_graph()
         for node in origin_graph.graph.nodes:
-            if node not in execution_plan.dbt_models:
+            if (
+                node
+                not in execution_plan.dbt_models
+                + execution_plan.before_scripts
+                + execution_plan.after_scripts
+            ):
                 graph.remove_node(node)
+
+        if execution_plan.after_scripts:
+            logger.warn("Using after scripts is now deprecated. Please consider migrating to post-hooks.")
+
         return cls(graph)
 
 
@@ -67,7 +77,10 @@ class PlannedGraph(OriginGraph):
 
         for node in nx.topological_sort(self.graph):
             properties = self.graph.nodes[node]
-            if properties["kind"] is NodeKind.FAL_MODEL:
+            if properties["kind"] in (
+                NodeKind.FAL_MODEL,
+                NodeKind.FAL_SCRIPT
+            ):
                 yield from split()
                 continue
 
@@ -114,26 +127,3 @@ class PlannedGraph(OriginGraph):
         # with a few modifications.
         for nodes in self._find_subgraphs():
             self._reduce_subgraph(nodes)
-
-
-# TEMPORARY!!!
-def __test_reorder_graph(graph: nx.DiGraph) -> nx.DiGraph:
-    # Temporarily re-order the graph for testing purposes. Eliminates the
-    # before and after scripts.
-
-    from fal.cli.selectors import _is_before_script
-
-    new_graph = graph.copy()
-
-    for node, properties in graph.nodes(data=True):
-        kind = properties["kind"]
-        if kind is not NodeKind.FAL_SCRIPT:
-            continue
-
-        if _is_before_script(node):
-            assert len(list(new_graph.predecessors(node))) == 0
-        else:
-            assert len(list(graph.successors(node))) == 0
-        new_graph.remove_node(node)
-
-    return new_graph

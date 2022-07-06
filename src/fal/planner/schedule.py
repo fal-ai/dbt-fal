@@ -5,7 +5,7 @@ from typing import Iterator, List
 
 import networkx as nx
 
-from fal.node_graph import DbtModelNode, NodeGraph, NodeKind
+from fal.node_graph import DbtModelNode, NodeGraph, NodeKind, ScriptNode
 from fal.planner.tasks import SUCCESS, DBTTask, FalHookTask, FalModelTask, TaskGroup, GroupStatus
 
 
@@ -25,23 +25,34 @@ def create_group(
     else:
         model_ids = [node]
 
-    model_node = node_graph.get_node(model_ids[-1])
-    assert model_node is not None
+    flow_node = node_graph.get_node(model_ids[-1])
+    hook_paths = properties.get("post_hook", [])
 
     if kind is NodeKind.DBT_MODEL:
         task = DBTTask(model_ids=model_ids)
+    elif kind is NodeKind.FAL_MODEL:
+        assert isinstance(flow_node, DbtModelNode)
+        task = FalModelTask(model_ids=model_ids, bound_model=flow_node.model)
     else:
-        assert kind is NodeKind.FAL_MODEL
-        assert isinstance(model_node, DbtModelNode)
-        task = FalModelTask(model_ids=model_ids, bound_model=model_node.model)
-
-    post_hooks = [
-        FalHookTask(
-            hook_path=hook_path,
-            bound_model=model_node.model,
+        assert kind is NodeKind.FAL_SCRIPT
+        assert isinstance(flow_node, ScriptNode)
+        task = FalHookTask(
+            flow_node.script.path,
+            bound_model=flow_node.script.model,
+            is_post_hook=False,
         )
-        for hook_path in properties.get("post-hook", [])
-    ]
+
+    post_hooks = []
+    if hook_paths:
+        assert flow_node
+        post_hooks.extend(
+            FalHookTask(
+                hook_path=hook_path,
+                bound_model=flow_node.model,
+            )
+            for hook_path in hook_paths
+        )
+
     return TaskGroup(task, post_hooks=post_hooks)
 
 
