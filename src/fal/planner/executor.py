@@ -10,21 +10,26 @@ from dataclasses import dataclass, field
 from typing import List
 
 from fal.planner.schedule import SUCCESS, Scheduler
-from fal.planner.tasks import FalHookTask, TaskGroup, Task
+from fal.planner.tasks import FalHookTask, TaskGroup, Task, GroupStatus
 from faldbt.project import FalDbt
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
 
-def _show_failed_groups(failed_groups: List[TaskGroup], skipped_groups: List[TaskGroup]) -> None:
-    failed_models = ", ".join(
-        model for group in failed_groups for model in group.task.model_ids
-    )
-    skipped_models = ", ".join(
-        model for group in skipped_groups for model in group.task.model_ids
-    )
-    logger.info(f"Failed calculating the following DBT models: {failed_models}")
-    logger.info(f"Skipped calculating the following DBT models: {skipped_models}")
+def _show_failed_groups(scheduler: Scheduler) -> None:
+    failed_groups = scheduler.filter_groups(GroupStatus.FAILURE)
+    if failed_groups:
+        failed_models = ", ".join(
+            model for group in failed_groups for model in group.task.model_ids
+        )
+        logger.info(f"Failed calculating the following DBT models: {failed_models}")
+
+    skipped_groups = scheduler.filter_groups(GroupStatus.SKIPPED)
+    if skipped_groups:
+        skipped_models = ", ".join(
+            model for group in skipped_groups for model in group.task.model_ids
+        )
+        logger.info(f"Skipped calculating the following DBT models: {skipped_models}")
 
 
 @dataclass
@@ -111,4 +116,4 @@ def parallel_executor(
             future_groups.extend(create_futures(executor))
             futures = get_futures(future_groups)
 
-    _show_failed_groups(scheduler.failed_groups, scheduler.skipped_groups)
+    _show_failed_groups(scheduler)

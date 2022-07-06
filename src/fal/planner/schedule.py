@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterator
+from typing import Iterator, List
 
 import networkx as nx
 
 from fal.node_graph import DbtModelNode, NodeGraph, NodeKind
-from fal.planner.tasks import SUCCESS, DBTTask, FalHookTask, FalModelTask, TaskGroup
+from fal.planner.tasks import SUCCESS, DBTTask, FalHookTask, FalModelTask, TaskGroup, GroupStatus
 
 
 def create_group(
@@ -48,12 +48,17 @@ def create_group(
 @dataclass
 class Scheduler:
     groups: List[TaskGroup]
-    failed_groups: List[TaskGroup] = field(default_factory=list)
-    skipped_groups: List[TaskGroup] = field(default_factory=list)
     _counter: int = 0
 
+    def filter_groups(self, status: GroupStatus) -> List[TaskGroup]:
+        return [group for group in self.groups if group.status is status]
+
+    @property
+    def pending_groups(self) -> List[TaskGroup]:
+        return self.filter_groups(GroupStatus.PENDING)
+
     def __bool__(self) -> bool:
-        return bool(self.groups)
+        return bool(self.pending_groups)
 
     def _calculate_score(self, target_group: TaskGroup) -> tuple[int, int]:
         # Determine the priority of the group by doing a bunch
@@ -67,7 +72,7 @@ class Scheduler:
         direct_dependants = 0
         indirect_dependants = 0
 
-        for group in self.groups:
+        for group in self.pending_groups:
             if group is target_group:
                 continue
 
@@ -86,7 +91,7 @@ class Scheduler:
 
         self._counter += 1
         target_group.set_run_index(self._counter)
-        self.groups.remove(target_group)
+        target_group.status = GroupStatus.RUNNING
 
     def finish(self, target_group: TaskGroup, status: int) -> None:
         # When a staged group's execution is finished, we'll remove it
@@ -98,14 +103,14 @@ class Scheduler:
             self._fail(target_group)
 
     def _fail(self, target_group: TaskGroup) -> None:
-        self.failed_groups.append(target_group)
-        for group in self.groups.copy():
+        target_group.status = GroupStatus.FAILURE
+        for group in self.pending_groups:
             if target_group in group.dependencies:
-                self.groups.remove(group)
-                self.skipped_groups.append(group)
+                group.status = GroupStatus.SKIPPED
 
     def _succeed(self, target_group: TaskGroup) -> None:
-        for group in self.groups.copy():
+        target_group.status = GroupStatus.SUCCESS
+        for group in self.pending_groups.copy():
             if target_group in group.dependencies:
                 group.dependencies.remove(target_group)
 
@@ -115,7 +120,7 @@ class Scheduler:
         # groups (groups without any dependencies) and use the scoring
         # algorithm to determine the priority of each groups (kind of like
         # a dynamic topological sort).
-        unblocked_groups = [group for group in self.groups if not group.dependencies]
+        unblocked_groups = [group for group in self.pending_groups if not group.dependencies]
         unblocked_groups.sort(key=self._calculate_score, reverse=True)
 
         for group in unblocked_groups:
