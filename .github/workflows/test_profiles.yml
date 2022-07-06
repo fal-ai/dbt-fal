@@ -1,12 +1,42 @@
 name: Run Integration Tests on Different Profiles
 
 on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
   schedule:
     # every midnight
     - cron: "0 0 * * *"
   workflow_dispatch:
 
 jobs:
+  matrix-adapters:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.include-step.outputs.out }}
+    steps:
+      - id: include-step
+        shell: bash
+        run: |
+          OUTPUT='"postgres", "bigquery", "snowflake", "redshift", "duckdb"'
+
+          if [[ '${{ github.event_name }}' == 'pull_request' ]]
+          then
+            OUTPUT=''
+            # Only test adapters mentioned in the pull request title.
+            # If no adapter is mentioned, we do not test at all.
+            for ADAPTER in postgres bigquery snowflake redshift duckdb
+            do
+              if [[ '${{ github.event.pull_request.title }}' =~ $ADAPTER ]]
+              then
+                OUTPUT=$OUTPUT', "'$ADAPTER'"'
+              fi
+            done
+            # Remove dangling comma
+            OUTPUT=${OUTPUT:2}
+          fi
+
+          echo "::set-output name=out::[$OUTPUT]"
+
   matrix-python:
     runs-on: ubuntu-latest
     outputs:
@@ -14,19 +44,39 @@ jobs:
     steps:
       - id: include-step
         run: |
-          echo '::set-output name=out::["3.8"]'
+          OUTPUT='"3.8"'
+
           if [[ '${{ github.event_name }}' == 'schedule' ]]
           then
-            # overwrites the output
-            echo '::set-output name=out::["3.7", "3.8", "3.9", "3.10"]'
+            OUTPUT='"3.7", "3.8", "3.9", "3.10"'
           fi
+
+          echo "::set-output name=out::[$OUTPUT]"
+
+  matrix-dbt:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.include-step.outputs.out }}
+    steps:
+      - id: include-step
+        run: |
+          OUTPUT='"0.20.*", "0.21.*", "1.0.*", "1.1.*"'
+
+          if [[ '${{ github.event_name }}' == 'workflow_dispatch' ]]
+          then
+            OUTPUT='latest'
+          fi
+
+          echo "::set-output name=out::[$OUTPUT]"
+
   run:
-    needs: [matrix-python]
+    needs: [matrix-adapters, matrix-python, matrix-dbt]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        profile: ["postgres", "bigquery", "snowflake", "redshift", "duckdb"]
+        profile: ${{ fromJSON(needs.matrix-adapters.outputs.list) }}
+        dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
 
     steps:
@@ -36,6 +86,7 @@ jobs:
         uses: ./.github/actions/setup-local-fal
         with:
           python: ${{ matrix.python }}
+          dbt: ${{ matrix.dbt }}
           adapter: ${{ matrix.profile }}
 
       - name: Start Docker database
