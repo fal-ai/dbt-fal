@@ -1,4 +1,5 @@
 import argparse
+import warnings
 from concurrent.futures import (
     FIRST_COMPLETED,
     Executor,
@@ -14,6 +15,16 @@ from fal.planner.tasks import FalHookTask, TaskGroup, Task, GroupStatus
 from faldbt.project import FalDbt
 
 from dbt.logger import GLOBAL_LOGGER as logger
+
+
+# HACK: Since we construct multiprocessing pools for each DBT run, it leaves a trace
+# of shared memory warnings behind. In reality, there isn't anything we can do to
+# get rid of them since everything is closed properly and gets destroyed at the end.
+# As of now, it is just a known problem of using multiprocessing like this, and for
+# not spamming the users with these unrelated warnings we'll filter them out.
+#
+# See for more: https://stackoverflow.com/a/63004750
+warnings.filterwarnings("ignore", category=UserWarning, module="multiprocessing.resource_tracker")
 
 
 def _show_failed_groups(scheduler: Scheduler) -> None:
