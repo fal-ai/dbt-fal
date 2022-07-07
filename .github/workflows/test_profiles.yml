@@ -69,15 +69,15 @@ jobs:
       list: ${{ steps.include-step.outputs.out }}
     steps:
       - id: include-step
+        shell: python
         run: |
-          OUTPUT='"3.8"'
+          OUTPUT=["3.8"]
 
-          if [[ '${{ github.event_name }}' == 'schedule' ]]
-          then
-            OUTPUT='"3.7", "3.8", "3.9", "3.10"'
-          fi
+          if '${{ github.event_name }}' in ('schedule', 'push'):
+            OUTPUT=["3.7", "3.8", "3.9", "3.10"]
 
-          echo "::set-output name=out::[$OUTPUT]"
+          import json
+          print("::set-output name=out::" + json.dumps(OUTPUT))
 
   matrix-dbt:
     runs-on: ubuntu-latest
