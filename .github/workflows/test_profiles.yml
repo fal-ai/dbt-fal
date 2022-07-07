@@ -1,11 +1,22 @@
-name: Run Integration Tests on Different Profiles
+name: Integration Tests
 
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
+    paths-ignore:
+      - "examples/**"
+      - "docsite/**"
+      - "README.md"
+      - "LICENSE"
+      - "docker/**"
+
+  push:
+    branches: [main]
+
   schedule:
     # every midnight
     - cron: "0 0 * * *"
+
   workflow_dispatch:
     inputs:
       adapter:
@@ -34,13 +45,15 @@ jobs:
           OUTPUT = ADAPTERS
 
           if '${{ github.event_name }}' == 'pull_request':
-
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
             PR_BRANCH = '${{ github.head_ref }}'.lower()
 
             # Only test adapters mentioned in the pull request title or branch.
             # We always test postgres as a sanity check.
             OUTPUT = [a for a in ADAPTERS if a in PR_TITLE or a in PR_BRANCH or a == 'postgres']
+
+          elif '${{ github.event_name }}' == 'push':
+            OUTPUT = ['postgres']
 
           elif '${{ github.event_name }}' == 'workflow_dispatch':
             ADAPTER_CHOICE = '${{ github.event.inputs.adapter }}'
