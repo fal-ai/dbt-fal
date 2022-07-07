@@ -36,11 +36,11 @@ jobs:
           if '${{ github.event_name }}' == 'pull_request':
 
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
-            PR_BRANCH = '${{ github.event.pull_request.head.ref }}'.lower()
+            PR_BRANCH = '${{ github.head_ref }}'.lower()
 
             # Only test adapters mentioned in the pull request title or branch.
-            # If no adapter is mentioned, we do not test at all.
-            OUTPUT = [a for a in ADAPTERS if a in PR_TITLE or a in PR_BRANCH]
+            # We always test postgres as a sanity check.
+            OUTPUT = [a for a in ADAPTERS if a in PR_TITLE or a in PR_BRANCH or a == 'postgres']
 
           elif '${{ github.event_name }}' == 'workflow_dispatch':
             ADAPTER_CHOICE = '${{ github.event.inputs.adapter }}'
@@ -173,7 +173,14 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          BEHAVE_ARGS="--tags=-broken_profile --tags=-TODO-${{ matrix.profile }}"
+          BEHAVE_ARGS="--tags=-TODO-${{ matrix.profile }}"
+
+          if [[ '${{ matrix.profile }}' != 'postgres' ]]
+          then
+            # 'broken_profile' tests only works for postgres right now
+            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-broken_profile"
+          fi
+
           if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
           then
             BEHAVE_ARGS="$BEHAVE_ARGS --tags=-dbtv1"
