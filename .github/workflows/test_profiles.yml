@@ -7,6 +7,19 @@ on:
     # every midnight
     - cron: "0 0 * * *"
   workflow_dispatch:
+    inputs:
+      adapter:
+        description: dbt Adapter to test with
+        required: false
+        default: "<ALL>"
+        type: choice
+        options:
+          - "<ALL>"
+          - postgres
+          - bigquery
+          - snowflake
+          - redshift
+          - duckdb
 
 jobs:
   matrix-adapters:
@@ -28,6 +41,11 @@ jobs:
             # Only test adapters mentioned in the pull request title or branch.
             # If no adapter is mentioned, we do not test at all.
             OUTPUT = [a for a in ADAPTERS if a in PR_TITLE or a in PR_BRANCH]
+
+          elif '${{ github.event_name }}' == 'workflow_dispatch':
+            ADAPTER_CHOICE = '${{ github.event.inputs.adapter }}'
+            if ADAPTER_CHOICE != '<ALL>':
+              OUTPUT = [ADAPTER_CHOICE]
 
           import json
           print("::set-output name=out::" + json.dumps(OUTPUT))
