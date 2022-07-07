@@ -214,7 +214,7 @@ jobs:
           # For posting a rich message using Block Kit
           payload: |
             {
-              "text": "Integration tests failed for ${{ matrix.profile }}, Python version ${{ matrix.python }}. https://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
+              "text": "Integration tests failed for dbt-${{ matrix.profile }}@${{ matrix.dbt }} (Python ${{ matrix.python }})\nhttps://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
