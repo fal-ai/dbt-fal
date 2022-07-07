@@ -109,6 +109,11 @@ jobs:
         dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
 
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      cancel-in-progress: true
+
     steps:
       - uses: actions/checkout@v2
 
