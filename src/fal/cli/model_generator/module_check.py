@@ -34,12 +34,9 @@ def write_to_model_check(module: ast.Module):
     all_function_calls = _find_function_calls(ast.walk(module))
     all_wtm_calls = _filter_function_calls_by_name(all_function_calls, "write_to_model")
 
-    top_level_function_calls = _find_function_calls(
-        stmt.value for stmt in module.body if isinstance(stmt, ast.Expr)
-    )
     assert (
-        len(all_wtm_calls) == 1 and all_wtm_calls[0] in top_level_function_calls
-    ), "There must be a single write_to_model call and it must be a top-level expression of the Python Model script"
+        len(all_wtm_calls) > 0
+    ), "There must be at least a write_to_model call in the Python Model"
 
 
 def _find_function_calls(nodes: Iterator[ast.AST]) -> List[ast.Call]:
