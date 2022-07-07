@@ -112,7 +112,7 @@ def test_write_to_model_never():
     module = ast.parse(program)
     try:
         write_to_model_check(module)
-        raise  # Should not have thrown
+        raise  # Should have thrown
     except AssertionError:
         pass
 
@@ -128,9 +128,8 @@ def test_write_to_model_inner_level():
     module = ast.parse(program)
     try:
         write_to_model_check(module)
-        raise  # Should not have thrown
     except AssertionError:
-        pass
+        assert False, "Should not have thrown"
 
 
 def test_write_to_model_once_top_level_once_inner_level():
@@ -145,9 +144,8 @@ def test_write_to_model_once_top_level_once_inner_level():
     module = ast.parse(program)
     try:
         write_to_model_check(module)
-        raise  # Should not have thrown
     except AssertionError:
-        pass
+        assert False, "Should not have thrown"
 
 
 def test_write_to_model_more_than_once_top_level():
@@ -157,12 +155,11 @@ def test_write_to_model_more_than_once_top_level():
         write_to_model(df)
 
         df = ref('model')
-        write_to_model(df)
+        write_to_model(df, mode='append')
         """
     )
     module = ast.parse(program)
     try:
         write_to_model_check(module)
-        raise  # Should not have thrown
     except AssertionError:
-        pass
+        assert False, "Should not have thrown"
