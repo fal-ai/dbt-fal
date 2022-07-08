@@ -26,6 +26,7 @@ Feature: Python nodes
     And the script model_c.post_hook.py output file has the lines:
       | Status: success |
 
+  @TODO-parallel
   Scenario: Python model post hooks run even when model script fails
     When the following command is invoked:
       """

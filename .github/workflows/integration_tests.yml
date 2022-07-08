@@ -21,6 +21,7 @@ jobs:
       matrix:
         python: ["3.8"]
         dbt: ["0.20.*", "0.21.*", "1.0.*", "1.1.*"]
+        experimental_threads: [0, 4]
 
     # Run only the latest commit pushed to PR
     concurrency:
@@ -48,8 +49,13 @@ jobs:
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
+          FAL_TESTS_EXPERIMENTAL_THREADS: ${{ matrix.experimental_threads }}
         run: |
           BEHAVE_ARGS="--tags=-TODO-postgres"
+          if [[ $FAL_TESTS_EXPERIMENTAL_THREADS != '0' ]]
+          then
+            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-TODO-parallel"
+          fi
           if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
           then
             BEHAVE_ARGS="$BEHAVE_ARGS --tags=-dbtv1"

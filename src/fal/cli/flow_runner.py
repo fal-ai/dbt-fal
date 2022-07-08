@@ -19,18 +19,13 @@ RUN_RESULTS_FILE_NAME = "run_results.json"
 RUN_RESULTS_KEY = "results"
 
 
-def _is_experimental_models_enabled(parsed: argparse.Namespace):
-    """Whether experimental models are enabled or not."""
-    return parsed.experimental_python_models or parsed.experimental_threads is not None
-
-
 def run_serial(
     fal_dbt: FalDbt,
     parsed: argparse.Namespace,
     node_graph: NodeGraph,
 ) -> None:
     main_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    if parsed.experimental_flow or _is_experimental_models_enabled(parsed):
+    if parsed.experimental_flow or parsed.experimental_python_models:
         sub_graphs = main_graph.generate_sub_graphs()
     else:
         sub_graphs = [main_graph]
@@ -55,7 +50,6 @@ def run_threaded(
         OriginGraph,
         FilteredGraph,
         PlannedGraph,
-        __test_reorder_graph,
     )
     from fal.planner.schedule import schedule_graph
     from fal.planner.executor import parallel_executor
@@ -65,7 +59,7 @@ def run_threaded(
 
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
 
-    origin_graph = OriginGraph(__test_reorder_graph(node_graph.graph))
+    origin_graph = OriginGraph(node_graph.graph)
     filtered_graph = FilteredGraph.from_execution_plan(
         origin_graph, execution_plan=execution_plan
     )
@@ -83,7 +77,7 @@ def run_threaded(
 
 def fal_flow_run(parsed: argparse.Namespace):
     generated_models: Dict[str, Path] = {}
-    if _is_experimental_models_enabled(parsed):
+    if parsed.experimental_python_models:
         telemetry.log_call("experimental_python_models")
         generated_models = generate_python_dbt_models(parsed.project_dir)
 
