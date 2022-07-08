@@ -33,12 +33,12 @@ on:
           - duckdb
 
 jobs:
-  matrix-adapters:
+  matrix-adapter:
     runs-on: ubuntu-latest
     outputs:
-      list: ${{ steps.include-step.outputs.out }}
+      list: ${{ steps.matrix-step.outputs.list }}
     steps:
-      - id: include-step
+      - id: matrix-step
         shell: python
         run: |
           ADAPTERS = ['postgres', 'bigquery', 'snowflake', 'redshift', 'duckdb']
@@ -61,14 +61,14 @@ jobs:
               OUTPUT = [ADAPTER_CHOICE]
 
           import json
-          print("::set-output name=out::" + json.dumps(OUTPUT))
+          print("::set-output name=list::" + json.dumps(OUTPUT))
 
   matrix-python:
     runs-on: ubuntu-latest
     outputs:
-      list: ${{ steps.include-step.outputs.out }}
+      list: ${{ steps.matrix-step.outputs.list }}
     steps:
-      - id: include-step
+      - id: matrix-step
         shell: python
         run: |
           OUTPUT=["3.8"]
@@ -77,14 +77,14 @@ jobs:
             OUTPUT=["3.7", "3.8", "3.9", "3.10"]
 
           import json
-          print("::set-output name=out::" + json.dumps(OUTPUT))
+          print("::set-output name=list::" + json.dumps(OUTPUT))
 
   matrix-dbt:
     runs-on: ubuntu-latest
     outputs:
-      list: ${{ steps.include-step.outputs.out }}
+      list: ${{ steps.matrix-step.outputs.list }}
     steps:
-      - id: include-step
+      - id: matrix-step
         shell: python
         run: |
           OUTPUT=["1.0.*", "1.1.*"]
@@ -97,15 +97,18 @@ jobs:
             OUTPUT=["latest"]
 
           import json
-          print("::set-output name=out::" + json.dumps(OUTPUT))
+          print("::set-output name=list::" + json.dumps(OUTPUT))
 
   run:
-    needs: [matrix-adapters, matrix-python, matrix-dbt]
+    needs:
+      - matrix-adapter
+      - matrix-python
+      - matrix-dbt
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        profile: ${{ fromJSON(needs.matrix-adapters.outputs.list) }}
+        profile: ${{ fromJSON(needs.matrix-adapter.outputs.list) }}
         dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
 
