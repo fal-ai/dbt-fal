@@ -28,17 +28,19 @@ SELECT * FROM {{ target.schema }}.{{ model.alias }}
 
 
 def generate_python_dbt_models(project_dir: str):
-    project_contract = load_dbt_project_contract(project_dir)
-    project_path = Path(project_dir)
-    model_paths = map(
-        project_path.joinpath, cast(List[str], project_contract.model_paths)
-    )
+    model_paths = _get_model_paths(project_dir)
 
     python_paths: List[Path] = []
     for model_path in model_paths:
         python_paths.extend(_generate_python_dbt_models(model_path))
 
     return dict([(path.stem, path) for path in python_paths])
+
+
+def _get_model_paths(project_dir: str):
+    project_contract = load_dbt_project_contract(project_dir)
+    project_path = Path(project_dir)
+    return map(project_path.joinpath, cast(List[str], project_contract.model_paths))
 
 
 GENERATED_DIR = Path("fal")
@@ -97,6 +99,20 @@ def _check_path_safe_to_write(sql_path: Path, py_path: Path):
 
 
 CHECKSUM_REGEX = re.compile(r"FAL_GENERATED ([_\d\w]+)")
+
+
+def delete_generated_models(project_dir: str):
+    model_paths = _get_model_paths(project_dir)
+    for path in model_paths:
+        fal_path = path / GENERATED_DIR
+        for file in fal_path.glob("**/*.sql"):
+            if _is_fal_generated(file):
+                file.unlink()
+
+
+def _is_fal_generated(file_path):
+    with open(file_path) as file:
+        return CHECKSUM_REGEX.search(file.read())
 
 
 def _checksum(contents: str):

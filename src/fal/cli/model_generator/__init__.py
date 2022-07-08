@@ -1,1 +1,1 @@
-from .model_generator import generate_python_dbt_models
+from .model_generator import generate_python_dbt_models, delete_generated_models
