@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 from fal.planner.schedule import SUCCESS, Scheduler
-from fal.planner.tasks import FalHookTask, TaskGroup, Task, GroupStatus
+from fal.planner.tasks import FalHookTask, TaskGroup, Task, GroupStatus, DBTTask
 from faldbt.project import FalDbt
 
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -24,23 +24,27 @@ from dbt.logger import GLOBAL_LOGGER as logger
 # not spamming the users with these unrelated warnings we'll filter them out.
 #
 # See for more: https://stackoverflow.com/a/63004750
-warnings.filterwarnings("ignore", category=UserWarning, module="multiprocessing.resource_tracker")
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="multiprocessing.resource_tracker"
+)
+
+
+def _collect_models(groups: List[TaskGroup]) -> List[str]:
+    for group in groups:
+        if isinstance(group.task, DBTTask):
+            yield from group.task.model_ids
 
 
 def _show_failed_groups(scheduler: Scheduler) -> None:
-    failed_groups = scheduler.filter_groups(GroupStatus.FAILURE)
-    if failed_groups:
-        failed_models = ", ".join(
-            model for group in failed_groups for model in group.task.model_ids
-        )
-        logger.info(f"Failed calculating the following DBT models: {failed_models}")
+    failed_models = _collect_models(scheduler.filter_groups(GroupStatus.FAILURE))
+    if failed_models:
+        message = ", ".join(failed_models)
+        logger.info("Failed calculating the following DBT models: ", message)
 
-    skipped_groups = scheduler.filter_groups(GroupStatus.SKIPPED)
-    if skipped_groups:
-        skipped_models = ", ".join(
-            model for group in skipped_groups for model in group.task.model_ids
-        )
-        logger.info(f"Skipped calculating the following DBT models: {skipped_models}")
+    skipped_models = _collect_models(scheduler.filter_groups(GroupStatus.SKIPPED))
+    if skipped_models:
+        message = ", ".join(skipped_models)
+        logger.info("Skipped calculating the following DBT models: ", message)
 
 
 @dataclass

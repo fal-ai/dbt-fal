@@ -142,15 +142,16 @@ class FalModelTask(DBTTask):
 class FalHookTask(Task):
     hook_path: str
     bound_model: Union[DbtModel, None] = None
+    is_post_hook: bool = True
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        script = FalScript(fal_dbt, self.bound_model, self.hook_path, True)
+        script = FalScript(fal_dbt, self.bound_model, self.hook_path, self.is_post_hook)
         return _run_script(script, fal_dbt=fal_dbt)
 
 
 @dataclass
 class TaskGroup:
-    task: DBTTask
+    task: Task
     post_hooks: List[FalHookTask] = field(default_factory=list)
     dependencies: List[TaskGroup] = field(default_factory=list)
     status: GroupStatus = GroupStatus.PENDING
