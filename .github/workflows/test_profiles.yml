@@ -72,15 +72,19 @@ jobs:
       list: ${{ steps.include-step.outputs.out }}
     steps:
       - id: include-step
+        shell: python
         run: |
-          OUTPUT='"0.20.*", "0.21.*", "1.0.*", "1.1.*"'
+          OUTPUT=["1.0.*", "1.1.*"]
 
-          if [[ '${{ github.event_name }}' == 'workflow_dispatch' ]]
-          then
-            OUTPUT='latest'
-          fi
+          if '${{ github.event_name }}' == 'pull_request':
+            # Add more versions for pull requests
+            OUTPUT.extend(["0.20.*", "0.21.*"])
 
-          echo "::set-output name=out::[$OUTPUT]"
+          elif '${{ github.event_name }}' == 'workflow_dispatch':
+            OUTPUT=["latest"]
+
+          import json
+          print("::set-output name=out::" + json.dumps(OUTPUT))
 
   run:
     needs: [matrix-adapters, matrix-python, matrix-dbt]
