@@ -1,11 +1,22 @@
-name: Run Integration Tests on Different Profiles
+name: Integration Tests
 
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
+    paths-ignore:
+      - "examples/**"
+      - "docsite/**"
+      - "README.md"
+      - "LICENSE"
+      - "docker/**"
+
+  push:
+    branches: [main]
+
   schedule:
     # every midnight
     - cron: "0 0 * * *"
+
   workflow_dispatch:
     inputs:
       adapter:
@@ -22,25 +33,27 @@ on:
           - duckdb
 
 jobs:
-  matrix-adapters:
+  matrix-adapter:
     runs-on: ubuntu-latest
     outputs:
-      list: ${{ steps.include-step.outputs.out }}
+      list: ${{ steps.matrix-step.outputs.list }}
     steps:
-      - id: include-step
+      - id: matrix-step
         shell: python
         run: |
           ADAPTERS = ['postgres', 'bigquery', 'snowflake', 'redshift', 'duckdb']
           OUTPUT = ADAPTERS
 
           if '${{ github.event_name }}' == 'pull_request':
-
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
-            PR_BRANCH = '${{ github.event.pull_request.head.ref }}'.lower()
+            PR_BRANCH = '${{ github.head_ref }}'.lower()
 
             # Only test adapters mentioned in the pull request title or branch.
-            # If no adapter is mentioned, we do not test at all.
-            OUTPUT = [a for a in ADAPTERS if a in PR_TITLE or a in PR_BRANCH]
+            # We always test postgres as a sanity check.
+            OUTPUT = [a for a in ADAPTERS if a in PR_TITLE or a in PR_BRANCH or a == 'postgres']
+
+          elif '${{ github.event_name }}' == 'push':
+            OUTPUT = ['postgres']
 
           elif '${{ github.event_name }}' == 'workflow_dispatch':
             ADAPTER_CHOICE = '${{ github.event.inputs.adapter }}'
@@ -48,30 +61,30 @@ jobs:
               OUTPUT = [ADAPTER_CHOICE]
 
           import json
-          print("::set-output name=out::" + json.dumps(OUTPUT))
+          print("::set-output name=list::" + json.dumps(OUTPUT))
 
   matrix-python:
     runs-on: ubuntu-latest
     outputs:
-      list: ${{ steps.include-step.outputs.out }}
+      list: ${{ steps.matrix-step.outputs.list }}
     steps:
-      - id: include-step
+      - id: matrix-step
+        shell: python
         run: |
-          OUTPUT='"3.8"'
+          OUTPUT=["3.8"]
 
-          if [[ '${{ github.event_name }}' == 'schedule' ]]
-          then
-            OUTPUT='"3.7", "3.8", "3.9", "3.10"'
-          fi
+          if '${{ github.event_name }}' in ('schedule', 'push'):
+            OUTPUT=["3.7", "3.8", "3.9", "3.10"]
 
-          echo "::set-output name=out::[$OUTPUT]"
+          import json
+          print("::set-output name=list::" + json.dumps(OUTPUT))
 
   matrix-dbt:
     runs-on: ubuntu-latest
     outputs:
-      list: ${{ steps.include-step.outputs.out }}
+      list: ${{ steps.matrix-step.outputs.list }}
     steps:
-      - id: include-step
+      - id: matrix-step
         shell: python
         run: |
           OUTPUT=["1.0.*", "1.1.*"]
@@ -84,17 +97,45 @@ jobs:
             OUTPUT=["latest"]
 
           import json
-          print("::set-output name=out::" + json.dumps(OUTPUT))
+          print("::set-output name=list::" + json.dumps(OUTPUT))
 
   run:
-    needs: [matrix-adapters, matrix-python, matrix-dbt]
+    needs:
+      - matrix-adapter
+      - matrix-python
+      - matrix-dbt
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        profile: ${{ fromJSON(needs.matrix-adapters.outputs.list) }}
+        profile: ${{ fromJSON(needs.matrix-adapter.outputs.list) }}
         dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
+        # TODO: remove when no longer experimental
+        experimental_threads: [0, 4]
+        exclude:
+          # Avoid profiles that take too long from testing experimental threads
+          - experimental_threads: 4
+            profile: bigquery
+          - experimental_threads: 4
+            profile: snowflake
+          - experimental_threads: 4
+            profile: redshift
+          # Avoid 0.* for experimental threads
+          - experimental_threads: 4
+            dbt: "0.20.*"
+          - experimental_threads: 4
+            dbt: "0.21.*"
+          # Avoid non-working combination
+          - python: 3.10
+            dbt: "0.20.*"
+          - python: 3.10
+            dbt: "0.21.*"
+
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.dbt }}-${{ matrix.python }}-${{ matrix.experimental_threads }}"
+      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v2
@@ -128,6 +169,8 @@ jobs:
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
+          # TODO: remove when no longer experimental
+          FAL_TESTS_EXPERIMENTAL_THREADS: ${{ matrix.experimental_threads }}
           # BigQuery
           KEYFILE: ${{ secrets.GCP_SA_KEY }}
           GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
@@ -173,10 +216,23 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          BEHAVE_ARGS="--tags=-broken_profile --tags=-TODO-${{ matrix.profile }}"
+          BEHAVE_ARGS="--tags=-TODO-${{ matrix.profile }}"
+
+          if [[ '${{ matrix.profile }}' != 'postgres' ]]
+          then
+            # 'broken_profile' tests only works for postgres right now
+            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-broken_profile"
+          fi
+
           if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
           then
             BEHAVE_ARGS="$BEHAVE_ARGS --tags=-dbtv1"
+          fi
+
+          # TODO: remove when no longer experimental
+          if [[ $FAL_TESTS_EXPERIMENTAL_THREADS != '0' ]]
+          then
+            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-TODO-parallel"
           fi
 
           behave $BEHAVE_ARGS -D profile=${{ matrix.profile }}
@@ -189,7 +245,7 @@ jobs:
           # For posting a rich message using Block Kit
           payload: |
             {
-              "text": "Integration tests failed for ${{ matrix.profile }}, Python version ${{ matrix.python }}. https://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
+              "text": "Integration tests failed for dbt-${{ matrix.profile }}@${{ matrix.dbt }} (Python ${{ matrix.python }})\nhttps://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
