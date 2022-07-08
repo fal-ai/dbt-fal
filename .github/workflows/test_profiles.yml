@@ -115,11 +115,17 @@ jobs:
         experimental_threads: [0, 4]
         exclude:
           # Avoid profiles that take too long from testing experimental threads
-          - profile: [bigquery, snowflake, redshift]
-            experimental_threads: 4
+          - experimental_threads: 4
+            profile: bigquery
+          - experimental_threads: 4
+            profile: snowflake
+          - experimental_threads: 4
+            profile: redshift
           # Avoid non-working combination
-          - dbt: ["0.20.*", "0.21.*"]
-            python: 3.10
+          - python: 3.10
+            dbt: "0.20.*"
+          - python: 3.10
+            dbt: "0.21.*"
 
     # Run only the latest commit pushed to PR
     concurrency:
