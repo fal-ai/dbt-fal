@@ -29,16 +29,13 @@ class FilteredGraph(OriginGraph):
     ) -> FilteredGraph:
         graph = origin_graph.copy_graph()
         for node in origin_graph.graph.nodes:
-            if (
-                node
-                not in execution_plan.dbt_models
-                + execution_plan.before_scripts
-                + execution_plan.after_scripts
-            ):
+            if node not in execution_plan.nodes:
                 graph.remove_node(node)
 
         if execution_plan.after_scripts:
-            logger.warn("Using after scripts is now deprecated. Please consider migrating to post-hooks.")
+            logger.warn(
+                "Using after scripts is now deprecated. Please consider migrating to post-hooks."
+            )
 
         return cls(graph)
 
@@ -77,10 +74,7 @@ class PlannedGraph(OriginGraph):
 
         for node in nx.topological_sort(self.graph):
             properties = self.graph.nodes[node]
-            if properties["kind"] in (
-                NodeKind.FAL_MODEL,
-                NodeKind.FAL_SCRIPT
-            ):
+            if properties["kind"] in (NodeKind.FAL_MODEL, NodeKind.FAL_SCRIPT):
                 yield from split()
                 continue
 

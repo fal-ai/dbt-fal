@@ -34,6 +34,10 @@ class ExecutionPlan:
             else:
                 self.dbt_models.append(id)
 
+    @property
+    def nodes(self) -> List[str]:
+        return self.before_scripts + self.after_scripts + self.dbt_models
+
     @classmethod
     def create_plan_from_graph(cls, parsed, nodeGraph: NodeGraph, fal_dbt: FalDbt):
         """
