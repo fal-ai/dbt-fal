@@ -111,6 +111,12 @@ jobs:
         profile: ${{ fromJSON(needs.matrix-adapter.outputs.list) }}
         dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
+        # TODO: remove when no longer experimental
+        experimental_threads: [0, 4]
+        exclude:
+          # Avoid profiles that take too long from testing experimental threads
+          - profile: [bigquery, snowflake, redshift]
+            experimental_threads: 4
 
     # Run only the latest commit pushed to PR
     concurrency:
@@ -149,6 +155,8 @@ jobs:
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
+          # TODO: remove when no longer experimental
+          FAL_TESTS_EXPERIMENTAL_THREADS: ${{ matrix.experimental_threads }}
           # BigQuery
           KEYFILE: ${{ secrets.GCP_SA_KEY }}
           GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
@@ -205,6 +213,12 @@ jobs:
           if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
           then
             BEHAVE_ARGS="$BEHAVE_ARGS --tags=-dbtv1"
+          fi
+
+          # TODO: remove when no longer experimental
+          if [[ $FAL_TESTS_EXPERIMENTAL_THREADS != '0' ]]
+          then
+            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-TODO-parallel"
           fi
 
           behave $BEHAVE_ARGS -D profile=${{ matrix.profile }}
