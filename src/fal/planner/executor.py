@@ -25,7 +25,7 @@ from dbt.logger import GLOBAL_LOGGER as logger
 #
 # See for more: https://stackoverflow.com/a/63004750
 warnings.filterwarnings(
-    "ignore", category=UserWarning, module="multiprocessing.resource_tracker"
+    "ignore", category=UserWarning, module="multiprocessing.*"
 )
 
 
@@ -36,15 +36,15 @@ def _collect_models(groups: List[TaskGroup]) -> List[str]:
 
 
 def _show_failed_groups(scheduler: Scheduler) -> None:
-    failed_models = _collect_models(scheduler.filter_groups(GroupStatus.FAILURE))
+    failed_models = list(_collect_models(scheduler.filter_groups(GroupStatus.FAILURE)))
     if failed_models:
         message = ", ".join(failed_models)
-        logger.info("Failed calculating the following DBT models: ", message)
+        logger.info("Failed calculating the following DBT models: {}", message)
 
-    skipped_models = _collect_models(scheduler.filter_groups(GroupStatus.SKIPPED))
+    skipped_models = list(_collect_models(scheduler.filter_groups(GroupStatus.SKIPPED)))
     if skipped_models:
         message = ", ".join(skipped_models)
-        logger.info("Skipped calculating the following DBT models: ", message)
+        logger.info("Skipped calculating the following DBT models: {}", message)
 
 
 @dataclass
