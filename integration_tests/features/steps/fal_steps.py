@@ -1,5 +1,6 @@
 from functools import reduce
 import os
+import shlex
 from typing import List, Sequence, Iterator
 from behave import *
 import glob
@@ -12,6 +13,8 @@ from pathlib import Path
 from datetime import datetime, timezone
 import re
 
+
+FAL_TESTS_EXPERIMENTAL_THREADS = int(os.getenv("FAL_TESTS_EXPERIMENTAL_THREADS", 0))
 
 # The main distinction we can use on an artifact file to determine
 # whether it was created by a Python script or a Python model is the number
@@ -87,12 +90,16 @@ def invoke_command(context):
     args: str = context.text.replace("$baseDir", context.base_dir)
     args = args.replace("$profilesDir", str(profiles_dir))
     args = args.replace("$tempDir", context.temp_dir.name)
+    is_fal_flow_run = "fal flow run" in args
 
-    import shlex
+    args = shlex.split(args)
+    if is_fal_flow_run and FAL_TESTS_EXPERIMENTAL_THREADS:
+        args.append("--experimental-threads")
+        args.append(str(FAL_TESTS_EXPERIMENTAL_THREADS))
 
     context.exc = None
     try:
-        cli(shlex.split(args))
+        cli(args)
     except Exception:
         import sys
 

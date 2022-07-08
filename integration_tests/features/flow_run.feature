@@ -124,6 +124,7 @@ Feature: `flow run` command
     Then the following models are calculated:
       | new_model |
 
+  @TODO-parallel
   Scenario: fal flow run with an error in before
     Given the project 003_scripts_with_errors
     When the following command is invoked:
@@ -132,6 +133,7 @@ Feature: `flow run` command
       """
     Then it throws an exception RuntimeError with message 'Error in scripts'
 
+  @TODO-parallel
   Scenario: fal flow run with an error in after
     Given the project 003_scripts_with_errors
     When the following command is invoked:
@@ -140,6 +142,7 @@ Feature: `flow run` command
       """
     Then it throws an exception RuntimeError with message 'Error in scripts'
 
+  @TODO-parallel
   @TODO-duckdb
   Scenario: fal flow run with an error in dbt run
     Given the project 003_scripts_with_errors
@@ -266,7 +269,7 @@ Feature: `flow run` command
     And the following scripts are ran:
       | model_c.before.py | agent_wait_time.before.py |
 
-  @broken_profile
+  @broken_profile @TODO-parallel
   Scenario: fal flow run with target
     Given the project 001_flow_run_with_selectors
     When the data is seeded
@@ -284,6 +287,7 @@ Feature: `flow run` command
     Then the following models are calculated:
       | zendesk_ticket_data |
 
+  @TODO-parallel
   Scenario: post hooks run after both successful and failed dbt models
     Given the project 003_scripts_with_errors
     When the following command is invoked:
