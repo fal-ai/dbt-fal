@@ -36,7 +36,7 @@ def write_to_model_check(module: ast.Module):
 
     assert (
         len(all_wtm_calls) > 0
-    ), "There must be at least a write_to_model call in the Python Model"
+    ), "There must be at least one write_to_model call in the Python Model"
 
 
 def _find_function_calls(nodes: Iterator[ast.AST]) -> List[ast.Call]:
