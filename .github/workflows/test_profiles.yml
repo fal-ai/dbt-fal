@@ -129,7 +129,7 @@ jobs:
 
     # Run only the latest commit pushed to PR
     concurrency:
-      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.dbt }}-${{ matrix.python }}-${{ matrix.experimental_threads }}"
       cancel-in-progress: true
 
     steps:
