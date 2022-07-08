@@ -121,6 +121,11 @@ jobs:
             profile: snowflake
           - experimental_threads: 4
             profile: redshift
+          # Avoid 0.* for experimental threads
+          - experimental_threads: 4
+            dbt: "0.20.*"
+          - experimental_threads: 4
+            dbt: "0.21.*"
           # Avoid non-working combination
           - python: 3.10
             dbt: "0.20.*"
