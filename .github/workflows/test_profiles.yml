@@ -117,6 +117,9 @@ jobs:
           # Avoid profiles that take too long from testing experimental threads
           - profile: [bigquery, snowflake, redshift]
             experimental_threads: 4
+          # Avoid non-working combination
+          - dbt: ["0.20.*", "0.21.*"]
+            python: 3.10
 
     # Run only the latest commit pushed to PR
     concurrency:
