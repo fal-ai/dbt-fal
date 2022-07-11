@@ -23,7 +23,7 @@ __deps__
 
 */
 
-SELECT * FROM {{ target.schema }}.{{ model.alias }}
+SELECT * FROM {{ this }}
 """
 
 
