@@ -7,7 +7,6 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from functools import cached_property
 from typing import Iterator, List, Union, Any, Optional, Dict, Tuple
 
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -156,9 +155,12 @@ class TaskGroup:
     dependencies: List[TaskGroup] = field(default_factory=list)
     status: GroupStatus = GroupStatus.PENDING
 
+    def __post_init__(self):
+        self._id = str(uuid.uuid4())
+
     def set_run_index(self, run_index: int) -> None:
         self.task._run_index = run_index
 
-    @cached_property
+    @property
     def id(self) -> str:
-        return str(uuid.uuid4())
+        return self._id
