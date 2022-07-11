@@ -71,10 +71,22 @@ jobs:
       - id: matrix-step
         shell: python
         run: |
+          VERSIONS=["3.7", "3.8", "3.9", "3.10"]
           OUTPUT=["3.8"]
 
-          if '${{ github.event_name }}' in ('schedule', 'push'):
-            OUTPUT=["3.7", "3.8", "3.9", "3.10"]
+          if '${{ github.event_name }}' == 'pull_request':
+            PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
+            PR_BRANCH = '${{ github.head_ref }}'.lower()
+
+            # Test version mentioned in the pull request title or branch.
+            OUTPUT = [v for v in VERSIONS if v in PR_TITLE or v in PR_BRANCH]
+
+            if not OUTPUT:
+              # If none were found in PR info
+              OUTPUT=["3.8"]
+
+          elif '${{ github.event_name }}' in ('schedule', 'push'):
+            OUTPUT=VERSIONS
 
           import json
           print("::set-output name=list::" + json.dumps(OUTPUT))
