@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 import sys
 import traceback
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Iterator, List, Union, Any, Optional, Dict, Tuple
+from typing import Iterator, List, Any, Optional, Dict, Tuple
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
@@ -20,6 +21,8 @@ FAILURE = 1
 
 
 class Task:
+    _run_index: int = -1
+
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         raise NotImplementedError
 
@@ -98,7 +101,6 @@ def _modify_path(fal_dbt: FalDbt):
 @dataclass
 class DBTTask(Task):
     model_ids: List[str]
-    _run_index: int = -1
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         from fal.cli.dbt_runner import dbt_run_through_python
@@ -118,9 +120,11 @@ class DBTTask(Task):
 
 @dataclass
 class FalModelTask(DBTTask):
-    bound_model: Union[DbtModel, None] = None
+    bound_model: Optional[DbtModel] = None
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
+        assert self._run_index != -1
+
         # Run the ephemeral model
         dbt_result = super().execute(args, fal_dbt)
 
@@ -139,12 +143,16 @@ class FalModelTask(DBTTask):
 
 @dataclass
 class FalHookTask(Task):
-    hook_path: str
-    bound_model: Union[DbtModel, None] = None
+    hook_path: Path
+    bound_model: Optional[DbtModel] = None
     is_post_hook: bool = True
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        script = FalScript(fal_dbt, self.bound_model, self.hook_path, self.is_post_hook)
+        assert self._run_index != -1
+
+        script = FalScript(
+            fal_dbt, self.bound_model, str(self.hook_path), self.is_post_hook
+        )
         return _run_script(script, fal_dbt=fal_dbt)
 
 
