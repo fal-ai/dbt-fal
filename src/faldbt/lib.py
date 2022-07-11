@@ -182,19 +182,14 @@ def _get_target_relation(
         profile_target=profile_target,
     )
 
-    relation = None
     with adapter.connection_named(_connection_name("relation", target)):
         with _cache_lock("_get_target_relation"):
             _clear_relations_cache(adapter, config)
 
-            target_name = target.name
-            if isinstance(target, ParsedModelNode):
-                target_name = target.alias
-
             # This ROLLBACKs so it has to be a new connection
-            relation = adapter.get_relation(target.database, target.schema, target_name)
-
-    return relation
+            return adapter.get_relation(
+                target.database, target.schema, target.identifier
+            )
 
 
 def compile_sql(
