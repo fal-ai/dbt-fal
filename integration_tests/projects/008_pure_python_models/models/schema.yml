@@ -7,19 +7,28 @@ models:
         scripts:
           - after.py
   - name: model_b
+    meta:
+      fal:
+        scripts:
+          before:
+            - before.py
   - name: model_c # Python model
     meta:
       fal:
         post-hook:
           - post_hook.py
         scripts:
+          - post_hook.py
           - after.py
   - name: model_d
   - name: model_e # Python (notebook) model
     meta:
       fal:
         scripts:
-          - after.py
+          before:
+            - before.py
+          after:
+            - after.py
   - name: broken_model # Python model that will throw an exception
     meta:
       fal:
