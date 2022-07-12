@@ -50,6 +50,7 @@ def run_threaded(
         OriginGraph,
         FilteredGraph,
         PlannedGraph,
+        ShuffledGraph,
     )
     from fal.planner.schedule import schedule_graph
     from fal.planner.executor import parallel_executor
@@ -63,8 +64,9 @@ def run_threaded(
     filtered_graph = FilteredGraph.from_execution_plan(
         origin_graph, execution_plan=execution_plan
     )
-    planned_graph = PlannedGraph.from_filtered_graph(
-        filtered_graph, enable_chunking=False
+    shuffled_graph = ShuffledGraph.from_filtered_graph(filtered_graph)
+    planned_graph = PlannedGraph.from_shuffled_graph(
+        shuffled_graph, enable_chunking=False
     )
     scheduler = schedule_graph(planned_graph.graph, node_graph)
     parallel_executor(

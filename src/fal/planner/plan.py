@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Iterator, List
+from typing import Iterator, List, Set
+import re
 
 import networkx as nx
 from fal.node_graph import NodeKind
@@ -41,16 +42,74 @@ class FilteredGraph(OriginGraph):
 
 
 @dataclass
-class PlannedGraph(OriginGraph):
+class ShuffledGraph(OriginGraph):
     graph: nx.DiGraph
+    after_pattern = re.compile("^script\\..+\\.AFTER\\..+\\.(py|ipynb)")
+    before_pattern = re.compile("^script\\..+\\.BEFORE\\..+\\.(py|ipynb)")
 
     @classmethod
     def from_filtered_graph(
         cls,
         filtered_graph: FilteredGraph,
-        enable_chunking: bool = True,
     ):
         graph = filtered_graph.copy_graph()
+        shuffled_graph = cls(graph)
+        shuffled_graph._shuffle()
+        return shuffled_graph
+
+    def _shuffle(self):
+        def _pattern_matching(pattern: re.Pattern, nodes: Set[str]):
+            return {
+                maybe_script for maybe_script in nodes if pattern.match(maybe_script)
+            }
+
+        old_graph = self.copy_graph()
+        node: str
+        for node in old_graph.nodes:
+
+            all_successors = set(old_graph.successors(node))
+            # TODO: is_after_script() later on!!
+            after_scripts = _pattern_matching(
+                ShuffledGraph.after_pattern, all_successors
+            )
+
+            for succ in all_successors - after_scripts:
+                # Keep the original `node` to `succ` edge and add a new one from `script`
+                self.graph.add_edges_from([(script, succ) for script in after_scripts])
+
+                # And add an edge between all node after scripts to the succ before scripts
+                succ_predecessors = old_graph.predecessors(succ)
+                # TODO: is_before_script() later on!!
+                succ_before_scripts = _pattern_matching(
+                    ShuffledGraph.before_pattern, succ_predecessors
+                )
+                for before_script in succ_before_scripts:
+                    self.graph.add_edges_from(
+                        [(script, before_script) for script in after_scripts]
+                    )
+
+            all_predecessors = set(old_graph.predecessors(node))
+            # TODO: is_before_script() later on!!
+            before_scripts = _pattern_matching(
+                ShuffledGraph.before_pattern, all_predecessors
+            )
+
+            for pred in all_predecessors - before_scripts:
+                # Keep the original `node` to `succ` edge and add a new one from `script`
+                self.graph.add_edges_from([(pred, script) for script in before_scripts])
+
+
+@dataclass
+class PlannedGraph(OriginGraph):
+    graph: nx.DiGraph
+
+    @classmethod
+    def from_shuffled_graph(
+        cls,
+        shuffled_graph: ShuffledGraph,
+        enable_chunking: bool = True,
+    ):
+        graph = shuffled_graph.copy_graph()
         planned_graph = cls(graph)
         if enable_chunking:
             planned_graph.plan()
