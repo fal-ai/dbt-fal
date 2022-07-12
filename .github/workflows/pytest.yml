@@ -17,8 +17,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.8"]
+        python: ["3.7", "3.8", "3.9", "3.10"]
         dbt: ["0.20.*", "0.21.*", "1.0.*", "1.1.*"]
+        exclude:
+          # Avoid non-working combination
+          - python: 3.10
+            dbt: "0.20.*"
+          - python: 3.10
+            dbt: "0.21.*"
 
     # Run only the latest commit pushed to PR
     concurrency:
