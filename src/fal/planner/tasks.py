@@ -148,7 +148,9 @@ class FalHookTask(Task):
     is_post_hook: bool = True
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        assert self._run_index != -1
+        if not self.is_post_hook:
+            # For after/before scripts
+            assert self._run_index != -1
 
         script = FalScript(
             fal_dbt, self.bound_model, str(self.hook_path), self.is_post_hook
