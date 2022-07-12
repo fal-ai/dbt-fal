@@ -10,7 +10,7 @@ Feature: Python nodes
     Then the following models are calculated:
       | model_a | model_b | model_c.py | model_d | model_e.ipynb |
     Then the following scripts are ran:
-      | model_a.after.py | model_c.after.py | model_e.after.py | model_c.post_hook.py |
+      | model_a.after.py | model_b.before.py | model_c.after.py | model_e.before.py | model_e.after.py | model_c.post_hook.py |
 
   Scenario: Run a project with Python nodes only selecting the Python model
     When the following command is invoked:
