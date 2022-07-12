@@ -15,7 +15,32 @@ class OriginGraph:
     graph: nx.DiGraph
 
     def copy_graph(self) -> nx.DiGraph:
-        return self.graph.copy()
+        return self.graph.copy()  # type: ignore
+
+    def _plot(self, graph=None):
+        """
+        For development and debugging purposes
+        """
+        if not graph:
+            graph = self.graph
+
+        import matplotlib.pyplot as plt
+
+        import networkx.drawing.layout as layout
+
+        nx.draw_networkx(
+            graph,
+            arrows=True,
+            pos=layout.circular_layout(graph),
+            labels={
+                node: node.replace(".", "\n")
+                .replace("model\n", "")
+                .replace("script\n", "")
+                .replace("\npy", ".py")
+                for node in graph.nodes
+            },
+        )
+        plt.show()
 
 
 @dataclass

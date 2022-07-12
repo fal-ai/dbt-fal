@@ -12,7 +12,7 @@ from fal.planner.schedule import schedule_graph
 
 
 class ModelDict(defaultdict):
-    def get(self, key) -> None:
+    def get(self, key):
         return super().__getitem__(key)
 
 
