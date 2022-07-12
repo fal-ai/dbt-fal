@@ -44,4 +44,4 @@ Feature: Python nodes
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select no_write_model
       """
-    Then it throws an exception AssertionError with message 'There must be a single write_to_model call and it must be a top-level expression of the Python Model script'
+    Then it throws an exception AssertionError with message 'There must be at least one write_to_model call in the Python Model'
