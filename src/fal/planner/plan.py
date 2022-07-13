@@ -84,44 +84,43 @@ class ShuffledGraph(OriginGraph):
 
     def _shuffle(self):
         def _pattern_matching(pattern: re.Pattern, nodes: Set[str]):
-            return {
+            matched = {
                 maybe_script for maybe_script in nodes if pattern.match(maybe_script)
             }
+            return matched, nodes - matched
+
+        def _add_edges_from_to(from_nodes: Set[str], to_nodes: Set[str]):
+            self.graph.add_edges_from(
+                (from_n, to_n) for from_n in from_nodes for to_n in to_nodes
+            )
 
         old_graph = self.copy_graph()
         node: str
         for node in old_graph.nodes:
 
-            all_successors = set(old_graph.successors(node))
             # TODO: is_after_script() later on!!
-            after_scripts = _pattern_matching(
-                ShuffledGraph.after_pattern, all_successors
+            after_scripts, other_succs = _pattern_matching(
+                ShuffledGraph.after_pattern, set(old_graph.successors(node))
             )
+            # Keep the original node to succs edges and add a new one from the script to succs
+            _add_edges_from_to(after_scripts, other_succs)
 
-            for succ in all_successors - after_scripts:
-                # Keep the original `node` to `succ` edge and add a new one from `script`
-                self.graph.add_edges_from([(script, succ) for script in after_scripts])
-
-                # And add an edge between all node after scripts to the succ before scripts
-                succ_predecessors = old_graph.predecessors(succ)
-                # TODO: is_before_script() later on!!
-                succ_before_scripts = _pattern_matching(
-                    ShuffledGraph.before_pattern, succ_predecessors
-                )
-                for before_script in succ_before_scripts:
-                    self.graph.add_edges_from(
-                        [(script, before_script) for script in after_scripts]
-                    )
-
-            all_predecessors = set(old_graph.predecessors(node))
             # TODO: is_before_script() later on!!
-            before_scripts = _pattern_matching(
-                ShuffledGraph.before_pattern, all_predecessors
+            before_scripts, other_preds = _pattern_matching(
+                ShuffledGraph.before_pattern, set(old_graph.predecessors(node))
             )
+            # Keep the original preds to node edge and add a new one from preds to the scripts
+            _add_edges_from_to(other_preds, before_scripts)
 
-            for pred in all_predecessors - before_scripts:
-                # Keep the original `node` to `succ` edge and add a new one from `script`
-                self.graph.add_edges_from([(pred, script) for script in before_scripts])
+            # Add edges between node's after and succ's before scripts
+            for succ in other_succs:
+                # TODO: is_before_script() later on!!
+                succ_before_scripts, _succ_other_preds = _pattern_matching(
+                    ShuffledGraph.before_pattern, set(old_graph.predecessors(succ))
+                )
+
+                # Add edge between all after scripts to the succ's before scripts
+                _add_edges_from_to(after_scripts, succ_before_scripts)
 
 
 @dataclass
