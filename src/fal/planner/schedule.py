@@ -6,7 +6,14 @@ from typing import Iterator, List
 import networkx as nx
 
 from fal.node_graph import DbtModelNode, NodeGraph, NodeKind, ScriptNode
-from fal.planner.tasks import SUCCESS, DBTTask, FalHookTask, FalModelTask, TaskGroup, GroupStatus
+from fal.planner.tasks import (
+    SUCCESS,
+    DBTTask,
+    FalHookTask,
+    FalModelTask,
+    TaskGroup,
+    GroupStatus,
+)
 
 
 def create_group(
@@ -45,6 +52,7 @@ def create_group(
     post_hooks = []
     if hook_paths:
         assert flow_node
+        assert isinstance(flow_node, DbtModelNode)
         post_hooks.extend(
             FalHookTask(
                 hook_path=hook_path,
@@ -131,7 +139,9 @@ class Scheduler:
         # groups (groups without any dependencies) and use the scoring
         # algorithm to determine the priority of each groups (kind of like
         # a dynamic topological sort).
-        unblocked_groups = [group for group in self.pending_groups if not group.dependencies]
+        unblocked_groups = [
+            group for group in self.pending_groups if not group.dependencies
+        ]
         unblocked_groups.sort(key=self._calculate_score, reverse=True)
 
         for group in unblocked_groups:
