@@ -96,7 +96,7 @@ def _select_scripts(
     scripts_flag = _scripts_flag(args)
 
     for model in models:
-        model_scripts = model.get_scripts(args.keyword, bool(args.before))
+        model_scripts = model.get_scripts(args.keyword, before=bool(args.before))
         for path in model_scripts:
             if not scripts_flag:
                 # run all scripts when no --script is passed
@@ -149,7 +149,7 @@ def _get_filtered_models(faldbt: FalDbt, all, selected, before) -> List[DbtModel
             if node.unique_id in selected_ids:
                 filtered_models.append(node)
         elif before:
-            if node.get_scripts(faldbt.keyword, before) != []:
+            if node.get_scripts(faldbt.keyword, before=before) != []:
                 filtered_models.append(node)
         elif all:
             filtered_models.append(node)

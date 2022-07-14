@@ -185,7 +185,7 @@ class DbtModel(_DbtTestableNode):
 
         return post_hooks
 
-    def get_scripts(self, keyword: str, before: bool) -> List[str]:
+    def get_scripts(self, keyword: str, *, before: bool) -> List[str]:
         # sometimes properties can *be* there and still be None
         meta = self.meta or {}
 

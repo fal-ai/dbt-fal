@@ -63,10 +63,10 @@ class Context:
 class FalScript:
     model: Optional[DbtModel]
     path: Path
-    _faldbt: FalDbt
+    faldbt: FalDbt
 
     # TODO: delete this property once we deprecate after scripts
-    _is_post_hook: bool
+    is_post_hook: bool
 
     def __init__(
         self,
@@ -78,8 +78,8 @@ class FalScript:
         # Necessary because of frozen=True
         object.__setattr__(self, "model", model)
         object.__setattr__(self, "path", normalize_path(faldbt.scripts_dir, path))
-        object.__setattr__(self, "_faldbt", faldbt)
-        object.__setattr__(self, "_is_post_hook", is_post_hook)
+        object.__setattr__(self, "faldbt", faldbt)
+        object.__setattr__(self, "is_post_hook", is_post_hook)
 
     @classmethod
     def model_script(cls, faldbt: FalDbt, model: DbtModel):
@@ -88,7 +88,7 @@ class FalScript:
         object.__setattr__(script, "path", model.python_model)
         return script
 
-    def exec(self, faldbt: FalDbt):
+    def exec(self):
         """
         Executes the script
         """
@@ -100,24 +100,26 @@ class FalScript:
             exec_globals = {
                 "__name__": "__main__",
                 "context": self._build_script_context(),
-                "ref": faldbt.ref,
-                "source": faldbt.source,
-                "write_to_firestore": faldbt.write_to_firestore,
-                "list_models": faldbt.list_models,
-                "list_models_ids": faldbt.list_models_ids,
-                "list_sources": faldbt.list_sources,
-                "list_features": faldbt.list_features,
-                "el": faldbt.el,
-                "execute_sql": faldbt.execute_sql,
+                "ref": self.faldbt.ref,
+                "source": self.faldbt.source,
+                "write_to_firestore": self.faldbt.write_to_firestore,
+                "list_models": self.faldbt.list_models,
+                "list_models_ids": self.faldbt.list_models_ids,
+                "list_sources": self.faldbt.list_sources,
+                "list_features": self.faldbt.list_features,
+                "el": self.faldbt.el,
+                "execute_sql": self.faldbt.execute_sql,
             }
 
-            if not self._is_post_hook:
-                exec_globals["write_to_source"] = faldbt.write_to_source
+            if not self.is_post_hook:
+                exec_globals["write_to_source"] = self.faldbt.write_to_source
 
                 if self.model is not None:
                     # Hard-wire the model
                     exec_globals["write_to_model"] = partial(
-                        faldbt.write_to_model, target_1=self.model.name, target_2=None
+                        self.faldbt.write_to_model,
+                        target_1=self.model.name,
+                        target_2=None,
                     )
 
             else:
@@ -134,9 +136,9 @@ class FalScript:
     @property
     def relative_path(self):
         if self.is_model:
-            return self.path.relative_to(self._faldbt.project_dir)
+            return self.path.relative_to(self.faldbt.project_dir)
         else:
-            return self.path.relative_to(self._faldbt.scripts_dir)
+            return self.path.relative_to(self.faldbt.scripts_dir)
 
     @property
     def id(self):
@@ -159,14 +161,14 @@ class FalScript:
         return "<GLOBAL>" if self.is_global else self.model.name  # type: ignore
 
     def _build_script_context(self):
-        context_config = ContextConfig(self._faldbt._config)
+        context_config = ContextConfig(self.faldbt._config)
         if self.is_global:
             return Context(current_model=None, config=context_config)
 
         model: DbtModel = self.model  # type: ignore
 
         meta = model.meta
-        _del_key(meta, self._faldbt.keyword)
+        _del_key(meta, self.faldbt.keyword)
 
         tests = _process_tests(model.tests)
 

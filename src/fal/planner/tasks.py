@@ -71,12 +71,12 @@ def _map_cli_output_model_statuses(
         yield result["unique_id"], NodeStatus(result["status"])
 
 
-def _run_script(script: FalScript, fal_dbt: FalDbt):
+def _run_script(script: FalScript):
     print_run_info([script])
     logger.debug("Running script {}", script.id)
     try:
-        with _modify_path(fal_dbt):
-            script.exec(fal_dbt)
+        with _modify_path(script.faldbt):
+            script.exec()
     except:
         logger.error("Error in script {}:\n{}", script.id, traceback.format_exc())
         # TODO: what else to do?
@@ -134,7 +134,7 @@ class FalModelTask(DBTTask):
 
         assert self.bound_model is not None
         bound_script = FalScript.model_script(fal_dbt, self.bound_model)
-        script_result = _run_script(bound_script, fal_dbt=fal_dbt)
+        script_result = _run_script(bound_script)
 
         status = NodeStatus.Success if script_result == SUCCESS else NodeStatus.Error
         _mark_dbt_nodes_status(fal_dbt, status, self.bound_model.unique_id)
@@ -152,10 +152,13 @@ class FalHookTask(Task):
             # For after/before scripts
             assert self._run_index != -1
 
-        script = FalScript(
+        script = self.build_fal_script(fal_dbt)
+        return _run_script(script)
+
+    def build_fal_script(self, fal_dbt: FalDbt):
+        return FalScript(
             fal_dbt, self.bound_model, str(self.hook_path), self.is_post_hook
         )
-        return _run_script(script, fal_dbt=fal_dbt)
 
 
 @dataclass

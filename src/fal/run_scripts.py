@@ -21,7 +21,7 @@ def _prepare_exec_script(script: FalScript, faldbt: FalDbt) -> bool:
     logger.debug("Running script {}", script.id)
 
     try:
-        script.exec(faldbt)
+        script.exec()
     except:
         logger.error("Error in script {}:\n{}", script.id, traceback.format_exc())
         # TODO: what else to do?
