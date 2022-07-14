@@ -123,21 +123,7 @@ jobs:
         profile: ${{ fromJSON(needs.matrix-adapter.outputs.list) }}
         dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
-        # TODO: remove when no longer experimental
-        experimental_threads: [0, 4]
         exclude:
-          # Avoid profiles that take too long from testing experimental threads
-          - experimental_threads: 4
-            profile: bigquery
-          - experimental_threads: 4
-            profile: snowflake
-          - experimental_threads: 4
-            profile: redshift
-          # Avoid 0.* for experimental threads
-          - experimental_threads: 4
-            dbt: "0.20.*"
-          - experimental_threads: 4
-            dbt: "0.21.*"
           # Avoid non-working combination
           - python: 3.10
             dbt: "0.20.*"
@@ -146,7 +132,7 @@ jobs:
 
     # Run only the latest commit pushed to PR
     concurrency:
-      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.dbt }}-${{ matrix.python }}-${{ matrix.experimental_threads }}"
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.dbt }}-${{ matrix.python }}"
       cancel-in-progress: true
 
     steps:
@@ -181,8 +167,6 @@ jobs:
         working-directory: integration_tests
         env:
           FAL_STATS_ENABLED: false
-          # TODO: remove when no longer experimental
-          FAL_TESTS_EXPERIMENTAL_THREADS: ${{ matrix.experimental_threads }}
           # BigQuery
           KEYFILE: ${{ secrets.GCP_SA_KEY }}
           GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
@@ -239,12 +223,6 @@ jobs:
           if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
           then
             BEHAVE_ARGS="$BEHAVE_ARGS --tags=-dbtv1"
-          fi
-
-          # TODO: remove when no longer experimental
-          if [[ $FAL_TESTS_EXPERIMENTAL_THREADS != '0' ]]
-          then
-            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-TODO-parallel"
           fi
 
           behave $BEHAVE_ARGS -D profile=${{ matrix.profile }}
