@@ -41,12 +41,7 @@ def run_threaded(
         connected_graph, enable_chunking=False
     )
     scheduler = schedule_graph(planned_graph.graph, node_graph)
-    parallel_executor(
-        args=parsed,
-        fal_dbt=fal_dbt,
-        scheduler=scheduler,
-        max_threads=fal_dbt.threads,
-    )
+    parallel_executor(parsed, fal_dbt, scheduler)
 
 
 def fal_flow_run(parsed: argparse.Namespace):
