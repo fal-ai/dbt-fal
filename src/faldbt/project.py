@@ -742,10 +742,6 @@ class FalDbt:
     @telemetry.log_call("execute_sql")
     def execute_sql(self, sql: str) -> pd.DataFrame:
         """Execute a sql query."""
-        if lib.IS_DBT_V0:
-            raise NotImplementedError(
-                "execute_sql only supported in dbt version >= 1.0.0"
-            )
 
         # HACK: we need to pass config in because of weird behavior of execute_sql when
         # ran from GitHub Actions. For some reason, it can not find the right profile.

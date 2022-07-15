@@ -29,12 +29,13 @@ def _cli(argv: List[str]):
     # since we do not use the new dbt logging system
     # This fixes issue https://github.com/fal-ai/fal/issues/97
     log_manager.set_path(None)
+
     if parsed.disable_logging:
         logger.disable()
-    # Re-enable logging for 1.0.0 through old API of logger
-    elif lib.IS_DBT_V1PLUS:
-        if logger.disabled:
-            logger.enable()
+    else:
+        # Re-enabling old API of logger
+        # TODO: Move to new logging system
+        logger.enable()
 
     with log_manager.applicationbound():
         if parsed.debug:
