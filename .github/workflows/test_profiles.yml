@@ -210,11 +210,6 @@ jobs:
             BEHAVE_ARGS="$BEHAVE_ARGS --tags=-broken_profile"
           fi
 
-          if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
-          then
-            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-dbtv1"
-          fi
-
           behave $BEHAVE_ARGS -D profile=${{ matrix.profile }}
 
       - name: Send custom JSON data to Slack workflow
