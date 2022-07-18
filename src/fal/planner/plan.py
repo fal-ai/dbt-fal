@@ -66,7 +66,7 @@ class FilteredGraph(OriginGraph):
 
 
 @dataclass
-class ShuffledGraph(OriginGraph):
+class ScriptConnectedGraph(OriginGraph):
     graph: nx.DiGraph
 
     @classmethod
@@ -124,9 +124,9 @@ class PlannedGraph(OriginGraph):
     graph: nx.DiGraph
 
     @classmethod
-    def from_shuffled_graph(
+    def from_script_connected_graph(
         cls,
-        shuffled_graph: ShuffledGraph,
+        shuffled_graph: ScriptConnectedGraph,
         enable_chunking: bool = True,
     ):
         graph = shuffled_graph.copy_graph()
