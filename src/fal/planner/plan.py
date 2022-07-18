@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Iterator, List, Set
-import re
+from typing import Callable, Iterator, List, Set
 
 import networkx as nx
 from fal.node_graph import NodeKind
-from fal.cli.selectors import ExecutionPlan
+from fal.cli.selectors import ExecutionPlan, _is_before_script, _is_after_script
 from dbt.logger import GLOBAL_LOGGER as logger
 from dataclasses import dataclass
 
@@ -69,8 +68,6 @@ class FilteredGraph(OriginGraph):
 @dataclass
 class ShuffledGraph(OriginGraph):
     graph: nx.DiGraph
-    after_pattern = re.compile("^script\\..+\\.AFTER\\..+\\.(py|ipynb)")
-    before_pattern = re.compile("^script\\..+\\.BEFORE\\..+\\.(py|ipynb)")
 
     @classmethod
     def from_filtered_graph(
@@ -83,11 +80,17 @@ class ShuffledGraph(OriginGraph):
         return shuffled_graph
 
     def _shuffle(self):
-        def _pattern_matching(pattern: re.Pattern, nodes: Set[str]):
+        def _pattern_matching(node_check: Callable[[str], bool], nodes: Set[str]):
             matched = {
-                maybe_script for maybe_script in nodes if pattern.match(maybe_script)
+                maybe_script for maybe_script in nodes if node_check(maybe_script)
             }
             return matched, nodes - matched
+
+        def get_before_scripts(graph: nx.DiGraph, node: str):
+            return _pattern_matching(_is_before_script, set(graph.predecessors(node)))
+
+        def get_after_scripts(graph: nx.DiGraph, node: str):
+            return _pattern_matching(_is_after_script, set(graph.successors(node)))
 
         def _add_edges_from_to(from_nodes: Set[str], to_nodes: Set[str]):
             self.graph.add_edges_from(
@@ -98,25 +101,18 @@ class ShuffledGraph(OriginGraph):
         node: str
         for node in old_graph.nodes:
 
-            # TODO: is_after_script() later on!!
-            after_scripts, other_succs = _pattern_matching(
-                ShuffledGraph.after_pattern, set(old_graph.successors(node))
-            )
+            after_scripts, other_succs = get_after_scripts(old_graph, node)
             # Keep the original node to succs edges and add a new one from the script to succs
             _add_edges_from_to(after_scripts, other_succs)
 
-            # TODO: is_before_script() later on!!
-            before_scripts, other_preds = _pattern_matching(
-                ShuffledGraph.before_pattern, set(old_graph.predecessors(node))
-            )
+            before_scripts, other_preds = get_before_scripts(old_graph, node)
             # Keep the original preds to node edge and add a new one from preds to the scripts
             _add_edges_from_to(other_preds, before_scripts)
 
             # Add edges between node's after and succ's before scripts
             for succ in other_succs:
-                # TODO: is_before_script() later on!!
-                succ_before_scripts, _succ_other_preds = _pattern_matching(
-                    ShuffledGraph.before_pattern, set(old_graph.predecessors(succ))
+                succ_before_scripts, _succ_other_preds = get_before_scripts(
+                    old_graph, succ
                 )
 
                 # Add edge between all after scripts to the succ's before scripts

@@ -284,8 +284,8 @@ OP_CHILDREN = SelectorGraphOpDepth(re.compile("(?P<rest>.*)\\+(?P<depth>\\d*)$")
 OP_SET_UNION = " "
 OP_SET_INTERSECTION = ","
 
-IS_BEFORE_SCRIPT_REGEX = re.compile("^script.*.BEFORE.*.(ipynb|py)$")
-IS_AFTER_SCRIPT_REGEX = re.compile("^script.*.AFTER.*.(ipynb|py)$")
+IS_BEFORE_SCRIPT_REGEX = re.compile("^script\\..+\\.BEFORE\\..+\\.(py|ipynb)$")
+IS_AFTER_SCRIPT_REGEX = re.compile("^script\\..+\\.AFTER\\..+\\.(py|ipynb)")
 
 
 def _is_before_script(id: str) -> bool:
