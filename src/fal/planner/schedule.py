@@ -43,11 +43,7 @@ def create_group(
     else:
         assert kind is NodeKind.FAL_SCRIPT
         assert isinstance(flow_node, ScriptNode)
-        task = FalHookTask(
-            flow_node.script.path,
-            bound_model=flow_node.script.model,
-            is_post_hook=False,
-        )
+        task = FalHookTask.from_fal_script(flow_node.script)
 
     post_hooks = []
     if hook_paths:

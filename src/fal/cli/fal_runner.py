@@ -79,16 +79,7 @@ def fal_run(args: argparse.Namespace):
 
 def _run_scripts(args: argparse.Namespace, scripts: List[FalScript], faldbt: FalDbt):
     scheduler = Scheduler(
-        [
-            TaskGroup(
-                FalHookTask(
-                    hook_path=script.path,
-                    bound_model=script.model,
-                    is_post_hook=script.is_post_hook,
-                )
-            )
-            for script in scripts
-        ]
+        [TaskGroup(FalHookTask.from_fal_script(script)) for script in scripts]
     )
     parallel_executor(args, faldbt, scheduler, faldbt.threads)
 

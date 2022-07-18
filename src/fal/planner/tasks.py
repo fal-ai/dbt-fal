@@ -155,6 +155,10 @@ class FalHookTask(Task):
         script = self.build_fal_script(fal_dbt)
         return _run_script(script)
 
+    @classmethod
+    def from_fal_script(cls, script: FalScript):
+        return cls(script.path, script.model, script.is_post_hook)
+
     def build_fal_script(self, fal_dbt: FalDbt):
         return FalScript(
             fal_dbt, self.bound_model, str(self.hook_path), self.is_post_hook
