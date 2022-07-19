@@ -92,14 +92,14 @@ def invoke_command(context):
     args = args.replace("$tempDir", context.temp_dir.name)
     is_fal_flow_run = "fal flow run" in args
 
-    args = shlex.split(args)
+    args_list = shlex.split(args)
     if is_fal_flow_run and FAL_TESTS_EXPERIMENTAL_THREADS:
-        args.append("--experimental-threads")
-        args.append(str(FAL_TESTS_EXPERIMENTAL_THREADS))
+        args_list.append("--experimental-threads")
+        args_list.append(str(FAL_TESTS_EXPERIMENTAL_THREADS))
 
     context.exc = None
     try:
-        cli(args)
+        cli(args_list)
     except Exception:
         import sys
 
@@ -125,7 +125,7 @@ def invoke_failing_fal_flow(context):
     args = args.replace("$profilesDir", str(profiles_dir))
     args = args.replace("$tempDir", str(context.temp_dir.name))
     try:
-        cli(args.split(" "))
+        cli(shlex.split(args))
         assert False, "Command should have failed."
     except Exception as e:
         print(e)
@@ -273,7 +273,9 @@ def _temp_dir_path(context, file):
 
 def _get_all_models(context) -> List[str]:
     """Retrieve all models (both DBT and Python)."""
-    all_models = _get_dated_dbt_models(context) + _get_dated_fal_artifacts(context, FAL_MODEL)
+    all_models = _get_dated_dbt_models(context) + _get_dated_fal_artifacts(
+        context, FAL_MODEL
+    )
     return _unpack_dated_result(all_models)
 
 

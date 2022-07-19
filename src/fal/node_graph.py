@@ -7,7 +7,6 @@ from faldbt.project import DbtModel, FalDbt
 from pathlib import Path
 import networkx as nx
 import os as os
-import copy
 from functools import reduce
 from enum import Enum
 
@@ -44,7 +43,7 @@ def _add_after_scripts(
     nodeLookup: Dict[str, FalFlowNode],
 ) -> Tuple[nx.DiGraph, Dict[str, FalFlowNode]]:
     "Add dbt node to after scripts edges to the graph"
-    after_scripts = model.get_scripts(faldbt.keyword, False)
+    after_scripts = model.get_scripts(faldbt.keyword, before=False)
     after_fal_scripts = map(
         lambda script_path: FalScript(faldbt, model, script_path), after_scripts
     )
@@ -73,7 +72,7 @@ def _add_before_scripts(
     nodeLookup: Dict[str, FalFlowNode],
 ) -> Tuple[nx.DiGraph, Dict[str, FalFlowNode]]:
     "Add before scripts to dbt node edges to the graph"
-    before_scripts = model.get_scripts(faldbt.keyword, True)
+    before_scripts = model.get_scripts(faldbt.keyword, before=True)
     before_fal_scripts = map(
         lambda script_path: FalScript(faldbt, model, script_path), before_scripts
     )
