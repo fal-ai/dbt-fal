@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Iterator, List
+from typing import Callable, Iterator, List, Set
 
 import networkx as nx
 from fal.node_graph import NodeKind
-from fal.cli.selectors import ExecutionPlan
+from fal.cli.selectors import ExecutionPlan, _is_before_script, _is_after_script
 from dbt.logger import GLOBAL_LOGGER as logger
 from dataclasses import dataclass
 
@@ -14,7 +14,32 @@ class OriginGraph:
     graph: nx.DiGraph
 
     def copy_graph(self) -> nx.DiGraph:
-        return self.graph.copy()
+        return self.graph.copy()  # type: ignore
+
+    def _plot(self, graph=None):
+        """
+        For development and debugging purposes
+        """
+        if not graph:
+            graph = self.graph
+
+        import matplotlib.pyplot as plt
+
+        import networkx.drawing.layout as layout
+
+        nx.draw_networkx(
+            graph,
+            arrows=True,
+            pos=layout.circular_layout(graph),
+            labels={
+                node: node.replace(".", "\n")
+                .replace("model\n", "")
+                .replace("script\n", "")
+                .replace("\npy", ".py")
+                for node in graph.nodes
+            },
+        )
+        plt.show()
 
 
 @dataclass
@@ -41,16 +66,70 @@ class FilteredGraph(OriginGraph):
 
 
 @dataclass
-class PlannedGraph(OriginGraph):
+class ScriptConnectedGraph(OriginGraph):
     graph: nx.DiGraph
 
     @classmethod
     def from_filtered_graph(
         cls,
         filtered_graph: FilteredGraph,
-        enable_chunking: bool = True,
     ):
         graph = filtered_graph.copy_graph()
+        shuffled_graph = cls(graph)
+        shuffled_graph._shuffle()
+        return shuffled_graph
+
+    def _shuffle(self):
+        def _pattern_matching(node_check: Callable[[str], bool], nodes: Set[str]):
+            matched = {
+                maybe_script for maybe_script in nodes if node_check(maybe_script)
+            }
+            return matched, nodes - matched
+
+        def get_before_scripts(graph: nx.DiGraph, node: str):
+            return _pattern_matching(_is_before_script, set(graph.predecessors(node)))
+
+        def get_after_scripts(graph: nx.DiGraph, node: str):
+            return _pattern_matching(_is_after_script, set(graph.successors(node)))
+
+        def _add_edges_from_to(from_nodes: Set[str], to_nodes: Set[str]):
+            self.graph.add_edges_from(
+                (from_n, to_n) for from_n in from_nodes for to_n in to_nodes
+            )
+
+        old_graph = self.copy_graph()
+        node: str
+        for node in old_graph.nodes:
+
+            after_scripts, other_succs = get_after_scripts(old_graph, node)
+            # Keep the original node to succs edges and add a new one from the script to succs
+            _add_edges_from_to(after_scripts, other_succs)
+
+            before_scripts, other_preds = get_before_scripts(old_graph, node)
+            # Keep the original preds to node edge and add a new one from preds to the scripts
+            _add_edges_from_to(other_preds, before_scripts)
+
+            # Add edges between node's after and succ's before scripts
+            for succ in other_succs:
+                succ_before_scripts, _succ_other_preds = get_before_scripts(
+                    old_graph, succ
+                )
+
+                # Add edge between all after scripts to the succ's before scripts
+                _add_edges_from_to(after_scripts, succ_before_scripts)
+
+
+@dataclass
+class PlannedGraph(OriginGraph):
+    graph: nx.DiGraph
+
+    @classmethod
+    def from_script_connected_graph(
+        cls,
+        shuffled_graph: ScriptConnectedGraph,
+        enable_chunking: bool = True,
+    ):
+        graph = shuffled_graph.copy_graph()
         planned_graph = cls(graph)
         if enable_chunking:
             planned_graph.plan()

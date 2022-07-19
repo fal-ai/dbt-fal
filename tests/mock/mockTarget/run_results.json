@@ -1,9 +1,9 @@
 {
   "metadata": {
     "dbt_schema_version": "https://schemas.getdbt.com/dbt/run-results/v4.json",
-    "dbt_version": "1.0.1",
-    "generated_at": "2022-02-15T23:53:04.734059Z",
-    "invocation_id": "502c60bd-8634-4b4c-ace6-dc82328404f6",
+    "dbt_version": "1.0.8",
+    "generated_at": "2022-07-13T00:03:00.614829Z",
+    "invocation_id": "3d3557d7-3906-4edc-917a-bc1826386c85",
     "env": {}
   },
   "results": [
@@ -12,67 +12,17 @@
       "timing": [
         {
           "name": "compile",
-          "started_at": "2022-02-15T23:53:04.205547Z",
-          "completed_at": "2022-02-15T23:53:04.228639Z"
+          "started_at": "2022-07-13T00:03:00.018100Z",
+          "completed_at": "2022-07-13T00:03:00.036981Z"
         },
         {
           "name": "execute",
-          "started_at": "2022-02-15T23:53:04.230662Z",
-          "completed_at": "2022-02-15T23:53:04.574517Z"
-        }
-      ],
-      "thread_id": "Thread-2",
-      "execution_time": 0.38544583320617676,
-      "adapter_response": {
-        "_message": "SELECT 1",
-        "code": "SELECT",
-        "rows_affected": 1
-      },
-      "message": "SELECT 1",
-      "failures": null,
-      "unique_id": "model.fal_test.model_feature_store"
-    },
-    {
-      "status": "success",
-      "timing": [
-        {
-          "name": "compile",
-          "started_at": "2022-02-15T23:53:04.211235Z",
-          "completed_at": "2022-02-15T23:53:04.229820Z"
-        },
-        {
-          "name": "execute",
-          "started_at": "2022-02-15T23:53:04.307810Z",
-          "completed_at": "2022-02-15T23:53:04.583163Z"
+          "started_at": "2022-07-13T00:03:00.070654Z",
+          "completed_at": "2022-07-13T00:03:00.310656Z"
         }
       ],
       "thread_id": "Thread-4",
-      "execution_time": 0.38576412200927734,
-      "adapter_response": {
-        "_message": "SELECT 1",
-        "code": "SELECT",
-        "rows_affected": 1
-      },
-      "message": "SELECT 1",
-      "failures": null,
-      "unique_id": "model.fal_test.model_with_before_scripts"
-    },
-    {
-      "status": "success",
-      "timing": [
-        {
-          "name": "compile",
-          "started_at": "2022-02-15T23:53:04.205761Z",
-          "completed_at": "2022-02-15T23:53:04.229000Z"
-        },
-        {
-          "name": "execute",
-          "started_at": "2022-02-15T23:53:04.265796Z",
-          "completed_at": "2022-02-15T23:53:04.595608Z"
-        }
-      ],
-      "thread_id": "Thread-3",
-      "execution_time": 0.3997819423675537,
+      "execution_time": 0.30472898483276367,
       "adapter_response": {
         "_message": "SELECT 1",
         "code": "SELECT",
@@ -87,17 +37,42 @@
       "timing": [
         {
           "name": "compile",
-          "started_at": "2022-02-15T23:53:04.205052Z",
-          "completed_at": "2022-02-15T23:53:04.229236Z"
+          "started_at": "2022-07-13T00:03:00.013752Z",
+          "completed_at": "2022-07-13T00:03:00.043621Z"
         },
         {
           "name": "execute",
-          "started_at": "2022-02-15T23:53:04.282348Z",
-          "completed_at": "2022-02-15T23:53:04.597685Z"
+          "started_at": "2022-07-13T00:03:00.115693Z",
+          "completed_at": "2022-07-13T00:03:00.314892Z"
         }
       ],
-      "thread_id": "Thread-1",
-      "execution_time": 0.4061009883880615,
+      "thread_id": "Thread-3",
+      "execution_time": 0.31365513801574707,
+      "adapter_response": {
+        "_message": "SELECT 1",
+        "code": "SELECT",
+        "rows_affected": 1
+      },
+      "message": "SELECT 1",
+      "failures": null,
+      "unique_id": "model.fal_test.model_feature_store"
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2022-07-13T00:03:00.013292Z",
+          "completed_at": "2022-07-13T00:03:00.043313Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2022-07-13T00:03:00.109397Z",
+          "completed_at": "2022-07-13T00:03:00.321708Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.32065606117248535,
       "adapter_response": {
         "_message": "SELECT 1",
         "code": "SELECT",
@@ -112,17 +87,42 @@
       "timing": [
         {
           "name": "compile",
-          "started_at": "2022-02-15T23:53:04.610643Z",
-          "completed_at": "2022-02-15T23:53:04.619715Z"
+          "started_at": "2022-07-13T00:03:00.012701Z",
+          "completed_at": "2022-07-13T00:03:00.031027Z"
         },
         {
           "name": "execute",
-          "started_at": "2022-02-15T23:53:04.620375Z",
-          "completed_at": "2022-02-15T23:53:04.696137Z"
+          "started_at": "2022-07-13T00:03:00.031896Z",
+          "completed_at": "2022-07-13T00:03:00.318803Z"
         }
       ],
-      "thread_id": "Thread-2",
-      "execution_time": 0.0937509536743164,
+      "thread_id": "Thread-1",
+      "execution_time": 0.32396793365478516,
+      "adapter_response": {
+        "_message": "SELECT 1",
+        "code": "SELECT",
+        "rows_affected": 1
+      },
+      "message": "SELECT 1",
+      "failures": null,
+      "unique_id": "model.fal_test.model_empty_fal"
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2022-07-13T00:03:00.355943Z",
+          "completed_at": "2022-07-13T00:03:00.396563Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2022-07-13T00:03:00.399972Z",
+          "completed_at": "2022-07-13T00:03:00.568783Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.2295517921447754,
       "adapter_response": {
         "_message": "SELECT 1",
         "code": "SELECT",
@@ -131,9 +131,59 @@
       "message": "SELECT 1",
       "failures": null,
       "unique_id": "model.fal_test.model_with_scripts"
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2022-07-13T00:03:00.344215Z",
+          "completed_at": "2022-07-13T00:03:00.368902Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2022-07-13T00:03:00.381350Z",
+          "completed_at": "2022-07-13T00:03:00.576331Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.24345970153808594,
+      "adapter_response": {
+        "_message": "SELECT 1",
+        "code": "SELECT",
+        "rows_affected": 1
+      },
+      "message": "SELECT 1",
+      "failures": null,
+      "unique_id": "model.fal_test.model_with_before_scripts"
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2022-07-13T00:03:00.368392Z",
+          "completed_at": "2022-07-13T00:03:00.397277Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2022-07-13T00:03:00.421443Z",
+          "completed_at": "2022-07-13T00:03:00.578696Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.2357959747314453,
+      "adapter_response": {
+        "_message": "SELECT 1",
+        "code": "SELECT",
+        "rows_affected": 1
+      },
+      "message": "SELECT 1",
+      "failures": null,
+      "unique_id": "model.fal_test.other_with_scripts"
     }
   ],
-  "elapsed_time": 0.7550399303436279,
+  "elapsed_time": 1.1397802829742432,
   "args": {
     "write_json": true,
     "use_colors": true,
@@ -141,8 +191,8 @@
     "version_check": true,
     "partial_parse": true,
     "static_parser": true,
-    "profiles_dir": "/Users/matteo/Projects/fal/fal/tests/mock",
-    "send_anonymous_usage_stats": true,
+    "profiles_dir": "/Users/matteo/Projects/fal/fal/tests/mock/mockProfile",
+    "send_anonymous_usage_stats": false,
     "event_buffer_size": 100000,
     "project_dir": "/Users/matteo/Projects/fal/fal/tests/mock",
     "which": "run",

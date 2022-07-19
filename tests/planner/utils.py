@@ -7,12 +7,17 @@ import networkx as nx
 
 from fal.cli.selectors import ExecutionPlan
 from fal.node_graph import DbtModelNode, NodeGraph
-from fal.planner.plan import FilteredGraph, OriginGraph, PlannedGraph
+from fal.planner.plan import (
+    FilteredGraph,
+    OriginGraph,
+    PlannedGraph,
+    ScriptConnectedGraph,
+)
 from fal.planner.schedule import schedule_graph
 
 
 class ModelDict(defaultdict):
-    def get(self, key) -> None:
+    def get(self, key):
         return super().__getitem__(key)
 
 
@@ -41,8 +46,9 @@ def plan_graph(
     filtered_graph = FilteredGraph.from_execution_plan(
         origin_graph, execution_plan=execution_plan
     )
-    planned_graph = PlannedGraph.from_filtered_graph(
-        filtered_graph, enable_chunking=enable_chunking
+    connected_graph = ScriptConnectedGraph.from_filtered_graph(filtered_graph)
+    planned_graph = PlannedGraph.from_script_connected_graph(
+        connected_graph, enable_chunking=enable_chunking
     )
     return planned_graph.graph
 
