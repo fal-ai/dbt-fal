@@ -183,7 +183,7 @@ class DbtModel(_DbtTestableNode):
         if not isinstance(post_hooks, list):
             return []
 
-        return post_hooks
+        return _parse_script_names(post_hooks)
 
     def get_scripts(self, keyword: str, before: bool) -> List[str]:
         # sometimes properties can *be* there and still be None
@@ -201,15 +201,15 @@ class DbtModel(_DbtTestableNode):
             if before:
                 return []
             else:
-                return scripts_node
+                return _parse_script_names(scripts_node)
 
         if not isinstance(scripts_node, dict):
             return []
 
         if before:
-            return scripts_node.get("before") or []
+            return _parse_script_names(scripts_node.get("before")) or []
         else:
-            return scripts_node.get("after") or []
+            return _parse_script_names(scripts_node.get("after")) or []
 
 
 @dataclass
@@ -789,3 +789,11 @@ def _get_custom_target(run_results: DbtRunResult):
     if "target" in run_results.nativeRunResult.args:
         return run_results.nativeRunResult.args["target"]
     return None
+
+
+def _parse_script_names(scripts_list: List[Any]) -> List[str]:
+    # With the new runtime scripts will sometimes be dicts:
+    # { "name": "my_script.py", "runtime": "my_runtime"}
+    if scripts_list and isinstance(scripts_list[0], dict):
+        return [script["name"] for script in scripts_list]
+    return scripts_list
