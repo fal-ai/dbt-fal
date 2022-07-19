@@ -2,6 +2,7 @@ import pandas as pd
 from functools import reduce
 import os
 import time
+from fal.context import *
 
 # Delay just a little bit in order to make sure the file is created
 # just after the model file.
