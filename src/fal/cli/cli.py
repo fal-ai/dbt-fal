@@ -54,23 +54,23 @@ def _cli(argv: List[str]):
 def _warn_deprecated_flags(parsed: argparse.Namespace):
     if parsed.experimental_flow:
         dbt.exceptions.warn(
-            "Flag `--experimental-flow` flag is DEPRECATED and is treated as a no-op.\n"
+            "Flag `--experimental-flow` is DEPRECATED and is treated as a no-op.\n"
             "This flag will make fal error in 0.5"
         )
     if parsed.experimental_python_models:
         dbt.exceptions.warn(
-            "Flag `--experimental-models` flag is DEPRECATED and is treated as a no-op.\n"
+            "Flag `--experimental-models` is DEPRECATED and is treated as a no-op.\n"
             "This flag will make fal error in 0.5"
         )
     if parsed.experimental_threads:
         dbt.exceptions.warn(
-            "Flag `--experimental-threads` flag is DEPRECATED and is treated as a no-op.\n"
+            "Flag `--experimental-threads` is DEPRECATED and is treated as a no-op.\n"
             "Using valued passed for `--threads` instead.\n"
             "This flag will make fal error in 0.5"
         )
         # NOTE: take the number of threads to use from the experimental_threads
         if parsed.threads:
             dbt.exceptions.warn(
-                f"WARNING: Overwriting `--threads` value with `--experimental-threads`"
+                f"WARNING: Overwriting `--threads` value with `--experimental-threads` value"
             )
         parsed.threads = parsed.experimental_threads
