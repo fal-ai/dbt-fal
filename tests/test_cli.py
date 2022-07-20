@@ -68,10 +68,11 @@ def test_flow_run_with_project_dir(capfd):
         )
 
         executing_re = re.compile(
-            r"Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile"
+            r": dbt run --threads 1 --project-dir [\w\d\/\-\_]+ --profiles-dir [\w\d\/\-\_]+tests/mock/mockProfile"
         )
         found = executing_re.findall(captured.out)
-        assert len(found) == 1
+        # We run each model separately
+        assert len(found) == 7
 
 
 def test_flow_run_with_project_dir_and_select(capfd):
@@ -89,7 +90,7 @@ def test_flow_run_with_project_dir_and_select(capfd):
         )
 
         executing_re = re.compile(
-            r"Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile \--select|\--models model_with_before_scripts"
+            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile \--select|\--models model_with_before_scripts"
         )
         found = executing_re.findall(captured.out)
         assert len(found) == 1
@@ -115,10 +116,11 @@ def test_flow_run_with_defer(capfd):
         )
 
         executing_re = re.compile(
-            r"Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile --defer --state [\w\/\-\_]+/target"
+            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile --defer --state [\w\/\-\_]+/target"
         )
         found = executing_re.findall(captured.out)
-        assert len(found) == 1
+        # We run each model separately
+        assert len(found) == 7
 
 
 def test_flow_run_with_vars(capfd):
@@ -136,10 +138,11 @@ def test_flow_run_with_vars(capfd):
         )
 
         executing_re = re.compile(
-            r"Executing command: dbt --log-format json run --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile --vars {some: 'value'}"
+            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile --vars {some: 'value'}"
         )
         found = executing_re.findall(captured.out)
-        assert len(found) == 1
+        # We run each model separately
+        assert len(found) == 7
 
 
 def test_selection(capfd):

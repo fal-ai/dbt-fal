@@ -14,10 +14,9 @@ def test_get_dbt_command_list_with_select():
         assert_contains_only(
             command_list,
             [
-                "dbt",
-                "--log-format",
-                "json",
                 "run",
+                "--threads",
+                "1",
                 "--select",
                 "modelA",
                 "modelB",
@@ -34,10 +33,9 @@ def test_get_dbt_command_list_with_empty_models_list():
     assert_contains_only(
         command_list,
         [
-            "dbt",
-            "--log-format",
-            "json",
             "run",
+            "--threads",
+            "1",
             "--project-dir",
             str(os.getcwd()),
         ],

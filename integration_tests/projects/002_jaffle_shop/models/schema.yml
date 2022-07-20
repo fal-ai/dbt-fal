@@ -98,4 +98,7 @@ models:
         tests:
           - not_null
 
+  - name: orders_forecast
+    description: fal generated model that forecasts dollar amount and count of orders
+
   - name: orders_daily

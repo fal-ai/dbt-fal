@@ -81,7 +81,7 @@ def _run_scripts(args: argparse.Namespace, scripts: List[FalScript], faldbt: Fal
     scheduler = Scheduler(
         [TaskGroup(FalHookTask.from_fal_script(script)) for script in scripts]
     )
-    parallel_executor(args, faldbt, scheduler, faldbt.threads)
+    parallel_executor(args, faldbt, scheduler)
 
     failed_tasks: List[FalHookTask] = [
         group.task for group in scheduler.filter_groups(GroupStatus.FAILURE)

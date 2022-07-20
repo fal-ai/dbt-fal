@@ -26,7 +26,7 @@ Feature: Python nodes
     And the script model_c.post_hook.py output file has the lines:
       | Status: success |
 
-  @TODO-parallel
+  @TODO-logging
   Scenario: Python model post hooks run even when model script fails
     When the following command is invoked:
       """
@@ -39,7 +39,7 @@ Feature: Python nodes
     And it throws an exception RuntimeError with message 'Error in scripts (model: models/staging/broken_model.py)'
 
   Scenario: Run a Python node without write to model should error
-    Given the project 003_scripts_with_errors
+    Given the project 012_model_generation_error
     When the following command is invoked:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select no_write_model

@@ -18,7 +18,7 @@ Feature: fal works with ipynb features
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
@@ -29,7 +29,7 @@ Feature: fal works with ipynb features
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --vars 'extra_col: true' --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data+ --vars 'extra_col: true'
       """
     Then the following models are calculated:
       | zendesk_ticket_data |

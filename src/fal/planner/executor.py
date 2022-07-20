@@ -8,7 +8,7 @@ from concurrent.futures import (
     wait,
 )
 from dataclasses import dataclass, field
-from typing import List
+from typing import Iterator, List
 
 from fal.planner.schedule import SUCCESS, Scheduler
 from fal.planner.tasks import FalHookTask, TaskGroup, Task, GroupStatus, DBTTask
@@ -24,12 +24,10 @@ from dbt.logger import GLOBAL_LOGGER as logger
 # not spamming the users with these unrelated warnings we'll filter them out.
 #
 # See for more: https://stackoverflow.com/a/63004750
-warnings.filterwarnings(
-    "ignore", category=UserWarning, module="multiprocessing.*"
-)
+warnings.filterwarnings("ignore", category=UserWarning, module="multiprocessing.*")
 
 
-def _collect_models(groups: List[TaskGroup]) -> List[str]:
+def _collect_models(groups: List[TaskGroup]) -> Iterator[str]:
     for group in groups:
         if isinstance(group.task, DBTTask):
             yield from group.task.model_ids
@@ -91,7 +89,6 @@ def parallel_executor(
     args: argparse.Namespace,
     fal_dbt: FalDbt,
     scheduler: Scheduler,
-    max_threads: int,
 ) -> None:
     def get_futures(future_groups):
         return {
@@ -115,7 +112,7 @@ def parallel_executor(
             for task_group in scheduler.iter_available_groups()
         ]
 
-    with ThreadPoolExecutor(max_threads) as executor:
+    with ThreadPoolExecutor(fal_dbt.threads) as executor:
         future_groups = create_futures(executor)
         futures = get_futures(future_groups)
         while futures:
