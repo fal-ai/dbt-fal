@@ -16,7 +16,7 @@ Feature: `flow run` command with py nodes in the middle
   Scenario: fal flow run command with selectors with experimental flag
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select middle_1+ --experimental-flow
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select middle_1+
       """
     Then the following models are calculated in order:
       | middle_1 | middle_2 | after_middle |
@@ -26,7 +26,7 @@ Feature: `flow run` command with py nodes in the middle
   Scenario: fal flow run with or without experimental flag sends status information to after script updated
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select +middle_script.py --experimental-flow
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select +middle_script.py
       """
     Then the following scripts are ran:
       | middle_2.middle_script.py |
@@ -35,7 +35,7 @@ Feature: `flow run` command with py nodes in the middle
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select middle_script.py --experimental-flow
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select middle_script.py
       """
     Then the following scripts are ran:
       | middle_2.middle_script.py |
@@ -48,11 +48,11 @@ Feature: `flow run` command with py nodes in the middle
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --exclude broken_model
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude broken_model
       """
     And the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_a+,model_c+ --experimental-models
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_a+,model_c+
       """
     Then the following models are calculated in order:
       | model_c.py | model_d | model_e.ipynb |
@@ -104,7 +104,7 @@ Feature: `flow run` command with py nodes in the middle
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select "model_a model_b" , "model_b model_c"
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select "model_a model_b" , "model_b model_c"
       """
     Then the following models are calculated in order:
       | model_a | model_b | model_c.py |

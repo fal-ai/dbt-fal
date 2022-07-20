@@ -6,7 +6,7 @@ Feature: `execute_sql` function
   Scenario: Use execute_sql function
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-flow --select +query_other_model.py
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select +query_other_model.py
       """
     Then the following models are calculated:
       | execute_sql_model_one | execute_sql_model_two |
@@ -18,7 +18,7 @@ Feature: `execute_sql` function
   Scenario: Use execute_sql to run a macro
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-flow --select +run_macro.py
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select +run_macro.py
       """
     Then the following models are calculated:
       | execute_sql_model_one | execute_sql_model_two |

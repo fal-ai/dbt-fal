@@ -5,7 +5,7 @@ Feature: Python nodes
   Scenario: Run a project with Python nodes
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --exclude broken_model
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude broken_model
       """
     Then the following models are calculated:
       | model_a | model_b | model_c.py | model_d | model_e.ipynb |
@@ -15,7 +15,7 @@ Feature: Python nodes
   Scenario: Run a project with Python nodes only selecting the Python model
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select model_c
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_c
       """
     Then the following models are calculated:
       | model_c.py |
@@ -30,7 +30,7 @@ Feature: Python nodes
   Scenario: Python model post hooks run even when model script fails
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select broken_model
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select broken_model
       """
     Then the following scripts are ran:
       | broken_model.post_hook.py |
@@ -42,6 +42,6 @@ Feature: Python nodes
     Given the project 012_model_generation_error
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select no_write_model
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select no_write_model
       """
     Then it throws an exception AssertionError with message 'There must be at least one write_to_model call in the Python Model'
