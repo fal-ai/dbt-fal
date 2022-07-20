@@ -44,44 +44,4 @@ def _cli(argv: List[str]):
                 fal_flow_run(parsed)
 
         elif parsed.command == "run":
-            # TODO: remove in fal version 0.4.0
-            _warn_selectors_multiple_times(argv, parsed)
-
             fal_run(parsed)
-
-
-# TODO: remove in fal version 0.4.0
-def _warn_selectors_multiple_times(argv, parsed):
-    """
-    Warn about past behaviour of flags no longer supported
-    """
-    selects_count = (
-        argv.count("-s")
-        + argv.count("--select")
-        + argv.count("-m")
-        + argv.count("--models")
-        + argv.count("--model")
-    )
-
-    if selects_count > 1:
-        dbt.exceptions.warn_or_error(
-            "Passing multiple --select/--models flags to fal is no longer supported.\n"
-            + f"Please use model selection like dbt. Use: --select {' '.join(parsed.select)}",
-            log_fmt=dbt.ui.warning_tag("{}"),
-        )
-
-    exclude_count = argv.count("--exclude")
-    if exclude_count > 1:
-        dbt.exceptions.warn_or_error(
-            "Passing multiple --exclude flags to fal is no longer supported.\n"
-            + f"Please use model exclusion like dbt. Use: --exclude {' '.join(parsed.exclude)}",
-            log_fmt=dbt.ui.warning_tag("{}"),
-        )
-
-    script_count = argv.count("--script") + argv.count("--scripts")
-    if script_count > 1:
-        dbt.exceptions.warn_or_error(
-            "Passing multiple --script flags to fal is no longer supported.\n"
-            + f"Please dbt-style selection. Use: --script {' '.join(parsed.scripts)}",
-            log_fmt=dbt.ui.warning_tag("{}"),
-        )
