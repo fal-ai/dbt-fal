@@ -124,31 +124,41 @@ Feature: `flow run` command
     Then the following models are calculated:
       | new_model |
 
-  @TODO-parallel
+  @TODO-logging
   Scenario: fal flow run with an error in before
-    Given the project 003_scripts_with_errors
+    Given the project 003_runtime_errors
     When the following command is invoked:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select before.py
       """
     Then it throws an exception RuntimeError with message 'Error in scripts'
 
-  @TODO-parallel
+  @TODO-logging
   Scenario: fal flow run with an error in after
-    Given the project 003_scripts_with_errors
+    Given the project 003_runtime_errors
     When the following command is invoked:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select after.py
       """
     Then it throws an exception RuntimeError with message 'Error in scripts'
 
-  @TODO-parallel
+  @TODO-logging
   @TODO-duckdb
   Scenario: fal flow run with an error in dbt run
-    Given the project 003_scripts_with_errors
+    Given the project 003_runtime_errors
     When the following command is invoked:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select some_model
+      """
+    Then it throws an exception RuntimeError with message 'Error running dbt run'
+
+  @TODO-logging
+  @TODO-duckdb
+  Scenario: fal flow run with an error in Python model
+    Given the project 003_runtime_errors
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select runtime_error_model
       """
     Then it throws an exception RuntimeError with message 'Error running dbt run'
 
@@ -269,7 +279,8 @@ Feature: `flow run` command
     And the following scripts are ran:
       | model_c.before.py | agent_wait_time.before.py |
 
-  @broken_profile @TODO-parallel
+  @broken_profile
+  @TODO-logging
   Scenario: fal flow run with target
     Given the project 001_flow_run_with_selectors
     When the data is seeded
@@ -278,7 +289,7 @@ Feature: `flow run` command
       """
       fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data
       """
-    Then it throws an exception RuntimeError with message 'Error in script'
+    Then it throws an exception RuntimeError with message 'Error running dbt run'
 
     When the following command is invoked:
       """
@@ -287,9 +298,9 @@ Feature: `flow run` command
     Then the following models are calculated:
       | zendesk_ticket_data |
 
-  @TODO-parallel
+  @TODO-logging
   Scenario: post hooks run after both successful and failed dbt models
-    Given the project 003_scripts_with_errors
+    Given the project 003_runtime_errors
     When the following command is invoked:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude before.py
