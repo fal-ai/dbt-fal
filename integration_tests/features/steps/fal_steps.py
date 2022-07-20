@@ -120,7 +120,7 @@ def invoke_command_error(context, etype: str, msg: str):
         _etype, exception, _tb = context.exc
         assert isinstance(
             exception, eval(etype)
-        ), f"Invalid exception - expected {type}, got {type(exception)}"
+        ), f"Invalid exception - expected {etype}, got {type(exception)}"
         assert msg in str(exception), "Invalid message - expected " + msg
     else:
         if "TODO-logging" not in context.tags:
