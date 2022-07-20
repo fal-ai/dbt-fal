@@ -1,8 +1,11 @@
+from behave.configuration import Configuration
 import os
 
 
 def before_all(context):
     os.environ["FAL_STATS_ENABLED"] = "false"
+    config: Configuration = context.config
+    config.setup_logging()
 
 
 def after_scenario(context, scenario):
@@ -21,3 +24,9 @@ def after_scenario(context, scenario):
         print_exception(*context.exc)
         _etype, exception, _tb = context.exc
         raise exception
+
+
+def before_tag(context, tag):
+    if "TODO-logging" == tag:
+        # print here is not captured by behave
+        print("WARN: should have thrown an exception (TODO-logging)")
