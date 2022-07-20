@@ -39,14 +39,14 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select +intermediate_model_3 --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select +intermediate_model_3
       """
     Then the following models are calculated:
       | agent_wait_time | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 | model_a | model_b | model_c |
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1+ --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1+
       """
     Then the following models are calculated:
       | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
@@ -57,21 +57,21 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select 2+intermediate_model_3 --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select 2+intermediate_model_3
       """
     Then the following models are calculated:
       | intermediate_model_1 | intermediate_model_2 | intermediate_model_3 |
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1+1 --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1+1
       """
     Then the following models are calculated:
       | intermediate_model_1 | intermediate_model_2 |
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1+0 --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select intermediate_model_1+0
       """
     Then the following models are calculated:
       | intermediate_model_1 |
@@ -85,7 +85,7 @@ Feature: `flow run` command
       """
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select agent_wait_time --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select agent_wait_time
       """
     Then the following models are calculated:
       | agent_wait_time |
@@ -94,7 +94,7 @@ Feature: `flow run` command
     Given the project 001_flow_run_with_selectors
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir
       """
     And the file $baseDir/models/new_model.sql is created with the content:
       """
@@ -102,7 +102,7 @@ Feature: `flow run` command
       """
     Then the following command will fail:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select state:new --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select state:new
       """
     And no models are calculated
 
@@ -110,7 +110,7 @@ Feature: `flow run` command
     Given the project 001_flow_run_with_selectors
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir
       """
     And state is stored in old_state
     And the file $baseDir/models/new_model.sql is created with the content:
@@ -119,7 +119,7 @@ Feature: `flow run` command
       """
     And the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select state:new --state $tempDir/old_state --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select state:new --state $tempDir/old_state
       """
     Then the following models are calculated:
       | new_model |
@@ -180,7 +180,7 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
@@ -193,7 +193,7 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
@@ -202,7 +202,7 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data --vars 'extra_col: true' --threads 1
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select zendesk_ticket_data --vars 'extra_col: true'
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
@@ -276,13 +276,13 @@ Feature: `flow run` command
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data --threads 1
+      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data
       """
     Then it throws an exception RuntimeError with message 'Error in script'
 
     When the following command is invoked:
       """
-      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data --threads 1 --target custom
+      fal flow run --profiles-dir profiles/broken --project-dir $baseDir --select zendesk_ticket_data --target custom
       """
     Then the following models are calculated:
       | zendesk_ticket_data |
