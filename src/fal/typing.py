@@ -4,9 +4,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-# For status comparison (e.g. context.current_model.status == NodeStatus.Success)
-from dbt.contracts.results import NodeStatus
-
 if TYPE_CHECKING:
     import pandas as pd
     from typing import Optional, Dict, List, Protocol, Any
