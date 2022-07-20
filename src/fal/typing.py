@@ -4,14 +4,14 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-# For status comparison
+# For status comparison (e.g. context.current_model.status == NodeStatus.Success)
 from dbt.contracts.results import NodeStatus
-from faldbt.project import DbtModel, DbtTest, DbtSource, Feature
-from fal.fal_script import Context, CurrentModel
 
 if TYPE_CHECKING:
     import pandas as pd
     from typing import Optional, Dict, List, Protocol, Any
+    from faldbt.project import DbtModel, DbtTest, DbtSource, Feature
+    from fal.fal_script import Context, CurrentModel
 
     class _List_Sources(Protocol):
         def __call__(self):
