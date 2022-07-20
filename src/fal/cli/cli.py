@@ -25,8 +25,6 @@ def cli(argv: List[str] = sys.argv):
 def _cli(argv: List[str]):
     parsed = parse_args(argv[1:])
 
-    _warn_deprecated_flags(parsed)
-
     # Disabling the dbt.logger.DelayedFileHandler manually
     # since we do not use the new dbt logging system
     # This fixes issue https://github.com/fal-ai/fal/issues/97
@@ -44,6 +42,8 @@ def _cli(argv: List[str]):
 
         if parsed.command == "flow":
             if parsed.flow_command == "run":
+                _warn_deprecated_flags(parsed)
+
                 fal_flow_run(parsed)
 
         elif parsed.command == "run":
