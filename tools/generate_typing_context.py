@@ -17,9 +17,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pandas as pd
-    from faldbt.project import DbtModel, DbtTest, Feature
-    from fal.fal_script import Context
     from typing import Optional, Dict, List, Protocol, Any
+    from faldbt.project import DbtModel, DbtTest, DbtSource, Feature
+    from fal.fal_script import Context, CurrentModel
 
 {protocols}
 
@@ -27,7 +27,7 @@ context: Context
 {annotations}
 """
 
-TYPING_CONTEXT_FILE = "src/fal/context.py"
+TYPING_CONTEXT_FILE = "src/fal/typing.py"
 FAL_DBT_FILE = "src/faldbt/project.py"
 FAL_DBT_CLS = "FalDbt"
 
@@ -97,6 +97,7 @@ def main():
         )
 
     subprocess.run(["black", TYPING_CONTEXT_FILE])
+
 
 if __name__ == "__main__":
     main()

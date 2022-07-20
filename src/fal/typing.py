@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pandas as pd
-    from faldbt.project import DbtModel, DbtTest, Feature
-    from fal.fal_script import Context
     from typing import Optional, Dict, List, Protocol, Any
+    from faldbt.project import DbtModel, DbtTest, DbtSource, Feature
+    from fal.fal_script import Context, CurrentModel
 
     class _List_Sources(Protocol):
         def __call__(self):
