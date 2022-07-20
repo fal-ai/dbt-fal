@@ -1,0 +1,4 @@
+version: 2
+
+models:
+  - name: no_write_model # Python model

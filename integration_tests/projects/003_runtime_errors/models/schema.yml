@@ -6,13 +6,13 @@ models:
       fal:
         post-hook:
           - fal_scripts/post_hook.py
-        scripts:
-          before:
-            - fal_scripts/before.py
-          after:
-            - fal_scripts/after.py
   - name: working_model
     meta:
       fal:
         post-hook:
           - fal_scripts/post_hook.py
+        scripts:
+          before:
+            - fal_scripts/before.py
+          after:
+            - fal_scripts/after.py
