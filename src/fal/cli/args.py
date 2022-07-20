@@ -115,6 +115,38 @@ def _add_vars_option(parser: argparse.ArgumentParser):
     )
 
 
+def _add_experimental_flow_option(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--experimental-flow",
+        action="store_true",
+        help="""
+        Run fal after scripts right after a dbt node has finished to before continuing with downstream nodes.
+        """,
+    )
+
+
+def _add_experimental_python_models_option(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--experimental-models",
+        dest="experimental_python_models",
+        action="store_true",
+        help="""
+        Search Python files in source paths and treat as pure Python models. Implies --experimental-flow.
+        """,
+    )
+
+
+def _add_experimental_threading(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--experimental-threads",
+        type=int,
+        # TODO: Until we have all the components that can make this work
+        # we'll hide this option from --help output (only for us
+        # to know).
+        help=argparse.SUPPRESS,
+    )
+
+
 def _build_dbt_selectors(sub: argparse.ArgumentParser):
 
     # fmt: off
@@ -190,6 +222,9 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _build_fal_common_options(flow_run_parser)
     _add_threads_option(flow_run_parser)
     _add_state_option(flow_run_parser)
+    _add_experimental_flow_option(flow_run_parser)
+    _add_experimental_python_models_option(flow_run_parser)
+    _add_experimental_threading(flow_run_parser)
     _add_vars_option(flow_run_parser)
     _add_target_option(flow_run_parser)
 
