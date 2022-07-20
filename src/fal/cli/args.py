@@ -119,9 +119,7 @@ def _add_experimental_flow_option(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--experimental-flow",
         action="store_true",
-        help="""
-        Run fal after scripts right after a dbt node has finished to before continuing with downstream nodes.
-        """,
+        help="DEPRECATED: no-op",
     )
 
 
@@ -130,9 +128,7 @@ def _add_experimental_python_models_option(parser: argparse.ArgumentParser):
         "--experimental-models",
         dest="experimental_python_models",
         action="store_true",
-        help="""
-        Search Python files in source paths and treat as pure Python models. Implies --experimental-flow.
-        """,
+        help="DEPRECATED: no-op",
     )
 
 
@@ -140,10 +136,8 @@ def _add_experimental_threading(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--experimental-threads",
         type=int,
-        # TODO: Until we have all the components that can make this work
-        # we'll hide this option from --help output (only for us
-        # to know).
-        help=argparse.SUPPRESS,
+        help="DEPRECATED: no-op",
+        metavar="INT",
     )
 
 
