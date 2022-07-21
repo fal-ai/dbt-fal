@@ -14,8 +14,6 @@ from datetime import datetime, timezone
 import re
 
 
-FAL_TESTS_EXPERIMENTAL_THREADS = int(os.getenv("FAL_TESTS_EXPERIMENTAL_THREADS", 0))
-
 # The main distinction we can use on an artifact file to determine
 # whether it was created by a Python script or a Python model is the number
 # of suffixes it has. Models use <model_name>.txt and scripts use
@@ -90,12 +88,8 @@ def invoke_command(context):
     args: str = context.text.replace("$baseDir", context.base_dir)
     args = args.replace("$profilesDir", str(profiles_dir))
     args = args.replace("$tempDir", context.temp_dir.name)
-    is_fal_flow_run = "fal flow run" in args
 
     args_list = shlex.split(args)
-    if is_fal_flow_run and FAL_TESTS_EXPERIMENTAL_THREADS:
-        args_list.append("--experimental-threads")
-        args_list.append(str(FAL_TESTS_EXPERIMENTAL_THREADS))
 
     context.exc = None
     try:

@@ -6,7 +6,7 @@ Feature: `write_to_model` function
   Scenario: Use write_to_model and write_to_source_twice function with mode overwrite
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-flow
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir
       """
     Then the following models are calculated:
       | other_model | some_model | third_model |
@@ -22,7 +22,7 @@ Feature: `write_to_model` function
   Scenario: Use write_to_model function with mode overwrite
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select other_model+ --exclude some_model+ --experimental-flow
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select other_model+ --exclude some_model+
       """
     Then the following models are calculated:
       | other_model |
@@ -38,7 +38,7 @@ Feature: `write_to_model` function
   Scenario: Write a datetime to the datawarehouse
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select model_with_date
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_with_date
       """
     Then the following models are calculated:
       | model_with_date.py |
@@ -52,7 +52,7 @@ Feature: `write_to_model` function
   Scenario: Write a string and int array to the datawarehouse
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --experimental-models --select model_with_array
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_with_array
       """
     Then the following models are calculated:
       | model_with_array.py |

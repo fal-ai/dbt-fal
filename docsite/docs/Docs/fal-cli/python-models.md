@@ -4,9 +4,7 @@ sidebar_position: 2
 
 # Creating Python dbt models
 
-> ⚠️ NOTE: This feature is enabled with the flag `--experimental-models` when running the `fal flow run` command.
-
-As of version `0.3.0`, fal supports a new building block: _Pure Python models_. This type of model allows you to represent a `dbt` model purely in Python code leveraging its rich ecosystem of libraries. With Python models, you can build:
+As of version `0.4.0`, fal supports a new building block: _Pure Python models_. This type of model allows you to represent a `dbt` model purely in Python code leveraging its rich ecosystem of libraries. With Python models, you can build:
 
 1. Data transformations that Python is better suited for. (e.g. text manipulation, leveraging external Python modules)
 2. ML model artifacts (like predictions) as dbt models, using Data Science libraries such as `sklearn` and `xgboost`.
@@ -48,7 +46,7 @@ write_to_model(df)
 
 ## Under the hood
 
-When running `fal flow run --experimental-models`, `fal` will automatically generate an [ephemeral dbt model](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/materializations/#ephemeral) for each Python model. This is done in order to let `dbt` know about the existence of the Python model. This enables some nice properties such as Python models being available in `dbt` docs, and the ability to refer to Python models from other dbt models by using [`ref`](../../Reference/variables-and-functions.md#ref-function).
+When running `fal flow run`, `fal` will automatically generate an [ephemeral dbt model](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/materializations/#ephemeral) for each Python model. This is done in order to let `dbt` know about the existence of the Python model. This enables some nice properties such as Python models being available in `dbt` docs, and the ability to refer to Python models from other dbt models by using [`ref`](../../Reference/variables-and-functions.md#ref-function).
 
 > ❗️ NOTE: Generated files should be committed to your repository.
 
