@@ -12,7 +12,7 @@ from fal.planner.tasks import (
     FalHookTask,
     FalModelTask,
     TaskGroup,
-    GroupStatus,
+    Status,
 )
 
 
@@ -33,7 +33,6 @@ def create_group(
         model_ids = [node]
 
     flow_node = node_graph.get_node(model_ids[-1])
-    hook_paths = properties.get("post_hook", [])
 
     if kind is NodeKind.DBT_MODEL:
         task = DBTTask(model_ids=model_ids)
@@ -45,19 +44,29 @@ def create_group(
         assert isinstance(flow_node, ScriptNode)
         task = FalHookTask.from_fal_script(flow_node.script)
 
-    post_hooks = []
-    if hook_paths:
-        assert flow_node
+    pre_hook_paths = properties.get("pre_hook", [])
+    post_hook_paths = properties.get("post_hook", [])
+    if pre_hook_paths or post_hook_paths:
+        assert flow_node, "hook nodes must be attached to a model node"
         assert isinstance(flow_node, DbtModelNode)
-        post_hooks.extend(
-            FalHookTask(
-                hook_path=hook_path,
-                bound_model=flow_node.model,
-            )
-            for hook_path in hook_paths
-        )
 
-    return TaskGroup(task, post_hooks=post_hooks)
+
+    pre_hooks = [
+        FalHookTask(
+            hook_path=hook_path,
+            bound_model=flow_node.model
+        )
+        for hook_path in pre_hook_paths
+    ]
+    post_hooks = [
+        FalHookTask(
+            hook_path=hook_path,
+            bound_model=flow_node.model,
+        )
+        for hook_path in post_hook_paths
+    ]
+
+    return TaskGroup(task, pre_hooks=pre_hooks, post_hooks=post_hooks)
 
 
 @dataclass
@@ -65,12 +74,12 @@ class Scheduler:
     groups: List[TaskGroup]
     _counter: int = 0
 
-    def filter_groups(self, status: GroupStatus) -> List[TaskGroup]:
+    def filter_groups(self, status: Status) -> List[TaskGroup]:
         return [group for group in self.groups if group.status is status]
 
     @property
     def pending_groups(self) -> List[TaskGroup]:
-        return self.filter_groups(GroupStatus.PENDING)
+        return self.filter_groups(Status.PENDING)
 
     def __bool__(self) -> bool:
         return bool(self.pending_groups)
@@ -106,7 +115,7 @@ class Scheduler:
 
         self._counter += 1
         target_group.set_run_index(self._counter)
-        target_group.status = GroupStatus.RUNNING
+        target_group.status = Status.RUNNING
 
     def finish(self, target_group: TaskGroup, status: int) -> None:
         # When a staged group's execution is finished, we'll remove it
@@ -118,13 +127,13 @@ class Scheduler:
             self._fail(target_group)
 
     def _fail(self, target_group: TaskGroup) -> None:
-        target_group.status = GroupStatus.FAILURE
+        target_group.status = Status.FAILURE
         for group in self.pending_groups:
             if target_group in group.dependencies:
-                group.status = GroupStatus.SKIPPED
+                group.status = Status.SKIPPED
 
     def _succeed(self, target_group: TaskGroup) -> None:
-        target_group.status = GroupStatus.SUCCESS
+        target_group.status = Status.SUCCESS
         for group in self.pending_groups.copy():
             if target_group in group.dependencies:
                 group.dependencies.remove(target_group)

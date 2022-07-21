@@ -14,6 +14,8 @@ models:
       materialized: table
     meta:
       fal:
+        pre-hook:
+          - fal_scripts/pre_hook.py
         post-hook:
           - fal_scripts/post_hook.py
           - fal_scripts/post_hook2.py

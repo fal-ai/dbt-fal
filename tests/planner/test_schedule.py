@@ -3,7 +3,7 @@ import pytest
 
 from fal.node_graph import NodeKind
 from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalModelTask
-from fal.planner.tasks import DBTTask, FalModelTask, GroupStatus
+from fal.planner.tasks import DBTTask, FalModelTask, Status
 from tests.planner.data import GRAPH_1, GRAPHS
 from tests.planner.utils import to_scheduler
 
@@ -56,7 +56,7 @@ def test_scheduler():
 def assert_running(scheduler, *tasks):
     assert {
         skipped_model
-        for group in scheduler.filter_groups(GroupStatus.RUNNING)
+        for group in scheduler.filter_groups(Status.RUNNING)
         for skipped_model in group.task.model_ids
     } == set(tasks)
 
@@ -64,7 +64,7 @@ def assert_running(scheduler, *tasks):
 def assert_skipped(scheduler, *tasks):
     assert {
         skipped_model
-        for group in scheduler.filter_groups(GroupStatus.SKIPPED)
+        for group in scheduler.filter_groups(Status.SKIPPED)
         for skipped_model in group.task.model_ids
     } == set(tasks)
 
@@ -72,7 +72,7 @@ def assert_skipped(scheduler, *tasks):
 def assert_failed(scheduler, *tasks):
     assert {
         failed_model
-        for group in scheduler.filter_groups(GroupStatus.FAILURE)
+        for group in scheduler.filter_groups(Status.FAILURE)
         for failed_model in group.task.model_ids
     } == set(tasks)
 

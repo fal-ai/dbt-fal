@@ -27,7 +27,7 @@ class Task:
         raise NotImplementedError
 
 
-class GroupStatus(Enum):
+class Status(Enum):
     PENDING = auto()
     RUNNING = auto()
     SKIPPED = auto()
@@ -145,10 +145,10 @@ class FalModelTask(DBTTask):
 class FalHookTask(Task):
     hook_path: Path
     bound_model: Optional[DbtModel] = None
-    is_post_hook: bool = True
+    is_hook: bool = True
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        if not self.is_post_hook:
+        if not self.is_hook:
             # For after/before scripts
             assert self._run_index != -1
 
@@ -157,20 +157,21 @@ class FalHookTask(Task):
 
     @classmethod
     def from_fal_script(cls, script: FalScript):
-        return cls(script.path, script.model, script.is_post_hook)
+        return cls(script.path, script.model, script.is_hook)
 
     def build_fal_script(self, fal_dbt: FalDbt):
         return FalScript(
-            fal_dbt, self.bound_model, str(self.hook_path), self.is_post_hook
+            fal_dbt, self.bound_model, str(self.hook_path), self.is_hook
         )
 
 
 @dataclass
 class TaskGroup:
     task: Task
+    pre_hooks: List[FalHookTask] = field(default_factory=list)
     post_hooks: List[FalHookTask] = field(default_factory=list)
     dependencies: List[TaskGroup] = field(default_factory=list)
-    status: GroupStatus = GroupStatus.PENDING
+    status: Status = Status.PENDING
 
     def __post_init__(self):
         self._id = str(uuid.uuid4())

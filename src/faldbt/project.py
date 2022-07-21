@@ -2,6 +2,7 @@ from collections import defaultdict
 import os.path
 import re
 from dataclasses import dataclass, field
+from functools import partialmethod
 from typing import Dict, Iterable, List, Any, Optional, Tuple, Sequence, Union
 from pathlib import Path
 
@@ -172,18 +173,21 @@ class DbtModel(_DbtTestableNode):
     def get_depends_on_nodes(self) -> List[str]:
         return self.node.depends_on_nodes
 
-    def get_post_hook_paths(self, keyword: str = "fal") -> List[str]:
+    def _get_hook_paths(self, hook_type: str, keyword: str = "fal") -> List[str]:
         meta = self.meta or {}
 
         keyword_dict = meta.get(keyword) or {}
         if not isinstance(keyword_dict, dict):
             return []
 
-        post_hooks = keyword_dict.get("post-hook") or []
-        if not isinstance(post_hooks, list):
+        hooks = keyword_dict.get(hook_type) or []
+        if not isinstance(hooks, list):
             return []
 
-        return post_hooks
+        return hooks
+
+    get_pre_hook_paths = partialmethod(_get_hook_paths, hook_type="pre-hook")
+    get_post_hook_paths = partialmethod(_get_hook_paths, hook_type="post-hook")
 
     def get_scripts(self, keyword: str, *, before: bool) -> List[str]:
         # sometimes properties can *be* there and still be None
