@@ -36,12 +36,8 @@ _DBT_V1 = VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.installed
 
 IS_DBT_V1PLUS = DBT_VCURRENT.compare(_DBT_V1) >= 0
-IS_DBT_V0 = not IS_DBT_V1PLUS
 
-if IS_DBT_V0:
-    from faldbt.cp.contracts.sql import RemoteRunResult
-else:
-    from dbt.contracts.sql import RemoteRunResult
+from dbt.contracts.sql import RemoteRunResult
 
 
 class WriteModeEnum(Enum):
@@ -62,21 +58,16 @@ def initialize_dbt_flags(profiles_dir: str):
     args = FlagsArgs(profiles_dir, None)
     user_config = parse.get_dbt_user_config(profiles_dir)
 
-    if IS_DBT_V1PLUS:
-        flags.set_from_args(args, user_config)
-    else:
-        flags.set_from_args(args)
+    flags.set_from_args(args, user_config)
 
     # Set invocation id
-    if IS_DBT_V1PLUS:
-        import dbt.events.functions as events_functions
+    import dbt.events.functions as events_functions
 
-        events_functions.set_invocation_id()
+    events_functions.set_invocation_id()
 
     # Re-enable logging for 1.0.0 through old API of logger
     # TODO: migrate for 1.0.0 code to new event system
-    if IS_DBT_V1PLUS:
-        flags.ENABLE_LEGACY_LOGGER = "1"
+    flags.ENABLE_LEGACY_LOGGER = "1"
 
 
 def register_adapters(config: RuntimeConfig):

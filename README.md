@@ -295,9 +295,8 @@ tickets = faldbt.ref('stg_zendesk_ticket_data')
 
 Any extra configuration to work with different `dbt` versions is not needed, latest `fal` version currently supports:
 
-- 0.20.\*
-- 0.21.\*
 - 1.0.\*
+- 1.1.\*
 
 If you need another version, [open an issue](https://github.com/fal-ai/fal/issues/new) and we will take a look!
 

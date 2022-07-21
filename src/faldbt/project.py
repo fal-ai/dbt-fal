@@ -332,6 +332,11 @@ class FalDbt:
         args_vars: str = "{}",
         generated_models: Dict[str, Path] = {},
     ):
+        if not lib.IS_DBT_V1PLUS:
+            raise NotImplementedError(
+                f"dbt version {lib.DBT_VCURRENT} is no longer supported, please upgrade to dbt 1.0.0 or above"
+            )
+
         self.project_dir = os.path.realpath(os.path.expanduser(project_dir))
         self.profiles_dir = os.path.realpath(os.path.expanduser(profiles_dir))
         self.keyword = keyword
@@ -742,10 +747,6 @@ class FalDbt:
     @telemetry.log_call("execute_sql")
     def execute_sql(self, sql: str) -> pd.DataFrame:
         """Execute a sql query."""
-        if lib.IS_DBT_V0:
-            raise NotImplementedError(
-                "execute_sql only supported in dbt version >= 1.0.0"
-            )
 
         # HACK: we need to pass config in because of weird behavior of execute_sql when
         # ran from GitHub Actions. For some reason, it can not find the right profile.

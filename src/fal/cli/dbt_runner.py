@@ -77,10 +77,7 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> Li
         command_list += ["--vars", args.vars]
 
     if len(models_list) > 0:
-        if lib.IS_DBT_V0:
-            command_list += ["--models"] + models_list
-        else:
-            command_list += ["--select"] + models_list
+        command_list += ["--select"] + models_list
 
     # Assure all command parts are str
     return list(map(str, command_list))

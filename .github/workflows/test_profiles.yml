@@ -101,11 +101,7 @@ jobs:
         run: |
           OUTPUT=["1.0.*", "1.1.*"]
 
-          if '${{ github.event_name }}' == 'pull_request':
-            # Add more versions for pull requests
-            OUTPUT.extend(["0.20.*", "0.21.*"])
-
-          elif '${{ github.event_name }}' == 'workflow_dispatch':
+          if '${{ github.event_name }}' == 'workflow_dispatch':
             OUTPUT=["latest"]
 
           import json
@@ -123,12 +119,6 @@ jobs:
         profile: ${{ fromJSON(needs.matrix-adapter.outputs.list) }}
         dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
-        exclude:
-          # Avoid non-working combination
-          - python: 3.10
-            dbt: "0.20.*"
-          - python: 3.10
-            dbt: "0.21.*"
 
     # Run only the latest commit pushed to PR
     concurrency:
@@ -218,11 +208,6 @@ jobs:
           then
             # 'broken_profile' tests only works for postgres right now
             BEHAVE_ARGS="$BEHAVE_ARGS --tags=-broken_profile"
-          fi
-
-          if [[ '${{ matrix.dbt }}' =~ ^0.*$ ]]
-          then
-            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-dbtv1"
           fi
 
           behave $BEHAVE_ARGS -D profile=${{ matrix.profile }}

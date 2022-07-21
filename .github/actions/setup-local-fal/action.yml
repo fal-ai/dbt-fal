@@ -38,13 +38,13 @@ runs:
     - name: Install dbt
       shell: bash
       run: |
-        if [[ '${{ inputs.dbt }}' =~ ^0.*$ ]]
+        if [[ '${{ inputs.dbt }}' == 'latest' ]]
         then
-          pip install dbt==${{ inputs.dbt }}
-          pip install dbt-${{ inputs.adapter }}==${{ inputs.dbt }}
+          pip install dbt-${{ inputs.adapter }}
         elif [[ '${{ inputs.dbt }}' =~ ^1.*$ ]]
         then
           pip install dbt-${{ inputs.adapter }}==${{ inputs.dbt }}
         else
-          pip install dbt-${{ inputs.adapter }}
+          echo "Invalid dbt version to install"
+          exit 2
         fi
