@@ -591,9 +591,8 @@ class FalDbt:
         data: pd.DataFrame,
         target_source_name: str,
         target_table_name: str,
-        # TODO: Make dtype named-param in the future?
-        dtype: Any = None,
         *,
+        dtype: Any = None,
         mode: str = "append",
     ):
         """
