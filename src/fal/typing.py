@@ -60,23 +60,9 @@ if TYPE_CHECKING:
             data: pd.DataFrame,
             target_source_name: str,
             target_table_name: str,
-            dtype: Any = None,
             *,
+            dtype: Any = None,
             mode: str = "append",
-        ):
-            """
-            Write a pandas.DataFrame to a dbt model automagically.
-            """
-
-    class _Write_To_Model(Protocol):
-        def __call__(
-            self,
-            data: pd.DataFrame,
-            target_1: str,
-            target_2: Optional[str] = None,
-            *,
-            dtype: Any = None,
-            mode: str = "overwrite",
         ):
             """
             Write a pandas.DataFrame to a dbt source automagically.
@@ -92,8 +78,25 @@ if TYPE_CHECKING:
         def __call__(self, sql: str) -> pd.DataFrame:
             """Execute a sql query."""
 
+    # Manually introduced annotations, update manually in tools/generate_typing_context.py template.
+    class _Write_To_Model(Protocol):
+        def __call__(
+            self,
+            data: pd.DataFrame,
+            *,
+            dtype: Any = None,
+            mode: str = "overwrite",
+            target_1: str = ...,
+            target_2: Optional[str] = ...,
+        ):
+            """
+            Write a pandas.DataFrame to a dbt model automagically.
+            """
+
 
 context: Context
+write_to_model: _Write_To_Model
+
 list_sources: _List_Sources
 list_models_ids: _List_Models_Ids
 list_models: _List_Models
@@ -102,6 +105,5 @@ list_features: _List_Features
 ref: _Ref
 source: _Source
 write_to_source: _Write_To_Source
-write_to_model: _Write_To_Model
 write_to_firestore: _Write_To_Firestore
 execute_sql: _Execute_Sql

@@ -23,13 +23,32 @@ if TYPE_CHECKING:
 
 {protocols}
 
+    # Manually introduced annotations, update manually in tools/generate_typing_context.py template.
+    class _Write_To_Model(Protocol):
+        def __call__(
+            self,
+            data: pd.DataFrame,
+            *,
+            dtype: Any = None,
+            mode: str = "overwrite",
+            target_1: str = ...,
+            target_2: Optional[str] = ...,
+        ):
+            '''
+            Write a pandas.DataFrame to a dbt model automagically.
+            '''
+
+
 context: Context
+write_to_model: _Write_To_Model
+
 {annotations}
 """
 
 TYPING_CONTEXT_FILE = "src/fal/typing.py"
 FAL_DBT_FILE = "src/faldbt/project.py"
 FAL_DBT_CLS = "FalDbt"
+MANUAL_ANNOTATIONS = ["write_to_model"]
 
 
 def collect_methods(file, class_name):
@@ -54,7 +73,11 @@ def collect_methods(file, class_name):
 def generate_protocols(file, class_name):
     protocols, annotations = [], []
     for method in collect_methods(file, class_name):
-        call_function = copy.deepcopy(method)
+        call_function: ast.FunctionDef = copy.deepcopy(method)  # type: ignore
+
+        if call_function.name in MANUAL_ANNOTATIONS:
+            continue
+
         call_function.name = "__call__"
         call_function.decorator_list.clear()
 

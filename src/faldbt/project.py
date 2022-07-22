@@ -591,13 +591,12 @@ class FalDbt:
         data: pd.DataFrame,
         target_source_name: str,
         target_table_name: str,
-        # TODO: Make dtype named-param in the future?
-        dtype: Any = None,
         *,
+        dtype: Any = None,
         mode: str = "append",
     ):
         """
-        Write a pandas.DataFrame to a dbt model automagically.
+        Write a pandas.DataFrame to a dbt source automagically.
         """
 
         target_source = self._source(target_source_name, target_table_name)
@@ -637,7 +636,7 @@ class FalDbt:
         mode: str = "overwrite",
     ):
         """
-        Write a pandas.DataFrame to a dbt source automagically.
+        Write a pandas.DataFrame to a dbt model automagically.
         """
         target_model_name = target_1
         target_package_name = None
