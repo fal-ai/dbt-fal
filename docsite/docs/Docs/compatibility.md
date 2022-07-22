@@ -11,14 +11,14 @@ version in order to gain access to all the features fal is offering. In the
 case of adoption to an existing project, you can use the tables below for
 picking the right version that would work best for your environment
 
-#### fal <> dbt matrix
+#### fal & dbt matrix
 
 |     | fal version | Supported dbt version        |
 | --- | ----------- | ---------------------------- |
 |     | 0.4.0>=     | 1.0.X, 1.1.X                 |
 |     | 0.3.6\<=    | 0.20.X, 0.21.X, 1.0.X, 1.1.X |
 
-#### fal <> dbt adapter matrix
+#### fal & dbt adapter matrix
 
 |     | fal version | Supported dbt adapters                          | Notes                                                                                 |
 | --- | ----------- | ----------------------------------------------- | ------------------------------------------------------------------------------------- |
