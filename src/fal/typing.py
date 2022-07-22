@@ -72,11 +72,11 @@ if TYPE_CHECKING:
         def __call__(
             self,
             data: pd.DataFrame,
-            target_1: str,
-            target_2: Optional[str] = None,
             *,
             dtype: Any = None,
             mode: str = "overwrite",
+            target_1: str = ...,
+            target_2: Optional[str] = ...,
         ):
             """
             Write a pandas.DataFrame to a dbt model automagically.
