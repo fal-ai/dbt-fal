@@ -23,13 +23,32 @@ if TYPE_CHECKING:
 
 {protocols}
 
+    # Manually introduced annotations, update manually in tools/generate_typing_context.py template.
+    class _Write_To_Model(Protocol):
+        def __call__(
+            self,
+            data: pd.DataFrame,
+            *,
+            dtype: Any = None,
+            mode: str = "overwrite",
+            target_1: str = ...,
+            target_2: Optional[str] = ...,
+        ):
+            '''
+            Write a pandas.DataFrame to a dbt model automagically.
+            '''
+
+
 context: Context
+write_to_model: _Write_To_Model
+
 {annotations}
 """
 
 TYPING_CONTEXT_FILE = "src/fal/typing.py"
 FAL_DBT_FILE = "src/faldbt/project.py"
 FAL_DBT_CLS = "FalDbt"
+MANUAL_ANNOTATIONS = ["write_to_model"]
 
 
 def collect_methods(file, class_name):
@@ -56,41 +75,8 @@ def generate_protocols(file, class_name):
     for method in collect_methods(file, class_name):
         call_function: ast.FunctionDef = copy.deepcopy(method)  # type: ignore
 
-        if call_function.name == "write_to_model":
-            # TODO: this is convoluted
-
-            # Handle partially-applied function before passing to scripts
-            args = call_function.args
-
-            applied_inds = [
-                ind
-                for ind, arg in enumerate(args.args)
-                if arg.arg.startswith("target_")
-            ]
-
-            applied_args = [v for ind, v in enumerate(args.args) if ind in applied_inds]
-
-            PAD_OBJECT = object()
-            # defaults are applied backwards
-            args_size = len(args.args)
-            defaults_size = len(args.defaults)
-
-            # pad defaults to the left
-            padded_defaults = [PAD_OBJECT] * (args_size - defaults_size) + args.defaults  # type: ignore
-            args.defaults = [
-                v
-                for ind, v in enumerate(padded_defaults)
-                if ind not in applied_inds and v != PAD_OBJECT
-            ]
-
-            args.args = [
-                v for ind, v in enumerate(args.args) if ind not in applied_inds
-            ]
-
-            # partially applied become overridable in kwonlyargs
-            args.kwonlyargs += applied_args
-            # and they *must* have defaults
-            args.kw_defaults += [ast.Constant(...) for _ in applied_args]
+        if call_function.name in MANUAL_ANNOTATIONS:
+            continue
 
         call_function.name = "__call__"
         call_function.decorator_list.clear()

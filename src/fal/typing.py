@@ -68,6 +68,17 @@ if TYPE_CHECKING:
             Write a pandas.DataFrame to a dbt source automagically.
             """
 
+    class _Write_To_Firestore(Protocol):
+        def __call__(self, df: pd.DataFrame, collection: str, key_column: str):
+            """
+            Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
+            """
+
+    class _Execute_Sql(Protocol):
+        def __call__(self, sql: str) -> pd.DataFrame:
+            """Execute a sql query."""
+
+    # Manually introduced annotations, update manually in tools/generate_typing_context.py template.
     class _Write_To_Model(Protocol):
         def __call__(
             self,
@@ -82,18 +93,10 @@ if TYPE_CHECKING:
             Write a pandas.DataFrame to a dbt model automagically.
             """
 
-    class _Write_To_Firestore(Protocol):
-        def __call__(self, df: pd.DataFrame, collection: str, key_column: str):
-            """
-            Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
-            """
-
-    class _Execute_Sql(Protocol):
-        def __call__(self, sql: str) -> pd.DataFrame:
-            """Execute a sql query."""
-
 
 context: Context
+write_to_model: _Write_To_Model
+
 list_sources: _List_Sources
 list_models_ids: _List_Models_Ids
 list_models: _List_Models
@@ -102,6 +105,5 @@ list_features: _List_Features
 ref: _Ref
 source: _Source
 write_to_source: _Write_To_Source
-write_to_model: _Write_To_Model
 write_to_firestore: _Write_To_Firestore
 execute_sql: _Execute_Sql
