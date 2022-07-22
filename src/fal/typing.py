@@ -65,7 +65,7 @@ if TYPE_CHECKING:
             mode: str = "append",
         ):
             """
-            Write a pandas.DataFrame to a dbt model automagically.
+            Write a pandas.DataFrame to a dbt source automagically.
             """
 
     class _Write_To_Model(Protocol):
@@ -79,7 +79,7 @@ if TYPE_CHECKING:
             mode: str = "overwrite",
         ):
             """
-            Write a pandas.DataFrame to a dbt source automagically.
+            Write a pandas.DataFrame to a dbt model automagically.
             """
 
     class _Write_To_Firestore(Protocol):
