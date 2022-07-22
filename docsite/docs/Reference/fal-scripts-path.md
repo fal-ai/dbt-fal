@@ -22,7 +22,7 @@ Let's consider the following project structure:
             └── process_df.py
 ```
 
-By default `fal-scripts-path` is the [dbt project directory](https://docs.getdbt.com/reference/dbt_project.yml) (where the `dbt_project.yml` is located). 
+By default `fal-scripts-path` is the [dbt project directory](https://docs.getdbt.com/reference/dbt_project.yml) (where the `dbt_project.yml` is located).
 
 But it can be changed by setting in a dbt [var](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/using-variables#defining-variables-in-dbt_projectyml). An example of setting the variable would be:
 ```yaml
@@ -52,7 +52,7 @@ models:
           before:
             # searches in `./` because var has default value
             - scripts/before.py
-          after:
+          post-hook:
             - scripts/after.py
 ```
 
@@ -68,7 +68,7 @@ models:
           before:
             # searches in `./scripts/` because of var
             - before.py
-          after:
+          post-hook:
             - after.py
 ```
 

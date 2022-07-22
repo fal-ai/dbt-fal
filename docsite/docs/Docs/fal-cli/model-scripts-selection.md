@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Selecting scripts
+# Selecting `before` and `after` scripts
 
 For node selection, `fal` handles [dbt's selection flags](https://docs.getdbt.com/reference/node-selection/syntax):
 
@@ -36,3 +36,6 @@ model_alpha: script.py
 model_beta: script.py, other.py
 ...
 ```
+
+> Please note that individual `post-hook`s can not be selected, they will be ran if the underlying
+> model is selected.
