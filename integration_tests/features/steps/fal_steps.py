@@ -211,7 +211,6 @@ def check_model_results(context):
 
 
 def _verify_node_order(context):
-    context._runner.stop_capture()
     import networkx as nx
     from fal import FalDbt
     from fal.node_graph import NodeGraph
@@ -232,14 +231,19 @@ def _verify_node_order(context):
     ordered_nodes = _unpack_dated_result(all_nodes)
 
     graph = node_graph.graph
-    ancestors, post_hooks, pre_hooks = {}, {}, {}
+    ancestors, post_hooks, pre_hooks, descendants = {}, {}, {}, {}
     for node, data in graph.nodes(data=True):
         name = _as_name(node)
-        ancestors[name] = [
-            _as_name(ancestor)
-            for ancestor in nx.ancestors(graph, node)
-            if _as_name(ancestor) in ordered_nodes
-        ]
+        for container, filter_func in [
+            (ancestors, nx.ancestors),
+            (descendants, nx.descendants),
+        ]:
+            container[name] = [
+                _as_name(ancestor)
+                for ancestor in filter_func(graph, node)
+                if _as_name(ancestor) in ordered_nodes
+            ]
+
         for container, hook_type in [
             (pre_hooks, "pre_hook"),
             (post_hooks, "post_hook"),
@@ -253,7 +257,8 @@ def _verify_node_order(context):
     assert_precedes = partial(_assert_precedes, ordered_nodes)
     assert_succeeds = partial(_assert_succeeds, ordered_nodes)
     for node in ordered_nodes:
-        if _is_script(node):
+        # Skip all the nodes that are not part of the graph.
+        if node not in ancestors:
             continue
 
         # Ancestors (and their hooks) must precede the node
@@ -267,6 +272,12 @@ def _verify_node_order(context):
 
         # post-hooks of the node will succeed the node
         assert_succeeds(node, *post_hooks[node])
+
+        # Descendants (and their hooks) must succeed the node
+        for successor in descendants[node]:
+            assert_succeeds(node, *pre_hooks[successor])
+            assert_succeeds(node, successor)
+            assert_succeeds(node, *post_hooks[successor])
 
 
 def _assert_succeeds(nodes, node, *successors):
@@ -284,14 +295,14 @@ def _assert_precedes(nodes, node, *predecessors):
 
 
 def _as_name(node):
-    if node.endswith(".txt"):
+    # format for scripts: script.<model>.<direction>.<script_name>
+    if node.startswith("script."):
+        _, model_name, _, script_name = node.split(".", 3)
+        return model_name + "." + script_name
+    elif node.endswith(".txt"):
         return node.split(".")[-2]
     else:
         return node.split(".")[-1]
-
-
-def _is_script(script: str):
-    return len(Path(script).suffixes) == FAL_SCRIPT
 
 
 def _script_filename(script: str, model_name: Optional[str] = None):
