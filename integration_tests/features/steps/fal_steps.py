@@ -211,6 +211,7 @@ def check_model_results(context):
 
 
 def _verify_node_order(context):
+    context._runner.stop_capture()
     import networkx as nx
     from fal import FalDbt
     from fal.node_graph import NodeGraph
