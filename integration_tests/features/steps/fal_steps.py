@@ -1,7 +1,7 @@
-from functools import reduce
+from functools import reduce, partial
 import os
 import shlex
-from typing import List
+from typing import List, Optional
 from behave import *
 import glob
 from fal.cli import cli
@@ -219,43 +219,67 @@ def _verify_node_order(context):
         profiles_dir=_set_profiles_dir(context), project_dir=context.base_dir
     )
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    ordered_nodes = list(map(_as_name, _get_all_models(context)))
+
+    all_nodes = _get_dated_dbt_models(context) + _get_dated_fal_artifacts(
+        context, FAL_SCRIPT
+    )
+    # We need to normalize the suffix for Python models.
+    all_nodes += [
+        (_as_name(name), date)
+        for name, date in _get_dated_fal_artifacts(context, FAL_MODEL)
+    ]
+    ordered_nodes = _unpack_dated_result(all_nodes)
 
     graph = node_graph.graph
-    node_to_ancestors, node_to_post_hook = {}, {}
+    ancestors, post_hooks, pre_hooks = {}, {}, {}
     for node, data in graph.nodes(data=True):
         name = _as_name(node)
-        node_to_ancestors[name] = [
+        ancestors[name] = [
             _as_name(ancestor)
             for ancestor in nx.ancestors(graph, node)
             if _as_name(ancestor) in ordered_nodes
         ]
-        node_to_post_hook[name] = [
-            _script_filename(post_hook)
-            for post_hook in data.get("post_hook", [])
-            if _script_filename(post_hook) in ordered_nodes
-        ]
+        for container, hook_type in [
+            (pre_hooks, "pre_hook"),
+            (post_hooks, "post_hook"),
+        ]:
+            container[name] = [
+                _script_filename(hook, name)
+                for hook in data.get(hook_type, [])
+                if _script_filename(hook, name) in ordered_nodes
+            ]
 
+    assert_precedes = partial(_assert_precedes, ordered_nodes)
+    assert_succeeds = partial(_assert_succeeds, ordered_nodes)
     for node in ordered_nodes:
         if _is_script(node):
             continue
 
-        # Ancestors must precede the node
-        for ancestor in node_to_ancestors[node]:
-            _assert_precedes(ordered_nodes, ancestor, node)
-            # Post-hooks of ancestors also must precede the node
-            for post_hook in node_to_post_hook[ancestor]:
-                _assert_precedes(ordered_nodes, post_hook, node)
+        # Ancestors (and their hooks) must precede the node
+        for ancestor in ancestors[node]:
+            assert_precedes(node, *pre_hooks[ancestor])
+            assert_precedes(node, ancestor)
+            assert_precedes(node, *post_hooks[ancestor])
 
-        # The node itself must precede the post-hooks
-        for post_hook in node_to_post_hook[node]:
-            _assert_precedes(ordered_nodes, node, post_hook)
+        # pre-hooks of the node will precede the node
+        assert_precedes(node, *pre_hooks[node])
+
+        # post-hooks of the node will succeed the node
+        assert_succeeds(node, *post_hooks[node])
 
 
-def _assert_precedes(nodes, ancestor, node):
-    assert nodes.index(ancestor) < nodes.index(
-        node
-    ), f"{ancestor} must come before {node}"
+def _assert_succeeds(nodes, node, *successors):
+    for successor in successors:
+        assert nodes.index(successor) > nodes.index(
+            node
+        ), f"{successor} must come after {node}"
+
+
+def _assert_precedes(nodes, node, *predecessors):
+    for predecessor in predecessors:
+        assert nodes.index(predecessor) < nodes.index(
+            node
+        ), f"{predecessor} must come before {node}"
 
 
 def _as_name(node):
@@ -269,8 +293,11 @@ def _is_script(script: str):
     return len(Path(script).suffixes) == FAL_SCRIPT
 
 
-def _script_filename(script: str):
-    return script.replace(".ipynb", ".txt").replace(".py", ".txt")
+def _script_filename(script: str, model_name: Optional[str] = None):
+    script_name = script.replace(".ipynb", ".txt").replace(".py", ".txt")
+    if model_name:
+        script_name = model_name + "." + script_name
+    return script_name
 
 
 def _temp_dir_path(context, file):
