@@ -1,6 +1,7 @@
 import multiprocessing
 from multiprocessing import Pool
 from typing import Any, Dict, Optional, List
+import warnings
 import json
 import faldbt.lib as lib
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -90,6 +91,14 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> Li
 
 
 def _dbt_run_through_python(args: List[str], target_path: str, run_index: int):
+    # logbook is currently using deprecated APIs internally, which is causing
+    # a crash. We'll mirror the solution from DBT, until it is fixed on
+    # upstream.
+    #
+    # PR from dbt-core: https://github.com/dbt-labs/dbt-core/pull/4866
+
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="logbook")
+
     from dbt.main import handle_and_check
 
     run_results = exc = None
