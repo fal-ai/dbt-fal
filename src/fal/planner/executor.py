@@ -1,5 +1,7 @@
 import argparse
+from email.headerregistry import Group
 import warnings
+from enum import Enum, auto
 from concurrent.futures import (
     FIRST_COMPLETED,
     Executor,
@@ -8,13 +10,19 @@ from concurrent.futures import (
     wait,
 )
 from dataclasses import dataclass, field
-from typing import Iterator, List
+from typing import Iterator, List, Optional
 
 from fal.planner.schedule import SUCCESS, Scheduler
-from fal.planner.tasks import FalHookTask, TaskGroup, Task, GroupStatus, DBTTask
+from fal.planner.tasks import FalHookTask, TaskGroup, Task, Status, DBTTask
 from faldbt.project import FalDbt
 
 from dbt.logger import GLOBAL_LOGGER as logger
+
+
+class State(Enum):
+    PRE_HOOKS = auto()
+    MAIN_TASK = auto()
+    POST_HOOKS = auto()
 
 
 # HACK: Since we construct multiprocessing pools for each DBT run, it leaves a trace
@@ -34,12 +42,12 @@ def _collect_models(groups: List[TaskGroup]) -> Iterator[str]:
 
 
 def _show_failed_groups(scheduler: Scheduler) -> None:
-    failed_models = list(_collect_models(scheduler.filter_groups(GroupStatus.FAILURE)))
+    failed_models = list(_collect_models(scheduler.filter_groups(Status.FAILURE)))
     if failed_models:
         message = ", ".join(failed_models)
         logger.info("Failed calculating the following DBT models: {}", message)
 
-    skipped_models = list(_collect_models(scheduler.filter_groups(GroupStatus.SKIPPED)))
+    skipped_models = list(_collect_models(scheduler.filter_groups(Status.SKIPPED)))
     if skipped_models:
         message = ", ".join(skipped_models)
         logger.info("Skipped calculating the following DBT models: {}", message)
@@ -53,22 +61,48 @@ class FutureGroup:
     executor: Executor
     futures: List[Future] = field(default_factory=list)
     status: int = SUCCESS
+    state: Optional[State] = None
 
     def __post_init__(self) -> None:
-        # In the case of us having pre-hooks, this is
-        # where we'll trigger them (and handle the task_group.task)
-        # below.
-        self._add_tasks(self.task_group.task)
+        if self.task_group.pre_hooks:
+            self.switch_to(State.PRE_HOOKS)
+        else:
+            self.switch_to(State.MAIN_TASK)
+
+    def switch_to(self, group_status: State) -> None:
+        self.state = group_status
+        if group_status is State.PRE_HOOKS:
+            self._add_tasks(*self.task_group.pre_hooks)
+        elif group_status is State.MAIN_TASK:
+            self._add_tasks(self.task_group.task)
+        else:
+            assert group_status is State.POST_HOOKS
+            self._add_tasks(*self.task_group.post_hooks)
 
     def process(self, future: Future) -> None:
         assert future in self.futures
-
         self.futures.remove(future)
         self.status |= future.result()
-        if not isinstance(future.task, FalHookTask):
-            # Once the main task gets completed, we'll populate
-            # the task queue with the post-hooks.
-            self._add_tasks(*self.task_group.post_hooks)
+
+        if self.futures:
+            return None
+
+        if self.state is State.PRE_HOOKS:
+            # If there are no tasks left and the previous group was pre-hooks,
+            # we'll decide based on the exit status (success => move to the main task,
+            # failure => run the post-hooks and then exit).
+            if self.status == SUCCESS:
+                self.switch_to(State.MAIN_TASK)
+            else:
+                self.switch_to(State.POST_HOOKS)
+        elif self.state is State.MAIN_TASK:
+            # If we just executed the main task, then we'll proceed to the post-hooks
+            self.switch_to(State.POST_HOOKS)
+        else:
+            # If we just executed post-hooks and there are no more tasks left,
+            # we'll just exit ¯\_(ツ)_/¯
+            assert self.state is State.POST_HOOKS
+            return None
 
     def _add_tasks(self, *tasks: Task) -> None:
         for task in tasks:

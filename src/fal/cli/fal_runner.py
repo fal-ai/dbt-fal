@@ -1,13 +1,14 @@
 import argparse
 from itertools import chain
 from pathlib import Path
+from pydoc import ModuleScanner
 from typing import Dict, List, Iterable
 import os
 
 from dbt.config.profile import DEFAULT_PROFILES_DIR
 from fal.planner.executor import parallel_executor
 from fal.planner.schedule import Scheduler
-from fal.planner.tasks import FalHookTask, GroupStatus, TaskGroup
+from fal.planner.tasks import FalHookTask, Status, TaskGroup
 
 from fal.fal_script import FalScript
 from faldbt.project import DbtModel, FalDbt, FalGeneralException
@@ -64,12 +65,15 @@ def fal_run(args: argparse.Namespace):
             # run globals when no --script is passed
             _run_scripts(args, global_scripts, faldbt)
 
+        pre_hook_scripts = _get_hooks_for_model(models, faldbt, "pre-hook")
+        _run_scripts(args, pre_hook_scripts, faldbt)
+
         _run_scripts(args, scripts, faldbt)
 
     else:
         _run_scripts(args, scripts, faldbt)
 
-        post_hook_scripts = _get_all_post_hooks(models, faldbt)
+        post_hook_scripts = _get_hooks_for_model(models, faldbt, "post-hook")
         _run_scripts(args, post_hook_scripts, faldbt)
 
         if not _scripts_flag(args):
@@ -84,7 +88,7 @@ def _run_scripts(args: argparse.Namespace, scripts: List[FalScript], faldbt: Fal
     parallel_executor(args, faldbt, scheduler)
 
     failed_tasks: List[FalHookTask] = [
-        group.task for group in scheduler.filter_groups(GroupStatus.FAILURE)
+        group.task for group in scheduler.filter_groups(Status.FAILURE)
     ]  # type: ignore
     failed_script_ids = [task.build_fal_script(faldbt).id for task in failed_tasks]
     if failed_script_ids:
@@ -95,14 +99,12 @@ def _scripts_flag(args: argparse.Namespace) -> bool:
     return bool(args.scripts)
 
 
-def _get_all_post_hooks(models: List[DbtModel], faldbt: FalDbt) -> List[FalScript]:
-    return list(chain(*(_get_post_hooks_for_model(model, faldbt) for model in models)))
-
-
-def _get_post_hooks_for_model(model: DbtModel, faldbt: FalDbt) -> Iterable[FalScript]:
-    return (
-        FalScript(faldbt, model, path, True) for path in model.get_post_hook_paths()
-    )
+def _get_hooks_for_model(models: List[DbtModel], faldbt: FalDbt, hook_type: str) -> List[FalScript]:
+    return [
+        FalScript(faldbt, model, path, True)
+        for model in models
+        for path in model._get_hook_paths(hook_type=hook_type)
+    ]
 
 
 def _select_scripts(

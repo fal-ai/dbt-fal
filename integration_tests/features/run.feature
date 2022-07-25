@@ -27,6 +27,14 @@ Feature: `run` command
     Then the following scripts are ran:
       | agent_wait_time.after.py |
 
+  Scenario: fal run works with pre-hooks
+    When the following command is invoked:
+      """
+      fal run --profiles-dir $profilesDir --project-dir $baseDir --models zendesk_ticket_data --before
+      """
+    Then the following scripts are ran:
+      | zendesk_ticket_data.pre_hook.py |
+
   Scenario: fal run works with model selection
     When the following shell command is invoked:
       """

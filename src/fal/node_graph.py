@@ -112,6 +112,7 @@ class NodeGraph:
                 model_fal_node.unique_id,
                 kind=NodeKind.FAL_MODEL if model.python_model else NodeKind.DBT_MODEL,
                 post_hook=model.get_post_hook_paths(),
+                pre_hook=model.get_pre_hook_paths(),
             )
 
             # Add dbt model dependencies

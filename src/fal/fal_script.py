@@ -62,20 +62,20 @@ class FalScript:
     faldbt: FalDbt
 
     # TODO: delete this property once we deprecate after scripts
-    is_post_hook: bool
+    is_hook: bool
 
     def __init__(
         self,
         faldbt: FalDbt,
         model: Optional[DbtModel],
         path: str,
-        is_post_hook: bool = False,
+        is_hook: bool = False,
     ):
         # Necessary because of frozen=True
         object.__setattr__(self, "model", model)
         object.__setattr__(self, "path", normalize_path(faldbt.scripts_dir, path))
         object.__setattr__(self, "faldbt", faldbt)
-        object.__setattr__(self, "is_post_hook", is_post_hook)
+        object.__setattr__(self, "is_hook", is_hook)
 
     @classmethod
     def model_script(cls, faldbt: FalDbt, model: DbtModel):
@@ -107,7 +107,7 @@ class FalScript:
                 "execute_sql": self.faldbt.execute_sql,
             }
 
-            if not self.is_post_hook:
+            if not self.is_hook:
                 exec_globals["write_to_source"] = self.faldbt.write_to_source
 
                 if self.model is not None:
@@ -233,7 +233,7 @@ def _not_allowed_function_maker(function_name: str) -> Callable[[Any], None]:
     def not_allowed_function(*args):
         raise Exception(
             (
-                f"{function_name} is not allowed in post-hooks."
+                f"{function_name} is not allowed in hooks."
                 " Consider using a Python model."
             )
         )

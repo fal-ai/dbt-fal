@@ -1,3 +1,3 @@
-from _fal_testing import create_post_hook_artifact
+from _fal_testing import create_before_script_artifact
 
-create_post_hook_artifact(context, "before")
+create_before_script_artifact(context)

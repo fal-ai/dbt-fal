@@ -57,7 +57,7 @@ Feature: `flow run` command with py nodes in the middle
     Then the following models are calculated in order:
       | model_c.py | model_d | model_e.ipynb |
     And the following scripts are ran:
-      | model_c.after.py | model_e.after.py | model_c.post_hook.py |
+      | model_c.after.py | model_e.pre_hook.py | model_e.post_hook.py | model_c.post_hook.py |
 
   Scenario: fal flow run command with triple intersection selectors on parents
     When the following command is invoked:
