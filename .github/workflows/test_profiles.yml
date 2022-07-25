@@ -119,6 +119,10 @@ jobs:
         profile: ${{ fromJSON(needs.matrix-adapter.outputs.list) }}
         dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
+        exclude:
+          # Only DBT 1.1+ supports Python 3.10 (officially)
+          - python: 3.10
+            dbt: "1.0.*"
 
     # Run only the latest commit pushed to PR
     concurrency:
