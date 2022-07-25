@@ -7,7 +7,7 @@ Feature: Python nodes
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude broken_model
       """
-    Then the following models are calculated:
+    Then the following models are calculated in order:
       | model_a | model_b | model_c.py | model_d | model_e.ipynb |
     Then the following scripts are ran:
       | model_a.after.py | model_b.before.py | model_c.after.py | model_e.pre_hook.py | model_e.post_hook.py | model_c.post_hook.py |
@@ -17,7 +17,7 @@ Feature: Python nodes
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_c
       """
-    Then the following models are calculated:
+    Then the following models are calculated in order:
       | model_c.py |
     And the following scripts are not ran:
       | model_c.after.py |
