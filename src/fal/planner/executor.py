@@ -1,6 +1,5 @@
 import argparse
 from email.headerregistry import Group
-import warnings
 from enum import Enum, auto
 from concurrent.futures import (
     FIRST_COMPLETED,
@@ -23,16 +22,6 @@ class State(Enum):
     PRE_HOOKS = auto()
     MAIN_TASK = auto()
     POST_HOOKS = auto()
-
-
-# HACK: Since we construct multiprocessing pools for each DBT run, it leaves a trace
-# of shared memory warnings behind. In reality, there isn't anything we can do to
-# get rid of them since everything is closed properly and gets destroyed at the end.
-# As of now, it is just a known problem of using multiprocessing like this, and for
-# not spamming the users with these unrelated warnings we'll filter them out.
-#
-# See for more: https://stackoverflow.com/a/63004750
-warnings.filterwarnings("ignore", category=UserWarning, module="multiprocessing.*")
 
 
 def _collect_models(groups: List[TaskGroup]) -> Iterator[str]:
