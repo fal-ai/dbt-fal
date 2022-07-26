@@ -6,7 +6,7 @@ Feature: `write_to_model` function
   Scenario: Use write_to_model and write_to_source_twice function with mode overwrite
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --exclude model_with_date model_with_array
       """
     Then the following models are calculated:
       | other_model | some_model | third_model |
