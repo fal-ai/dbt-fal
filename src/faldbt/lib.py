@@ -132,15 +132,15 @@ def _execute_sql(
     config: Optional[RuntimeConfig] = None,
     adapter: Optional[SQLAdapter] = None,
 ) -> Tuple[AdapterResponse, pd.DataFrame]:
-    open_conn = adapter is None
+    new_conn = adapter is None
     if adapter is None:
         adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
 
     if adapter.type() == "bigquery":
-        return _bigquery_execute_sql(adapter, sql, open_conn)
+        return _bigquery_execute_sql(adapter, sql, new_conn)
 
     with _existing_or_new_connection(
-        adapter, _connection_name("execute_sql", sql), open_conn
+        adapter, _connection_name("execute_sql", sql), new_conn
     ) as is_new:
         exec_response: Tuple[AdapterResponse, agate.Table] = adapter.execute(
             sql, auto_begin=is_new, fetch=True
@@ -369,17 +369,6 @@ def write_target(
 
     relation = _build_table_from_target(adapter, target)
 
-    if adapter.type() == "bigquery":
-        return _bigquery_write_relation(
-            data,
-            project_dir,
-            profiles_dir,
-            profile_target,
-            relation,
-            mode=WriteModeEnum.APPEND,
-            fields_schema=dtype,
-        )
-
     return _write_relation(
         data, project_dir, profiles_dir, profile_target, relation, dtype=dtype
     )
@@ -396,7 +385,16 @@ def _write_relation(
 ) -> AdapterResponse:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    assert adapter.type() != "bigquery", "Should not have reached here with bigquery"
+    if adapter.type() == "bigquery":
+        return _bigquery_write_relation(
+            data,
+            project_dir,
+            profiles_dir,
+            profile_target,
+            relation,
+            mode=WriteModeEnum.APPEND,
+            fields_schema=dtype,
+        )
 
     database, schema, identifier = (
         relation.database,
@@ -580,9 +578,9 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
 def _existing_or_new_connection(
     adapter: BaseAdapter,
     name: str,
-    open_conn: bool,  # TODO: open_conn solution feels hacky
+    new_conn: bool,  # TODO: new_conn solution feels hacky
 ) -> Iterator[bool]:
-    if open_conn:
+    if new_conn:
         with adapter.connection_named(name):
             yield True
     else:
@@ -591,18 +589,17 @@ def _existing_or_new_connection(
 
 # Adapter: BigQuery
 def _bigquery_execute_sql(
-    adapter: BaseAdapter, sql: str, open_conn: bool
+    adapter: BaseAdapter, sql: str, new_conn: bool
 ) -> Tuple[AdapterResponse, pd.DataFrame]:
     assert adapter.type() == "bigquery"
 
     import google.cloud.bigquery as bigquery
 
     with _existing_or_new_connection(
-        adapter, _connection_name("bigquery:execute_sql", sql), open_conn
+        adapter, _connection_name("bigquery:execute_sql", sql), new_conn
     ):
-        conection_manager: BaseConnectionManager = adapter.connections  # type: ignore
-        conn = conection_manager.get_thread_connection()
-        client: bigquery.Client = conn.handle  # type: ignore
+        connection_manager: BaseConnectionManager = adapter.connections  # type: ignore
+        client: bigquery.Client = connection_manager.get_thread_connection().handle  # type: ignore
 
         job = client.query(sql)
         df = job.to_dataframe()
