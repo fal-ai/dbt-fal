@@ -24,22 +24,30 @@ class State(Enum):
     POST_HOOKS = auto()
 
 
-def _collect_models(groups: List[TaskGroup]) -> Iterator[str]:
+def _collect_nodes(groups: List[TaskGroup], fal_dbt: FalDbt) -> Iterator[str]:
     for group in groups:
         if isinstance(group.task, DBTTask):
             yield from group.task.model_ids
+        if isinstance(group.task, FalHookTask):
+            # Is a before/after script
+            yield group.task.build_fal_script(fal_dbt).id
 
 
-def _show_failed_groups(scheduler: Scheduler) -> None:
-    failed_models = list(_collect_models(scheduler.filter_groups(Status.FAILURE)))
-    if failed_models:
-        message = ", ".join(failed_models)
-        logger.info("Failed calculating the following DBT models: {}", message)
 
-    skipped_models = list(_collect_models(scheduler.filter_groups(Status.SKIPPED)))
-    if skipped_models:
-        message = ", ".join(skipped_models)
-        logger.info("Skipped calculating the following DBT models: {}", message)
+def _show_failed_groups(scheduler: Scheduler, fal_dbt: FalDbt) -> None:
+    failed_nodes = list(
+        _collect_nodes(scheduler.filter_groups(Status.FAILURE), fal_dbt)
+    )
+    if failed_nodes:
+        message = ", ".join(failed_nodes)
+        logger.info("Failed calculating the following nodes: {}", message)
+
+    skipped_nodes = list(
+        _collect_nodes(scheduler.filter_groups(Status.SKIPPED), fal_dbt)
+    )
+    if skipped_nodes:
+        message = ", ".join(skipped_nodes)
+        logger.info("Skipped calculating the following nodes: {}", message)
 
 
 @dataclass
@@ -151,4 +159,4 @@ def parallel_executor(
             future_groups.extend(create_futures(executor))
             futures = get_futures(future_groups)
 
-    _show_failed_groups(scheduler)
+    _show_failed_groups(scheduler, fal_dbt)
