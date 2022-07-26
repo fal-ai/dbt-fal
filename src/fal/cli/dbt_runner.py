@@ -1,5 +1,5 @@
 import multiprocessing
-from multiprocessing import Pool
+from multiprocessing.connection import Connection
 from typing import Any, Dict, Optional, List
 import warnings
 import json
@@ -90,7 +90,9 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> Li
 # imitate the existing behavior of `dbt_run()` (in terms of performance).
 
 
-def _dbt_run_through_python(args: List[str], target_path: str, run_index: int):
+def _dbt_run_through_python(
+    args: List[str], target_path: str, run_index: int, connection: Connection
+):
     # logbook is currently using deprecated APIs internally, which is causing
     # a crash. We'll mirror the solution from DBT, until it is fixed on
     # upstream.
@@ -118,9 +120,10 @@ def _dbt_run_through_python(args: List[str], target_path: str, run_index: int):
     if run_results is not None:
         run_results.write(os.path.join(target_path, f"fal_results_{run_index}.json"))
     else:
-        raise RuntimeError("Error running dbt run") from exc
+        connection.send(exc)
+        return
 
-    return return_code
+    connection.send(return_code)
 
 
 def dbt_run_through_python(
@@ -137,22 +140,25 @@ def dbt_run_through_python(
     cmd_str = " ".join(["dbt", *args_list])
     logger.info("Running command: {}", cmd_str)
 
-    # We are going to use multiprocessing module to spawn a new
-    # process that will run the sub-function we have here. We
-    # don't really need a process pool, since we are only going
-    # to spawn a single process but it provides a nice abstraction
-    # over retrieving values from the process.
+    # We will be using a multiprocessing.Pipe to communicate
+    # from subprocess to main process about the return code
+    # as well as the exceptions that might arise.
+    p_connection, c_connection = multiprocessing.Pipe()
+    process = multiprocessing.Process(
+        target=_dbt_run_through_python,
+        args=(args_list, target_path, run_index, c_connection),
+    )
 
-    with Pool(processes=1) as pool:
-        return_code = pool.apply(
-            _dbt_run_through_python,
-            (args_list, target_path, run_index),
-        )
+    process.start()
+    result = p_connection.recv()
+    if not isinstance(result, int):
+        raise RuntimeError("Error running dbt run") from result
+    process.join()
 
     run_results = _get_index_run_results(target_path, run_index)
     return DbtCliOutput(
         command=cmd_str,
-        return_code=return_code,
+        return_code=result,
         raw_output=None,
         logs=None,
         run_results=run_results,
