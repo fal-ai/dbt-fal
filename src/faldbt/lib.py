@@ -666,7 +666,10 @@ def _bigquery_write_relation(
             write_disposition=disposition,
         )
 
-        job = client.load_table_from_dataframe(data, table_ref, job_config=job_config)
+        with connection_manager.exception_handler("START JOB"):
+            job = client.load_table_from_dataframe(
+                data, table_ref, job_config=job_config
+            )
 
         from dbt.adapters.bigquery.__version__ import version as bigquery_version
 
