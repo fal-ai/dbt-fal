@@ -9,6 +9,24 @@ import os
 import argparse
 
 
+# logbook is currently using deprecated APIs internally, which is causing
+# a crash. We'll mirror the solution from DBT, until it is fixed on
+# upstream.
+#
+# PR from dbt-core: https://github.com/dbt-labs/dbt-core/pull/4866
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="logbook")
+
+
+# Since we construct multiprocessing pools for each DBT run, it leaves a trace
+# of shared memory warnings behind. In reality, there isn't anything we can do to
+# get rid of them since everything is closed properly and gets destroyed at the end.
+# As of now, it is just a known problem of using multiprocessing like this, and for
+# not spamming the users with these unrelated warnings we'll filter them out.
+#
+# See for more: https://stackoverflow.com/a/63004750
+warnings.filterwarnings("ignore", category=UserWarning, module="multiprocessing.*")
+
+
 class DbtCliOutput:
     def __init__(
         self,
@@ -91,14 +109,6 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> Li
 
 
 def _dbt_run_through_python(args: List[str], target_path: str, run_index: int):
-    # logbook is currently using deprecated APIs internally, which is causing
-    # a crash. We'll mirror the solution from DBT, until it is fixed on
-    # upstream.
-    #
-    # PR from dbt-core: https://github.com/dbt-labs/dbt-core/pull/4866
-
-    warnings.filterwarnings("ignore", category=DeprecationWarning, module="logbook")
-
     from dbt.main import handle_and_check
 
     run_results = exc = None
