@@ -17,6 +17,8 @@ from faldbt.project import FalDbt
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
+from functools import reduce
+
 
 class State(Enum):
     PRE_HOOKS = auto()
@@ -49,6 +51,10 @@ def _show_failed_groups(scheduler: Scheduler, fal_dbt: FalDbt) -> None:
         logger.info("Skipped calculating the following nodes: {}", message)
 
 
+def _combine_status(left: int, right: int):
+    return left | right
+
+
 @dataclass
 class FutureGroup:
     args: argparse.Namespace
@@ -78,7 +84,7 @@ class FutureGroup:
     def process(self, future: Future) -> None:
         assert future in self.futures
         self.futures.remove(future)
-        self.status |= future.result()
+        self.status = _combine_status(self.status, future.result())
 
         if self.futures:
             return None
@@ -119,7 +125,7 @@ def parallel_executor(
     args: argparse.Namespace,
     fal_dbt: FalDbt,
     scheduler: Scheduler,
-) -> None:
+) -> int:
     def get_futures(future_groups):
         return {
             # Unpack all running futures into a single set
@@ -159,3 +165,11 @@ def parallel_executor(
             futures = get_futures(future_groups)
 
     _show_failed_groups(scheduler, fal_dbt)
+
+    return _exit_code(future_groups)
+
+
+def _exit_code(future_groups: List[FutureGroup]) -> int:
+    return reduce(
+        lambda acc, fg: _combine_status(acc, fg.status), future_groups, SUCCESS
+    )
