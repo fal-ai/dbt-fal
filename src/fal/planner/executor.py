@@ -51,10 +51,6 @@ def _show_failed_groups(scheduler: Scheduler, fal_dbt: FalDbt) -> None:
         logger.info("Skipped calculating the following nodes: {}", message)
 
 
-def _combine_status(left: int, right: int):
-    return left | right
-
-
 @dataclass
 class FutureGroup:
     args: argparse.Namespace
@@ -84,7 +80,9 @@ class FutureGroup:
     def process(self, future: Future) -> None:
         assert future in self.futures
         self.futures.remove(future)
-        self.status = _combine_status(self.status, future.result())
+
+        # If non-zero, it will remain non-zero
+        self.status |= future.result()
 
         if self.futures:
             return None
@@ -166,10 +164,8 @@ def parallel_executor(
 
     _show_failed_groups(scheduler, fal_dbt)
 
-    return _exit_code(future_groups)
+    return _exit_code(scheduler)
 
 
-def _exit_code(future_groups: List[FutureGroup]) -> int:
-    return reduce(
-        lambda acc, fg: _combine_status(acc, fg.status), future_groups, SUCCESS
-    )
+def _exit_code(scheduler: Scheduler) -> int:
+    return int(any(scheduler.filter_groups(Status.FAILURE)))
