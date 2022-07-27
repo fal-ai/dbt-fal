@@ -14,7 +14,8 @@ write_to_model(df)
 
 model_name = context.current_model.name
 df = ref(model_name)
-print(df)
+# TODO: Snowflake gets a weird output (is it a stringified array?)
+df.columns = df.columns.str.lower()  # Snowflake has uppercase columns
 df.info()
 output = f"my_array: {list(df['my_array'][0])}"
 output += f"\nother_array: {list(df['other_array'][0])}"
