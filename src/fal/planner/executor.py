@@ -28,11 +28,9 @@ def _collect_nodes(groups: List[TaskGroup], fal_dbt: FalDbt) -> Iterator[str]:
     for group in groups:
         if isinstance(group.task, DBTTask):
             yield from group.task.model_ids
-        if isinstance(group.task, FalHookTask):
+        if isinstance(group.task, FalHookTask) and not group.task.is_hook:
             # Is a before/after script
-            assert not group.task.is_hook
             yield group.task.build_fal_script(fal_dbt).id
-
 
 
 def _show_failed_groups(scheduler: Scheduler, fal_dbt: FalDbt) -> None:
