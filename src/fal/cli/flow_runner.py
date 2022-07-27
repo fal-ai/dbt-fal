@@ -20,7 +20,7 @@ def run_threaded(
     fal_dbt: FalDbt,
     parsed: argparse.Namespace,
     node_graph: NodeGraph,
-) -> None:
+) -> int:
     from fal.planner.plan import (
         OriginGraph,
         FilteredGraph,
@@ -41,10 +41,10 @@ def run_threaded(
         connected_graph, enable_chunking=False
     )
     scheduler = schedule_graph(planned_graph.graph, node_graph)
-    parallel_executor(parsed, fal_dbt, scheduler)
+    return parallel_executor(parsed, fal_dbt, scheduler)
 
 
-def fal_flow_run(parsed: argparse.Namespace):
+def fal_flow_run(parsed: argparse.Namespace) -> int:
     generated_models: Dict[str, Path] = {}
 
     # Python models
@@ -55,11 +55,12 @@ def fal_flow_run(parsed: argparse.Namespace):
     _mark_dbt_nodes_status(fal_dbt, NodeStatus.Skipped)
 
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    run_threaded(fal_dbt=fal_dbt, parsed=parsed, node_graph=node_graph)
+    status_code = run_threaded(fal_dbt=fal_dbt, parsed=parsed, node_graph=node_graph)
 
     # each dbt run creates its own run_results file, here we are combining
     # these files in a single run_results file that fits dbt file format
     _combine_fal_run_results(fal_dbt.target_path)
+    return status_code
 
 
 def _mark_dbt_nodes_status(

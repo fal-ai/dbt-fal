@@ -78,6 +78,8 @@ class FutureGroup:
     def process(self, future: Future) -> None:
         assert future in self.futures
         self.futures.remove(future)
+
+        # If non-zero, it will remain non-zero
         self.status |= future.result()
 
         if self.futures:
@@ -119,7 +121,7 @@ def parallel_executor(
     args: argparse.Namespace,
     fal_dbt: FalDbt,
     scheduler: Scheduler,
-) -> None:
+) -> int:
     def get_futures(future_groups):
         return {
             # Unpack all running futures into a single set
@@ -159,3 +161,9 @@ def parallel_executor(
             futures = get_futures(future_groups)
 
     _show_failed_groups(scheduler, fal_dbt)
+
+    return _exit_code(scheduler)
+
+
+def _exit_code(scheduler: Scheduler) -> int:
+    return int(any(scheduler.filter_groups(Status.FAILURE)))
