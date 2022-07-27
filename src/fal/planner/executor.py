@@ -30,6 +30,7 @@ def _collect_nodes(groups: List[TaskGroup], fal_dbt: FalDbt) -> Iterator[str]:
             yield from group.task.model_ids
         if isinstance(group.task, FalHookTask):
             # Is a before/after script
+            assert not group.task.is_hook
             yield group.task.build_fal_script(fal_dbt).id
 
 
