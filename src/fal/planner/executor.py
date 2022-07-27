@@ -17,8 +17,6 @@ from faldbt.project import FalDbt
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
-from functools import reduce
-
 
 class State(Enum):
     PRE_HOOKS = auto()
