@@ -45,8 +45,9 @@ def _cli(argv: List[str]):
             if parsed.flow_command == "run":
                 _warn_deprecated_flags(parsed)
 
-                status_code = fal_flow_run(parsed)
-                exit(status_code)
+                exit_code = fal_flow_run(parsed)
+                if exit_code:
+                    raise SystemExit(exit_code)
 
         elif parsed.command == "run":
             fal_run(parsed)

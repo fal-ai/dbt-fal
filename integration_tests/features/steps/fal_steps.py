@@ -94,7 +94,7 @@ def invoke_command(context):
     context.exc = None
     try:
         cli(args_list)
-    except Exception:
+    except BaseException:
         import sys
 
         context.exc = sys.exc_info()
@@ -111,14 +111,18 @@ def invoke_command_error(context, etype: str, msg: str):
     # err_cap: StringIO = context.stderr_capture
 
     if context.exc:
-        _etype, exception, _tb = context.exc
-        assert isinstance(
-            exception, eval(etype)
-        ), f"Invalid exception - expected {etype}, got {type(exception)}"
-        assert msg in str(exception), "Invalid message - expected " + msg
+        _etype, exc, _tb = context.exc
+        if isinstance(exc, SystemExit):
+            if not exc.code:
+                # zero exit code
+                raise AssertionError("Should have thrown an exception")
+        else:
+            assert isinstance(
+                exc, eval(etype)
+            ), f"Invalid exception - expected {etype}, got {type(exc)}"
+            assert msg in str(exc), "Invalid message - expected " + msg
     else:
-        if "TODO-logging" not in context.tags:
-            raise AssertionError("Should have thrown an exception")
+        raise AssertionError("Should have thrown an exception")
 
     # Clear the exception
     context.exc = None
