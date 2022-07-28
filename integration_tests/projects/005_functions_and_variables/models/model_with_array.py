@@ -1,5 +1,7 @@
+from fal.typing import *
+from _fal_testing.utils import create_model_artifact
+
 import pandas as pd
-import os
 
 df = pd.DataFrame(
     {
@@ -7,18 +9,20 @@ df = pd.DataFrame(
         "other_array": [[1, 2, 3], []],
     }
 )
+df.info()
 
+model_name = context.current_model.name
+
+write_to_model(df)
+df = ref(model_name)
+df.columns = df.columns.str.lower()  # Snowflake has uppercase columns
 df.info()
 
 write_to_model(df)
-
-model_name = context.current_model.name
 df = ref(model_name)
-# TODO: Snowflake gets a weird output (is it a stringified array?)
 df.columns = df.columns.str.lower()  # Snowflake has uppercase columns
 df.info()
+
 output = f"my_array: {list(df['my_array'][0])}"
 output += f"\nother_array: {list(df['other_array'][0])}"
-temp_dir = os.environ["temp_dir"]
-with open(os.path.join(temp_dir, model_name + ".txt"), "w") as file:
-    file.write(output)
+create_model_artifact(context, additional_data=output)
