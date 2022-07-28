@@ -55,12 +55,12 @@ def fal_flow_run(parsed: argparse.Namespace) -> int:
     _mark_dbt_nodes_status(fal_dbt, NodeStatus.Skipped)
 
     node_graph = NodeGraph.from_fal_dbt(fal_dbt)
-    status_code = run_threaded(fal_dbt=fal_dbt, parsed=parsed, node_graph=node_graph)
+    exit_code = run_threaded(fal_dbt=fal_dbt, parsed=parsed, node_graph=node_graph)
 
     # each dbt run creates its own run_results file, here we are combining
     # these files in a single run_results file that fits dbt file format
     _combine_fal_run_results(fal_dbt.target_path)
-    return status_code
+    return exit_code
 
 
 def _mark_dbt_nodes_status(

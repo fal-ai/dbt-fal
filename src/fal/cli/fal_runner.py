@@ -99,7 +99,9 @@ def _scripts_flag(args: argparse.Namespace) -> bool:
     return bool(args.scripts)
 
 
-def _get_hooks_for_model(models: List[DbtModel], faldbt: FalDbt, hook_type: str) -> List[FalScript]:
+def _get_hooks_for_model(
+    models: List[DbtModel], faldbt: FalDbt, hook_type: str
+) -> List[FalScript]:
     return [
         FalScript(faldbt, model, path, True)
         for model in models
