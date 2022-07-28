@@ -1,5 +1,6 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
 from contextlib import contextmanager
+import datetime
 import six
 from enum import Enum
 from dataclasses import dataclass
@@ -691,6 +692,50 @@ def _bigquery_write_relation(
 
 
 # Adapter: Snowflake
+# 0 FIXED NUMBER/INT
+# 1 REAL REAL
+# 2 TEXT VARCHAR/STRING
+# 3 DATE DATE
+# 4 TIMESTAMP TIMESTAMP
+# 5 VARIANT VARIANT
+# 6 TIMESTAMP_LTZ TIMESTAMP_LTZ
+# 7 TIMESTAMP_TZ TIMESTAMP_TZ
+# 8 TIMESTAMP_NTZ TIMESTAMP_TZ
+# 9 OBJECT OBJECT
+# 10 ARRAY ARRAY
+# 11 BINARY BINARY
+# 12 TIME TIME
+# 13 BOOLEAN BOOLEAN
+# *****
+# 0 int
+# 1 float
+# 2 str | unicode
+# 3 datetime.date
+# 4 // never stored
+# 5 list[*]
+# 6 datetime.datetime with timezone?
+# 7 datetime.datetime with timezone?
+# 8 datetime.datetime without timezone?
+# 9 object?
+# 10 list[*]
+# 11 bytes | bytearray
+# 12 datetime.time
+# 13 bool
+SNOWFLAKE_TYPES = {
+    0: int,
+    1: float,
+    2: str,
+    3: datetime.date,
+    6: datetime.datetime,
+    7: datetime.datetime,
+    8: datetime.datetime,
+    9: None,
+    11: bytearray,
+    12: datetime.time,
+    13: bool,
+}
+
+
 def _snowflake_execute_sql(
     adapter: BaseAdapter, sql: str, new_conn: bool, *, fetch: bool = True
 ) -> Tuple[AdapterResponse, pd.DataFrame]:
