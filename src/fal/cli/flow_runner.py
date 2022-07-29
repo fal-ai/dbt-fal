@@ -14,6 +14,7 @@ import argparse
 DBT_RUN_RESULTS_FILENAME = "run_results.json"
 FAL_RUN_RESULTS_FILENAME = "fal_results.json"
 RUN_RESULTS_KEY = "results"
+ELAPSED_TIME_KEY = "elapsed_time"
 
 
 def run_threaded(
@@ -106,8 +107,8 @@ def _combine_fal_run_results(target_path: str) -> None:
     else:
         result_framework = {
             "metadata": {},
-            "elapsed_time": float("nan"),
             "args": {},
+            ELAPSED_TIME_KEY: float("nan"),
         }
 
     for file, results in [
@@ -119,7 +120,10 @@ def _combine_fal_run_results(target_path: str) -> None:
 
         combined_results = copy.deepcopy(result_framework)
         combined_results[RUN_RESULTS_KEY] = []
+        combined_results[ELAPSED_TIME_KEY] = 0.0
+
         for result in results:
+            combined_results[ELAPSED_TIME_KEY] += result.get(ELAPSED_TIME_KEY, 0)
             combined_results[RUN_RESULTS_KEY].extend(result[RUN_RESULTS_KEY])
 
         with open(target_path / file, "w") as stream:
