@@ -42,7 +42,7 @@ Feature: `write_to_model` function
     Then the following models are calculated:
       | model_with_date.py |
     And the script model_with_date.py output file has the lines:
-      | my_datetime: 2022-01-01 14:50:59+00:00 | my_date: 2022-01-01 | my_time: 14:50:59 |
+      | my_datetime: 2022-01-01t14:50:59+00:00 | my_date: 2022-01-01 | my_time: 14:50:59 |
 
   @TODO-postgres
   @TODO-duckdb
