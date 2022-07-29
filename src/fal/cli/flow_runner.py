@@ -99,17 +99,24 @@ def _combine_fal_run_results(target_path: str) -> None:
         # Clear out files as we go.
         path.unlink()
 
-    if not dbt_run_results:
-        return
-
     # Use the last DBT result as the framework for putting
     # the rest of the run results.
-    result_framework = dbt_run_results[-1]
+    if dbt_run_results:
+        result_framework = dbt_run_results[-1]
+    else:
+        result_framework = {
+            "metadata": {},
+            "elapsed_time": float("nan"),
+            "args": {},
+        }
 
     for file, results in [
         (DBT_RUN_RESULTS_FILENAME, dbt_run_results),
         (FAL_RUN_RESULTS_FILENAME, fal_run_results),
     ]:
+        if not results:
+            continue
+
         combined_results = copy.deepcopy(result_framework)
         combined_results[RUN_RESULTS_KEY] = []
         for result in results:
