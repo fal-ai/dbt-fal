@@ -126,7 +126,7 @@ def run_script(script: FalScript, run_index: int) -> int:
     results = _run_script(script)
     run_results_file = Path(script.faldbt.target_path) / f"fal_results_{run_index}.json"
     with open(run_results_file, "w") as stream:
-        json.dump({"schema": "fal", "results": [results]}, stream)
+        json.dump({"results": [results]}, stream)
     return SUCCESS if results["status"] == NodeStatus.Success else FAILURE
 
 

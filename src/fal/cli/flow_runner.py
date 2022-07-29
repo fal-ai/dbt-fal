@@ -14,7 +14,6 @@ import argparse
 DBT_RUN_RESULTS_FILENAME = "run_results.json"
 FAL_RUN_RESULTS_FILENAME = "fal_results.json"
 RUN_RESULTS_KEY = "results"
-SCHEMA_KEY = "schema"
 
 
 def run_threaded(
@@ -92,7 +91,7 @@ def _combine_fal_run_results(target_path: str) -> None:
 
         results = _get_all_result_content(path)
 
-        if results.get(SCHEMA_KEY) != "fal":
+        if "dbt_schema_version" in results.get("metadata", {}):
             dbt_run_results.append(results)
         fal_run_results.append(results)
 
