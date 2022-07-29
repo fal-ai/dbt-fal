@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 import pytest
 
 from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalHookTask, FalModelTask
-
+from fal.utils import DynamicIndexProvider
 
 @dataclass
 class FakeCLIOutput:
@@ -47,7 +47,7 @@ def mock_script_construction(mocker, return_code):
         return_value=FakeScript(),
     )
     mocker.patch(
-        "fal.planner.tasks._run_script",
+        "fal.planner.tasks.run_script",
         return_value=return_code,
     )
 
@@ -55,7 +55,7 @@ def mock_script_construction(mocker, return_code):
 @pytest.mark.parametrize("return_code", [SUCCESS, FAILURE])
 def test_dbt_task(mocker, return_code):
     task = DBTTask(["a", "b"])
-    task._run_index = 1
+    task.set_run_index(DynamicIndexProvider())
 
     fal_dbt = FakeFalDbt("/test")
     mock_dbt_run(mocker, return_code)
@@ -64,7 +64,7 @@ def test_dbt_task(mocker, return_code):
 
 def test_fal_model_task_when_dbt_fails(mocker):
     task = FalModelTask(["a", "b"])
-    task._run_index = 1
+    task.set_run_index(DynamicIndexProvider())
 
     fal_dbt = FakeFalDbt("/test")
     mock_dbt_run(mocker, FAILURE)
@@ -74,7 +74,7 @@ def test_fal_model_task_when_dbt_fails(mocker):
 @pytest.mark.parametrize("return_code", [SUCCESS, FAILURE])
 def test_fal_model_task_when_dbt_succeeds(mocker, return_code):
     task = FalModelTask(["a", "b"], bound_model=FakeModel("model"))
-    task._run_index = 1
+    task.set_run_index(DynamicIndexProvider())
 
     fal_dbt = FakeFalDbt("/test")
     mock_dbt_run(mocker, SUCCESS)
@@ -85,7 +85,7 @@ def test_fal_model_task_when_dbt_succeeds(mocker, return_code):
 @pytest.mark.parametrize("return_code", [SUCCESS, FAILURE])
 def test_fal_hook(mocker, return_code):
     task = FalHookTask("something.py", bound_model=FakeModel("model"))
-    task._run_index = 1
+    task.set_run_index(DynamicIndexProvider())
 
     fal_dbt = FakeFalDbt("/test")
     mock_script_construction(mocker, return_code)

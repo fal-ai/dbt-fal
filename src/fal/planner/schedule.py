@@ -14,6 +14,7 @@ from fal.planner.tasks import (
     TaskGroup,
     Status,
 )
+from fal.utils import DynamicIndexProvider
 
 
 def create_group(
@@ -50,12 +51,8 @@ def create_group(
         assert flow_node, "hook nodes must be attached to a model node"
         assert isinstance(flow_node, DbtModelNode)
 
-
     pre_hooks = [
-        FalHookTask(
-            hook_path=hook_path,
-            bound_model=flow_node.model
-        )
+        FalHookTask(hook_path=hook_path, bound_model=flow_node.model)
         for hook_path in pre_hook_paths
     ]
     post_hooks = [
@@ -72,7 +69,12 @@ def create_group(
 @dataclass
 class Scheduler:
     groups: List[TaskGroup]
-    _counter: int = 0
+
+    def __post_init__(self) -> None:
+        index_provider = DynamicIndexProvider()
+        for group in self.groups:
+            for task in group.iter_tasks():
+                task.set_run_index(index_provider)
 
     def filter_groups(self, status: Status) -> List[TaskGroup]:
         return [group for group in self.groups if group.status is status]
@@ -108,13 +110,6 @@ class Scheduler:
         return (direct_dependants, indirect_dependants)
 
     def _stage_group(self, target_group: TaskGroup) -> None:
-        # When we start running a group, we don't want to simply remove it
-        # just yet (since that would unblock all of its dependencies). So
-        # we'll remove it from the group queue, but still keep references to
-        # it from its dependencies.
-
-        self._counter += 1
-        target_group.set_run_index(self._counter)
         target_group.status = Status.RUNNING
 
     def finish(self, target_group: TaskGroup, status: int) -> None:
@@ -155,12 +150,14 @@ class Scheduler:
 
 
 def schedule_graph(graph: nx.DiGraph, node_graph: NodeGraph) -> Scheduler:
-    tasks = {
+    task_groups = {
         node: create_group(node, properties, node_graph)
         for node, properties in graph.nodes(data=True)
     }
 
-    for name, task in tasks.items():
-        task.dependencies = [tasks[ancestor] for ancestor in nx.ancestors(graph, name)]
+    for name, task_group in task_groups.items():
+        task_group.dependencies = [
+            task_groups[ancestor] for ancestor in nx.ancestors(graph, name)
+        ]
 
-    return Scheduler(list(tasks.values()))
+    return Scheduler(list(task_groups.values()))

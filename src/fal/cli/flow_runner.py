@@ -1,8 +1,7 @@
-from functools import reduce
 import json
-import os
+import copy
 from pathlib import Path
-from typing import Dict, List, Optional, cast, Union
+from typing import Any, Dict, Optional, cast, Union
 
 from fal.cli.fal_runner import create_fal_dbt
 from fal.cli.selectors import ExecutionPlan
@@ -12,7 +11,8 @@ from fal.node_graph import DbtModelNode, FalFlowNode, NodeGraph, ScriptNode
 from faldbt.project import FalDbt, NodeStatus
 import argparse
 
-RUN_RESULTS_FILE_NAME = "run_results.json"
+DBT_RUN_RESULTS_FILENAME = "run_results.json"
+FAL_RUN_RESULTS_FILENAME = "fal_results.json"
 RUN_RESULTS_KEY = "results"
 
 
@@ -84,47 +84,41 @@ def node_to_script(node: Union[FalFlowNode, None], fal_dbt: FalDbt) -> FalScript
         raise Exception(f"Cannot convert node to script. Node: {node}")
 
 
-def _combine_fal_run_results(target_path):
-    result_files = _get_fal_run_results(target_path)
+def _combine_fal_run_results(target_path: str) -> None:
+    target_path = Path(target_path)
+    dbt_run_results, fal_run_results = [], []
+    for path in target_path.glob("fal_results_*.json"):
+        assert path.is_file()
 
-    if not result_files:
+        results = _get_all_result_content(path)
+
+        if "dbt_schema_version" in results.get("metadata", {}):
+            dbt_run_results.append(results)
+        fal_run_results.append(results)
+
+        # Clear out files as we go.
+        path.unlink()
+
+    if not dbt_run_results:
         return
 
-    all_results = reduce(
-        lambda all, next: all.extend(_get_result_array(next)) or all,
-        result_files,
-        [],
-    )
+    # Use the last DBT result as the framework for putting
+    # the rest of the run results.
+    result_framework = dbt_run_results[-1]
 
-    last_run_result = _get_all_result_content(result_files[-1])
-    last_run_result[RUN_RESULTS_KEY] = all_results
-    run_result_file = os.path.join(target_path, RUN_RESULTS_FILE_NAME)
+    for file, results in [
+        (DBT_RUN_RESULTS_FILENAME, dbt_run_results),
+        (FAL_RUN_RESULTS_FILENAME, fal_run_results),
+    ]:
+        combined_results = copy.deepcopy(result_framework)
+        combined_results[RUN_RESULTS_KEY] = []
+        for result in results:
+            combined_results[RUN_RESULTS_KEY].extend(result[RUN_RESULTS_KEY])
 
-    # remove all run_results_*.json files for the next fal flow run
-    _remove_all(result_files)
-
-    with open(run_result_file, "w") as file:
-        file.write(json.dumps(last_run_result))
-        file.close()
-
-
-def _remove_all(files: List[str]):
-    for file in files:
-        os.remove(file) if os.path.exists(file) else None
+        with open(target_path / file, "w") as stream:
+            json.dump(combined_results, stream)
 
 
-def _get_all_result_content(file) -> Dict:
+def _get_all_result_content(file) -> Dict[str, Any]:
     with open(file) as content:
         return json.load(content)
-
-
-def _get_result_array(file) -> List[dict]:
-    return _get_all_result_content(file)[RUN_RESULTS_KEY]
-
-
-def _get_fal_run_results(target_path) -> List[str]:
-    run_result_files = map(
-        lambda x: str(x),
-        filter(lambda p: p.is_file(), Path(target_path).glob("fal_results_*.json")),
-    )
-    return list(run_result_files)
