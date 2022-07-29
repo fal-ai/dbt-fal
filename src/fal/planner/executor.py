@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Iterator, List, Optional
 
 from fal.planner.schedule import SUCCESS, Scheduler
-from fal.planner.tasks import FalHookTask, TaskGroup, Task, Status, DBTTask
+from fal.planner.tasks import TaskGroup, Task, Status, DBTTask, FalLocalHookTask
 from faldbt.project import FalDbt
 
 from dbt.logger import GLOBAL_LOGGER as logger
@@ -28,7 +28,7 @@ def _collect_nodes(groups: List[TaskGroup], fal_dbt: FalDbt) -> Iterator[str]:
     for group in groups:
         if isinstance(group.task, DBTTask):
             yield from group.task.model_ids
-        if isinstance(group.task, FalHookTask) and not group.task.is_hook:
+        if isinstance(group.task, FalLocalHookTask) and not group.task.is_hook:
             # Is a before/after script
             yield group.task.build_fal_script(fal_dbt).id
 

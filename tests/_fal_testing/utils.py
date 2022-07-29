@@ -1,8 +1,9 @@
 import os
+import inspect
 from pathlib import Path
-from functools import partial
 
-def create_artifact(context, suffix):
+
+def create_artifact(context, suffix, additional_data=None):
     model_name = context.current_model.name
     model_status = context.current_model.status
 
@@ -12,18 +13,21 @@ def create_artifact(context, suffix):
     output = f"Model name: {model_name}"
     output += f"\nStatus: {model_status}"
     output += f"\nModel dataframe name: {model_name}"
+    if additional_data:
+        output += f"\n{additional_data}"
     temp_file.write_text(output)
 
 
-def create_model_artifact(context):
-    create_artifact(context, ".txt")
+def create_model_artifact(context, additional_data=None):
+    create_artifact(context, ".txt", additional_data)
 
 
-def create_script_artifact(context, prompt):
-    create_artifact(context, f".{prompt}.txt")
+def create_script_artifact(context, prompt, additional_data=None):
+    create_artifact(context, f".{prompt}.txt", additional_data)
 
 
-create_before_script_artifact = partial(create_script_artifact, prompt="before")
-create_after_script_artifact = partial(create_script_artifact, prompt="after")
-create_pre_hook_artifact = partial(create_script_artifact, prompt="pre_hook")
-create_post_hook_artifact = partial(create_script_artifact, prompt="post_hook")
+def create_dynamic_artifact(context, additional_data=None):
+    _, outer_frame, *_ = inspect.stack()
+    return create_script_artifact(
+        context, Path(outer_frame.filename).stem, additional_data
+    )

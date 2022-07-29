@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalHookTask, FalModelTask
+from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalLocalHookTask, FalModelTask
 from fal.utils import DynamicIndexProvider
 
 @dataclass
@@ -84,7 +84,7 @@ def test_fal_model_task_when_dbt_succeeds(mocker, return_code):
 
 @pytest.mark.parametrize("return_code", [SUCCESS, FAILURE])
 def test_fal_hook(mocker, return_code):
-    task = FalHookTask("something.py", bound_model=FakeModel("model"))
+    task = FalLocalHookTask("something.py", bound_model=FakeModel("model"))
     task.set_run_index(DynamicIndexProvider())
 
     fal_dbt = FakeFalDbt("/test")

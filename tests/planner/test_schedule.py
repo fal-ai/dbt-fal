@@ -138,7 +138,7 @@ def test_scheduler_task_separation(graph_info):
         )
     )
     assert all_post_hooks == {
-        post_hook
+        post_hook.path
         for properties in graph.nodes.values()
         for post_hook in properties.get("post_hook", [])
     }

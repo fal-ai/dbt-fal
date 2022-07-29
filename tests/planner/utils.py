@@ -14,6 +14,7 @@ from fal.planner.plan import (
     ScriptConnectedGraph,
 )
 from fal.planner.schedule import schedule_graph
+from fal.fal_script import LocalHook
 
 
 class ModelDict(defaultdict):
@@ -27,6 +28,12 @@ def to_graph(data: list[tuple[str, dict[str, Any]]]) -> nx.DiGraph:
     nodes, edges = [], []
     for node, _properties in data:
         properties = _properties.copy()
+        for hook_type in ["pre_hook", "post_hook"]:
+            if hook_type in properties:
+                properties[hook_type] = [
+                    LocalHook(path) for path in properties[hook_type]
+                ]
+
         edges.extend((node, edge) for edge in properties.pop("to", []))
         nodes.append((node, properties))
 

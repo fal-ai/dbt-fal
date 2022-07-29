@@ -3,7 +3,17 @@ import os.path
 import re
 from dataclasses import dataclass, field
 from functools import partialmethod
-from typing import Dict, Iterable, List, Any, Optional, Tuple, Sequence, Union
+from typing import (
+    Dict,
+    Iterable,
+    List,
+    Any,
+    Optional,
+    Tuple,
+    Sequence,
+    Union,
+    TYPE_CHECKING,
+)
 from pathlib import Path
 
 from dbt.node_types import NodeType
@@ -42,6 +52,9 @@ from decimal import Decimal
 import pandas as pd
 
 from fal.telemetry import telemetry
+
+if TYPE_CHECKING:
+    from fal.fal_script import Hook
 
 
 class FalGeneralException(Exception):
@@ -173,21 +186,26 @@ class DbtModel(_DbtTestableNode):
     def get_depends_on_nodes(self) -> List[str]:
         return self.node.depends_on_nodes
 
-    def _get_hook_paths(self, hook_type: str, keyword: str = "fal") -> List[str]:
+    def _get_hooks(self, hook_type: str, keyword: str = "fal") -> List["Hook"]:
+        from fal.fal_script import create_hook
+
         meta = self.meta or {}
 
         keyword_dict = meta.get(keyword) or {}
         if not isinstance(keyword_dict, dict):
             return []
 
-        hooks = keyword_dict.get(hook_type) or []
-        if not isinstance(hooks, list):
+        raw_hooks = keyword_dict.get(hook_type) or []
+        if not isinstance(raw_hooks, list):
             return []
 
-        return hooks
+        return [
+            create_hook(raw_hook)
+            for raw_hook in raw_hooks
+        ]
 
-    get_pre_hook_paths = partialmethod(_get_hook_paths, hook_type="pre-hook")
-    get_post_hook_paths = partialmethod(_get_hook_paths, hook_type="post-hook")
+    get_pre_hook_paths = partialmethod(_get_hooks, hook_type="pre-hook")
+    get_post_hook_paths = partialmethod(_get_hooks, hook_type="post-hook")
 
     def get_scripts(self, keyword: str, *, before: bool) -> List[str]:
         # sometimes properties can *be* there and still be None

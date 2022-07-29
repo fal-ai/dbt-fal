@@ -195,9 +195,10 @@ class FalModelTask(DBTTask):
 
 
 @dataclass
-class FalHookTask(Task):
+class FalLocalHookTask(Task):
     hook_path: Path
     bound_model: Optional[DbtModel] = None
+    arguments: Optional[Dict[str, Any]] = None
     is_hook: bool = True
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
@@ -206,17 +207,28 @@ class FalHookTask(Task):
 
     @classmethod
     def from_fal_script(cls, script: FalScript):
-        return cls(script.path, script.model, script.is_hook)
+        return cls(
+            script.path,
+            script.model,
+            script.hook_arguments,
+            script.is_hook,
+        )
 
     def build_fal_script(self, fal_dbt: FalDbt):
-        return FalScript(fal_dbt, self.bound_model, str(self.hook_path), self.is_hook)
+        return FalScript(
+            fal_dbt,
+            self.bound_model,
+            str(self.hook_path),
+            hook_arguments=self.arguments,
+            is_hook=self.is_hook,
+        )
 
 
 @dataclass
 class TaskGroup:
     task: Task
-    pre_hooks: List[FalHookTask] = field(default_factory=list)
-    post_hooks: List[FalHookTask] = field(default_factory=list)
+    pre_hooks: List[Task] = field(default_factory=list)
+    post_hooks: List[Task] = field(default_factory=list)
     dependencies: List[TaskGroup] = field(default_factory=list)
     status: Status = Status.PENDING
 
