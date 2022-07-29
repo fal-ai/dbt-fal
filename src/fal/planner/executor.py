@@ -1,5 +1,4 @@
 import argparse
-from email.headerregistry import Group
 from enum import Enum, auto
 from concurrent.futures import (
     FIRST_COMPLETED,
