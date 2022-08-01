@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.7", "3.8", "3.9", "3.10"]
-        dbt: ["1.0.*", "1.1.*"]
+        dbt: ["1.0.*", "1.1.*", "1.2.*"]
         exclude:
           # Only DBT 1.1+ supports Python 3.10 (officially)
           - python: 3.10

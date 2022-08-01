@@ -99,7 +99,7 @@ jobs:
       - id: matrix-step
         shell: python
         run: |
-          OUTPUT=["1.0.*", "1.1.*"]
+          OUTPUT=["1.0.*", "1.1.*", "1.2.*"]
 
           if '${{ github.event_name }}' == 'workflow_dispatch':
             OUTPUT=["latest"]
