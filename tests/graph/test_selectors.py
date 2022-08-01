@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from fal.cli.selectors import ExecutionPlan
 from fal.node_graph import NodeGraph
 import networkx as nx
@@ -131,7 +132,8 @@ def test_create_plan_large_graph_model_levels():
             modelm = _model(f"model{n}_{m}")
             digraph.add_edge(modeln, modelm)
 
-    graph = NodeGraph(digraph, {})
+    node_lookup: Dict[str, Any] = {node: None for node in digraph.nodes}
+    graph = NodeGraph(digraph, node_lookup)
 
     parsed = Namespace(select=["model0+70"])
 
@@ -224,7 +226,11 @@ def _create_test_graph():
     modelA = "model.test_project.modelA"
     modelB = "model.test_project.modelB"
 
+    sourceA = "source.test_project.results.some_source"
+
     graph = nx.DiGraph()
+
+    graph.add_node(sourceA)
 
     graph.add_node(scriptA)
     graph.add_node(scriptB)
@@ -233,9 +239,13 @@ def _create_test_graph():
     graph.add_node(modelA)
     graph.add_node(modelB)
 
+    graph.add_edge(sourceA, modelA)
     graph.add_edge(modelA, scriptA)
     graph.add_edge(modelA, scriptB)
     graph.add_edge(scriptC, modelA)
     graph.add_edge(scriptD, modelA)
 
-    return NodeGraph(graph, {})
+    node_lookup: Dict[str, Any] = {
+        node: None for node in graph.nodes if not node.startswith("source.")
+    }
+    return NodeGraph(graph, node_lookup)
