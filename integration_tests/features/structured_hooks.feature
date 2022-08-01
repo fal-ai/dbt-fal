@@ -16,4 +16,4 @@ Feature: Structured Hooks
     And the script model_a.sub.py output file has the lines
       | Calculation result: 3 |
     And the script model_a.types.py output file has the lines
-      | Types: number=int, text=str, sequence=list, mapping=dict |
+      | Arguments: number=5, text='type', sequence=[1, 2, 3], mapping={'key': 'value'} |
