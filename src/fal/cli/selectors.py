@@ -44,24 +44,23 @@ class ExecutionPlan:
         Creates and ExecutionPlan from the cli arguments
         """
         unique_ids = list(nodeGraph.graph.nodes.keys())
-        ids_to_execute = []
 
-        ids_to_exclude = []
-
+        ids_to_execute = unique_ids
         if parsed.select:
             ids_to_execute = _filter_node_ids(
                 unique_ids, fal_dbt, list(parsed.select), nodeGraph
             )
 
-        else:
-            ids_to_execute.extend(unique_ids)
-
+        ids_to_exclude = []
         if "exclude" in parsed and parsed.exclude:
             ids_to_exclude = _filter_node_ids(
                 unique_ids, fal_dbt, list(parsed.exclude), nodeGraph
             )
 
         ids_to_execute = [i for i in ids_to_execute if i not in ids_to_exclude]
+
+        # Remove non-model nodes (sources, maybe more?) by making sure they are in the node_lookup dict
+        ids_to_execute = [i for i in ids_to_execute if i in nodeGraph.node_lookup]
         return cls(list(set(ids_to_execute)), fal_dbt.project_name)
 
 
