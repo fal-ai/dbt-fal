@@ -253,9 +253,9 @@ def _verify_node_order(context):
             (post_hooks, "post_hook"),
         ]:
             container[name] = [
-                _script_filename(hook, name)
+                _script_filename(hook.path, name)
                 for hook in data.get(hook_type, [])
-                if _script_filename(hook, name) in ordered_nodes
+                if _script_filename(hook.path, name) in ordered_nodes
             ]
 
     assert_precedes = partial(_assert_precedes, ordered_nodes)

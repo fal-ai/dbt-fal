@@ -1,3 +1,4 @@
-from _fal_testing import create_pre_hook_artifact
+from fal.typing import *
+from _fal_testing import create_dynamic_artifact
 
-create_pre_hook_artifact(context)
+create_dynamic_artifact(context)

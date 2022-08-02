@@ -3,7 +3,7 @@ import json
 from typing import Dict, Any, List, Optional, Union, Callable
 from pathlib import Path
 from functools import partial
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from deprecation import deprecated
 
 from faldbt.parse import normalize_path
@@ -14,6 +14,28 @@ from dbt.config.runtime import RuntimeConfig
 from dbt.logger import GLOBAL_LOGGER as logger
 
 from dbt.contracts.graph.parsed import ColumnInfo
+
+
+class Hook:
+    ...
+
+
+@dataclass
+class LocalHook(Hook):
+    path: str
+    arguments: Dict[str, Any] = field(default_factory=dict)
+
+
+def create_hook(raw_hook: Any) -> Hook:
+    if isinstance(raw_hook, str):
+        return LocalHook(raw_hook)
+    elif isinstance(raw_hook, dict):
+        if "path" in raw_hook:
+            return LocalHook(raw_hook["path"], raw_hook.get("with", {}))
+        else:
+            raise ValueError(f"A hook must specify path.")
+
+    raise ValueError(f"Unrecognized hook value: {raw_hook}")
 
 
 @dataclass
@@ -53,6 +75,16 @@ class ContextConfig:
 class Context:
     current_model: Union[CurrentModel, None]
     config: ContextConfig
+    _arguments: Optional[Dict[str, Any]] = field(repr=False, default=None)
+
+    @property
+    def arguments(self) -> Dict[str, Any]:
+        if self._arguments is None:
+            raise ValueError(
+                "'context.arguments' is only accessible from hooks, "
+                "not from scripts/models"
+            )
+        return self._arguments
 
 
 @dataclass(frozen=True, init=False)
@@ -60,8 +92,7 @@ class FalScript:
     model: Optional[DbtModel]
     path: Path
     faldbt: FalDbt
-
-    # TODO: delete this property once we deprecate after scripts
+    hook_arguments: Optional[Dict[str, Any]]
     is_hook: bool
 
     def __init__(
@@ -69,13 +100,29 @@ class FalScript:
         faldbt: FalDbt,
         model: Optional[DbtModel],
         path: str,
+        hook_arguments: Optional[Dict[str, Any]] = None,
         is_hook: bool = False,
     ):
         # Necessary because of frozen=True
         object.__setattr__(self, "model", model)
         object.__setattr__(self, "path", normalize_path(faldbt.scripts_dir, path))
         object.__setattr__(self, "faldbt", faldbt)
+        object.__setattr__(self, "hook_arguments", hook_arguments)
         object.__setattr__(self, "is_hook", is_hook)
+
+    @classmethod
+    def from_hook(cls, faldbt: FalDbt, model: DbtModel, hook: Hook):
+        """
+        Creates a FalScript from a hook
+        """
+        assert isinstance(hook, LocalHook)
+        return cls(
+            faldbt=faldbt,
+            model=model,
+            path=hook.path,
+            hook_arguments=hook.arguments,
+            is_hook=True,
+        )
 
     @classmethod
     def model_script(cls, faldbt: FalDbt, model: DbtModel):
@@ -156,7 +203,7 @@ class FalScript:
     def model_name(self):
         return "<GLOBAL>" if self.is_global else self.model.name  # type: ignore
 
-    def _build_script_context(self):
+    def _build_script_context(self) -> Context:
         context_config = ContextConfig(self.faldbt._config)
         if self.is_global:
             return Context(current_model=None, config=context_config)
@@ -177,7 +224,11 @@ class FalScript:
             meta=meta,
         )
 
-        return Context(current_model=current_model, config=context_config)
+        return Context(
+            current_model=current_model,
+            config=context_config,
+            _arguments=self.hook_arguments,
+        )
 
 
 def _del_key(dict: Dict[str, Any], key: str):
