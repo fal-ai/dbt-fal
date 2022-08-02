@@ -1,0 +1,5 @@
+environments:
+  - name: not-funny
+  - name: funny
+    requirements:
+      - pyjokes==0.6.0

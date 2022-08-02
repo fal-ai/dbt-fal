@@ -38,6 +38,9 @@ sqlalchemy-redshift = "^0.8.9"
 deprecation = "^2.1.0"
 astor = "^0.8.1"
 duckdb-engine = "^0.1.8"
+platformdirs = "^2.5.2"
+virtualenv = "^20.16.2"
+importlib-metadata = "^4.12.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

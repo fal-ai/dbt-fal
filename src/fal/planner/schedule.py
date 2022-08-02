@@ -10,21 +10,29 @@ from fal.planner.tasks import (
     SUCCESS,
     Task,
     DBTTask,
+    FalIsolatedHookTask,
     FalLocalHookTask,
     FalModelTask,
     TaskGroup,
     Status,
 )
 from fal.utils import DynamicIndexProvider
-from fal.fal_script import Hook, LocalHook
+from fal.fal_script import Hook, LocalHook, IsolatedHook
 
 
 def create_hook_task(
-    hook: Hook,
-    bound_model: DbtModelNode,
+    hook: Hook, bound_model: DbtModelNode, bound_model_name: str
 ) -> Task:
-    assert isinstance(hook, LocalHook)
-    return FalLocalHookTask(hook.path, bound_model, hook.arguments)
+    if isinstance(hook, LocalHook):
+        return FalLocalHookTask(hook.path, bound_model, hook.arguments)
+    else:
+        assert isinstance(hook, IsolatedHook)
+        return FalIsolatedHookTask(
+            hook.path,
+            hook.environment,
+            bound_model_name,
+            hook.arguments,
+        )
 
 
 def create_group(
@@ -43,7 +51,8 @@ def create_group(
     else:
         model_ids = [node]
 
-    flow_node = node_graph.get_node(model_ids[-1])
+    bound_model_name = model_ids[-1]
+    flow_node = node_graph.get_node(bound_model_name)
 
     if kind is NodeKind.DBT_MODEL:
         task = DBTTask(model_ids=model_ids)
@@ -65,6 +74,7 @@ def create_group(
         create_hook_task(
             hook=hook,
             bound_model=flow_node.model,
+            bound_model_name=bound_model_name,
         )
         for hook in pre_hooks
     ]
@@ -72,6 +82,7 @@ def create_group(
         create_hook_task(
             hook=hook,
             bound_model=flow_node.model,
+            bound_model_name=bound_model_name,
         )
         for hook in post_hooks
     ]
