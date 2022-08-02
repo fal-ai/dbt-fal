@@ -33,6 +33,7 @@ sqlalchemy-bigquery = "^1.2.2"
 requests = "^2.27.1"
 posthog = "^1.4.5"
 snowflake-sqlalchemy = "^1.3.3"
+snowflake-connector-python = "2.7.9" # 2.7.10 needs pyarrow 8
 sqlalchemy-redshift = "^0.8.9"
 deprecation = "^2.1.0"
 astor = "^0.8.1"
