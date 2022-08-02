@@ -697,34 +697,34 @@ def _snowflake_execute_sql(
     assert adapter.type() == "snowflake"
 
     import snowflake.connector as snowflake
-    from dbt.adapters.snowflake import SnowflakeAdapter, SnowflakeConnectionManager
+    from dbt.adapters.snowflake import SnowflakeConnectionManager
 
     with _existing_or_new_connection(
         adapter, _connection_name("snowflake:execute_sql", sql), new_conn
     ):
         connection_manager: SnowflakeConnectionManager = adapter.connections  # type: ignore
-
         conn: snowflake.SnowflakeConnection = connection_manager.get_thread_connection().handle  # type: ignore
 
-        cur = conn.cursor()
+        with connection_manager.exception_handler("EXECUTE SQL"):
+            cur = conn.cursor()
 
-        cur.execute(sql)
+            cur.execute(sql)
 
-        # Use snowflake-dbt function directly
-        res = connection_manager.get_response(cur)
+            # Use snowflake-dbt function directly
+            res = connection_manager.get_response(cur)
 
-        df = pd.DataFrame({})
-        if fetch:
-            df: pd.DataFrame = cur.fetch_pandas_all()
+            df = pd.DataFrame({})
+            if fetch:
+                df: pd.DataFrame = cur.fetch_pandas_all()
 
-            # HACK: manually parse ARRAY and VARIANT since they are returned as strings right now
-            # Related issue: https://github.com/snowflakedb/snowflake-connector-python/issues/544
-            for desc in cur.description:
-                # 5=VARIANT, 10=ARRAY -- https://docs.snowflake.com/en/user-guide/python-connector-api.html#type-codes
-                if desc.type_code in [5, 10]:
-                    import json
+                # HACK: manually parse ARRAY and VARIANT since they are returned as strings right now
+                # Related issue: https://github.com/snowflakedb/snowflake-connector-python/issues/544
+                for desc in cur.description:
+                    # 5=VARIANT, 10=ARRAY -- https://docs.snowflake.com/en/user-guide/python-connector-api.html#type-codes
+                    if desc.type_code in [5, 10]:
+                        import json
 
-                    df[desc.name] = df[desc.name].map(lambda v: json.loads(v))
+                        df[desc.name] = df[desc.name].map(lambda v: json.loads(v))
 
     return res, df
 
@@ -753,15 +753,22 @@ def _snowflake_write_relation(
         connection_manager: SnowflakeConnectionManager = adapter.connections  # type: ignore
         conn: snowflake.SnowflakeConnection = connection_manager.get_thread_connection().handle  # type: ignore
 
-        success, chunks, num_rows, output = snowflake_pandas.write_pandas(
-            conn,
-            data,
-            table_name=table,
-            database=database,
-            schema=schema,
-            auto_create_table=True,
-            quote_identifiers=False,
-        )
+        with connection_manager.exception_handler("LOAD TABLE"):
+            success, chunks, num_rows, output = snowflake_pandas.write_pandas(
+                conn,
+                data,
+                table_name=table,
+                database=database,
+                schema=schema,
+                auto_create_table=True,
+                quote_identifiers=False,
+            )
+            if not success:
+                # In case the failure does not raise by itself
+                # I have not been able to reproduce such a case
+                from dbt.exceptions import DatabaseException
+
+                raise DatabaseException(output)
 
     # TODO: better AdapterResponse
     return AdapterResponse(str(output), rows_affected=num_rows)
