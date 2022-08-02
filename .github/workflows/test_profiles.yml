@@ -31,6 +31,16 @@ on:
           - snowflake
           - redshift
           - duckdb
+      dbt:
+        description: dbt Adapter to test with
+        required: false
+        default: "latest"
+        type: choice
+        options:
+          - "latest"
+          - "1.0.*"
+          - "1.1.*"
+          - "1.2.*"
 
 jobs:
   matrix-adapter:
@@ -102,7 +112,8 @@ jobs:
           OUTPUT=["1.0.*", "1.1.*"]
 
           if '${{ github.event_name }}' == 'workflow_dispatch':
-            OUTPUT=["latest"]
+            DBT_CHOICE = '${{ github.event.inputs.dbt }}'
+            OUTPUT = [DBT_CHOICE]
 
           import json
           print("::set-output name=list::" + json.dumps(OUTPUT))
