@@ -1,10 +1,13 @@
-from fal.cli import cli
-import tempfile
+import inspect
 import os
-from pathlib import Path
-import shutil
-from dbt.exceptions import DbtProjectError
 import re
+import shutil
+import tempfile
+import pytest
+from pathlib import Path
+
+from dbt.exceptions import DbtProjectError
+from fal.cli import cli
 
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 project_dir = os.path.join(Path.cwd(), "tests/mock")
@@ -315,6 +318,113 @@ def test_target(capfd):
             in captured.out
         )
 
+
+@pytest.mark.parametrize(
+    "broken_schema",
+    [
+        """
+        version: 2
+        models:
+          - name: model_with_scripts
+            meta:
+              fal:
+                scripts:
+                  - path: fal_scripts/test.py
+        """,
+        """
+        version: 2
+        models:
+          - name: model_with_scripts
+            meta:
+              fal:
+                scripts:
+                  after:
+                    - path: fal_scripts/test.py
+        """,
+        """
+        version: 2
+        models:
+          - name: model_with_scripts
+            meta:
+              fal:
+                pre-hook:
+                  - xxx: fal_scripts/test.py
+        """,
+    ],
+)
+def test_broken_schemas(broken_schema, monkeypatch):
+    with ProjectTemporaryDirectory() as tmp_dir:
+        monkeypatch.chdir(tmp_dir)
+        path = Path(tmp_dir)
+
+        for model in (path / "models").rglob("*.sql"):
+            if model.stem != "model_with_scripts":
+                model.unlink()
+
+        with open(path / "models" / "schema.yml", "w") as f:
+            f.write(inspect.cleandoc(broken_schema))
+
+        with pytest.raises((ValueError, TypeError)):
+            cli(
+                [
+                    "fal",
+                    "flow",
+                    "run",
+                    "--project-dir",
+                    tmp_dir,
+                    "--profiles-dir",
+                    profiles_dir,
+                    "--exclude=model_with_scripts",
+                ],
+            )
+
+@pytest.mark.parametrize(
+    "schema",
+    [
+        """
+        version: 2
+        models:
+          - name: model_with_scripts
+            meta:
+              fal:
+                post-hook:
+                  - fal_scripts/test.py
+        """,
+        """
+        version: 2
+        models:
+          - name: model_with_scripts
+            meta:
+              fal:
+                post-hook:
+                  - path: fal_scripts/test.py
+        """,
+    ],
+)
+def test_schemas(schema, monkeypatch):
+    with ProjectTemporaryDirectory() as tmp_dir:
+        monkeypatch.chdir(tmp_dir)
+        path = Path(tmp_dir)
+
+        for model in (path / "models").rglob("*.sql"):
+            if model.stem != "model_with_scripts":
+                model.unlink()
+
+        with open(path / "models" / "schema.yml", "w") as f:
+            f.write(inspect.cleandoc(schema))
+
+        cli(
+            [
+                "fal",
+                "flow",
+                "run",
+                "--project-dir",
+                tmp_dir,
+                "--profiles-dir",
+                profiles_dir,
+                "--exclude=model_with_scripts",
+            ],
+        )
 
 def _run_fal(args, capfd):
     # Given fal arguments, runs fal and returns capfd output
