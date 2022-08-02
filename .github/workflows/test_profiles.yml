@@ -57,10 +57,17 @@ jobs:
           if '${{ github.event_name }}' == 'pull_request':
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
             PR_BRANCH = '${{ github.head_ref }}'.lower()
+            PR_DESCRIPTION = '''${{ github.event.pull_request.body }}'''.lower()
 
             # Only test adapters mentioned in the pull request title or branch.
             # We always test postgres as a sanity check.
-            OUTPUT = [a for a in ADAPTERS if a in PR_TITLE or a in PR_BRANCH or a == 'postgres']
+            OUTPUT = [
+              a for a in ADAPTERS
+              if a == 'postgres' or
+                a in PR_TITLE or
+                a in PR_BRANCH or
+                a in PR_DESCRIPTION
+              ]
 
           elif '${{ github.event_name }}' == 'push':
             OUTPUT = ['postgres']
