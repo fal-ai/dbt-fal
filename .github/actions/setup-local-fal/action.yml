@@ -48,3 +48,7 @@ runs:
           echo "Invalid dbt version to install"
           exit 2
         fi
+
+    - name: List requirements.txt
+      shell: sh
+      run: pip freeze
