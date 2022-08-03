@@ -241,6 +241,7 @@ class FalIsolatedHookTask(Task):
                 arguments=self.arguments,
                 bound_model_name=self.bound_model_name,
                 run_index=self.run_index,
+                disable_logging=args.disable_logging,
             )
 
 

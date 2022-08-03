@@ -1,22 +1,11 @@
-from re import L
-from logbook import StreamHandler
 import json
 import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Any, Dict
+from fal.cli.cli import reconfigure_logging
+from dbt.logger import log_manager
 
-
-def reconfigure_handlers():
-    from logbook import INFO, StreamHandler
-    from dbt.logger import GLOBAL_LOGGER as logger
-
-    # Reconfigure DBT's log handlers to output to
-    # stdout so we can stream it back to the parent
-    # process.
-    logger.disabled = False
-    logger.handlers.append(StreamHandler(sys.stdout))
-    logger.level = INFO
 
 def run_fal_hook(
     path: str,
@@ -24,6 +13,7 @@ def run_fal_hook(
     fal_dbt_config: Dict[str, Any],
     arguments: Dict[str, Any],
     run_index: int,
+    disable_logging: bool,
 ) -> None:
     from fal.node_graph import DbtModelNode, NodeGraph
     from fal.planner.tasks import FalLocalHookTask
@@ -38,7 +28,9 @@ def run_fal_hook(
     task._run_index = run_index
 
     dummy_namespace = Namespace()
-    return task.execute(dummy_namespace, fal_dbt)
+    reconfigure_logging(disable_logging=disable_logging)
+    with log_manager.applicationbound():
+        return task.execute(dummy_namespace, fal_dbt)
 
 
 def main() -> None:
