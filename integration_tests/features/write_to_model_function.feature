@@ -32,7 +32,6 @@ Feature: `write_to_model` function
       | my_int 0.0 | my_int 3.0 | size 1 |
 
   @TODO-postgres
-  @TODO-snowflake
   @TODO-duckdb
   @TODO-redshift
   Scenario: Write a datetime to the datawarehouse
@@ -43,10 +42,9 @@ Feature: `write_to_model` function
     Then the following models are calculated:
       | model_with_date.py |
     And the script model_with_date.py output file has the lines:
-      | my_date: 2022-01-01 00:00:00+00:00 |
+      | my_datetime: 2022-01-01t14:50:59+00:00 | my_date: 2022-01-01 | my_time: 14:50:59 |
 
   @TODO-postgres
-  @TODO-snowflake
   @TODO-duckdb
   @TODO-redshift
   Scenario: Write a string and int array to the datawarehouse

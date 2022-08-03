@@ -132,15 +132,18 @@ def _execute_sql(
     config: Optional[RuntimeConfig] = None,
     adapter: Optional[SQLAdapter] = None,
 ) -> Tuple[AdapterResponse, pd.DataFrame]:
-    open_conn = adapter is None
+    new_conn = adapter is None
     if adapter is None:
         adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
 
     if adapter.type() == "bigquery":
-        return _bigquery_execute_sql(adapter, sql, open_conn)
+        return _bigquery_execute_sql(adapter, sql, new_conn)
+
+    if adapter.type() == "snowflake":
+        return _snowflake_execute_sql(adapter, sql, new_conn)
 
     with _existing_or_new_connection(
-        adapter, _connection_name("execute_sql", sql), open_conn
+        adapter, _connection_name("execute_sql", sql), new_conn
     ) as is_new:
         exec_response: Tuple[AdapterResponse, agate.Table] = adapter.execute(
             sql, auto_begin=is_new, fetch=True
@@ -274,14 +277,6 @@ def _build_table_from_parts(
 ) -> BaseRelation:
     from dbt.contracts.relation import Path, RelationType
 
-    if adapter.type() == "snowflake":
-        if database is not None:
-            database = database.lower()
-        if schema is not None:
-            schema = schema.lower()
-        if identifier is not None:
-            identifier = identifier.lower()
-
     path = Path(database, schema, identifier)
 
     # NOTE: assuming we want TABLE relation if not found
@@ -369,17 +364,6 @@ def write_target(
 
     relation = _build_table_from_target(adapter, target)
 
-    if adapter.type() == "bigquery":
-        return _bigquery_write_relation(
-            data,
-            project_dir,
-            profiles_dir,
-            profile_target,
-            relation,
-            mode=WriteModeEnum.APPEND,
-            fields_schema=dtype,
-        )
-
     return _write_relation(
         data, project_dir, profiles_dir, profile_target, relation, dtype=dtype
     )
@@ -396,7 +380,25 @@ def _write_relation(
 ) -> AdapterResponse:
     adapter = _get_adapter(project_dir, profiles_dir, profile_target)
 
-    assert adapter.type() != "bigquery", "Should not have reached here with bigquery"
+    if adapter.type() == "bigquery":
+        return _bigquery_write_relation(
+            data,
+            project_dir,
+            profiles_dir,
+            profile_target,
+            relation,
+            mode=WriteModeEnum.APPEND,
+            fields_schema=dtype,
+        )
+
+    if adapter.type() == "snowflake":
+        return _snowflake_write_relation(
+            data,
+            project_dir,
+            profiles_dir,
+            profile_target,
+            relation,
+        )
 
     database, schema, identifier = (
         relation.database,
@@ -505,12 +507,11 @@ def _replace_relation(
                 create_stmt = (
                     f"create or replace table {original_relation} clone {new_relation}"
                 )
-                _execute_sql(
-                    project_dir,
-                    profiles_dir,
-                    six.text_type(create_stmt).strip(),
-                    profile_target=profile_target,
+                _snowflake_execute_sql(
                     adapter=adapter,
+                    sql=six.text_type(create_stmt).strip(),
+                    new_conn=False,
+                    fetch=False,  # Avoid trying to fetch as pandas
                 )
                 adapter.drop_relation(new_relation)
             else:
@@ -580,9 +581,9 @@ def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
 def _existing_or_new_connection(
     adapter: BaseAdapter,
     name: str,
-    open_conn: bool,  # TODO: open_conn solution feels hacky
+    new_conn: bool,  # TODO: new_conn solution feels hacky
 ) -> Iterator[bool]:
-    if open_conn:
+    if new_conn:
         with adapter.connection_named(name):
             yield True
     else:
@@ -591,18 +592,17 @@ def _existing_or_new_connection(
 
 # Adapter: BigQuery
 def _bigquery_execute_sql(
-    adapter: BaseAdapter, sql: str, open_conn: bool
+    adapter: BaseAdapter, sql: str, new_conn: bool
 ) -> Tuple[AdapterResponse, pd.DataFrame]:
     assert adapter.type() == "bigquery"
 
     import google.cloud.bigquery as bigquery
 
     with _existing_or_new_connection(
-        adapter, _connection_name("bigquery:execute_sql", sql), open_conn
+        adapter, _connection_name("bigquery:execute_sql", sql), new_conn
     ):
-        conection_manager: BaseConnectionManager = adapter.connections  # type: ignore
-        conn = conection_manager.get_thread_connection()
-        client: bigquery.Client = conn.handle  # type: ignore
+        connection_manager: BaseConnectionManager = adapter.connections  # type: ignore
+        client: bigquery.Client = connection_manager.get_thread_connection().handle  # type: ignore
 
         job = client.query(sql)
         df = job.to_dataframe()
@@ -688,3 +688,87 @@ def _bigquery_write_relation(
 
     # TODO: better AdapterResponse
     return AdapterResponse("OK", rows_affected=num_rows)
+
+
+# Adapter: Snowflake
+def _snowflake_execute_sql(
+    adapter: BaseAdapter, sql: str, new_conn: bool, *, fetch: bool = True
+) -> Tuple[AdapterResponse, pd.DataFrame]:
+    assert adapter.type() == "snowflake"
+
+    import snowflake.connector as snowflake
+    from dbt.adapters.snowflake import SnowflakeConnectionManager
+
+    with _existing_or_new_connection(
+        adapter, _connection_name("snowflake:execute_sql", sql), new_conn
+    ):
+        connection_manager: SnowflakeConnectionManager = adapter.connections  # type: ignore
+        conn: snowflake.SnowflakeConnection = connection_manager.get_thread_connection().handle  # type: ignore
+
+        with connection_manager.exception_handler("EXECUTE SQL"):
+            cur = conn.cursor()
+
+            cur.execute(sql)
+
+            # Use snowflake-dbt function directly
+            res = connection_manager.get_response(cur)
+
+            df = pd.DataFrame({})
+            if fetch:
+                df: pd.DataFrame = cur.fetch_pandas_all()
+
+                # HACK: manually parse ARRAY and VARIANT since they are returned as strings right now
+                # Related issue: https://github.com/snowflakedb/snowflake-connector-python/issues/544
+                for desc in cur.description:
+                    # 5=VARIANT, 10=ARRAY -- https://docs.snowflake.com/en/user-guide/python-connector-api.html#type-codes
+                    if desc.type_code in [5, 10]:
+                        import json
+
+                        df[desc.name] = df[desc.name].map(lambda v: json.loads(v))
+
+    return res, df
+
+
+def _snowflake_write_relation(
+    data: pd.DataFrame,
+    project_dir: str,
+    profiles_dir: str,
+    profile_target: str,
+    relation: BaseRelation,
+) -> AdapterResponse:
+    from dbt.adapters.snowflake import SnowflakeAdapter, SnowflakeConnectionManager
+    import snowflake.connector as snowflake
+    import snowflake.connector.pandas_tools as snowflake_pandas
+
+    adapter: SnowflakeAdapter = _get_adapter(project_dir, profiles_dir, profile_target)  # type: ignore
+    assert adapter.type() == "snowflake"
+
+    database: str = relation.database  # type: ignore
+    schema: str = relation.schema  # type: ignore
+    table: str = relation.identifier  # type: ignore
+
+    with adapter.connection_named(
+        _connection_name("snowflake:write_relation", relation, _hash=False)
+    ):
+        connection_manager: SnowflakeConnectionManager = adapter.connections  # type: ignore
+        conn: snowflake.SnowflakeConnection = connection_manager.get_thread_connection().handle  # type: ignore
+
+        with connection_manager.exception_handler("LOAD TABLE"):
+            success, chunks, num_rows, output = snowflake_pandas.write_pandas(
+                conn,
+                data,
+                table_name=table,
+                database=database,
+                schema=schema,
+                auto_create_table=True,
+                quote_identifiers=False,
+            )
+            if not success:
+                # In case the failure does not raise by itself
+                # I have not been able to reproduce such a case
+                from dbt.exceptions import DatabaseException
+
+                raise DatabaseException(output)
+
+    # TODO: better AdapterResponse
+    return AdapterResponse(str(output), rows_affected=num_rows)
