@@ -32,7 +32,7 @@ on:
           - redshift
           - duckdb
       dbt:
-        description: dbt Adapter to test with
+        description: dbt version to test with
         required: false
         default: "latest"
         type: choice
