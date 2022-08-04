@@ -1,0 +1,15 @@
+config:
+  send_anonymous_usage_stats: False
+
+fal_test:
+  target: integration_tests
+  outputs:
+    integration_tests:
+      type: athena
+      # TODO: valid values
+      s3_staging_dir: s3://athena-query-results/dbt/
+      region_name: eu-west-1
+      schema: dbt
+      database: awsdatacatalog
+      aws_profile_name: my-profile
+      work_group: my-workgroup
