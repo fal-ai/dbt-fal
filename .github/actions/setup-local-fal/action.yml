@@ -32,8 +32,7 @@ runs:
     - name: Install fal
       shell: sh
       run: |
-        poetry build
-        pip install dist/fal-0.1.0-py3-none-any.whl
+        pip install -e .
 
     - name: Install dbt
       shell: bash
