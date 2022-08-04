@@ -374,6 +374,7 @@ def _clean_args_list(args: List[str]) -> List[str]:
         "--threads",
         "--thread",
         "--state",
+        "--full-refresh",
         "-s",
         "--select",
         "-m",
