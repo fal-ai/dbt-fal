@@ -546,10 +546,6 @@ def _drop_relation(
 
 def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
     url_string = f"{adapter.type()}://"
-    if adapter.type() == "bigquery":
-        assert database is not None
-        url_string = f"bigquery://{database}"
-
     if adapter.type() == "postgres":
         url_string = "postgresql://"
 
