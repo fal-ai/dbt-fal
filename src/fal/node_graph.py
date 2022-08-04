@@ -117,7 +117,8 @@ class NodeGraph:
 
             # Add dbt model dependencies
             for dbt_dependency_unique_id in model_fal_node.model.get_depends_on_nodes():
-                graph.add_node(dbt_dependency_unique_id, kind=NodeKind.DBT_MODEL)
+                if dbt_dependency_unique_id not in node_lookup:
+                    graph.add_node(dbt_dependency_unique_id, kind=NodeKind.DBT_MODEL)
                 graph.add_edge(dbt_dependency_unique_id, model_fal_node.unique_id)
 
             _add_after_scripts(

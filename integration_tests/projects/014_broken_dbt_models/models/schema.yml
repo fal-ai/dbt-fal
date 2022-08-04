@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: get_data
+  - name: regular_model
+    meta:
+      fal:
+        post-hook:
+          - post_hook.py
+  - name: process_data
