@@ -1,3 +1,6 @@
+-- To test full-refresh
+{{ config(materialized='incremental') }}
+
 WITH data AS (
     SELECT 
         my_int,

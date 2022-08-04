@@ -126,6 +126,28 @@ def test_flow_run_with_defer(capfd):
         assert len(found) == 7
 
 
+def test_flow_run_with_full_refresh(capfd):
+    with ProjectTemporaryDirectory() as tmp_dir:
+        captured = _run_fal(
+            [
+                # fmt: off
+                "flow", "run",
+                "--full-refresh",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                # fmt: on
+            ],
+            capfd,
+        )
+
+        executing_re = re.compile(
+            r": dbt run --threads 1 --project-dir [\w\d\/\-\_]+ --profiles-dir [\w\d\/\-\_]+tests/mock/mockProfile --full-refresh"
+        )
+        found = executing_re.findall(captured.out)
+        # We run each model separately
+        assert len(found) == 7
+
+
 def test_flow_run_with_vars(capfd):
     with ProjectTemporaryDirectory() as tmp_dir:
         captured = _run_fal(
