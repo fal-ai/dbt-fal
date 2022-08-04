@@ -57,22 +57,26 @@ def _unique_ids_to_model_names(id_list: List[str]) -> List[str]:
     return list(map(_unique_id_to_model_name, id_list))
 
 
-def _mark_dbt_nodes_status(
+def _mark_dbt_nodes_status_and_response(
     fal_dbt: FalDbt,
     status: NodeStatus,
     dbt_node: Optional[str] = None,
+    adapter_response: Optional[dict] = None,
 ):
     for model in fal_dbt.models:
         if dbt_node is not None:
             if model.unique_id == dbt_node:
                 model.status = status
+
+                if adapter_response is not None:
+                    model.adapter_response = adapter_response
         else:
             model.status = status
 
 
-def _map_cli_output_model_statuses(
+def _map_cli_output_model_results(
     run_results: Dict[Any, Any]
-) -> Iterator[Tuple[str, NodeStatus]]:
+) -> Iterator[Tuple[str, NodeStatus, Optional[dict]]]:
     if not isinstance(run_results.get("results"), list):
         raise Exception("Could not read dbt run results")
 
@@ -80,7 +84,9 @@ def _map_cli_output_model_statuses(
         if not result.get("unique_id") or not result.get("status"):
             continue
 
-        yield result["unique_id"], NodeStatus(result["status"])
+        yield result["unique_id"], NodeStatus(result["status"]), result.get(
+            "adapter_response"
+        )
 
 
 def _run_script(script: FalScript) -> Dict[str, Any]:
@@ -157,8 +163,10 @@ class DBTTask(Task):
             args, model_names, fal_dbt.target_path, self.run_index
         )
 
-        for node, status in _map_cli_output_model_statuses(output.run_results):
-            _mark_dbt_nodes_status(fal_dbt, status, node)
+        for node, status, adapter_response in _map_cli_output_model_results(
+            output.run_results
+        ):
+            _mark_dbt_nodes_status_and_response(fal_dbt, status, node, adapter_response)
 
         return output.return_code
 
@@ -190,7 +198,7 @@ class FalModelTask(DBTTask):
         script_result = run_script(bound_script, self.model_script_run_index)
 
         status = NodeStatus.Success if script_result == SUCCESS else NodeStatus.Error
-        _mark_dbt_nodes_status(fal_dbt, status, self.bound_model.unique_id)
+        _mark_dbt_nodes_status_and_response(fal_dbt, status, self.bound_model.unique_id)
         return script_result
 
 
