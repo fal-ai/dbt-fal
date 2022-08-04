@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import argparse
+from os import environ
 import threading
-import os
 import json
 from pathlib import Path
 import sys
@@ -17,6 +17,7 @@ from dbt.logger import GLOBAL_LOGGER as logger
 
 from fal.node_graph import FalScript
 from fal.utils import print_run_info, DynamicIndexProvider
+from faldbt.parse import get_environment
 from faldbt.project import DbtModel, FalDbt, NodeStatus
 
 from datetime import datetime, timezone
@@ -222,6 +223,26 @@ class FalLocalHookTask(Task):
             hook_arguments=self.arguments,
             is_hook=self.is_hook,
         )
+
+
+@dataclass
+class FalIsolatedHookTask(Task):
+    hook_path: Path
+    environment_name: str
+    bound_model_name: str
+    arguments: Optional[Dict[str, Any]] = None
+
+    def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
+        environment = get_environment(fal_dbt.project_dir, self.environment_name)
+        with environment.setup() as hook_runner:
+            return hook_runner(
+                fal_dbt=fal_dbt,
+                hook_path=self.hook_path,
+                arguments=self.arguments,
+                bound_model_name=self.bound_model_name,
+                run_index=self.run_index,
+                disable_logging=args.disable_logging,
+            )
 
 
 @dataclass

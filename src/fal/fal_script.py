@@ -26,12 +26,26 @@ class LocalHook(Hook):
     arguments: Dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class IsolatedHook(Hook):
+    path: str
+    environment: str
+    arguments: Dict[str, Any] = field(default_factory=dict)
+
+
 def create_hook(raw_hook: Any) -> Hook:
     if isinstance(raw_hook, str):
         return LocalHook(raw_hook)
     elif isinstance(raw_hook, dict):
         if "path" in raw_hook:
-            return LocalHook(raw_hook["path"], raw_hook.get("with", {}))
+            if "environment" in raw_hook:
+                return IsolatedHook(
+                    raw_hook["path"],
+                    raw_hook["environment"],
+                    raw_hook.get("with", {}),
+                )
+            else:
+                return LocalHook(raw_hook["path"], raw_hook.get("with", {}))
         else:
             raise ValueError(f"A hook must specify path.")
 

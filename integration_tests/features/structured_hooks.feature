@@ -17,3 +17,15 @@ Feature: Structured Hooks
       | Calculation result: 3 |
     And the script model_a.types.py output file has the lines
       | Arguments: number=5, text='type', sequence=[1, 2, 3], mapping={'key': 'value'} |
+
+  Scenario: Run isolated hooks
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_b
+      """
+    Then the following models are calculated:
+      | model_b |
+    And the following scripts are ran:
+      | model_b.local_hook.py | model_b.funny_hook.py | model_b.check_imports.py |
+    And the script model_b.funny_hook.py output file has the lines
+      | PyJokes version: 0.6.0 |

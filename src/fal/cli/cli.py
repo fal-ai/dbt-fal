@@ -21,21 +21,25 @@ def cli(argv: List[str] = sys.argv):
         telemetry.shutdown()
 
 
-@telemetry.log_call("cli")
-def _cli(argv: List[str]):
-    parsed = parse_args(argv[1:])
-
+def reconfigure_logging(disable_logging: bool = False) -> None:
     # Disabling the dbt.logger.DelayedFileHandler manually
     # since we do not use the new dbt logging system
     # This fixes issue https://github.com/fal-ai/fal/issues/97
     log_manager.set_path(None)
 
-    if parsed.disable_logging:
+    if disable_logging:
         logger.disable()
     else:
         # Re-enabling old API of logger
         # TODO: Move to new logging system
         logger.enable()
+
+
+@telemetry.log_call("cli")
+def _cli(argv: List[str]):
+    parsed = parse_args(argv[1:])
+
+    reconfigure_logging(disable_logging=parsed.disable_logging)
 
     with log_manager.applicationbound():
         if parsed.debug:

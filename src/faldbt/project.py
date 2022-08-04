@@ -199,10 +199,7 @@ class DbtModel(_DbtTestableNode):
         if not isinstance(raw_hooks, list):
             return []
 
-        return [
-            create_hook(raw_hook)
-            for raw_hook in raw_hooks
-        ]
+        return [create_hook(raw_hook) for raw_hook in raw_hooks]
 
     get_pre_hook_paths = partialmethod(_get_hooks, hook_type="pre-hook")
     get_post_hook_paths = partialmethod(_get_hooks, hook_type="post-hook")
@@ -435,6 +432,16 @@ class FalDbt:
         )
 
         self.features = self._find_features()
+
+    def _serialize(self) -> Dict[str, Any]:
+        # All the information required for re-creating the project
+        return {
+            "project_dir": self.project_dir,
+            "profiles_dir": self.profiles_dir,
+            "threads": self.threads,
+            "keyword": self.keyword,
+            "profile_target": self._profile_target,
+        }
 
     @property
     def source_paths(self) -> List[str]:

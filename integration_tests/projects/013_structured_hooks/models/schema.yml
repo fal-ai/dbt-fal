@@ -29,3 +29,17 @@ models:
                 - 3
               mapping:
                 key: value
+
+  - name: model_b
+    meta:
+      fal:
+        pre-hook:
+          - path: local_hook.py
+          - path: funny_hook.py
+            environment: funny
+        post-hook:
+          - path: check_imports.py
+            environment: not-funny
+            with:
+              import: pyjokes
+              expected_success: false
