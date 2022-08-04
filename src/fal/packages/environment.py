@@ -40,10 +40,8 @@ _BASE_CACHE_DIR.mkdir(exist_ok=True)
 _BASE_VENV_DIR = _BASE_CACHE_DIR / "venvs"
 _BASE_VENV_DIR.mkdir(exist_ok=True)
 
-# TODO: for dev versions, we need a better solution.
-_IS_DEV_VERSION = True
 
-# This is from DBT itself
+# NOTE: This is from dbt https://github.com/dbt-labs/dbt-core/blob/7bd861a3514f70b64d5a6c642b4204b50d0d3f7e/core/dbt/version.py#L209-L236
 def _get_dbt_plugins_info() -> Iterator[Tuple[str, str]]:
     for plugin_name in _get_adapter_plugin_names():
         if plugin_name == "core":
@@ -76,12 +74,20 @@ def _get_adapter_plugin_names() -> Iterator[str]:
 def _get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
     import pkg_resources
     import dbt.version
+    from dbt.semver import VersionSpecifier
 
-    # TODO: for dev versions, we need a better solution.
-    if _IS_DEV_VERSION:
-        yield "git+https://github.com/fal-ai/fal@batuhan/fea-318-use-the-environment-option-for-local", None
+    raw_fal_version = pkg_resources.get_distribution("fal").version
+    fal_version = VersionSpecifier.from_version_string(raw_fal_version)
+    if fal_version.prerelease:
+        import fal
+
+        # If this is a development version, we'll install
+        # the current fal itself.
+        base_dir = Path(fal.__file__).parent.parent.parent
+        assert (base_dir / ".git").exists()
+        yield str(base_dir), None
     else:
-        yield "fal", pkg_resources.get_distribution("fal").version
+        yield "fal", raw_fal_version
 
     yield "dbt-core", dbt.version.__version__
 
