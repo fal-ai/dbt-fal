@@ -39,7 +39,6 @@ virtualenv = "^20.16.2"
 # Adapters
 
 ## snowflake
-snowflake-sqlalchemy = { version = "^1.3.3", optional = true }
 snowflake-connector-python = { version = "2.7.9", optional = true } # 2.7.10 needs pyarrow 8
 
 ## redshift
@@ -50,7 +49,7 @@ duckdb-engine = { version = "^0.1.8", optional = true }
 
 [tool.poetry.extras]
 postgres = []
-snowflake = ["snowflake-sqlalchemy", "snowflake-connector-python"]
+snowflake = ["snowflake-connector-python"]
 bigquery = []
 redshift = ["sqlalchemy-redshift"]
 duckdb = ["duckdb-engine"]
