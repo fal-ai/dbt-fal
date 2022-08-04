@@ -32,7 +32,7 @@ runs:
     - name: Install fal
       shell: sh
       run: |
-        pip install -e .
+        pip install -e '.[${{ inputs.adapter }}]'
 
     - name: Install dbt
       shell: bash
