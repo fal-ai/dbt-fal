@@ -89,9 +89,16 @@ def _run_script(script: FalScript) -> Dict[str, Any]:
     # DBT seems to be dealing with only UTC times
     # so we'll follow that convention.
     started_at = datetime.now(tz=timezone.utc)
+
+    try:
+        from fal_runtime.client import runtime_run
+    except:
+        def runtime_run(script: FalScript):
+            script.exec()
+
     try:
         with _modify_path(script.faldbt):
-            script.exec()
+            runtime_run(script)
     except:
         logger.error("Error in script {}:\n{}", script.id, traceback.format_exc())
         # TODO: what else to do?
