@@ -35,8 +35,24 @@ def run_command_step(context):
 
 
 @given("the project {project}")
-def set_project_folder(context, project):
-    context.base_dir = reduce(os.path.join, [os.getcwd(), "projects", project])
+def set_project_folder(context, project: str):
+    project_path = Path.cwd() / "projects" / project
+    if not project_path.exists() or not project_path.is_dir():
+        extra = ""
+        try:
+            # Try to find the correct option
+            match = re.match("^(\\d+)_", project)
+
+            if match:
+                project_number = match.group(1)
+                projects_dir = Path(__file__).parent.parent.parent / "projects"
+                found = [r.name for r in projects_dir.glob(project_number + "_*")]
+                if found:
+                    extra = "Is it " + " or ".join(found) + " ?"
+        finally:
+            raise ValueError(f"Project {project} not found. {extra}")
+
+    context.base_dir = str(project_path)
     context.temp_dir = tempfile.TemporaryDirectory()
     os.environ["temp_dir"] = context.temp_dir.name
     os.environ["project_dir"] = context.base_dir
