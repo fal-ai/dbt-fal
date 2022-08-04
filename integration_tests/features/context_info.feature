@@ -1,6 +1,11 @@
 Feature: Context object information
   Background: Project Setup
     Given the project 005_functions_and_variables
+    # To make sure all data is there for dbt stage
+    When the following shell command is invoked:
+      """
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir
+      """
 
   Scenario: Get rows affected in post hook for fal flow run
     When the following command is invoked:
@@ -15,11 +20,7 @@ Feature: Context object information
       | adapter response: rows affected 1 |
 
   Scenario: Get rows affected in post hook for fal run
-    When the following shell command is invoked:
-      """
-      dbt run --profiles-dir $profilesDir --project-dir $baseDir --select some_model
-      """
-    And the following command is invoked:
+    When the following command is invoked:
       """
       fal run --profiles-dir $profilesDir --project-dir $baseDir --select some_model --scripts context.py
       """
