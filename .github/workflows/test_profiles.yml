@@ -31,6 +31,7 @@ on:
           - snowflake
           - redshift
           - duckdb
+          - athena
 
       python:
         description: Python version to test with
@@ -73,6 +74,7 @@ jobs:
           EXTRA_OPTIONS = [
             'redshift',
             'duckdb',
+            'athena',
           ]
           OUTPUT = OPTIONS
 
