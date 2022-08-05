@@ -30,6 +30,7 @@ models:
               mapping:
                 key: value
 
+  # Hook with environment overrides
   - name: model_b
     meta:
       fal:
@@ -43,3 +44,49 @@ models:
             with:
               import: pyjokes
               expected_success: false
+
+  # A regular DBT model on a new environment
+  - name: model_c
+    meta:
+      fal:
+        environment: pyjokes-0.6.0
+        post-hook:
+          - path: check_imports.py
+            with:
+              import: pyjokes
+              expected_success: true
+
+  # A Python model on an environment w/pyjokes==0.5.0
+  - name: model_d
+    meta:
+      fal:
+        environment: pyjokes-0.5.0
+        post-hook:
+          - path: check_imports.py
+            with:
+              import: pyjokes
+              expected_success: true
+
+  # A Python model on an environment w/pyjokes==0.6.0
+  - name: model_e
+    meta:
+      fal:
+        environment: pyjokes-0.6.0
+        pre-hook:
+          # We override the default environment here
+          # for only this hook, and expect the import
+          # of pyjokes to fail under 'not-funny' environment.
+          - path: check_imports.py
+            environment: not-funny
+            with:
+              import: pyjokes
+              expected_success: false
+
+          # But all other hooks should still be able to
+          # access to the model's environment
+          - joke_version.py
+
+          # And they can even customize the version
+          # with another overwrite
+          - path: funny_hook.py
+            environment: pyjokes-0.5.0

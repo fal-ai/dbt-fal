@@ -1,6 +1,7 @@
 import networkx as nx
 import pytest
 
+from pathlib import Path
 from fal.node_graph import NodeKind
 from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalModelTask
 from fal.planner.tasks import DBTTask, FalModelTask, Status
@@ -138,7 +139,7 @@ def test_scheduler_task_separation(graph_info):
         )
     )
     assert all_post_hooks == {
-        post_hook.path
+        Path(post_hook.path)
         for properties in graph.nodes.values()
         for post_hook in properties.get("post_hook", [])
     }

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import Any
+from pathlib import Path
 
 import networkx as nx
 
@@ -20,6 +21,12 @@ from fal.fal_script import LocalHook
 class ModelDict(defaultdict):
     def get(self, key):
         return super().__getitem__(key)
+
+
+class FakeDbtModel:
+    @property
+    def python_model(self):
+        return Path("...")
 
 
 def to_graph(data: list[tuple[str, dict[str, Any]]]) -> nx.DiGraph:
@@ -64,5 +71,7 @@ def to_scheduler(graph):
     if isinstance(graph, list):
         graph = to_graph(graph)
     new_graph = plan_graph(graph, to_plan(graph))
-    node_graph = NodeGraph(graph, ModelDict(lambda: DbtModelNode("...", None)))
+    node_graph = NodeGraph(
+        graph, ModelDict(lambda: DbtModelNode("...", FakeDbtModel()))
+    )
     return schedule_graph(new_graph, node_graph)

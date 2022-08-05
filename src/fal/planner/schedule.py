@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Iterator, List
 
 import networkx as nx
 
+from faldbt.project import DbtModel
 from fal.node_graph import DbtModelNode, NodeGraph, NodeKind, ScriptNode
 from fal.planner.tasks import (
     SUCCESS,
@@ -15,23 +17,32 @@ from fal.planner.tasks import (
     FalModelTask,
     TaskGroup,
     Status,
+    HookType,
 )
 from fal.utils import DynamicIndexProvider
-from fal.fal_script import Hook, LocalHook, IsolatedHook
+from fal.fal_script import Hook, LocalHook, IsolatedHook, create_hook
 
 
 def create_hook_task(
-    hook: Hook, bound_model: DbtModelNode, bound_model_name: str
+    hook: Hook,
+    bound_model: DbtModel,
+    hook_type: HookType = HookType.HOOK,
 ) -> Task:
     if isinstance(hook, LocalHook):
-        return FalLocalHookTask(hook.path, bound_model, hook.arguments)
+        return FalLocalHookTask(
+            Path(hook.path),
+            bound_model=bound_model,
+            arguments=hook.arguments,
+            hook_type=hook_type,
+        )
     else:
         assert isinstance(hook, IsolatedHook)
         return FalIsolatedHookTask(
-            hook.path,
-            hook.environment,
-            bound_model_name,
-            hook.arguments,
+            Path(hook.path),
+            bound_model=bound_model,
+            environment_name=hook.environment_name,
+            arguments=hook.arguments,
+            hook_type=hook_type,
         )
 
 
@@ -58,7 +69,18 @@ def create_group(
         task = DBTTask(model_ids=model_ids)
     elif kind is NodeKind.FAL_MODEL:
         assert isinstance(flow_node, DbtModelNode)
-        task = FalModelTask(model_ids=model_ids, bound_model=flow_node.model)
+        model_script = create_hook(
+            {
+                "path": str(flow_node.model.python_model),
+                "environment": properties.get("environment"),
+            }
+        )
+        model_script_task = create_hook_task(
+            model_script,
+            flow_node.model,
+            hook_type=HookType.MODEL_SCRIPT,
+        )
+        task = FalModelTask(model_ids=model_ids, script=model_script_task)
     else:
         assert kind is NodeKind.FAL_SCRIPT
         assert isinstance(flow_node, ScriptNode)
@@ -71,20 +93,12 @@ def create_group(
         assert isinstance(flow_node, DbtModelNode)
 
     pre_hook_tasks = [
-        create_hook_task(
-            hook=hook,
-            bound_model=flow_node.model,
-            bound_model_name=bound_model_name,
-        )
-        for hook in pre_hooks
+        create_hook_task(hook=pre_hook, bound_model=flow_node.model)
+        for pre_hook in pre_hooks
     ]
     post_hook_tasks = [
-        create_hook_task(
-            hook=hook,
-            bound_model=flow_node.model,
-            bound_model_name=bound_model_name,
-        )
-        for hook in post_hooks
+        create_hook_task(hook=post_hook, bound_model=flow_node.model)
+        for post_hook in post_hooks
     ]
 
     return TaskGroup(task, pre_hooks=pre_hook_tasks, post_hooks=post_hook_tasks)
