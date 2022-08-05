@@ -25,6 +25,7 @@ from dbt.contracts.graph.manifest import (
     MaybeParsedSource,
     Disabled,
 )
+from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.results import (
     RunResultsArtifact,
     RunResultOutput,
@@ -158,6 +159,8 @@ class DbtSource(_DbtTestableNode):
 class DbtModel(_DbtTestableNode):
     python_model: Optional[Path] = field(default=None)
 
+    _adapter_response: Optional[AdapterResponse] = field(default=None)
+
     def __repr__(self):
         attrs = ["name", "alias", "unique_id", "columns", "tests", "status"]
         props = ", ".join([f"{item}={repr(getattr(self, item))}" for item in attrs])
@@ -179,6 +182,16 @@ class DbtModel(_DbtTestableNode):
             return self.node.config.meta
         elif hasattr(self.node, "meta"):
             return self.node.meta
+
+    def _get_adapter_response(self):
+        return self._adapter_response
+
+    def _set_adapter_response(self, adapter_response: Optional[dict]):
+        self._adapter_response = (
+            AdapterResponse.from_dict(adapter_response) if adapter_response else None
+        )
+
+    adapter_response = property(_get_adapter_response, _set_adapter_response)
 
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
@@ -282,15 +295,19 @@ class DbtManifest:
         freshness_results: DbtFreshnessExecutionResult,
         generated_models: Dict[str, Path],
     ) -> Tuple[List[DbtModel], List[DbtSource], List[DbtTest]]:
-        status_map = {r.unique_id: r.status for r in run_results.results}
+        results_map = {r.unique_id: r for r in run_results.results}
 
         tests: List[DbtTest] = []
         tests_dict: Dict[Union[Tuple[str, str], str], List[DbtTest]] = defaultdict(list)
         for node in self.get_test_nodes():
             test = DbtTest(
                 node=node,
-                _status=status_map.get(node.unique_id, NodeStatus.Skipped).value,
             )
+
+            result = results_map.get(node.unique_id)
+            if result:
+                test.status = result.status.value
+
             tests.append(test)
 
             if test.model:
@@ -302,10 +319,15 @@ class DbtManifest:
         for node in self.get_model_nodes():
             model = DbtModel(
                 node=node,
-                _status=status_map.get(node.unique_id, NodeStatus.Skipped).value,
                 tests=tests_dict[node.name],
                 python_model=generated_models.get(node.name),
             )
+
+            result = results_map.get(node.unique_id)
+            if result:
+                model.status = result.status.value
+                model.adapter_response = result.adapter_response
+
             models.append(model)
 
         source_freshness_map = {r.unique_id: r for r in freshness_results.results}
@@ -314,10 +336,14 @@ class DbtManifest:
         for node in self.get_source_nodes():
             source = DbtSource(
                 node=node,
-                _status=status_map.get(node.unique_id, NodeStatus.Skipped).value,
                 tests=tests_dict[(node.source_name, node.name)],
                 freshness=source_freshness_map.get(node.unique_id),
             )
+
+            result = results_map.get(node.unique_id)
+            if result:
+                source.status = result.status.value
+
             sources.append(source)
 
         return models, sources, tests

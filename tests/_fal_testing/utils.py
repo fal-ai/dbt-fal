@@ -4,8 +4,9 @@ from pathlib import Path
 
 
 def create_artifact(context, suffix, additional_data=None):
-    model_name = context.current_model.name
-    model_status = context.current_model.status
+    model = context.current_model
+    model_name = model.name if model else "GLOBAL"
+    model_status = model.status if model else None
 
     temp_dir = Path(os.environ["temp_dir"])
     temp_file = (temp_dir / model_name).with_suffix(suffix)

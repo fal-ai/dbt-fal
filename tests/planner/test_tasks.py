@@ -5,6 +5,7 @@ import pytest
 from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalLocalHookTask, FalModelTask
 from fal.utils import DynamicIndexProvider
 
+
 @dataclass
 class FakeCLIOutput:
     return_code: int
@@ -32,7 +33,7 @@ def mock_dbt_run(mocker, return_code):
         return_value=FakeCLIOutput(return_code, {}),
     )
     mocker.patch(
-        "fal.planner.tasks._map_cli_output_model_statuses",
+        "fal.planner.tasks._map_cli_output_model_results",
         return_value=[],
     )
 

@@ -29,6 +29,8 @@ models:
         scripts:
           after:
             - fal_scripts/write_to_source_twice.py
+        post-hook:
+          - fal_scripts/context.py
 
   - name: other_model
     meta:

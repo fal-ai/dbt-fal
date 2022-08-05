@@ -53,6 +53,13 @@ def create_hook(raw_hook: Any) -> Hook:
 
 
 @dataclass
+class CurrentAdapterResponse:
+    message: str
+    code: Optional[str]
+    rows_affected: Optional[int]
+
+
+@dataclass
 class CurrentModel:
     name: str
     alias: str
@@ -60,6 +67,7 @@ class CurrentModel:
     columns: Dict[str, ColumnInfo]
     tests: List[Any]
     meta: Dict[Any, Any]
+    adapter_response: Optional[CurrentAdapterResponse]
 
 
 @dataclass
@@ -224,10 +232,18 @@ class FalScript:
 
         model: DbtModel = self.model  # type: ignore
 
-        meta = model.meta
+        meta = model.meta or {}
         _del_key(meta, self.faldbt.keyword)
 
         tests = _process_tests(model.tests)
+
+        current_adapter_response = None
+        if model.adapter_response:
+            current_adapter_response = CurrentAdapterResponse(
+                message=str(model.adapter_response),
+                code=model.adapter_response.code,
+                rows_affected=model.adapter_response.rows_affected,
+            )
 
         current_model = CurrentModel(
             name=model.name,
@@ -236,6 +252,7 @@ class FalScript:
             columns=model.columns,
             tests=tests,
             meta=meta,
+            adapter_response=current_adapter_response,
         )
 
         return Context(
