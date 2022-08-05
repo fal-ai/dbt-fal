@@ -13,10 +13,11 @@ def run_fal_hook(
     fal_dbt_config: Dict[str, Any],
     arguments: Dict[str, Any],
     run_index: int,
+    hook_type: str,
     disable_logging: bool,
 ) -> None:
     from fal.node_graph import DbtModelNode, NodeGraph
-    from fal.planner.tasks import FalLocalHookTask
+    from fal.planner.tasks import FalLocalHookTask, HookType
     from faldbt.project import FalDbt
 
     fal_dbt = FalDbt(**fal_dbt_config)
@@ -24,7 +25,16 @@ def run_fal_hook(
     flow_node = node_graph.get_node(bound_model_name)
     assert isinstance(flow_node, DbtModelNode)
 
-    task = FalLocalHookTask(path, flow_node.model, arguments)
+    hook_type = HookType(hook_type)
+    if hook_type is HookType.MODEL_SCRIPT:
+        flow_node.model.python_model = Path(path)
+
+    task = FalLocalHookTask(
+        Path(path),
+        flow_node.model,
+        arguments,
+        hook_type=HookType(hook_type),
+    )
     task._run_index = run_index
 
     dummy_namespace = Namespace()

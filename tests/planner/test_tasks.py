@@ -64,7 +64,10 @@ def test_dbt_task(mocker, return_code):
 
 
 def test_fal_model_task_when_dbt_fails(mocker):
-    task = FalModelTask(["a", "b"])
+    task = FalModelTask(
+        ["a", "b"],
+        script=FalLocalHookTask("something.py", bound_model=FakeModel("model")),
+    )
     task.set_run_index(DynamicIndexProvider())
 
     fal_dbt = FakeFalDbt("/test")
@@ -74,7 +77,10 @@ def test_fal_model_task_when_dbt_fails(mocker):
 
 @pytest.mark.parametrize("return_code", [SUCCESS, FAILURE])
 def test_fal_model_task_when_dbt_succeeds(mocker, return_code):
-    task = FalModelTask(["a", "b"], bound_model=FakeModel("model"))
+    task = FalModelTask(
+        ["a", "b"],
+        script=FalLocalHookTask("something.py", bound_model=FakeModel("model")),
+    )
     task.set_run_index(DynamicIndexProvider())
 
     fal_dbt = FakeFalDbt("/test")

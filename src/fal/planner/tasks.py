@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-from os import environ
 import threading
 import json
 from pathlib import Path
@@ -11,7 +10,7 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Iterator, List, Any, Optional, Dict, Tuple
+from typing import Iterator, List, Any, Optional, Dict, Tuple, Union
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
@@ -38,6 +37,12 @@ class Task:
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         raise NotImplementedError
+
+
+class HookType(Enum):
+    HOOK = "HOOK"
+    SCRIPT = "SCRIPT"
+    MODEL_SCRIPT = "MODEL_SCRIPT"
 
 
 class Status(Enum):
@@ -174,17 +179,11 @@ class DBTTask(Task):
 
 @dataclass
 class FalModelTask(DBTTask):
-    bound_model: Optional[DbtModel] = None
+    script: Union[FalLocalHookTask, FalIsolatedHookTask]
 
     def set_run_index(self, index_provider: DynamicIndexProvider) -> None:
         super().set_run_index(index_provider)
-        self._model_script_run_index = index_provider.next()
-
-    @property
-    def model_script_run_index(self) -> int:
-        run_index = getattr(self, "_model_script_run_index", None)
-        assert run_index is not None
-        return run_index
+        self.script.set_run_index(index_provider)
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         # Run the ephemeral model
@@ -194,12 +193,9 @@ class FalModelTask(DBTTask):
         if dbt_result != SUCCESS:
             return dbt_result
 
-        assert self.bound_model is not None
-        bound_script = FalScript.model_script(fal_dbt, self.bound_model)
-        script_result = run_script(bound_script, self.model_script_run_index)
-
+        script_result = self.script.execute(args, fal_dbt)
         status = NodeStatus.Success if script_result == SUCCESS else NodeStatus.Error
-        _mark_dbt_nodes_status_and_response(fal_dbt, status, self.bound_model.unique_id)
+        _mark_dbt_nodes_status_and_response(fal_dbt, status, self.script.bound_model.unique_id)
         return script_result
 
 
@@ -208,11 +204,7 @@ class FalLocalHookTask(Task):
     hook_path: Path
     bound_model: Optional[DbtModel] = None
     arguments: Optional[Dict[str, Any]] = None
-    is_hook: bool = True
-
-    def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        script = self.build_fal_script(fal_dbt)
-        return run_script(script, self.run_index)
+    hook_type: HookType = HookType.HOOK
 
     @classmethod
     def from_fal_script(cls, script: FalScript):
@@ -223,22 +215,30 @@ class FalLocalHookTask(Task):
             script.is_hook,
         )
 
+    def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
+        script = self.build_fal_script(fal_dbt)
+        return run_script(script, self.run_index)
+
     def build_fal_script(self, fal_dbt: FalDbt):
-        return FalScript(
-            fal_dbt,
-            self.bound_model,
-            str(self.hook_path),
-            hook_arguments=self.arguments,
-            is_hook=self.is_hook,
-        )
+        if self.hook_type is HookType.MODEL_SCRIPT:
+            return FalScript.model_script(fal_dbt, model=self.bound_model)
+        else:
+            return FalScript(
+                fal_dbt,
+                model=self.bound_model,
+                path=str(self.hook_path),
+                hook_arguments=self.arguments,
+                is_hook=self.hook_type is HookType.HOOK,
+            )
 
 
 @dataclass
 class FalIsolatedHookTask(Task):
     hook_path: Path
+    bound_model: DbtModel
     environment_name: str
-    bound_model_name: str
     arguments: Optional[Dict[str, Any]] = None
+    hook_type: HookType = HookType.HOOK
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         environment = get_environment(fal_dbt.project_dir, self.environment_name)
@@ -247,8 +247,9 @@ class FalIsolatedHookTask(Task):
                 fal_dbt=fal_dbt,
                 hook_path=self.hook_path,
                 arguments=self.arguments,
-                bound_model_name=self.bound_model_name,
+                bound_model_name=self.bound_model.unique_id,
                 run_index=self.run_index,
+                hook_type=self.hook_type,
                 disable_logging=args.disable_logging,
             )
 

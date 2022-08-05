@@ -31,8 +31,8 @@ from platformdirs import user_cache_dir
 
 import fal.packages._run_hook as _hook_runner_module
 from faldbt.project import FalDbt
-from fal.planner.tasks import SUCCESS, FAILURE
 from dbt.logger import GLOBAL_LOGGER as logger
+from fal.planner.tasks import SUCCESS, FAILURE, HookType
 
 _BASE_CACHE_DIR = Path(user_cache_dir("fal", "fal"))
 _BASE_CACHE_DIR.mkdir(exist_ok=True)
@@ -95,7 +95,7 @@ def _get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
         yield f"dbt-{adapter_name}", adapter_version
 
 
-HookRunner = Callable[[FalDbt, Path, str, Dict[str, Any], int, bool], int]
+HookRunner = Callable[[FalDbt, Path, str, Dict[str, Any], int, HookType, bool], int]
 
 
 @contextmanager
@@ -174,6 +174,7 @@ class VirtualPythonEnvironment(BaseEnvironment):
         arguments: Dict[str, Any],
         bound_model_name: str,
         run_index: int,
+        hook_type: HookType,
         disable_logging: bool,
     ) -> int:
         python_path = venv_path / "bin" / "python"
@@ -184,6 +185,7 @@ class VirtualPythonEnvironment(BaseEnvironment):
                 "fal_dbt_config": fal_dbt._serialize(),
                 "arguments": arguments,
                 "run_index": run_index,
+                "hook_type": hook_type.value,
                 "disable_logging": disable_logging,
             }
         )

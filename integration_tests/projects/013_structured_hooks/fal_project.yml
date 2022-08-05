@@ -3,3 +3,9 @@ environments:
   - name: funny
     requirements:
       - pyjokes==0.6.0
+  - name: pyjokes-0.5.0
+    requirements:
+      - pyjokes==0.5.0
+  - name: pyjokes-0.6.0
+    requirements:
+      - pyjokes==0.6.0
