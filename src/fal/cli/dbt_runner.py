@@ -71,6 +71,9 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> Li
     if args.state:
         command_list += ["--state", args.state]
 
+    if args.full_refresh:
+        command_list += ["--full-refresh"]
+
     if args.target:
         command_list += ["--target", args.target]
 

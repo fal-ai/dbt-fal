@@ -94,7 +94,16 @@ def _add_target_option(parser: argparse.ArgumentParser):
         "--target",
         type=str,
         default=None,
-        help="Specify a custom target from profiles.yml",
+        help="Specify a custom target from profiles.yml.",
+    )
+
+
+def _add_full_refresh_option(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--full-refresh",
+        action="store_true",
+        default=False,
+        help="If specified, fal will pass dbt calls the --full-refresh flag, which will drop incremental models and fully-recalculate the incremental table from the model definition.",
     )
 
 
@@ -221,6 +230,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _add_experimental_threading(flow_run_parser)
     _add_vars_option(flow_run_parser)
     _add_target_option(flow_run_parser)
+    _add_full_refresh_option(flow_run_parser)
 
 
 def _build_cli_parser():

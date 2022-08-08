@@ -1,12 +1,12 @@
 
 {{ config(materialized='ephemeral') }}
 /*
-FAL_GENERATED 5703f4afba785d3cf956a51bcb4dc564
+FAL_GENERATED 2d1b785862f633481ecaa4b410a5a8a6
 
 Script dependencies:
 
-{{ ref("model_b") }}
 {{ ref('model_a') }}
+{{ ref('model_b') }}
 
 */
 
