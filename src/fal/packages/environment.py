@@ -27,17 +27,13 @@ from typing import (
     Tuple,
 )
 
-from platformdirs import user_cache_dir
-
 import fal.packages._run_hook as _hook_runner_module
 from faldbt.project import FalDbt
 from dbt.logger import GLOBAL_LOGGER as logger
 from fal.planner.tasks import SUCCESS, FAILURE, HookType
+from fal.packages.base import BASE_CACHE_DIR
 
-_BASE_CACHE_DIR = Path(user_cache_dir("fal", "fal"))
-_BASE_CACHE_DIR.mkdir(exist_ok=True)
-
-_BASE_VENV_DIR = _BASE_CACHE_DIR / "venvs"
+_BASE_VENV_DIR = BASE_CACHE_DIR / "venvs"
 _BASE_VENV_DIR.mkdir(exist_ok=True)
 
 

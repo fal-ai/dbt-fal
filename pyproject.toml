@@ -47,6 +47,7 @@ sqlalchemy-redshift = { version = "^0.8.9", optional = true }
 
 ## duckdb
 duckdb-engine = { version = "^0.1.8", optional = true }
+dulwich = "^0.20.44"
 
 [tool.poetry.extras]
 postgres = []
