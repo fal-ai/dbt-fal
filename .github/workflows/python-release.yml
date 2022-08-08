@@ -1,11 +1,20 @@
-# This workflow will update the latest version and upload a Python Package using Artifactory on changes to main
+# This workflow will update the latest version with minor release and upload a package to PyPi
 
-name: PyPI Release - patch
+name: PyPI Release
 
 on:
   push:
     branches: [release]
   workflow_dispatch:
+    inputs:
+      version:
+        description: Version
+        required: false
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
 
 jobs:
   deploy:
@@ -29,11 +38,22 @@ jobs:
           PYPI_USERNAME: ${{ secrets.PYPI_USER }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          poetry version patch
+          VERSION_TYPE="patch"
+          if [[ '${{ github.event_name }}' == 'workflow_dispatch' ]]
+          then
+            VERSION_TYPE="${{ github.event.inputs.version }}"
+          fi
+
+          poetry version $VERSION_TYPE
+
+          # version has format '0.4.1'
           current_version=$(poetry version -s)
+          echo "current_version=$current_version" >> $GITHUB_ENV
+
+          # tag has format 'v0.4.0' (note the 'v')
           prev_version_tag=$(git describe --tags --abbrev=0)
           echo "prev_version_tag=$prev_version_tag" >> $GITHUB_ENV
-          echo "current_version=$current_version" >> $GITHUB_ENV
+
           poetry build
 
       - name: Generate a changelog
@@ -41,7 +61,7 @@ jobs:
         id: git-cliff
         with:
           config: cliff.toml
-          args: v${{ env.prev_version_tag }}..HEAD
+          args: ${{ env.prev_version_tag }}..HEAD
         env:
           OUTPUT: CHANGES.md
 
