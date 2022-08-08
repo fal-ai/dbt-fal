@@ -17,7 +17,7 @@ from dbt.logger import GLOBAL_LOGGER as logger
 from faldbt.utils.yaml_helper import load_yaml
 
 if TYPE_CHECKING:
-    from fal.packages.environment import Environment
+    from fal.packages.environment import BaseEnvironment
 
 FAL_SCRIPTS_PATH = "fal-scripts-path"
 
@@ -174,22 +174,27 @@ def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:
     return global_scripts
 
 
-# TODO: temporary until the fal runtime work gets merged in
-def get_environment(base_dir: str, name: str) -> "Environment":
+def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
     from fal.packages.environment import create_environment
+    from fal.fal_script import _is_local_environment
 
     fal_project_path = os.path.join(base_dir, "fal_project.yml")
     if not os.path.exists(fal_project_path):
         raise FalParseError("{fal_project_path} must exist to define environments")
 
     fal_project = load_yaml(fal_project_path)
+
+    environments = {}
     for environment in fal_project.get("environments", []):
-        if environment["name"] == name:
-            return create_environment(requirements=environment.get("requirements", []))
-    else:
-        raise FalParseError(
-            f"Could not find the environment definition for {name} in {fal_project_path}"
-        )
+        if "name" not in environment:
+            raise FalParseError("Environment must have a name")
+
+        name = environment.get("name")
+        if _is_local_environment(name):
+            raise FalParseError(f"Environment name conflicts with a reserved name: {name}.")
+
+        environments[name] = create_environment(requirements=environment.get("requirements", []))
+    return environments
 
 
 def normalize_path(base: str, path: Union[Path, str]):

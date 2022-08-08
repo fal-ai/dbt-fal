@@ -33,7 +33,7 @@ Feature: Structured Hooks
   Scenario: Run isolated models
     When the following command is invoked:
       """
-      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_c+
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_c model_d model_e
       """
     Then the following models are calculated:
       | model_c | model_d.py | model_e.py |
@@ -47,3 +47,19 @@ Feature: Structured Hooks
       | PyJokes version: 0.5.0 |
     And the script model_e.joke_version.py output file has the lines
       | PyJokes version: 0.6.0 |
+
+  Scenario: Run local hooks on isolated models
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_f
+      """
+    Then the following models are calculated:
+      | model_f.py |
+    And the following scripts are ran:
+      | model_f.environment_type.py | model_f.environment_type_2.py | model_f.environment_type_3.py |
+    And the script model_f.environment_type.py output file has the lines
+      | Environment: local |
+    And the script model_f.environment_type_2.py output file has the lines
+      | Environment: local |
+    And the script model_f.environment_type_3.py output file has the lines
+      | Environment: venv |
