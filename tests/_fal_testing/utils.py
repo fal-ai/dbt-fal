@@ -8,14 +8,18 @@ def create_artifact(context, suffix, additional_data=None):
     model_name = model.name if model else "GLOBAL"
     model_status = model.status if model else None
 
-    temp_dir = Path(os.environ["temp_dir"])
-    temp_file = (temp_dir / model_name).with_suffix(suffix)
-
     output = f"Model name: {model_name}"
     output += f"\nStatus: {model_status}"
     output += f"\nModel dataframe name: {model_name}"
     if additional_data:
         output += f"\n{additional_data}"
+
+    create_file(output, Path(model_name).with_suffix(suffix))
+
+
+def create_file(output, file_name):
+    temp_dir = Path(os.environ["temp_dir"])
+    temp_file = temp_dir / file_name
     temp_file.write_text(output)
 
 
