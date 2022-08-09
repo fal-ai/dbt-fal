@@ -37,6 +37,7 @@ if TYPE_CHECKING:
             '''
             Write a pandas.DataFrame to a dbt model automagically.
             '''
+            ...
 
 
 context: Context
@@ -84,7 +85,9 @@ def generate_protocols(file, class_name):
         if ast.get_docstring(call_function):
             call_function.body = call_function.body[:1]
         else:
-            call_function.body = [ast.Expr(ast.Constant(...))]
+            call_function.body = []
+
+        call_function.body.append(ast.Expr(ast.Constant(...)))
 
         protocols.append(
             ast.ClassDef(
