@@ -20,10 +20,14 @@ def after_scenario(context, scenario):
 
     if hasattr(context, "exc") and context.exc:
         from traceback import print_exception
+        from sys import _OptExcInfo
 
-        print_exception(*context.exc)
-        _etype, exception, _tb = context.exc
-        raise exception
+        exc_info: _OptExcInfo = context.exc
+        _etype, exception, _tb = exc_info
+
+        print_exception(*exc_info)
+
+        raise AssertionError("Should have expected exception") from exception
 
 
 def before_tag(context, tag):
