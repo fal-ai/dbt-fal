@@ -1,0 +1,38 @@
+name: Generate typing module
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+    paths-ignore:
+      - "examples/**"
+      - "docsite/**"
+      - "README.md"
+      - "LICENSE"
+      - "docker/**"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Setup black
+        run: pip install black
+
+      - name: Generate typing
+        run: |
+          python tools/generate_typing_context.py
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Generate typing
