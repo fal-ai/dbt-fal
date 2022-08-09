@@ -243,6 +243,13 @@ jobs:
           SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
           # Duckdb
           DB_PATH: ${{ github.workspace }}/duck.db
+          # Athena
+          ATHENA_S3_STAGING_DIR: ${{ secrets.ATHENA_S3_STAGING_DIR }}
+          ATHENA_REGION: ${{ secrets.ATHENA_REGION }}
+          ATHENA_WORK_GROUP: ${{ secrets.ATHENA_WORK_GROUP }}
+          ATHENA_PROFILE: ${{ secrets.ATHENA_PROFILE }}
+          ATHENA_DATABASE: ${{ secrets.ATHENA_DATABASE }}
+          ATHENA_SCHEMA: ${{ secrets.ATHENA_SCHEMA }}
         run: |
           # Database and schema setup for sources
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
@@ -263,6 +270,10 @@ jobs:
             #   database: "{{ env_var('DBT_DATABASE', 'test') }}"
             #   schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
             export DBT_DATABASE="$SF_DATABASE" DBT_SCHEMA="$SF_SCHEMA"
+          fi
+          if [[ '${{ matrix.profile }}' == "athena" ]]
+          then
+            export DBT_DATABASE="$ATHENA_DATABASE" DBT_SCHEMA="$ATHENA_SCHEMA"
           fi
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]

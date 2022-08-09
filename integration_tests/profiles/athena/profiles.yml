@@ -6,10 +6,9 @@ fal_test:
   outputs:
     integration_tests:
       type: athena
-      # TODO: valid values
-      s3_staging_dir: s3://athena-query-results/dbt/
-      region_name: eu-west-1
-      schema: dbt
-      database: awsdatacatalog
-      aws_profile_name: my-profile
-      work_group: my-workgroup
+      s3_staging_dir: "{{ env_var('ATHENA_S3_STAGING_DIR') }}"
+      region_name: "{{ env_var('ATHENA_REGION') }}"
+      work_group: "{{ env_var('ATHENA_WORK_GROUP') }}"
+      aws_profile_name: "{{ env_var('ATHENA_PROFILE') }}"
+      database: "{{ env_var('ATHENA_DATABASE') }}"
+      schema: "{{ env_var('ATHENA_SCHEMA') }}"
