@@ -57,23 +57,23 @@ def _cli(argv: List[str]):
             fal_run(parsed)
 
 
-# TODO: remove in fal 0.5.0
+# TODO: remove in fal 0.6.0
 def _warn_deprecated_flags(parsed: argparse.Namespace):
     if parsed.experimental_flow:
         dbt.exceptions.warn(
             "Flag `--experimental-flow` is DEPRECATED and is treated as a no-op.\n"
-            "This flag will make fal error in 0.5"
+            "This flag will make fal error in 0.6"
         )
     if parsed.experimental_python_models:
         dbt.exceptions.warn(
             "Flag `--experimental-models` is DEPRECATED and is treated as a no-op.\n"
-            "This flag will make fal error in 0.5"
+            "This flag will make fal error in 0.6"
         )
     if parsed.experimental_threads:
         dbt.exceptions.warn(
             "Flag `--experimental-threads` is DEPRECATED and is treated as a no-op.\n"
             "Using valued passed for `--threads` instead.\n"
-            "This flag will make fal error in 0.5"
+            "This flag will make fal error in 0.6"
         )
         # NOTE: take the number of threads to use from the experimental_threads
         if parsed.threads:
