@@ -257,6 +257,13 @@ jobs:
           then
             export DBT_DATABASE="$SF_DATABASE" DBT_SCHEMA="$SF_SCHEMA"
           fi
+          if [[ '${{ matrix.profile }}' == "duckdb" ]]
+          then
+            # TODO: which to use for sources? Example:
+            #   database: "{{ env_var('DBT_DATABASE', 'test') }}"
+            #   schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
+            export DBT_DATABASE="$SF_DATABASE" DBT_SCHEMA="$SF_SCHEMA"
+          fi
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
           then
