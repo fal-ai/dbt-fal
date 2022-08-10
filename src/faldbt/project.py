@@ -188,6 +188,10 @@ class DbtSource(_DbtTestableNode):
         return f"DbtSource({props})"
 
     @property
+    def meta(self):
+        return self.node.meta
+
+    @property
     def table_name(self) -> str:
         return self.node.name
 
@@ -217,12 +221,7 @@ class DbtModel(_DbtTestableNode):
 
     @property
     def meta(self):
-        # BACKWARDS: Change intorduced in XXX (0.20?)
-        # TODO: specify which version is for this
-        if hasattr(self.node.config, "meta"):
-            return self.node.config.meta
-        elif hasattr(self.node, "meta"):
-            return self.node.meta
+        return self.node.meta
 
     def _get_adapter_response(self):
         return self._adapter_response
@@ -537,7 +536,7 @@ class FalDbt:
         return self._config.project_name
 
     @telemetry.log_call("list_sources")
-    def list_sources(self):
+    def list_sources(self) -> List[DbtSource]:
         """
         List tables available for `source` usage
         """
