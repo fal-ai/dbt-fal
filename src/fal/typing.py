@@ -15,24 +15,28 @@ if TYPE_CHECKING:
             """
             List tables available for `source` usage
             """
+            ...
 
     class _List_Models_Ids(Protocol):
         def __call__(self) -> Dict[str, str]:
             """
             List model ids available for `ref` usage, formatting like `[ref_name, ...]`
             """
+            ...
 
     class _List_Models(Protocol):
         def __call__(self) -> List[DbtModel]:
             """
             List models
             """
+            ...
 
     class _List_Tests(Protocol):
         def __call__(self) -> List[DbtTest]:
             """
             List tests
             """
+            ...
 
     class _List_Features(Protocol):
         def __call__(self) -> List[Feature]:
@@ -45,6 +49,7 @@ if TYPE_CHECKING:
             """
             Download a dbt model as a pandas.DataFrame automagically.
             """
+            ...
 
     class _Source(Protocol):
         def __call__(
@@ -53,6 +58,7 @@ if TYPE_CHECKING:
             """
             Download a dbt source as a pandas.DataFrame automagically.
             """
+            ...
 
     class _Write_To_Source(Protocol):
         def __call__(
@@ -67,16 +73,19 @@ if TYPE_CHECKING:
             """
             Write a pandas.DataFrame to a dbt source automagically.
             """
+            ...
 
     class _Write_To_Firestore(Protocol):
         def __call__(self, df: pd.DataFrame, collection: str, key_column: str):
             """
             Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
             """
+            ...
 
     class _Execute_Sql(Protocol):
         def __call__(self, sql: str) -> pd.DataFrame:
             """Execute a sql query."""
+            ...
 
     # Manually introduced annotations, update manually in tools/generate_typing_context.py template.
     class _Write_To_Model(Protocol):
@@ -92,6 +101,7 @@ if TYPE_CHECKING:
             """
             Write a pandas.DataFrame to a dbt model automagically.
             """
+            ...
 
 
 context: Context
