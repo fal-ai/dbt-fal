@@ -11,7 +11,7 @@ Feature: `write_to_model` function
     Then the following models are calculated:
       | other_model | some_model | third_model |
     And the following scripts are ran:
-      | some_model.write_to_source_twice.py | some_model.context.py | other_model.complete_model.py | third_model.complete_model.py |
+      | some_model.write_to_source_twice.py | some_model.context.py | some_model.lists.py | other_model.complete_model.py | third_model.complete_model.py |
     And the script other_model.complete_model.py output file has the lines:
       | my_int 0.0 | my_int 3.0 | size 1 |
     And the script third_model.complete_model.py output file has the lines:

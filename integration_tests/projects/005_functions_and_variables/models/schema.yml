@@ -6,6 +6,9 @@ sources:
     schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
     tables:
       - name: other_source
+        meta:
+          property:
+            other: 4
       - name: some_source
         columns:
           - name: my_text
@@ -25,15 +28,22 @@ models:
         tests:
           - not_null
     meta:
+      property:
+        name: some_model
+        other: 1
       fal:
         scripts:
           after:
             - fal_scripts/write_to_source_twice.py
         post-hook:
           - fal_scripts/context.py
+          - fal_scripts/lists.py
 
   - name: other_model
     meta:
+      property:
+        name: other_model
+        other: 2
       fal:
         scripts:
           after:
@@ -41,6 +51,9 @@ models:
 
   - name: third_model
     meta:
+      property:
+        name: third_model
+        other: 3
       fal:
         scripts:
           after:
