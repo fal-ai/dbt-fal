@@ -21,9 +21,11 @@ def after_scenario(context, scenario):
     if hasattr(context, "exc") and context.exc:
         from traceback import print_exception
 
-        print_exception(*context.exc)
         _etype, exception, _tb = context.exc
-        raise exception
+
+        print_exception(*context.exc)
+
+        raise AssertionError("Should have expected exception") from exception
 
 
 def before_tag(context, tag):

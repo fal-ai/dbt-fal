@@ -17,7 +17,12 @@ from typing import (
 from pathlib import Path
 
 from dbt.node_types import NodeType
-from dbt.contracts.graph.parsed import ParsedSourceDefinition, TestMetadata
+from dbt.contracts.graph.parsed import (
+    ParsedSourceDefinition,
+    TestMetadata,
+    ParsedGenericTestNode,
+    ParsedSingularTestNode,
+)
 from dbt.contracts.graph.compiled import ManifestNode
 from dbt.contracts.graph.manifest import (
     Manifest,
@@ -86,35 +91,64 @@ class _DbtNode:
 
 @dataclass
 class DbtTest(_DbtNode):
-    column: str = field(init=False)
-    source: Optional[Tuple[str, str]] = field(init=False, default=None)
-    model: Optional[str] = field(init=False, default=None)
+    model_ids: List[str] = field(init=False, default_factory=list)
+    source_ids: List[str] = field(init=False, default_factory=list)
+
+    @classmethod
+    def init(cls, node):
+        if node.resource_type == NodeType.Test:
+            if isinstance(node, ParsedGenericTestNode):
+                test = DbtGenericTest(node=node)
+            elif isinstance(node, ParsedSingularTestNode):
+                test = DbtSingularTest(node=node)
+            else:
+                raise ValueError(f"Unexpected test class {node.__class__.__name__}")
+
+            for dep in test.node.depends_on.nodes:
+                if dep.startswith("model."):
+                    test.model_ids.append(dep)
+                if dep.startswith("source."):
+                    test.source_ids.append(dep)
+
+            return test
+        else:
+            raise TypeError(
+                f"Initialized DbtTest with node of type {node.resource_type}"
+            )
+
+
+@dataclass
+class DbtGenericTest(DbtTest):
+    column: Optional[str] = field(init=False)
 
     def __post_init__(self):
-        node = self.node
-        if node.resource_type == NodeType.Test:
-            if hasattr(node, "test_metadata"):
-                metadata: TestMetadata = self.node.test_metadata
+        assert isinstance(self.node, ParsedGenericTestNode)
+        self.column = self.node.column_name
 
-                # metadata.kwargs looks like this:
-                # kwargs={'column_name': 'y', 'model': "{{ get_where_subquery(ref('boston')) }}"}
-                # and we want to get 'boston' is the model name that we want extract
-                # except in dbt v 0.20.1, where we need to filter 'where' string out
-                self.column = metadata.kwargs.get("column_name", None)
+    @property
+    def source_id(self):
+        if self.source_ids:
+            return self.source_ids[0]
 
-                # TODO: Handle package models?
-                refs = re.findall(r"ref\('([^']+)'\)", metadata.kwargs["model"])
+    @property
+    def model_id(self):
+        if self.model_ids:
+            return self.model_ids[0]
 
-                if refs:
-                    self.model = refs[0]
+    # TODO: Deprecate?
+    @property
+    def source(self):
+        if self.source_id:
+            parts = self.source_id.split(".")
+            return parts[-2], parts[-1]
 
-                sources = re.findall(
-                    r"source\('([^']+)', *'([^']+)'\)", metadata.kwargs["model"]
-                )
-                if sources:
-                    self.source = sources[0]
-            else:
-                logger.warn(f"Non-generic test was not processed: {node.name}")
+    # TODO: Deprecate?
+    @property
+    def model(self):
+        if self.model_id:
+            # TODO: handle package models
+            parts = self.model_id.split(".")
+            return parts[-1]
 
     @property
     def name(self) -> str:
@@ -123,8 +157,15 @@ class DbtTest(_DbtNode):
 
 
 @dataclass
+class DbtSingularTest(DbtTest):
+    def __post_init__(self):
+        assert isinstance(self.node, ParsedSingularTestNode)
+
+
+@dataclass
 class _DbtTestableNode(_DbtNode):
-    tests: List[DbtTest] = field(default_factory=list)
+    # TODO: should this include singular tests that ref to this node?
+    tests: List[DbtGenericTest] = field(default_factory=list)
 
     def _get_status(self):
         if self._status == NodeStatus.Skipped and any(
@@ -298,11 +339,10 @@ class DbtManifest:
         results_map = {r.unique_id: r for r in run_results.results}
 
         tests: List[DbtTest] = []
-        tests_dict: Dict[Union[Tuple[str, str], str], List[DbtTest]] = defaultdict(list)
+
+        tests_dict: Dict[str, List[DbtGenericTest]] = defaultdict(list)
         for node in self.get_test_nodes():
-            test = DbtTest(
-                node=node,
-            )
+            test: DbtTest = DbtTest.init(node=node)
 
             result = results_map.get(node.unique_id)
             if result:
@@ -310,16 +350,17 @@ class DbtManifest:
 
             tests.append(test)
 
-            if test.model:
-                tests_dict[test.model].append(test)
-            if test.source:
-                tests_dict[test.source].append(test)
+            if isinstance(test, DbtGenericTest):
+                if test.model_id:
+                    tests_dict[test.model_id].append(test)
+                if test.source_id:
+                    tests_dict[test.source_id].append(test)
 
         models: List[DbtModel] = []
         for node in self.get_model_nodes():
             model = DbtModel(
                 node=node,
-                tests=tests_dict[node.name],
+                tests=tests_dict[node.unique_id],
                 python_model=generated_models.get(node.name),
             )
 
@@ -336,7 +377,7 @@ class DbtManifest:
         for node in self.get_source_nodes():
             source = DbtSource(
                 node=node,
-                tests=tests_dict[(node.source_name, node.name)],
+                tests=tests_dict[node.unique_id],
                 freshness=source_freshness_map.get(node.unique_id),
             )
 
