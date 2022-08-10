@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from fal.fal_script import Context, CurrentModel
 
     class _List_Sources(Protocol):
-        def __call__(self):
+        def __call__(self) -> List[DbtSource]:
             """
             List tables available for `source` usage
             """
