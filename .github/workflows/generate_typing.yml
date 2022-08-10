@@ -21,6 +21,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.RELEASER_GITHUB_PAT }}
 
       - uses: actions/setup-python@v2
         with:
@@ -36,3 +38,5 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Generate typing
+          commit_user_email: batuhan+bot@fal.ai
+          commit_user_name: Fal Bot
