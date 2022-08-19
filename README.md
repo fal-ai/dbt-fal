@@ -145,7 +145,7 @@ models:
 
 ## Running scripts before dbt runs
 
-By using `pre-hook` you can run scripts before the associated models run.
+Run scripts before the model runs by using the `pre-hook:` configuration option.
 
 Given the following schema.yml:
 
@@ -158,15 +158,15 @@ models:
     meta:
       owner: "@meder"
       fal:
-      	scripts:
+        scripts:
           pre-hook:
             - fal_scripts/trigger_fivetran.py
-  	      post-hook:
+          post-hook:
             - fal_scripts/slack.py
 ```
 
-`fal flow run` will run `fal_scripts/trigger_fivetran.py`, then the `boston` dbt model, and finally `fal_scripts/slack.py`. If you select a model to be run with a selection flag (e.g. `--select boston`, the hooks associated to the model will always run with it.
-
+`fal flow run` will run `fal_scripts/trigger_fivetran.py`, then the `boston` dbt model, and finally `fal_scripts/slack.py`. 
+If a model is selected with a selection flag (e.g. `--select boston`), the hooks associated to the model will always run with it.
 
 ```bash
 $ fal flow run --select boston
@@ -243,7 +243,8 @@ ref(context.current_model.name)
 
 It is also possible to send data back to your data-warehouse. This makes it easy to get the data, process it and upload it back into dbt territory.
 
-This function is available in Python Data models only, that is a Python script inside your `models` directory. It does not have to be added to be considered by fal.
+This function is available in Python Data models only, that is a Python script inside your `models` directory.
+Once added, it will automatically be run by fal without having to add any extra configurations in the `schema.yml`.
 
 ```python
 source_df = source('source_name', 'table_name')
