@@ -644,6 +644,7 @@ class FalDbt:
             self.profiles_dir,
             target_model,
             self._profile_target,
+            config=self._config,
         )
 
     def _source(
@@ -678,6 +679,7 @@ class FalDbt:
             self.profiles_dir,
             target_source,
             self._profile_target,
+            config=self._config,
         )
 
     @telemetry.log_call("write_to_source", ["mode"])
@@ -705,6 +707,7 @@ class FalDbt:
                 self._profile_target,
                 target_source,
                 dtype=dtype,
+                config=self._config,
             )
 
         elif write_mode == WriteModeEnum.OVERWRITE:
@@ -715,6 +718,7 @@ class FalDbt:
                 self._profile_target,
                 target_source,
                 dtype=dtype,
+                config=self._config,
             )
 
         else:
@@ -750,6 +754,7 @@ class FalDbt:
                 self._profile_target,
                 target_model,
                 dtype=dtype,
+                config=self._config,
             )
 
         elif write_mode == WriteModeEnum.OVERWRITE:
@@ -760,6 +765,7 @@ class FalDbt:
                 self._profile_target,
                 target_model,
                 dtype=dtype,
+                config=self._config,
             )
 
         else:
