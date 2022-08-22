@@ -135,16 +135,17 @@ models:
     ...
     meta:
       fal:
-        scripts:
+        post-hook:
+          # scripts will run concurrently
           - send_slack_message.py
-          - another_python_script.py # will be run after the first script
+          - another_python_script.py
 ```
 
 `fal` also provides useful helpers within the Python context to seamlessly interact with dbt models: `ref("my_dbt_model_name")` will pull a dbt model into your Python script as a [`pandas.DataFrame`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html).
 
-### Running scripts before dbt runs
+## Running scripts before dbt runs
 
-The `--before` flag let's users run scripts before their dbt runs.
+Run scripts before the model runs by using the `pre-hook:` configuration option.
 
 Given the following schema.yml:
 
@@ -157,20 +158,18 @@ models:
     meta:
       owner: "@meder"
       fal:
-      	scripts:
-          before:
-            - fal_scripts/postgres.py
-  	      after:
+        scripts:
+          pre-hook:
+            - fal_scripts/trigger_fivetran.py
+          post-hook:
             - fal_scripts/slack.py
 ```
 
-`fal run --before` will run `fal_scripts/postgres.py` script regardless if dbt has calculated the boston model or not. `fal run` without the `--before` flag, will run `fal_scripts/slack.py`, but only if boston model is already calculated by dbt.
-
-A typical workflow involves running `dbt run` after invoking `fal run --before`.
+`fal flow run` will run `fal_scripts/trigger_fivetran.py`, then the `boston` dbt model, and finally `fal_scripts/slack.py`. 
+If a model is selected with a selection flag (e.g. `--select boston`), the hooks associated to the model will always run with it.
 
 ```bash
-$ fal run --before --select boston
-$ dbt run --select boston
+$ fal flow run --select boston
 ```
 
 # Concepts
@@ -188,12 +187,12 @@ models:
     meta:
       owner: "@me"
       fal:
-        scripts:
+        post-hook:
           - send_slack_message.py
-          - another_python_script.py # will be run sequentially
+          - another_python_script.py
 ```
 
-Use the `fal` and `scripts` keys underneath the `meta` config to let `fal` CLI know where to look for the Python scripts. You can pass a list of scripts as shown above to run one or more scripts as a post-hook operation after a `dbt run`.
+Use the `fal` and `post-hook` keys underneath the `meta` config to let `fal` CLI know where to look for the Python scripts. You can pass a list of scripts as shown above to run one or more scripts as a post-hook operation after a `dbt run`.
 
 ## Variables and functions
 
@@ -240,25 +239,31 @@ source('source_name', 'table_name')
 ref(context.current_model.name)
 ```
 
-### `write_to_source` function
+### `write_to_model` function
 
-It is also possible to send data back to your datawarehouse. This makes it easy to get the data, process it and upload it back into dbt territory.
+It is also possible to send data back to your data-warehouse. This makes it easy to get the data, process it and upload it back into dbt territory.
 
-All you have to do is define the target source in your schema and use it in fal.
-This operation appends to the existing source by default and should only be used targetting tables, not views.
+This function is available in Python Data models only, that is a Python script inside your `models` directory.
+Once added, it will automatically be run by fal without having to add any extra configurations in the `schema.yml`.
 
 ```python
+source_df = source('source_name', 'table_name')
+ref_df = ref('a_model')
+
+# Your code here
+df = ...
+
 # Upload a `pandas.DataFrame` back to the datawarehouse
-write_to_source(df, 'source_name', 'table_name2')
+write_to_model(df)
 ```
 
-`write_to_source` also accepts an optional `dtype` argument, which lets you specify datatypes of columns. It works the same way as `dtype` argument for [`DataFrame.to_sql` function](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html).
+`write_to_model` also accepts an optional `dtype` argument, which lets you specify datatypes of columns. It works the same way as `dtype` argument for [`DataFrame.to_sql` function](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html).
 
 ```python
 from sqlalchemy.types import Integer
 # Upload but specifically create the `value` column with type `integer`
 # Can be useful if data has `None` values
-write_to_source(df, 'source', 'table', dtype={'value': Integer()})
+write_to_model(df, dtype={'value': Integer()})
 ```
 
 ## Importing `fal` as a Python package
