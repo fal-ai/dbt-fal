@@ -251,6 +251,9 @@ def fetch_target(
 
 
 def _fetch_relation(adapter: SQLAdapter, relation: BaseRelation) -> pd.DataFrame:
+    if adapter.type() == "postgres":
+        return _sqlalchemy_engine_fetch_relation(adapter, relation)
+
     query = f"SELECT * FROM {relation}"
     return _execute_sql(adapter, query)[1]
 
@@ -363,13 +366,16 @@ def _write_relation(
             relation,
         )
 
+    if adapter.type() == "postgres":
+        return _sqlalchemy_engine_write_relation(adapter, data, relation, dtype=dtype)
+
     database, schema, identifier = (
         relation.database,
         relation.schema,
         relation.identifier,
     )
 
-    engine = _alchemy_engine(adapter)
+    engine = _alchemy_mock_engine(adapter)
     pddb = pdsql.SQLDatabase(engine, schema=schema)
     pdtable = pdsql.SQLTable(identifier, pddb, data, index=False, dtype=dtype)
 
@@ -470,11 +476,8 @@ def _drop_relation(adapter: SQLAdapter, relation: BaseRelation):
             adapter.commit_if_has_connection()
 
 
-def _alchemy_engine(adapter: SQLAdapter):
+def _alchemy_mock_engine(adapter: SQLAdapter):
     url_string = f"{adapter.type()}://"
-    if adapter.type() == "postgres":
-        url_string = "postgresql://"
-
     if adapter.type() == "athena":
         SCHEMA_NAME = adapter.config.credentials.schema
         S3_STAGING_DIR = adapter.config.credentials.s3_staging_dir
@@ -499,6 +502,18 @@ def _alchemy_engine(adapter: SQLAdapter):
     return sqlalchemy.create_mock_engine(url_string, executor=null_dump)
 
 
+def _create_engine_from_connection(adapter: SQLAdapter):
+    if adapter.type() == "postgres":
+        url_string = "postgresql+psycopg2://"
+    else:
+        # TODO: add special cases as needed
+        logger.warn("No explicit url string for adapter {}", adapter.type())
+        url_string = f"{adapter.type()}://"
+
+    connection = adapter.connections.get_thread_connection()
+    return sqlalchemy.create_engine(url_string, creator=lambda: connection.handle)
+
+
 @contextmanager
 def _existing_or_new_connection(
     adapter: BaseAdapter,
@@ -510,6 +525,62 @@ def _existing_or_new_connection(
             yield True
     else:
         yield False
+
+
+# Adapter: salalchemy connection
+def _sqlalchemy_engine_fetch_relation(adapter: SQLAdapter, relation: BaseRelation):
+    # TODO: use database, just using schema and identifier
+    database, schema, identifier = (
+        relation.database,
+        relation.schema,
+        relation.identifier,
+    )
+
+    assert identifier
+
+    with _existing_or_new_connection(
+        adapter, _connection_name("write_target", relation, _hash=False), True
+    ):
+        engine = _create_engine_from_connection(adapter)
+        # TODO: use database, just using schema and identifier
+        return pd.read_sql_table(
+            table_name=identifier,
+            schema=schema,
+            con=engine,
+        )
+
+
+def _sqlalchemy_engine_write_relation(
+    adapter: SQLAdapter,
+    data: pd.DataFrame,
+    relation: BaseRelation,
+    *,
+    dtype=None,
+):
+    # TODO: use database, just using schema and identifier
+    database, schema, identifier = (
+        relation.database,
+        relation.schema,
+        relation.identifier,
+    )
+
+    assert identifier
+
+    with _existing_or_new_connection(
+        adapter, _connection_name("write_target", relation, _hash=False), True
+    ):
+        engine = _create_engine_from_connection(adapter)
+
+        rows_affected = data.to_sql(
+            name=identifier,
+            con=engine,
+            schema=schema,
+            if_exists="append",
+            index=False,
+            dtype=dtype,
+        )
+
+        return AdapterResponse("OK", rows_affected=rows_affected)
 
 
 # Adapter: BigQuery
