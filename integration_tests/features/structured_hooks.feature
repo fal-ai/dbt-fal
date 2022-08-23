@@ -29,3 +29,21 @@ Feature: Structured Hooks
       | model_b.local_hook.py | model_b.funny_hook.py | model_b.check_imports.py |
     And the script model_b.funny_hook.py output file has the lines
       | PyJokes version: 0.6.0 |
+
+  Scenario: Run isolated models
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_c+
+      """
+    Then the following models are calculated:
+      | model_c | model_d.py | model_e.py |
+    And the following scripts are ran:
+      | model_c.check_imports.py | model_d.check_imports.py | model_e.check_imports.py | model_e.joke_version.py | model_e.funny_hook.py |
+    And the script model_d.py output file has the lines
+      | PyJokes version: 0.5.0 |
+    And the script model_e.py output file has the lines
+      | PyJokes version: 0.6.0 |
+    And the script model_e.funny_hook.py output file has the lines
+      | PyJokes version: 0.5.0 |
+    And the script model_e.joke_version.py output file has the lines
+      | PyJokes version: 0.6.0 |

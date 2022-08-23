@@ -239,7 +239,11 @@ class DbtModel(_DbtTestableNode):
     def get_depends_on_nodes(self) -> List[str]:
         return self.node.depends_on_nodes
 
-    def _get_hooks(self, hook_type: str, keyword: str = "fal") -> List["Hook"]:
+    def _get_hooks(
+        self,
+        hook_type: str,
+        keyword: str = "fal",
+    ) -> List["Hook"]:
         from fal.fal_script import create_hook
 
         meta = self.meta or {}
@@ -252,7 +256,10 @@ class DbtModel(_DbtTestableNode):
         if not isinstance(raw_hooks, list):
             return []
 
-        return [create_hook(raw_hook) for raw_hook in raw_hooks]
+        return [
+            create_hook(raw_hook, default_environment_name=self.environment_name)
+            for raw_hook in raw_hooks
+        ]
 
     get_pre_hook_paths = partialmethod(_get_hooks, hook_type="pre-hook")
     get_post_hook_paths = partialmethod(_get_hooks, hook_type="post-hook")
@@ -282,6 +289,13 @@ class DbtModel(_DbtTestableNode):
             return scripts_node.get("before") or []
         else:
             return scripts_node.get("after") or []
+
+    @property
+    def environment_name(self) -> Optional[str]:
+        meta = self.meta or {}
+        fal = meta.get("fal") or {}
+        return fal.get("environment")
+
 
 
 @dataclass
