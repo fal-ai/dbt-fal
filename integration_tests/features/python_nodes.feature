@@ -45,3 +45,14 @@ Feature: Python nodes
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select no_write_model
       """
     Then it throws an exception AssertionError with message 'There must be at least one write_to_model call in the Python Model'
+
+  Scenario: Broken DBT model leads to corruption of the dependant Python model
+    Given the project 014_broken_dbt_models
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select get_data regular_model
+      """
+    Then the following models are calculated:
+      | regular_model | get_data.py |
+    And the following scripts are ran:
+      | regular_model.post_hook.py |

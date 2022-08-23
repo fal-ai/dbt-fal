@@ -1,0 +1,13 @@
+name: "fal_014"
+version: "1.0.0"
+config-version: 2
+profile: "fal_test"
+source-paths: ["models"]
+data-paths: ["data"]
+snapshot-paths: ["snapshots"]
+target-path: "{{ env_var('temp_dir') }}/target"
+vars:
+  fal-scripts-path: "scripts"
+
+models:
+  +schema: custom
