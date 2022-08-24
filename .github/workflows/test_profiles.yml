@@ -55,6 +55,7 @@ jobs:
           OUTPUT = ADAPTERS
 
           if '${{ github.event_name }}' == 'pull_request':
+            ADAPTERS += ['redshift', 'duckdb']
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
             PR_BRANCH = '${{ github.head_ref }}'.lower()
             PR_DESCRIPTION = '''${{ github.event.pull_request.body }}'''.lower()
