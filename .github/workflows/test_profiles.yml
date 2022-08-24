@@ -51,7 +51,7 @@ jobs:
       - id: matrix-step
         shell: python
         run: |
-          ADAPTERS = ['postgres', 'bigquery', 'snowflake', 'redshift', 'duckdb']
+          ADAPTERS = ['postgres', 'bigquery', 'snowflake']
           OUTPUT = ADAPTERS
 
           if '${{ github.event_name }}' == 'pull_request':
