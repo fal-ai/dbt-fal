@@ -1,38 +1,29 @@
 from __future__ import annotations
 
-import os
-import glob
 import hashlib
-import json
 import shutil
 import subprocess
 import threading
-import importlib
-import importlib.util
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
 from typing import (
-    Any,
+    TYPE_CHECKING,
     Callable,
     ClassVar,
     ContextManager,
     DefaultDict,
-    Dict,
     Iterator,
     List,
-    Optional,
-    Tuple,
 )
 
+from dbt.logger import GLOBAL_LOGGER as logger
 from platformdirs import user_cache_dir
 
-import fal.packages._run_hook as _hook_runner_module
-from faldbt.project import FalDbt
-from dbt.logger import GLOBAL_LOGGER as logger
-from fal.planner.tasks import SUCCESS, FAILURE, HookType
+from fal.packages import bridge, isolated_runner
+from fal.packages.dependency_analysis import get_default_requirements
 
 _BASE_CACHE_DIR = Path(user_cache_dir("fal", "fal"))
 _BASE_CACHE_DIR.mkdir(exist_ok=True)
@@ -40,62 +31,14 @@ _BASE_CACHE_DIR.mkdir(exist_ok=True)
 _BASE_VENV_DIR = _BASE_CACHE_DIR / "venvs"
 _BASE_VENV_DIR.mkdir(exist_ok=True)
 
+InternalHook = Callable[[], int]
 
-# NOTE: This is from dbt https://github.com/dbt-labs/dbt-core/blob/7bd861a3514f70b64d5a6c642b4204b50d0d3f7e/core/dbt/version.py#L209-L236
-def _get_dbt_plugins_info() -> Iterator[Tuple[str, str]]:
-    for plugin_name in _get_adapter_plugin_names():
-        if plugin_name == "core":
-            continue
-        try:
-            mod = importlib.import_module(f"dbt.adapters.{plugin_name}.__version__")
-        except ImportError:
-            # not an adapter
-            continue
-        yield plugin_name, mod.version  # type: ignore
+if TYPE_CHECKING:
+    from typing import Protocol
 
-
-def _get_adapter_plugin_names() -> Iterator[str]:
-    spec = importlib.util.find_spec("dbt.adapters")
-    # If None, then nothing provides an importable 'dbt.adapters', so we will
-    # not be reporting plugin versions today
-    if spec is None or spec.submodule_search_locations is None:
-        return
-
-    for adapters_path in spec.submodule_search_locations:
-        version_glob = os.path.join(adapters_path, "*", "__version__.py")
-        for version_path in glob.glob(version_glob):
-            # the path is like .../dbt/adapters/{plugin_name}/__version__.py
-            # except it could be \\ on windows!
-            plugin_root, _ = os.path.split(version_path)
-            _, plugin_name = os.path.split(plugin_root)
-            yield plugin_name
-
-
-def _get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
-    import pkg_resources
-    import dbt.version
-    from dbt.semver import VersionSpecifier
-
-    raw_fal_version = pkg_resources.get_distribution("fal").version
-    fal_version = VersionSpecifier.from_version_string(raw_fal_version)
-    if fal_version.prerelease:
-        import fal
-
-        # If this is a development version, we'll install
-        # the current fal itself.
-        base_dir = Path(fal.__file__).parent.parent.parent
-        assert (base_dir / ".git").exists()
-        yield str(base_dir), None
-    else:
-        yield "fal", raw_fal_version
-
-    yield "dbt-core", dbt.version.__version__
-
-    for adapter_name, adapter_version in _get_dbt_plugins_info():
-        yield f"dbt-{adapter_name}", adapter_version
-
-
-HookRunner = Callable[[FalDbt, Path, str, Dict[str, Any], int, HookType, bool], int]
+    class HookRunnerProtocol(Protocol):
+        def __call__(self, executable: InternalHook, *args, **kwargs) -> int:
+            ...
 
 
 @contextmanager
@@ -108,8 +51,45 @@ def _clear_on_fail(path: Path) -> Iterator[None]:
 
 
 class BaseEnvironment:
-    def setup(self) -> ContextManager[HookRunner]:
+    def setup(self) -> ContextManager[HookRunnerProtocol]:
         raise NotImplementedError
+
+    def _prepare_client(
+        self,
+        service: bridge.Listener,
+        *args,
+        **kwargs,
+    ) -> ContextManager[bridge.ConnectionWrapper]:
+        raise NotImplementedError
+
+    def _run(self, executable: InternalHook, *args, **kwargs) -> int:
+        # The controller here assumes that there will be at most one
+        # client. This restriction might change in the future.
+        logger.debug("Starting the controller bridge.")
+        with bridge.controller_connection() as controller_service:
+            logger.debug("Controller connection is established at {}", controller_service.address)
+            with self._prepare_client(
+                controller_service, *args, **kwargs
+            ) as connection:
+                logger.info("Child connection has been established at the bridge {}", controller_service.address)
+                # TODO: check_alive() here.
+                connection.send(executable)
+                logger.info("Awaiting the child process to exit at {}", controller_service.address)
+                return self._receive_status(connection)
+
+    def _receive_status(self, connection: bridge.ConnectionWrapper) -> int:
+        try:
+            status, exception = connection.recv()
+        except EOFError:
+            raise RuntimeError("The child process has unexpectedly exited.")
+
+        if exception is not None:
+            logger.error("An exception has occurred: {}", exception)
+            raise exception
+
+        logger.info("Isolated process has exitted with status: {}", status)
+        assert status is not None
+        return status
 
 
 @dataclass(frozen=True)
@@ -129,7 +109,7 @@ class VirtualPythonEnvironment(BaseEnvironment):
     def __post_init__(self) -> None:
         self.requirements.extend(
             f"{key}=={value}" if value else key
-            for key, value in _get_default_requirements()
+            for key, value in get_default_requirements()
         )
 
     @property
@@ -140,11 +120,6 @@ class VirtualPythonEnvironment(BaseEnvironment):
         # Note that we also sort the requirements to make sure even
         # with a different order, the environments are cached.
         return hashlib.sha256(" ".join(self.requirements).encode()).hexdigest()
-
-    @contextmanager
-    def setup(self) -> Iterator[HookRunner]:
-        venv_path = self._create_venv()
-        yield partial(self._run_in_venv, venv_path)
 
     def _create_venv(self) -> Path:
         from virtualenv import cli_run
@@ -166,43 +141,28 @@ class VirtualPythonEnvironment(BaseEnvironment):
 
         return path
 
-    def _run_in_venv(
-        self,
-        venv_path: Path,
-        fal_dbt: FalDbt,
-        hook_path: Path,
-        arguments: Dict[str, Any],
-        bound_model_name: str,
-        run_index: int,
-        hook_type: HookType,
-        disable_logging: bool,
-    ) -> int:
-        python_path = venv_path / "bin" / "python"
-        data = json.dumps(
-            {
-                "path": str(hook_path),
-                "bound_model_name": bound_model_name,
-                "fal_dbt_config": fal_dbt._serialize(),
-                "arguments": arguments,
-                "run_index": run_index,
-                "hook_type": hook_type.value,
-                "disable_logging": disable_logging,
-            }
-        )
+    @contextmanager
+    def setup(self) -> Iterator[HookRunnerProtocol]:
+        venv_path = self._create_venv()
+        yield partial(self._run, venv_path=venv_path)
 
-        process = subprocess.Popen(
+    @contextmanager
+    def _prepare_client(
+        self,
+        service: bridge.Listener,
+        venv_path: Path,
+    ) -> Iterator[bridge.ConnectionWrapper]:
+        python_path = venv_path / "bin" / "python"
+        logger.info("Starting the process...")
+        with subprocess.Popen(
             [
                 python_path,
-                _hook_runner_module.__file__,
-                data,
+                isolated_runner.__file__,
+                bridge.encode_service_address(service.address),
             ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
-        for line in process.stdout:
-            logger.info(line, end="")
-        return SUCCESS if process.wait() == 0 else FAILURE
+        ) as process:
+            with service.accept() as connection:
+                yield connection
 
 
 def create_environment(*, requirements: List[str]) -> BaseEnvironment:

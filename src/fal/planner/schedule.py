@@ -28,22 +28,19 @@ def create_hook_task(
     bound_model: DbtModel,
     hook_type: HookType = HookType.HOOK,
 ) -> Task:
-    if isinstance(hook, LocalHook):
-        return FalLocalHookTask(
-            Path(hook.path),
-            bound_model=bound_model,
-            arguments=hook.arguments,
-            hook_type=hook_type,
+    local_hook = FalLocalHookTask(
+        Path(hook.path),
+        bound_model=bound_model,
+        arguments=hook.arguments,
+        hook_type=hook_type,
+    )
+    if isinstance(hook, IsolatedHook):
+        return FalIsolatedHookTask(
+            hook.environment_name,
+            local_hook,
         )
     else:
-        assert isinstance(hook, IsolatedHook)
-        return FalIsolatedHookTask(
-            Path(hook.path),
-            bound_model=bound_model,
-            environment_name=hook.environment_name,
-            arguments=hook.arguments,
-            hook_type=hook_type,
-        )
+        return local_hook
 
 
 def create_group(
