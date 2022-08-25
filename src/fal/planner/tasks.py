@@ -16,7 +16,6 @@ from dbt.logger import GLOBAL_LOGGER as logger
 
 from fal.node_graph import FalScript
 from fal.utils import print_run_info, DynamicIndexProvider
-from faldbt.parse import get_environment
 from faldbt.project import DbtModel, FalDbt, NodeStatus
 
 from datetime import datetime, timezone
@@ -241,7 +240,11 @@ class FalIsolatedHookTask(Task):
     hook_type: HookType = HookType.HOOK
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        environment = get_environment(fal_dbt.project_dir, self.environment_name)
+        environment = fal_dbt._load_environment(self.environment_name)
+        if environment is None:
+            logger.error("Could not find environment {}", self.environment_name)
+            return FAILURE
+
         with environment.setup() as hook_runner:
             return hook_runner(
                 fal_dbt=fal_dbt,

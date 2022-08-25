@@ -90,3 +90,18 @@ models:
           # with another overwrite
           - path: funny_hook.py
             environment: pyjokes-0.5.0
+
+  # A node-scoped environment with local hooks
+  - name: model_f
+    meta:
+      fal:
+        environment: not-funny
+        pre-hook:
+          - path: environment_type.py
+            environment: local
+
+        post-hook:
+          - path: environment_type_2.py
+            environment: local
+
+          - path: environment_type_3.py

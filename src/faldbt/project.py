@@ -61,6 +61,7 @@ from fal.telemetry import telemetry
 
 if TYPE_CHECKING:
     from fal.fal_script import Hook
+    from fal.packages.environment import BaseEnvironment
 
 
 class FalGeneralException(Exception):
@@ -297,7 +298,6 @@ class DbtModel(_DbtTestableNode):
         return fal.get("environment")
 
 
-
 @dataclass
 class DbtRunResult:
     nativeRunResult: Optional[RunResultsArtifact]
@@ -512,6 +512,7 @@ class FalDbt:
         )
 
         self.features = self._find_features()
+        self._environments = None
 
     def _serialize(self) -> Dict[str, Any]:
         # All the information required for re-creating the project
@@ -879,6 +880,13 @@ class FalDbt:
             compiled_result.compiled_sql,  # type: ignore
             config=self._config,
         )
+
+    def _load_environment(self, name: str) -> Optional["BaseEnvironment"]:
+        """Return the environment for the given ``name``. If the environment does not
+        exist, return None."""
+        if self._environments is None:
+            self._environments = parse.load_environments(self.project_dir)
+        return self._environments.get(name)
 
 
 def _firestore_dict_to_document(data: Dict, key_column: str):
