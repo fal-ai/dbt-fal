@@ -18,7 +18,6 @@ from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.base import BaseRelation, BaseAdapter, BaseConnectionManager
 from dbt.contracts.graph.compiled import CompileResultNode
-from dbt.contracts.graph.parsed import ParsedModelNode
 from dbt.config import RuntimeConfig
 
 from . import parse
@@ -124,17 +123,11 @@ def _connection_name(prefix: str, obj, _hash: bool = True):
 
 
 def _execute_sql(
-    project_dir: str,
-    profiles_dir: str,
+    adapter: SQLAdapter,
     sql: str,
-    profile_target: str,
     *,
-    config: Optional[RuntimeConfig] = None,
-    adapter: Optional[SQLAdapter] = None,
+    new_conn=True,
 ) -> Tuple[AdapterResponse, pd.DataFrame]:
-    new_conn = adapter is None
-    if adapter is None:
-        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
 
     if adapter.type() == "bigquery":
         return _bigquery_execute_sql(adapter, sql, new_conn)
@@ -156,29 +149,19 @@ def _execute_sql(
     return response, _agate_table_to_df(agate_table)
 
 
-def _clear_relations_cache(adapter: BaseAdapter, config: RuntimeConfig):
+def _clear_relations_cache(adapter: BaseAdapter):
     # HACK: Sometimes we cache an incomplete cache or create stuff without the cache noticing.
     #       Some adapters work without this. We should separate adapter solutions like dbt.
-    manifest = parse.get_dbt_manifest(config)
+    manifest = parse.get_dbt_manifest(adapter.config)
     adapter.set_relations_cache(manifest, True)
 
 
 def _get_target_relation(
-    target: CompileResultNode,
-    project_dir: str,
-    profiles_dir: str,
-    profile_target: str,
+    adapter: SQLAdapter, target: CompileResultNode
 ) -> Optional[BaseRelation]:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
-    config = parse.get_dbt_config(
-        project_dir=project_dir,
-        profiles_dir=profiles_dir,
-        profile_target=profile_target,
-    )
-
     with adapter.connection_named(_connection_name("relation", target)):
         with _cache_lock("_get_target_relation"):
-            _clear_relations_cache(adapter, config)
+            _clear_relations_cache(adapter)
 
             # This ROLLBACKs so it has to be a new connection
             return adapter.get_relation(
@@ -193,6 +176,7 @@ def compile_sql(
     sql: str,
     *,
     config: Optional[RuntimeConfig] = None,
+    adapter: Optional[SQLAdapter] = None,
 ):
     from dbt.parser.manifest import process_node
     from dbt.task.sql import SqlCompileRunner
@@ -205,9 +189,10 @@ def compile_sql(
             profile_target=profile_target,
         )
 
-    manifest = parse.get_dbt_manifest(config)
+    if adapter is None:
+        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
 
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
+    manifest = parse.get_dbt_manifest(config)
 
     block_parser = SqlBlockParser(
         project=config,
@@ -229,10 +214,12 @@ def execute_sql(
     sql: str,
     *,
     config: Optional[RuntimeConfig] = None,
+    adapter: Optional[SQLAdapter] = None,
 ) -> pd.DataFrame:
-    return _execute_sql(
-        project_dir, profiles_dir, sql, profile_target=profile_target, config=config
-    )[1]
+    if adapter is None:
+        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
+
+    return _execute_sql(adapter, sql)[1]
 
 
 def _agate_table_to_df(table: agate.Table) -> pd.DataFrame:
@@ -248,25 +235,24 @@ def fetch_target(
     profiles_dir: str,
     target: CompileResultNode,
     profile_target: str,
+    *,
+    config: Optional[RuntimeConfig] = None,
+    adapter: Optional[SQLAdapter] = None,
 ) -> pd.DataFrame:
-    relation = _get_target_relation(
-        target, project_dir, profiles_dir, profile_target=profile_target
-    )
+    if adapter is None:
+        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
+
+    relation = _get_target_relation(adapter, target)
 
     if relation is None:
         raise Exception(f"Could not get relation for '{target.unique_id}'")
 
-    return _fetch_relation(project_dir, profiles_dir, profile_target, relation)
+    return _fetch_relation(adapter, relation)
 
 
-def _fetch_relation(
-    project_dir: str, profiles_dir: str, profile_target: str, relation: BaseRelation
-) -> pd.DataFrame:
+def _fetch_relation(adapter: SQLAdapter, relation: BaseRelation) -> pd.DataFrame:
     query = f"SELECT * FROM {relation}"
-    _, df = _execute_sql(
-        project_dir, profiles_dir, query, profile_target=profile_target
-    )
-    return df
+    return _execute_sql(adapter, query)[1]
 
 
 def _build_table_from_parts(
@@ -297,17 +283,18 @@ def overwrite_target(
     target: CompileResultNode,
     *,
     dtype=None,
+    config: Optional[RuntimeConfig] = None,
+    adapter: Optional[SQLAdapter] = None,
 ) -> AdapterResponse:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+    if not adapter:
+        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
 
     relation = _build_table_from_target(adapter, target)
 
     if adapter.type() == "bigquery":
         return _bigquery_write_relation(
+            adapter,
             data,
-            project_dir,
-            profiles_dir,
-            profile_target,
             relation,
             mode=WriteModeEnum.OVERWRITE,
             fields_schema=dtype,
@@ -323,31 +310,14 @@ def overwrite_target(
         f"{relation.identifier}__f__{unique_str}",
     )
 
-    results = _write_relation(
-        data,
-        project_dir,
-        profiles_dir,
-        profile_target,
-        temporal_relation,
-        dtype=dtype,
-    )
+    results = _write_relation(adapter, data, temporal_relation, dtype=dtype)
+
     try:
-        _replace_relation(
-            project_dir,
-            profiles_dir,
-            profile_target,
-            relation,
-            temporal_relation,
-        )
+        _replace_relation(adapter, relation, temporal_relation)
 
         return results
     except:
-        _drop_relation(
-            project_dir,
-            profiles_dir,
-            temporal_relation,
-            profile_target=profile_target,
-        )
+        _drop_relation(adapter, temporal_relation)
         raise
 
 
@@ -359,33 +329,28 @@ def write_target(
     target: CompileResultNode,
     *,
     dtype=None,
+    config: Optional[RuntimeConfig] = None,
+    adapter: Optional[SQLAdapter] = None,
 ) -> AdapterResponse:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
+    if adapter is None:
+        adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
 
     relation = _build_table_from_target(adapter, target)
 
-    return _write_relation(
-        data, project_dir, profiles_dir, profile_target, relation, dtype=dtype
-    )
+    return _write_relation(adapter, data, relation, dtype=dtype)
 
 
 def _write_relation(
+    adapter: SQLAdapter,
     data: pd.DataFrame,
-    project_dir: str,
-    profiles_dir: str,
-    profile_target: str,
     relation: BaseRelation,
     *,
     dtype=None,
 ) -> AdapterResponse:
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
-
     if adapter.type() == "bigquery":
         return _bigquery_write_relation(
+            adapter,
             data,
-            project_dir,
-            profiles_dir,
-            profile_target,
             relation,
             mode=WriteModeEnum.APPEND,
             fields_schema=dtype,
@@ -393,10 +358,8 @@ def _write_relation(
 
     if adapter.type() == "snowflake":
         return _snowflake_write_relation(
+            adapter,
             data,
-            project_dir,
-            profiles_dir,
-            profile_target,
             relation,
         )
 
@@ -406,7 +369,7 @@ def _write_relation(
         relation.identifier,
     )
 
-    engine = _alchemy_engine(adapter, database)
+    engine = _alchemy_engine(adapter)
     pddb = pdsql.SQLDatabase(engine, schema=schema)
     pdtable = pdsql.SQLTable(identifier, pddb, data, index=False, dtype=dtype)
 
@@ -435,48 +398,27 @@ def _write_relation(
     create_stmt = CreateTable(alchemy_table, if_not_exists=True).compile(
         bind=engine, compile_kwargs={"literal_binds": True}
     )
-
-    _execute_sql(
-        project_dir,
-        profiles_dir,
-        six.text_type(create_stmt).strip(),
-        profile_target=profile_target,
-    )
+    _execute_sql(adapter, six.text_type(create_stmt).strip())
 
     insert_stmt = Insert(alchemy_table, values=row_dicts).compile(
         bind=engine, compile_kwargs={"literal_binds": True}
     )
-
-    response, _ = _execute_sql(
-        project_dir,
-        profiles_dir,
-        six.text_type(insert_stmt).strip(),
-        profile_target=profile_target,
-    )
+    response, _ = _execute_sql(adapter, six.text_type(insert_stmt).strip())
     return response
 
 
 def _replace_relation(
-    project_dir: str,
-    profiles_dir: str,
-    profile_target: str,
+    adapter: SQLAdapter,
     original_relation: BaseRelation,
     new_relation: BaseRelation,
 ):
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
-    config = parse.get_dbt_config(
-        project_dir=project_dir,
-        profiles_dir=profiles_dir,
-        profile_target=profile_target,
-    )
-
     with adapter.connection_named(
         _connection_name("replace_relation", original_relation, _hash=False)
     ):
         with _cache_lock("_replace_relation"):
             adapter.connections.begin()
 
-            _clear_relations_cache(adapter, config)
+            _clear_relations_cache(adapter)
 
             if adapter.type() not in ("bigquery", "snowflake"):
                 # This is a 'DROP ... IF EXISTS', so it always works
@@ -486,21 +428,17 @@ def _replace_relation(
                 # HACK: athena doesn't support renaming tables, we do it manually
                 create_stmt = f"create table {original_relation} as select * from {new_relation} with data"
                 _execute_sql(
-                    project_dir,
-                    profiles_dir,
+                    adapter,
                     six.text_type(create_stmt).strip(),
-                    profile_target=profile_target,
-                    adapter=adapter,
+                    new_conn=False,
                 )
                 adapter.drop_relation(new_relation)
             elif adapter.type() == "bigquery":
                 create_stmt = f"create or replace table {original_relation} as select * from {new_relation}"
-                _execute_sql(
-                    project_dir,
-                    profiles_dir,
+                _bigquery_execute_sql(
+                    adapter,
                     six.text_type(create_stmt).strip(),
-                    profile_target=profile_target,
-                    adapter=adapter,
+                    new_conn=False,
                 )
                 adapter.drop_relation(new_relation)
             elif adapter.type() == "snowflake":
@@ -520,31 +458,19 @@ def _replace_relation(
             adapter.commit_if_has_connection()
 
 
-def _drop_relation(
-    project_dir: str,
-    profiles_dir: str,
-    relation: BaseRelation,
-    profile_target: str,
-):
-    adapter = _get_adapter(project_dir, profiles_dir, profile_target)
-    config = parse.get_dbt_config(
-        project_dir=project_dir,
-        profiles_dir=profiles_dir,
-        profile_target=profile_target,
-    )
-
+def _drop_relation(adapter: SQLAdapter, relation: BaseRelation):
     with adapter.connection_named(_connection_name("drop_relation", relation)):
         with _cache_lock("_drop_relation"):
             adapter.connections.begin()
 
-            _clear_relations_cache(adapter, config)
+            _clear_relations_cache(adapter)
 
             adapter.drop_relation(relation)
 
             adapter.commit_if_has_connection()
 
 
-def _alchemy_engine(adapter: SQLAdapter, database: Optional[str]):
+def _alchemy_engine(adapter: SQLAdapter):
     url_string = f"{adapter.type()}://"
     if adapter.type() == "postgres":
         url_string = "postgresql://"
@@ -613,10 +539,8 @@ def _bigquery_execute_sql(
 
 
 def _bigquery_write_relation(
+    adapter: SQLAdapter,
     data: pd.DataFrame,
-    project_dir: str,
-    profiles_dir: str,
-    profile_target: str,
     relation: BaseRelation,
     *,
     mode: WriteModeEnum,
@@ -626,8 +550,9 @@ def _bigquery_write_relation(
     from google.cloud.bigquery.job import WriteDisposition
     from dbt.adapters.bigquery import BigQueryAdapter, BigQueryConnectionManager
 
-    adapter: BigQueryAdapter = _get_adapter(project_dir, profiles_dir, profile_target)  # type: ignore
     assert adapter.type() == "bigquery"
+
+    _adapter: BigQueryAdapter = adapter  # type: ignore
 
     disposition = (
         WriteDisposition.WRITE_TRUNCATE
@@ -639,10 +564,10 @@ def _bigquery_write_relation(
     dataset: str = relation.schema  # type: ignore
     table: str = relation.identifier  # type: ignore
 
-    with adapter.connection_named(
+    with _adapter.connection_named(
         _connection_name("bigquery:write_relation", relation, _hash=False)
     ):
-        connection_manager: BigQueryConnectionManager = adapter.connections
+        connection_manager: BigQueryConnectionManager = _adapter.connections
         conn = connection_manager.get_thread_connection()
         client: bigquery.Client = conn.handle  # type: ignore
 
@@ -677,7 +602,7 @@ def _bigquery_write_relation(
             timeout = connection_manager.get_timeout(conn) or 300
 
         with connection_manager.exception_handler("LOAD TABLE"):
-            adapter.poll_until_job_completes(job, timeout)
+            _adapter.poll_until_job_completes(job, timeout)
 
         query_table = client.get_table(job.destination)
         num_rows = query_table.num_rows
@@ -688,7 +613,11 @@ def _bigquery_write_relation(
 
 # Adapter: Snowflake
 def _snowflake_execute_sql(
-    adapter: BaseAdapter, sql: str, new_conn: bool, *, fetch: bool = True
+    adapter: BaseAdapter,
+    sql: str,
+    new_conn: bool,
+    *,
+    fetch: bool = True,
 ) -> Tuple[AdapterResponse, pd.DataFrame]:
     assert adapter.type() == "snowflake"
 
@@ -726,27 +655,26 @@ def _snowflake_execute_sql(
 
 
 def _snowflake_write_relation(
+    adapter: SQLAdapter,
     data: pd.DataFrame,
-    project_dir: str,
-    profiles_dir: str,
-    profile_target: str,
     relation: BaseRelation,
 ) -> AdapterResponse:
     from dbt.adapters.snowflake import SnowflakeAdapter, SnowflakeConnectionManager
     import snowflake.connector as snowflake
     import snowflake.connector.pandas_tools as snowflake_pandas
 
-    adapter: SnowflakeAdapter = _get_adapter(project_dir, profiles_dir, profile_target)  # type: ignore
     assert adapter.type() == "snowflake"
+
+    _adapter: SnowflakeAdapter = adapter  # type: ignore
 
     database: str = relation.database  # type: ignore
     schema: str = relation.schema  # type: ignore
     table: str = relation.identifier  # type: ignore
 
-    with adapter.connection_named(
+    with _adapter.connection_named(
         _connection_name("snowflake:write_relation", relation, _hash=False)
     ):
-        connection_manager: SnowflakeConnectionManager = adapter.connections  # type: ignore
+        connection_manager: SnowflakeConnectionManager = _adapter.connections  # type: ignore
         conn: snowflake.SnowflakeConnection = connection_manager.get_thread_connection().handle  # type: ignore
 
         with connection_manager.exception_handler("LOAD TABLE"):
