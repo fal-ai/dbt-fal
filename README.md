@@ -302,6 +302,7 @@ Any extra configuration to work with different `dbt` versions is not needed, lat
 
 - 1.0.\*
 - 1.1.\*
+- 1.2.\*
 
 If you need another version, [open an issue](https://github.com/fal-ai/fal/issues/new) and we will take a look!
 
