@@ -194,7 +194,9 @@ class FalModelTask(DBTTask):
 
         script_result = self.script.execute(args, fal_dbt)
         status = NodeStatus.Success if script_result == SUCCESS else NodeStatus.Error
-        _mark_dbt_nodes_status_and_response(fal_dbt, status, self.script.bound_model.unique_id)
+        _mark_dbt_nodes_status_and_response(
+            fal_dbt, status, self.script.bound_model.unique_id
+        )
         return script_result
 
 
@@ -207,11 +209,20 @@ class FalLocalHookTask(Task):
 
     @classmethod
     def from_fal_script(cls, script: FalScript):
+        if (
+            script.model is not None
+            and script.model.python_model is not None
+            and script.path == script.model.python_model
+        ):
+            hook_type = HookType.MODEL_SCRIPT
+        else:
+            hook_type = HookType.HOOK if script.is_hook else HookType.SCRIPT
+
         return cls(
             script.path,
             script.model,
             script.hook_arguments,
-            script.is_hook,
+            hook_type,
         )
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
