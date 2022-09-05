@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 import traceback
 import uuid
+from functools import partial
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -233,28 +234,26 @@ class FalLocalHookTask(Task):
 
 @dataclass
 class FalIsolatedHookTask(Task):
-    hook_path: Path
-    bound_model: DbtModel
     environment_name: str
-    arguments: Optional[Dict[str, Any]] = None
-    hook_type: HookType = HookType.HOOK
+    local_hook: FalLocalHookTask
+
+    def set_run_index(self, index_provider: DynamicIndexProvider) -> None:
+        super().set_run_index(index_provider)
+        self.local_hook.set_run_index(index_provider)
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         environment = fal_dbt._load_environment(self.environment_name)
         if environment is None:
-            logger.error("Could not find environment {}", self.environment_name)
+            logger.error("Could not find environment: {}", self.environment_name)
             return FAILURE
 
-        with environment.setup() as hook_runner:
-            return hook_runner(
-                fal_dbt=fal_dbt,
-                hook_path=self.hook_path,
-                arguments=self.arguments,
-                bound_model_name=self.bound_model.unique_id,
-                run_index=self.run_index,
-                hook_type=self.hook_type,
-                disable_logging=args.disable_logging,
-            )
+        execute_local_task = partial(self.local_hook.execute, args=args, fal_dbt=fal_dbt)
+        with environment.setup() as run:
+            return run(execute_local_task)
+
+    @property
+    def bound_model(self) -> DbtModel:
+        return self.local_hook.bound_model
 
 
 @dataclass

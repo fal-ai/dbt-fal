@@ -58,6 +58,7 @@ from decimal import Decimal
 import pandas as pd
 
 from fal.telemetry import telemetry
+from fal.utils import has_side_effects
 
 if TYPE_CHECKING:
     from fal.fal_script import Hook
@@ -413,6 +414,7 @@ class CompileArgs:
     single_threaded: Optional[bool]
 
 
+@has_side_effects
 class FalDbt:
     """Holds the entire dbt project information."""
 
@@ -513,16 +515,6 @@ class FalDbt:
 
         self.features = self._find_features()
         self._environments = None
-
-    def _serialize(self) -> Dict[str, Any]:
-        # All the information required for re-creating the project
-        return {
-            "project_dir": self.project_dir,
-            "profiles_dir": self.profiles_dir,
-            "threads": self.threads,
-            "keyword": self.keyword,
-            "profile_target": self._profile_target,
-        }
 
     @property
     def source_paths(self) -> List[str]:

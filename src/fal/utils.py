@@ -1,10 +1,11 @@
 """Fal utilities."""
+import copy
 from dbt.logger import print_timestamped_line
-from fal.fal_script import FalScript
-from typing import List
+from typing import List, TYPE_CHECKING
+if TYPE_CHECKING:
+    from fal.fal_script import FalScript
 
-
-def print_run_info(scripts: List[FalScript]):
+def print_run_info(scripts: List["FalScript"]):
     """Print information on the current fal run."""
     models_str = "\n".join(map(lambda script: script.id, scripts))
     print_timestamped_line(
@@ -25,3 +26,25 @@ class DynamicIndexProvider:
     def __int__(self) -> int:
         """Return the last value."""
         return self._index
+
+
+class _ReInitialize:
+    def __init__(self, *args, **kwargs):
+        self._serialization_state = {
+            "args": copy.deepcopy(args),
+            "kwargs": copy.deepcopy(kwargs),
+        }
+        super().__init__(*args, **kwargs)
+
+    def __getstate__(self):
+        return self._serialization_state
+
+    def __setstate__(self, state):
+        super().__init__(*state["args"], **state["kwargs"])
+
+
+def has_side_effects(cls):
+    """The given class has possible side-effects that might
+    make the regular serialization problematic (e.g. registering
+    adapters to DBT's global factory)."""
+    return type(cls.__name__, (_ReInitialize, cls), {})

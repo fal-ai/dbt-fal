@@ -17,7 +17,8 @@ from dbt.contracts.graph.parsed import ColumnInfo
 
 
 class Hook:
-    ...
+    path: str
+    arguments: Dict[str, Any]
 
 
 @dataclass
