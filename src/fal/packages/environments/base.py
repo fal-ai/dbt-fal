@@ -83,6 +83,6 @@ class BaseEnvironment:
             logger.error("An exception has occurred: {}", exception)
             raise exception
 
-        logger.debug("Isolated process has exitted with status: {}", status)
+        logger.debug("Isolated process has exited with status: {}", status)
         assert status is not None
         return status

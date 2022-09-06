@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, DefaultDict, Iterator, List
+from typing import TYPE_CHECKING, ClassVar, DefaultDict, Iterator, List, Optional
 
 from dbt.logger import GLOBAL_LOGGER as logger
 
@@ -47,7 +47,26 @@ class VirtualPythonEnvironment(BaseEnvironment):
     def key(self) -> str:
         return hashlib.sha256(" ".join(self.requirements).encode()).hexdigest()
 
-    def create_or_get_venv(self) -> Path:
+    def _python_path_for(self, *search_paths) -> str:
+        assert len(search_paths) >= 1
+        return os.pathsep.join(
+            # sysconfig takes the virtual environment path and returns
+            # the directory where all the site packages are located.
+            sysconfig.get_path("purelib", vars={"base": search_path})
+            for search_path in search_paths
+        )
+
+    def _executable_in(self, search_path: Path, executable_name: str) -> Path:
+        return search_path / "bin" / executable_name
+
+    def _verify_dependencies(self, inherits_from: Path, new_env: Path) -> None:
+        # Ensure that there are no dependency mismatches between the
+        # primary environment and the secondary environment.
+        python_path = self._python_path_for(new_env, inherits_from)
+        original_pip = self._executable_in(inherits_from, "pip")
+        subprocess.check_call([original_pip, "check"], env={"PYTHONPATH": python_path})
+
+    def create_or_get_venv(self, inherits_from: Optional[Path] = None) -> Path:
         from virtualenv import cli_run
 
         path = _BASE_VENV_DIR / self.key
@@ -61,16 +80,24 @@ class VirtualPythonEnvironment(BaseEnvironment):
                     f"Installing the requirements: {', '.join(self.requirements)}"
                 )
                 if self.requirements:
-                    pip_path = path / "bin" / "pip"
+                    pip_path = self._executable_in(path, "pip")
                     subprocess.check_call([pip_path, "install"] + self.requirements)
-
+                    if inherits_from:
+                        # TODO: this currently happens during environment construction
+                        # phase for users, but ideally this should be decoupled from
+                        # secondary environments (since primary can change without
+                        # even going through this part). For the initial revision, this
+                        # check is useful, but in the future we should consider either
+                        # a better way of caching inter-environment dependency checks
+                        # or just running this on every run.
+                        self._verify_dependencies(inherits_from, path)
         return path
 
     @contextmanager
     def setup(self) -> Iterator[HookRunnerProtocol]:
         primary_env = get_primary_env()
         primary_env_path = primary_env.create_or_get_venv()
-        user_env_path = self.create_or_get_venv()
+        user_env_path = self.create_or_get_venv(inherits_from=primary_env_path)
         yield partial(
             self._run, primary_path=primary_env_path, secondary_path=user_env_path
         )
@@ -89,15 +116,9 @@ class VirtualPythonEnvironment(BaseEnvironment):
 
         # The search order is important, we want the secondary path to
         # take precedence.
-        search_paths = [secondary_path, primary_path]
-        python_path = os.pathsep.join(
-            # sysconfig takes the virtual environment path and returns
-            # the directory where all the site packages are located.
-            sysconfig.get_path("purelib", vars={"base": search_path})
-            for search_path in search_paths
-        )
+        python_path = self._python_path_for(secondary_path, primary_path)
+        python_executable = self._executable_in(primary_path, "python")
 
-        python_executable = primary_path / "bin" / "python"
         logger.debug("Starting the process...")
         with subprocess.Popen(
             [
