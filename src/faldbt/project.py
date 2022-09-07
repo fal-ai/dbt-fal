@@ -62,7 +62,7 @@ from fal.utils import has_side_effects
 
 if TYPE_CHECKING:
     from fal.fal_script import Hook
-    from fal.packages.environment import BaseEnvironment
+    from fal.packages.environments import BaseEnvironment
 
 
 class FalGeneralException(Exception):

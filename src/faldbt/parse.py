@@ -17,7 +17,7 @@ from dbt.logger import GLOBAL_LOGGER as logger
 from faldbt.utils.yaml_helper import load_yaml
 
 if TYPE_CHECKING:
-    from fal.packages.environment import BaseEnvironment
+    from fal.packages.environments import BaseEnvironment
 
 FAL_SCRIPTS_PATH = "fal-scripts-path"
 
@@ -175,7 +175,7 @@ def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:
 
 
 def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
-    from fal.packages.environment import create_environment
+    from fal.packages.environments import create_environment
     from fal.fal_script import _is_local_environment
 
     fal_project_path = os.path.join(base_dir, "fal_project.yml")

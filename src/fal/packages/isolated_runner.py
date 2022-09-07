@@ -33,7 +33,7 @@ from fal.packages import bridge
 #    ============================================================
 #    Child connection has been established at the bridge b'\x00listener-17368-0'
 #    Awaiting the child process to exit at b'\x00listener-17368-0'
-#    Isolated process has exitted with status: 0
+#    Isolated process has exited with status: 0
 #
 
 IS_DEBUG_MODE = os.getenv("FAL_DEBUG_ISOLATED_RUNNER") == "1"
