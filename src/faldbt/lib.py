@@ -64,10 +64,6 @@ def initialize_dbt_flags(profiles_dir: str):
 
     events_functions.set_invocation_id()
 
-    # Re-enable logging for 1.0.0 through old API of logger
-    # TODO: migrate for 1.0.0 code to new event system
-    flags.ENABLE_LEGACY_LOGGER = "1"
-
 
 def register_adapters(config: RuntimeConfig):
     # HACK: to avoid 'Node package named <profile> not found'
