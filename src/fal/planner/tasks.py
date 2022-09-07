@@ -258,9 +258,11 @@ class FalIsolatedHookTask(Task):
             logger.error("Could not find environment: {}", self.environment_name)
             return FAILURE
 
-        execute_local_task = partial(self.local_hook.execute, args=args, fal_dbt=fal_dbt)
-        with environment.setup() as run:
-            return run(execute_local_task)
+        with environment.connect() as connection:
+            execute_local_task = partial(self.local_hook.execute, args=args, fal_dbt=fal_dbt)
+            result = connection.run(execute_local_task)
+            assert isinstance(result, int), result
+            return result
 
     @property
     def bound_model(self) -> DbtModel:

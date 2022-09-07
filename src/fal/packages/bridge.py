@@ -32,6 +32,9 @@ class _DillListener(Listener):
 
 
 def controller_connection() -> _DillListener:
+    # The controller here assumes that there will be at most one
+    # client. This restriction might change in the future as an
+    # optimization.
     return _DillListener()
 
 
