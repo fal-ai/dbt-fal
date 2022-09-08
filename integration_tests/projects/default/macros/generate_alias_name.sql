@@ -2,11 +2,11 @@
 
     {%- if custom_alias_name is none -%}
 
-        {{ project_name }}_{{ node.name }}
+        ns_{{ env_var('DB_NAMESPACE', '') }}_{{ project_name }}_{{ node.name }}
 
     {%- else -%}
 
-        {{ custom_alias_name | trim }}
+        ns_{{ env_var('DB_NAMESPACE', '') }}_{{ custom_alias_name | trim }}
 
     {%- endif -%}
 
