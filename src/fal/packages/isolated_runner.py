@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.logger import log_manager
 
-from fal.cli.cli import reconfigure_logging
+from fal.logger import reconfigure_logging
 from fal.packages import bridge
 
 # Isolated processes are really tricky to debug properly
