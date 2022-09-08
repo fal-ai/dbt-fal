@@ -30,13 +30,21 @@ import sqlalchemy
 from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 
+from dbt.contracts.sql import RemoteRunResult
+
+DBT_VCURRENT = dbt.version.installed
+
+
+def version_compare(version_string: str):
+    return DBT_VCURRENT.compare(VersionSpecifier.from_version_string(version_string))
+
+
+IS_DBT_V1PLUS = version_compare("1.0.0") >= 0
 
 _DBT_V1 = VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.installed
 
 IS_DBT_V1PLUS = DBT_VCURRENT.compare(_DBT_V1) >= 0
-
-from dbt.contracts.sql import RemoteRunResult
 
 
 class WriteModeEnum(Enum):

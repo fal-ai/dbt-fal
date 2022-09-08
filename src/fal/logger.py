@@ -63,9 +63,19 @@ def reconfigure_logging() -> None:
     # This fixes issue https://github.com/fal-ai/fal/issues/97
     log_manager.set_path(None)
 
+# NOTE: LOGGER is imported in faldbt.lib, so import must be here
+import faldbt.lib as lib
+
+if lib.version_compare("1.1.0") < 0:
+    from dbt.events.base_types import Cli, Event
+
+    _EXTRA_CLASS_INHERIT = Cli, Event
+else:
+    _EXTRA_CLASS_INHERIT = (object,)
+
 
 @dataclass
-class TestMessage(_TestLevel):
+class TestMessage(_TestLevel, *_EXTRA_CLASS_INHERIT):
     msg: str
     code: str = "FAL0000"
 
@@ -74,7 +84,7 @@ class TestMessage(_TestLevel):
 
 
 @dataclass
-class DebugMessage(_DebugLevel):
+class DebugMessage(_DebugLevel, *_EXTRA_CLASS_INHERIT):
     msg: str
     code: str = "FAL1000"
 
@@ -83,7 +93,7 @@ class DebugMessage(_DebugLevel):
 
 
 @dataclass
-class InfoMessage(_InfoLevel):
+class InfoMessage(_InfoLevel, *_EXTRA_CLASS_INHERIT):
     msg: str
     code: str = "FAL2000"
 
@@ -92,7 +102,7 @@ class InfoMessage(_InfoLevel):
 
 
 @dataclass
-class WarnMessage(_WarnLevel):
+class WarnMessage(_WarnLevel, *_EXTRA_CLASS_INHERIT):
     msg: str
     code: str = "FAL3000"
 
@@ -101,7 +111,7 @@ class WarnMessage(_WarnLevel):
 
 
 @dataclass
-class ErrorMessage(_ErrorLevel):
+class ErrorMessage(_ErrorLevel, *_EXTRA_CLASS_INHERIT):
     msg: str
     code: str = "FAL4000"
 
