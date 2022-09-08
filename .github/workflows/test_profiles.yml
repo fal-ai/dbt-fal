@@ -168,13 +168,6 @@ jobs:
         working-directory: integration_tests
         run: pip install behave
 
-      # Avoid running against the same profile at the same time
-      - name: Set up mutex on profiles
-        uses: ben-z/gh-action-mutex@v1.0-alpha-5
-        if: contains(fromJSON('["bigquery", "snowflake", "redshift"]'), matrix.profile)
-        with:
-          branch: gh-mutex-profile-${{ matrix.profile }}
-
       - name: Run tests
         id: test_run
         working-directory: integration_tests
@@ -224,6 +217,8 @@ jobs:
             export KEYFILE_DIR=$HOME
             echo 'keyfile is ready'
           fi
+
+          export DB_NAMESPACE='${{ github.run_id }}'
 
           BEHAVE_ARGS="--tags=-TODO-${{ matrix.profile }}"
 
