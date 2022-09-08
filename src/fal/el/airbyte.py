@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 import requests
 import time
 from requests.exceptions import RequestException
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 
 from fal.telemetry import telemetry
 
@@ -51,7 +51,7 @@ class AirbyteClient:
                 response.raise_for_status()
                 return response.json()
             except RequestException as e:
-                logger.warn(f"Airbyte API request failed: {e}")
+                LOGGER.warn(f"Airbyte API request failed: {e}")
                 if num_retries == self.max_retries:
                     break
                 num_retries += 1
@@ -87,7 +87,7 @@ class AirbyteClient:
         connection = self.get_connection_data(connection_id)
         job = self.sync(connection_id)
         job_id = job.get("job", {}).get("id")
-        logger.info(f"Job {job_id} started for connection: {connection_id}.")
+        LOGGER.info(f"Job {job_id} started for connection: {connection_id}.")
         start = time.monotonic()
 
         while True:

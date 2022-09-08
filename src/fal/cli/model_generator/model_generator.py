@@ -10,7 +10,7 @@ from fal.cli.model_generator.module_check import (
     write_to_model_check,
 )
 
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 
 SQL_MODEL_TEMPLATE = """
 {{ config(materialized='ephemeral') }}
@@ -74,7 +74,7 @@ def _generate_python_dbt_models(model_path: Path):
             file.write(sql_contents)
 
         if not old_checksum or checksum != old_checksum:
-            logger.warn(
+            LOGGER.warn(
                 f"File '{sql_relative_path}' was generated from '{py_relative_path}'.\n"
                 "Please do not modify it directly. We recommend committing it to your repository."
             )
@@ -89,7 +89,7 @@ def _check_path_safe_to_write(sql_path: Path, py_path: Path):
             contents = file.read()
             checksum, found = _checksum(contents)
             if not found or checksum != found:
-                logger.debug(
+                LOGGER.debug(
                     f"Existing file calculated checksum: {checksum}\nFound checksum: {found}"
                 )
                 raise RuntimeError(

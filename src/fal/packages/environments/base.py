@@ -8,7 +8,6 @@ from contextlib import ExitStack, contextmanager, nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     ContextManager,
@@ -17,7 +16,7 @@ from typing import (
     TypeVar,
 )
 
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 from platformdirs import user_cache_dir
 
 from fal.packages import bridge
@@ -40,7 +39,20 @@ def rmdir_on_fail(path: Path) -> Iterator[None]:
 
 
 def log_env(env: BaseEnvironment, message: str, *args, kind: str = "trace", **kwargs):
-    logger.log(kind.upper(), f"[{env.key}] {message}", *args, **kwargs)
+    message = f"[{env.key}] {message}"
+
+    if kind.startswith("trace"):
+        LOGGER.trace(message, *args, **kwargs)
+    elif kind.startswith("debug"):
+        LOGGER.debug(message, *args, **kwargs)
+    elif kind.startswith("info"):
+        LOGGER.info(message, *args, **kwargs)
+    elif kind.startswith("warn"):
+        LOGGER.warn(message, *args, **kwargs)
+    elif kind.startswith("error"):
+        LOGGER.error(message, *args, **kwargs)
+    else:
+        LOGGER.info(message, *args, **kwargs)
 
 
 class BaseEnvironment(Generic[T]):

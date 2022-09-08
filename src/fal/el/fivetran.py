@@ -9,7 +9,7 @@ from requests.exceptions import RequestException
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 from dateutil import parser
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 
 BASE_URL = "https://api.fivetran.com/v1/connectors/"
 
@@ -70,7 +70,7 @@ class FivetranClient:
                 parsed = response.json()
                 return parsed["data"] if "data" in parsed else parsed
             except RequestException as e:
-                logger.warn(f"Fivetran API request failed: {e}")
+                LOGGER.warn(f"Fivetran API request failed: {e}")
                 num_retries += 1
                 time.sleep(self.retry_delay)
 
@@ -126,12 +126,12 @@ class FivetranClient:
     def start_sync(self, connector_id: str) -> Dict[str, Any]:
         """Start a Fivetran connector sync."""
         if self.disable_schedule_on_trigger:
-            logger.info("Disabling Fivetran sync schedule.")
+            LOGGER.info("Disabling Fivetran sync schedule.")
             self._update_schedule_type(connector_id, ScheduleType.MANUAL)
         self.check_connector(connector_id)
         self._request(method=MethodsEnum.POST, endpoint=f"{connector_id}/force")
         connector_data = self.get_connector_data(connector_id)
-        logger.info(f"Sync start for connector_id={connector_id}.")
+        LOGGER.info(f"Sync start for connector_id={connector_id}.")
         return connector_data
 
     def _poll_sync(
@@ -152,7 +152,7 @@ class FivetranClient:
                 curr_last_sync_succeeded,
                 curr_sync_state,
             ) = self.get_sync_status(connector_id)
-            logger.info(f"Connector '{connector_id}'. State: {curr_sync_state}")
+            LOGGER.info(f"Connector '{connector_id}'. State: {curr_sync_state}")
 
             if curr_last_sync_completion > prev_sync_completion:
                 break

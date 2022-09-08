@@ -3,8 +3,7 @@ from multiprocessing.connection import Connection
 from typing import Any, Dict, Optional, List
 import warnings
 import json
-import faldbt.lib as lib
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 import os
 import argparse
 
@@ -115,7 +114,7 @@ def _dbt_run_through_python(
     else:
         return_code = 0 if success else 1
 
-    logger.debug(f"dbt exited with return code {return_code}")
+    LOGGER.debug(f"dbt exited with return code {return_code}")
 
     # The 'run_results' object has a 'write()' method which is basically json.dump().
     # We'll dump it directly to the fal results file (instead of first dumping it to
@@ -141,7 +140,7 @@ def dbt_run_through_python(
     args_list = get_dbt_command_list(args, models_list)
 
     cmd_str = " ".join(["dbt", *args_list])
-    logger.info("Running command: {}", cmd_str)
+    LOGGER.info("Running command: {}", cmd_str)
 
     # We will be using a multiprocessing.Pipe to communicate
     # from subprocess to main process about the return code

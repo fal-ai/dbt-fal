@@ -5,7 +5,7 @@ from typing import Callable, Iterator, List, Set
 import networkx as nx
 from fal.node_graph import NodeKind
 from fal.cli.selectors import ExecutionPlan, _is_before_script, _is_after_script
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 from dataclasses import dataclass
 
 
@@ -58,7 +58,7 @@ class FilteredGraph(OriginGraph):
                 graph.remove_node(node)
 
         if execution_plan.after_scripts or execution_plan.before_scripts:
-            logger.warn(
+            LOGGER.warn(
                 "Using before/after scripts are now deprecated. "
                 "Please consider migrating to pre-hooks/post-hooks or Python models."
             )
@@ -154,10 +154,10 @@ class PlannedGraph(OriginGraph):
 
         for node in nx.topological_sort(self.graph):
             properties = self.graph.nodes[node]
-            if (
-                properties["kind"] in (NodeKind.FAL_MODEL, NodeKind.FAL_SCRIPT)
-                or properties.get("pre_hook")
-            ):
+            if properties["kind"] in (
+                NodeKind.FAL_MODEL,
+                NodeKind.FAL_SCRIPT,
+            ) or properties.get("pre_hook"):
                 yield from split()
                 continue
 

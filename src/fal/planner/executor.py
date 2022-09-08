@@ -21,7 +21,7 @@ from fal.planner.tasks import (
 )
 from faldbt.project import FalDbt
 
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 
 
 class State(Enum):
@@ -48,14 +48,14 @@ def _show_failed_groups(scheduler: Scheduler, fal_dbt: FalDbt) -> None:
     )
     if failed_nodes:
         message = ", ".join(failed_nodes)
-        logger.info("Failed calculating the following nodes: {}", message)
+        LOGGER.info("Failed calculating the following nodes: {}", message)
 
     skipped_nodes = list(
         _collect_nodes(scheduler.filter_groups(Status.SKIPPED), fal_dbt)
     )
     if skipped_nodes:
         message = ", ".join(skipped_nodes)
-        logger.info("Skipped calculating the following nodes: {}", message)
+        LOGGER.info("Skipped calculating the following nodes: {}", message)
 
 
 @dataclass

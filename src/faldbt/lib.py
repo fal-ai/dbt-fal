@@ -12,7 +12,7 @@ import dbt.version
 from dbt.semver import VersionSpecifier
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLAdapter
@@ -98,19 +98,19 @@ _lock = threading.RLock()
 @contextmanager
 def _cache_lock(info: str = ""):
     operationId = uuid4()
-    logger.debug("Locking  {} {}", operationId, info)
+    LOGGER.debug("Locking  {} {}", operationId, info)
 
     _lock.acquire()
-    logger.debug("Acquired {}", operationId)
+    LOGGER.debug("Acquired {}", operationId)
 
     try:
         yield
     except:
-        logger.debug("Error during lock operation {}", operationId)
+        LOGGER.debug("Error during lock operation {}", operationId)
         raise
     finally:
         _lock.release()
-        logger.debug("Released {}", operationId)
+        LOGGER.debug("Released {}", operationId)
 
 
 def _connection_name(prefix: str, obj, _hash: bool = True):
@@ -503,7 +503,7 @@ def _create_engine_from_connection(adapter: SQLAdapter):
         url_string = "postgresql+psycopg2://"
     else:
         # TODO: add special cases as needed
-        logger.warn("No explicit url string for adapter {}", adapter.type())
+        LOGGER.warn("No explicit url string for adapter {}", adapter.type())
         url_string = f"{adapter.type()}://"
 
     connection = adapter.connections.get_thread_connection()
