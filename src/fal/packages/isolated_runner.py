@@ -5,7 +5,6 @@ from argparse import ArgumentParser
 
 from fal.logger import LOGGER, log_manager
 
-from fal.logger import reconfigure_logging
 from fal.packages import bridge
 
 # Isolated processes are really tricky to debug properly
@@ -86,6 +85,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    reconfigure_logging()
+    # TODO: do we still need this?
     with log_manager.applicationbound():
         sys.exit(main())

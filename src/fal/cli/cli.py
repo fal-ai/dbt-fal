@@ -10,7 +10,7 @@ from fal.telemetry import telemetry
 
 import dbt.exceptions
 import dbt.ui
-from fal.logger import reconfigure_logging, log_manager
+from fal.logger import log_manager
 
 
 def cli(argv: List[str] = sys.argv):
@@ -25,8 +25,7 @@ def cli(argv: List[str] = sys.argv):
 def _cli(argv: List[str]):
     parsed = parse_args(argv[1:])
 
-    reconfigure_logging()
-
+    # TODO: do we still need this?
     with log_manager.applicationbound():
         if parsed.debug:
             log_manager.set_debug()

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
-from dbt.logger import log_manager
+
+from dbt.logger import log_manager  # For export
 from dbt.events.functions import fire_event
 from dbt.events.base_types import (
     TestLevel as _TestLevel,
@@ -11,59 +12,41 @@ from dbt.events.base_types import (
 )
 
 
-class LOGGER:
-    @classmethod
-    def test(cls, msg: str, *args, **kwargs):
+class FireEventLogger:
+    def test(self, msg: str, *args, **kwargs):
         fire_event(TestMessage(_prepare_msg(msg, *args, **kwargs)))
 
-    @classmethod
-    def trace(cls, msg: str, *args, **kwargs):
+    def trace(self, msg: str, *args, **kwargs):
         # Alias to test
-        return cls.test(msg, *args, **kwargs)
+        return self.test(msg, *args, **kwargs)
 
-    @classmethod
-    def debug(cls, msg: str, *args, **kwargs):
+    def debug(self, msg: str, *args, **kwargs):
         fire_event(DebugMessage(_prepare_msg(msg, *args, **kwargs)))
 
-    @classmethod
-    def info(cls, msg: str, *args, **kwargs):
+    def info(self, msg: str, *args, **kwargs):
         fire_event(InfoMessage(_prepare_msg(msg, *args, **kwargs)))
 
-    @classmethod
-    def warn(cls, msg: str, *args, **kwargs):
+    def warn(self, msg: str, *args, **kwargs):
         fire_event(WarnMessage(_prepare_msg(msg, *args, **kwargs)))
 
-    @classmethod
-    def warning(cls, msg: str, *args, **kwargs):
+    def warning(self, msg: str, *args, **kwargs):
         # Alias to warn
-        return cls.warn(msg, *args, **kwargs)
+        return self.warn(msg, *args, **kwargs)
 
-    @classmethod
-    def error(cls, msg: str, *args, **kwargs):
+    def error(self, msg: str, *args, **kwargs):
         fire_event(ErrorMessage(_prepare_msg(msg, *args, **kwargs)))
 
 
 def _prepare_msg(msg: str, *args, **kwargs):
-    if args:
-        if kwargs:
-            return msg.format(*args, **kwargs)
-        else:
-            return msg.format(*args)
+    if args or kwargs:
+        return msg.format(*args, **kwargs)
     else:
-        if kwargs:
-            return msg.format(**kwargs)
-        else:
-            return msg
+        return msg
 
 
-# TODO: do we still need to do this?
-def reconfigure_logging() -> None:
-    # Disabling the dbt.logger.DelayedFileHandler manually
-    # since we do not use the new dbt logging system
-    # This fixes issue https://github.com/fal-ai/fal/issues/97
-    log_manager.set_path(None)
+LOGGER = FireEventLogger()
 
-# NOTE: LOGGER is imported in faldbt.lib, so import must be here
+# NOTE: fal.logger is imported in faldbt.lib, so import must be here
 import faldbt.lib as lib
 
 if lib.version_compare("1.1.0") < 0:

@@ -40,19 +40,8 @@ def rmdir_on_fail(path: Path) -> Iterator[None]:
 
 def log_env(env: BaseEnvironment, message: str, *args, kind: str = "trace", **kwargs):
     message = f"[{env.key}] {message}"
-
-    if kind.startswith("trace"):
-        LOGGER.trace(message, *args, **kwargs)
-    elif kind.startswith("debug"):
-        LOGGER.debug(message, *args, **kwargs)
-    elif kind.startswith("info"):
-        LOGGER.info(message, *args, **kwargs)
-    elif kind.startswith("warn"):
-        LOGGER.warn(message, *args, **kwargs)
-    elif kind.startswith("error"):
-        LOGGER.error(message, *args, **kwargs)
-    else:
-        LOGGER.info(message, *args, **kwargs)
+    log_method = getattr(LOGGER, kind)
+    log_method(message, *args, **kwargs)
 
 
 class BaseEnvironment(Generic[T]):
