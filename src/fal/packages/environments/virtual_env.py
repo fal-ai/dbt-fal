@@ -23,7 +23,7 @@ _BASE_VENV_DIR.mkdir(exist_ok=True)
 
 
 @dataclass
-class VirtualPythonEnvironment(BaseEnvironment[Path], make_thread_safe=False):
+class VirtualPythonEnvironment(BaseEnvironment[Path], make_thread_safe=True):
     requirements: List[str] = field(default_factory=list)
 
     @property
