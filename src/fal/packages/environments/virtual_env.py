@@ -4,6 +4,7 @@ import hashlib
 import os
 import subprocess
 import sysconfig
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ContextManager, List
@@ -39,14 +40,22 @@ class VirtualPythonEnvironment(BaseEnvironment[Path], make_thread_safe=False):
             for search_path in search_paths
         )
 
-    def _executable_in(self, search_path: Path, executable_name: str) -> Path:
-        return search_path / "bin" / executable_name
+    def _get_executable_path(self, search_path: Path, executable_name: str) -> Path:
+        bin_dir = (search_path / "bin").as_posix()
+        executable_path = shutil.which(executable_name, path=bin_dir)
+        if executable_path is None:
+            raise RuntimeError(
+                f"Could not find {executable_name} in {search_path}. "
+                f"Is the virtual environment corrupted?"
+            )
+
+        return Path(executable_path)
 
     def _verify_dependencies(self, primary_path: Path, secondary_path: Path) -> None:
         # Ensure that there are no dependency mismatches between the
         # primary environment and the secondary environment.
         python_path = self._python_path_for(secondary_path, primary_path)
-        original_pip = self._executable_in(primary_path, "pip")
+        original_pip = self._get_executable_path(primary_path, "pip")
         subprocess.check_call([original_pip, "check"], env={"PYTHONPATH": python_path})
 
     def _get_or_create(self) -> Path:
@@ -101,7 +110,7 @@ class VenvConnection(IsolatedProcessConnection[VirtualPythonEnvironment]):
         # The search order is important, we want the secondary path to
         # take precedence.
         python_path = self.env._python_path_for(self.secondary_path, self.primary_path)
-        python_executable = self.env._executable_in(self.primary_path, "python")
+        python_executable = self.env._get_executable_path(self.primary_path, "python")
         return subprocess.Popen(
             [
                 python_executable,
