@@ -16,6 +16,8 @@ info = buf.getvalue()
 
 output = output + f"\nModel dataframe information:\n{info}"
 output = output + f"\nModel alias is {model_alias}"
+alias_no_namespace = '_'.join(model_alias.split('_')[2:])
+output = output + f"\nModel alias without namespace is {alias_no_namespace}"
 temp_dir = os.environ["temp_dir"]
 write_dir = open(reduce(os.path.join, [temp_dir, model_name + ".after.txt"]), "w")
 write_dir.write(output)
