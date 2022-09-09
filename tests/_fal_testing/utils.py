@@ -1,4 +1,5 @@
 import os
+import sys
 import inspect
 from pathlib import Path
 
@@ -36,3 +37,21 @@ def create_dynamic_artifact(context, additional_data=None):
     return create_script_artifact(
         context, Path(outer_frame.filename).stem, additional_data
     )
+
+
+def get_environment_type():
+    # To determine whether this is a fal-created environment or not
+    # we'll check whether the executable that is running this script
+    # is located under any of the designated fal environment directories.
+    from fal.packages.environments.virtual_env import _BASE_VENV_DIR
+    from fal.packages.environments.conda import _BASE_CONDA_DIR
+
+    executable_path = Path(sys.executable)
+    for environment_type, prefix in [
+        ("venv", _BASE_VENV_DIR),
+        ("conda", _BASE_CONDA_DIR),
+    ]:
+        if prefix in executable_path.parents:
+            return environment_type
+    else:
+        return "local"

@@ -105,3 +105,23 @@ models:
             environment: local
 
           - path: environment_type_3.py
+
+  - name: model_g
+    meta:
+      fal:
+        environment: funny-conda
+        pre-hook:
+          - path: environment_type.py
+
+          - path: environment_type_2.py
+            environment: funny
+
+          - path: environment_type_3.py
+            environment: local
+
+        post-hook:
+          - path: check_imports.py
+            with:
+              import: pyjokes
+              expected_success: true
+              version: "0.6.0"
