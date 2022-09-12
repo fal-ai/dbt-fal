@@ -12,6 +12,8 @@ from fal.cli.model_generator.module_check import (
 
 from fal.logger import LOGGER
 
+from fal.telemetry import telemetry
+
 SQL_MODEL_TEMPLATE = """
 {{ config(materialized='ephemeral') }}
 /*
@@ -33,6 +35,14 @@ def generate_python_dbt_models(project_dir: str):
     python_paths: List[Path] = []
     for model_path in model_paths:
         python_paths.extend(_generate_python_dbt_models(model_path))
+
+    if python_paths:
+        telemetry.log_api(
+            action="python_models_generated",
+            additional_props={
+                "models": len(python_paths)
+            }
+        )
 
     return dict([(path.stem, path) for path in python_paths])
 
