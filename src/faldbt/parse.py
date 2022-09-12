@@ -12,7 +12,7 @@ from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultAr
 from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
 from dbt.exceptions import IncompatibleSchemaException, RuntimeException
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 
 from faldbt.utils.yaml_helper import load_yaml
 
@@ -123,7 +123,7 @@ def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
         exc.add_filename(sources_path)
         raise
     except RuntimeException as exc:
-        logger.warn("Could not read dbt sources artifact")
+        LOGGER.warn("Could not read dbt sources artifact")
         return None
 
 
@@ -143,7 +143,7 @@ def get_dbt_results(
         exc.add_filename(results_path)
         raise
     except RuntimeException as exc:
-        logger.warn("Could not read dbt run_results artifact")
+        LOGGER.warn("Could not read dbt run_results artifact")
         return None
 
 
@@ -191,9 +191,13 @@ def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
 
         name = environment.get("name")
         if _is_local_environment(name):
-            raise FalParseError(f"Environment name conflicts with a reserved name: {name}.")
+            raise FalParseError(
+                f"Environment name conflicts with a reserved name: {name}."
+            )
 
-        environments[name] = create_environment(requirements=environment.get("requirements", []))
+        environments[name] = create_environment(
+            requirements=environment.get("requirements", [])
+        )
     return environments
 
 

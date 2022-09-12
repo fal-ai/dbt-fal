@@ -8,7 +8,6 @@ from dbt.task.compile import CompileTask
 from enum import Enum
 from functools import reduce
 import networkx as nx
-from dbt.logger import GLOBAL_LOGGER as logger
 
 
 class ExecutionPlan:

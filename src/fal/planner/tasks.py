@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Iterator, List, Any, Optional, Dict, Tuple, Union
 
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 
 from fal.node_graph import FalScript
 from fal.utils import print_run_info, DynamicIndexProvider
@@ -105,13 +105,13 @@ def _run_script(script: FalScript) -> Dict[str, Any]:
         with _modify_path(script.faldbt):
             script.exec()
     except:
-        logger.error("Error in script {}:\n{}", script.id, traceback.format_exc())
+        LOGGER.error("Error in script {}:\n{}", script.id, traceback.format_exc())
         # TODO: what else to do?
         status = NodeStatus.Fail
     else:
         status = NodeStatus.Success
     finally:
-        logger.debug("Finished script {}", script.id)
+        LOGGER.debug("Finished script {}", script.id)
         finished_at = datetime.now(tz=timezone.utc)
 
     return {
@@ -255,11 +255,13 @@ class FalIsolatedHookTask(Task):
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         environment = fal_dbt._load_environment(self.environment_name)
         if environment is None:
-            logger.error("Could not find environment: {}", self.environment_name)
+            LOGGER.error("Could not find environment: {}", self.environment_name)
             return FAILURE
 
         with environment.connect() as connection:
-            execute_local_task = partial(self.local_hook.execute, args=args, fal_dbt=fal_dbt)
+            execute_local_task = partial(
+                self.local_hook.execute, args=args, fal_dbt=fal_dbt
+            )
             result = connection.run(execute_local_task)
             assert isinstance(result, int), result
             return result

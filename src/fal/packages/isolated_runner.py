@@ -3,10 +3,8 @@ import sys
 import time
 from argparse import ArgumentParser
 
-from dbt.logger import GLOBAL_LOGGER as logger
-from dbt.logger import log_manager
+from fal.logger import LOGGER, log_manager
 
-from fal.cli.cli import reconfigure_logging
 from fal.packages import bridge
 
 # Isolated processes are really tricky to debug properly
@@ -47,11 +45,11 @@ def run_client(address: str, *, with_pdb: bool = False) -> int:
         # flag when executing the binary.
         breakpoint()
 
-    logger.debug("Trying to create a connection to {}", address)
+    LOGGER.debug("Trying to create a connection to {}", address)
     with bridge.child_connection(address) as connection:
-        logger.debug("Created child connection to {}", address)
+        LOGGER.debug("Created child connection to {}", address)
         callable = connection.recv()
-        logger.debug("Received the callable at {}", address)
+        LOGGER.debug("Received the callable at {}", address)
         try:
             result = callable()
             exception = None
@@ -64,7 +62,7 @@ def run_client(address: str, *, with_pdb: bool = False) -> int:
 
 
 def main() -> None:
-    logger.debug("Starting the isolated process at PID {}", os.getpid())
+    LOGGER.debug("Starting the isolated process at PID {}", os.getpid())
 
     parser = ArgumentParser()
     parser.add_argument("listen_at")
@@ -79,7 +77,7 @@ def main() -> None:
         message += f"    $ {sys.executable} {os.path.abspath(__file__)} --with-pdb {options.listen_at}"
         message += "\n" * 3
         message += "=" * 60
-        logger.info(message)
+        LOGGER.info(message)
         time.sleep(DEBUG_TIMEOUT)
 
     address = bridge.decode_service_address(options.listen_at)
@@ -87,6 +85,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    reconfigure_logging()
+    # TODO: do we still need this?
     with log_manager.applicationbound():
         sys.exit(main())

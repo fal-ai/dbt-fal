@@ -12,7 +12,7 @@ import dbt.version
 from dbt.semver import VersionSpecifier
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLAdapter
@@ -30,13 +30,21 @@ import sqlalchemy
 from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 
+from dbt.contracts.sql import RemoteRunResult
+
+DBT_VCURRENT = dbt.version.installed
+
+
+def version_compare(version_string: str):
+    return DBT_VCURRENT.compare(VersionSpecifier.from_version_string(version_string))
+
+
+IS_DBT_V1PLUS = version_compare("1.0.0") >= 0
 
 _DBT_V1 = VersionSpecifier.from_version_string("1.0.0")
 DBT_VCURRENT = dbt.version.installed
 
 IS_DBT_V1PLUS = DBT_VCURRENT.compare(_DBT_V1) >= 0
-
-from dbt.contracts.sql import RemoteRunResult
 
 
 class WriteModeEnum(Enum):
@@ -63,10 +71,6 @@ def initialize_dbt_flags(profiles_dir: str):
     import dbt.events.functions as events_functions
 
     events_functions.set_invocation_id()
-
-    # Re-enable logging for 1.0.0 through old API of logger
-    # TODO: migrate for 1.0.0 code to new event system
-    flags.ENABLE_LEGACY_LOGGER = "1"
 
 
 def register_adapters(config: RuntimeConfig):
@@ -102,19 +106,19 @@ _lock = threading.RLock()
 @contextmanager
 def _cache_lock(info: str = ""):
     operationId = uuid4()
-    logger.debug("Locking  {} {}", operationId, info)
+    LOGGER.debug("Locking  {} {}", operationId, info)
 
     _lock.acquire()
-    logger.debug("Acquired {}", operationId)
+    LOGGER.debug("Acquired {}", operationId)
 
     try:
         yield
     except:
-        logger.debug("Error during lock operation {}", operationId)
+        LOGGER.debug("Error during lock operation {}", operationId)
         raise
     finally:
         _lock.release()
-        logger.debug("Released {}", operationId)
+        LOGGER.debug("Released {}", operationId)
 
 
 def _connection_name(prefix: str, obj, _hash: bool = True):
@@ -507,7 +511,7 @@ def _create_engine_from_connection(adapter: SQLAdapter):
         url_string = "postgresql+psycopg2://"
     else:
         # TODO: add special cases as needed
-        logger.warn("No explicit url string for adapter {}", adapter.type())
+        LOGGER.warn("No explicit url string for adapter {}", adapter.type())
         url_string = f"{adapter.type()}://"
 
     connection = adapter.connections.get_thread_connection()

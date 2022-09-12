@@ -38,7 +38,7 @@ from dbt.contracts.results import (
     FreshnessExecutionResultArtifact,
     FreshnessNodeOutput,
 )
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 from dbt.task.compile import CompileTask
 import dbt.tracking
 
@@ -832,7 +832,7 @@ class FalDbt:
             self._firestore_client = firestore.client(app=app)
 
         except Exception:
-            logger.warn(
+            LOGGER.warn(
                 "Could not find acceptable GCP credentials in profiles.yml, trying default GCP Application"
             )
 
@@ -847,7 +847,7 @@ class FalDbt:
 
                 self._firestore_client = firestore.client(app=app)
             except Exception:
-                logger.warn(
+                LOGGER.warn(
                     "Could not find acceptable Default GCP Application credentials"
                 )
 

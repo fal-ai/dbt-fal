@@ -11,7 +11,7 @@ from faldbt.project import DbtModel, FalDbt
 
 from dbt.contracts.results import RunStatus
 from dbt.config.runtime import RuntimeConfig
-from dbt.logger import GLOBAL_LOGGER as logger
+from fal.logger import LOGGER
 
 from dbt.contracts.graph.parsed import ColumnInfo
 
@@ -57,7 +57,6 @@ def create_hook(raw_hook: Any, default_environment_name: Optional[str] = None) -
         )
     else:
         return LocalHook(raw_hook["path"], raw_hook.get("with", {}))
-
 
 
 @dataclass
@@ -314,7 +313,7 @@ def _process_ipynb(raw_source_code: str) -> str:
 
     joined_script = "\n #cell \n".join(script_list)
 
-    logger.debug(f"Joined .ipynb cells to:\n{joined_script}")
+    LOGGER.debug(f"Joined .ipynb cells to:\n{joined_script}")
 
     return joined_script
 
