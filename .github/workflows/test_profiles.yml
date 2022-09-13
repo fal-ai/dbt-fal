@@ -212,6 +212,15 @@ jobs:
         if: contains(fromJSON('["redshift", "postgres"]'), matrix.profile)
         run: docker-compose up -d
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        # TODO: make redshift use a real connection
+        if: contains(fromJSON('["redshift", "athena"]'), matrix.profile)
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Setup behave
         working-directory: integration_tests
         run: pip install behave
