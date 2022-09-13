@@ -185,13 +185,13 @@ jobs:
           GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
           BQ_DATASET: ${{ secrets.BQ_DATASET }}
           # Redshift
-          RS_DB_NAME: ${{ secrets.RS_DB_NAME }}
-          # TODO: change to {{ secrets.RS_SCHEMA }} when testing with real Redshift
+          # TODO: change to {{ secrets.* }} when testing with real Redshift
+          RS_DB_NAME: test
           RS_SCHEMA: dbt_fal
-          RS_HOST: ${{ secrets.RS_HOST }}
-          RS_PASSWORD: ${{ secrets.RS_PASSWORD }}
-          RS_PORT: ${{ secrets.RS_PORT }}
-          RS_USER: ${{ secrets.RS_USER }}
+          RS_HOST: localhost
+          RS_PASSWORD: pass
+          RS_PORT: 5432
+          RS_USER: pguser
           # Snowflake
           SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
           SF_USER: ${{ secrets.SF_USER }}
