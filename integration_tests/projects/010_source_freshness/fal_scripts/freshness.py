@@ -7,7 +7,8 @@ output = ""
 sources: List[DbtSource] = list_sources()
 for node in sources:
     if node.freshness:
-        output += f"({node.name}, {node.table_name}) {node.freshness.status}\n"
+        # NOTE: removing the namespace prefix
+        output += f"({node.name}, {node.table_name.split('__ns__')[1]}) {node.freshness.status}\n"
 
 temp_dir = os.environ["temp_dir"]
 write_dir = open(os.path.join(temp_dir, "GLOBAL.freshness.txt"), "w")

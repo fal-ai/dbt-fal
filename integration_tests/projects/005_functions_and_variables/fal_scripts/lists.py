@@ -12,7 +12,8 @@ for model in list_models():
 
 for source in list_sources():
     lines.append(
-        f"source: {source.name} {source.table_name} property: {source.meta['property']['other'] if source.meta else None}"
+        # NOTE: removing the namespace prefix
+        f"source: {source.name} {source.table_name.split('__ns__')[1]} property: {source.meta['property']['other'] if source.meta else None}"
     )
 
 create_dynamic_artifact(context, additional_data="\n".join(lines))

@@ -5,11 +5,11 @@ sources:
     database: "{{ env_var('DBT_DATABASE', 'test') }}"
     schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
     tables:
-      - name: other_source
+      - name: "ns__{{ env_var('DB_NAMESPACE', '') }}__ns__other_source"
         meta:
           property:
             other: 4
-      - name: some_source
+      - name: "ns__{{ env_var('DB_NAMESPACE', '') }}__ns__some_source"
         columns:
           - name: my_text
             tests:

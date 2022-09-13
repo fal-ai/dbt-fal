@@ -112,7 +112,7 @@ Feature: `run` command
     Then the following scripts are ran:
       | agent_wait_time.after.py | zendesk_ticket_data.post_hook.py | zendesk_ticket_data.post_hook2.py |
     And the script agent_wait_time.after.py output file has the lines:
-      | Model alias is wait_time |
+      | Model alias without namespace is wait_time |
 
   Scenario: when false script is selected, nothing runs
     When the following shell command is invoked:

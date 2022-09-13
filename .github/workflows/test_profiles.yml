@@ -168,13 +168,6 @@ jobs:
         working-directory: integration_tests
         run: pip install behave
 
-      # Avoid running against the same profile at the same time
-      - name: Set up mutex on profiles
-        uses: ben-z/gh-action-mutex@v1.0-alpha-5
-        if: contains(fromJSON('["bigquery", "snowflake", "redshift"]'), matrix.profile)
-        with:
-          branch: gh-mutex-profile-${{ matrix.profile }}
-
       - name: Run tests
         id: test_run
         working-directory: integration_tests
@@ -225,15 +218,19 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          BEHAVE_ARGS="--tags=-TODO-${{ matrix.profile }}"
+          # Could not get the real job_id easily from context
+          UUID=$(uuidgen | head -c8)
+          export DB_NAMESPACE="${{ github.run_id }}_${UUID}"
+
+          BEHAVE_TAGS="--tags=-TODO-${{ matrix.profile }}"
 
           if [[ '${{ matrix.profile }}' != 'postgres' ]]
           then
             # 'broken_profile' tests only works for postgres right now
-            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-broken_profile"
+            BEHAVE_TAGS="$BEHAVE_TAGS --tags=-broken_profile"
           fi
 
-          behave $BEHAVE_ARGS -D profile=${{ matrix.profile }}
+          behave $BEHAVE_TAGS -fplain -D profile=${{ matrix.profile }}
 
       - name: Send custom JSON data to Slack workflow
         if: (failure() || cancelled()) && github.event_name == 'schedule'

@@ -8,14 +8,14 @@ sources:
       warn_after: { "count": 5, "period": minute }
       error_after: { "count": 30, "period": minute }
     tables:
-      - name: freshness_table
+      - name: "ns__{{ env_var('DB_NAMESPACE', '') }}__ns__freshness_table"
         loaded_at_field: "current_timestamp"
         columns:
           - name: info
             tests:
               - unique
 
-      - name: freshness_xther # does not exist (run time error)
+      - name: "ns__{{ env_var('DB_NAMESPACE', '') }}__ns__freshness_xther" # does not exist (run time error)
         loaded_at_field: "current_timestamp"
 fal:
   scripts:
