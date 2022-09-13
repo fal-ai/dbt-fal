@@ -21,7 +21,8 @@ for test in faldbt.tests:
     print(test)
 
 for source in faldbt.sources:
-    print(source.name, source.table_name, [(t.name, t.status) for t in source.tests])
+    # NOTE: removing the namespace prefix
+    print(source.name, source.table_name.split('__ns__')[1], [(t.name, t.status) for t in source.tests])
 
 for model in faldbt.models:
     print(model.name, [(t.name, t.status) for t in model.tests])

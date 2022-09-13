@@ -5,7 +5,7 @@ sources:
     database: "{{ env_var('DBT_DATABASE', 'test') }}"
     schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
     tables:
-      - name: some_source
+      - name: "ns__{{ env_var('DB_NAMESPACE', '') }}__ns__some_source"
 
 models:
   - name: zendesk_ticket_data
