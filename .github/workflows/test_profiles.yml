@@ -278,7 +278,7 @@ jobs:
             # TODO: which to use for sources? Example:
             #   database: "{{ env_var('DBT_DATABASE', 'test') }}"
             #   schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
-            export DBT_DATABASE="$SF_DATABASE" DBT_SCHEMA="$SF_SCHEMA"
+            export DBT_DATABASE="" DBT_SCHEMA=""
           fi
           if [[ '${{ matrix.profile }}' == "athena" ]]
           then
