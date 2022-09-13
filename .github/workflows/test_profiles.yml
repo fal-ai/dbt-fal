@@ -218,17 +218,19 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          export DB_NAMESPACE='${{ github.run_id }}'
+          # Could not get the real job_id easily from context
+          UUID=$(uuidgen | head -c8)
+          export DB_NAMESPACE="${{ github.run_id }}_${UUID}"
 
-          BEHAVE_ARGS="--tags=-TODO-${{ matrix.profile }}"
+          BEHAVE_TAGS="--tags=-TODO-${{ matrix.profile }}"
 
           if [[ '${{ matrix.profile }}' != 'postgres' ]]
           then
             # 'broken_profile' tests only works for postgres right now
-            BEHAVE_ARGS="$BEHAVE_ARGS --tags=-broken_profile"
+            BEHAVE_TAGS="$BEHAVE_TAGS --tags=-broken_profile"
           fi
 
-          behave $BEHAVE_ARGS -D profile=${{ matrix.profile }}
+          behave $BEHAVE_TAGS -fplain -D profile=${{ matrix.profile }}
 
       - name: Send custom JSON data to Slack workflow
         if: (failure() || cancelled()) && github.event_name == 'schedule'
