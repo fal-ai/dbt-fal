@@ -31,6 +31,17 @@ on:
           - snowflake
           - redshift
           - duckdb
+      python:
+        description: Python version to test with
+        required: false
+        default: "3.8"
+        type: choice
+        options:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+
       dbt:
         description: dbt version to test with
         required: false
@@ -55,10 +66,13 @@ jobs:
           OUTPUT = ADAPTERS
 
           if '${{ github.event_name }}' == 'pull_request':
+            import re
+
             ADAPTERS += ['redshift', 'duckdb']
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
             PR_BRANCH = '${{ github.head_ref }}'.lower()
             PR_DESCRIPTION = '''${{ github.event.pull_request.body }}'''.lower()
+            PR_DESCRIPTION = re.sub("<!--.*?-->", "", PR_DESCRIPTION)
 
             # Only test adapters mentioned in the pull request title or branch.
             # We always test postgres as a sanity check.
@@ -68,7 +82,7 @@ jobs:
                 a in PR_TITLE or
                 a in PR_BRANCH or
                 a in PR_DESCRIPTION
-              ]
+            ]
 
           elif '${{ github.event_name }}' == 'push':
             OUTPUT = ['postgres']
@@ -93,11 +107,20 @@ jobs:
           OUTPUT=["3.8"]
 
           if '${{ github.event_name }}' == 'pull_request':
+            import re
+
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
             PR_BRANCH = '${{ github.head_ref }}'.lower()
+            PR_DESCRIPTION = '''${{ github.event.pull_request.body }}'''.lower()
+            PR_DESCRIPTION = re.sub("<!--.*?-->", "", PR_DESCRIPTION)
 
             # Test version mentioned in the pull request title or branch.
-            OUTPUT = [v for v in VERSIONS if v in PR_TITLE or v in PR_BRANCH]
+            OUTPUT = [
+              v for v in VERSIONS
+              if v in PR_TITLE or
+                v in PR_BRANCH or
+                v in PR_DESCRIPTION
+            ]
 
             if not OUTPUT:
               # If none were found in PR info
@@ -105,6 +128,10 @@ jobs:
 
           elif '${{ github.event_name }}' in ('schedule', 'push'):
             OUTPUT=VERSIONS
+
+          elif '${{ github.event_name }}' == 'workflow_dispatch':
+            PYTHON_CHOICE = '${{ github.event.inputs.python }}'
+            OUTPUT = [PYTHON_CHOICE]
 
           import json
           print("::set-output name=list::" + json.dumps(OUTPUT))
