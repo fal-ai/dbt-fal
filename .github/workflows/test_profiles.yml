@@ -31,12 +31,26 @@ on:
           - snowflake
           - redshift
           - duckdb
+
+      python:
+        description: Python version to test with
+        required: false
+        default: "3.8"
+        type: choice
+        options:
+          - "<ALL>"
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+
       dbt:
         description: dbt version to test with
         required: false
         default: "latest"
         type: choice
         options:
+          - "<ALL>"
           - "latest"
           - "1.0.*"
           - "1.1.*"
@@ -51,32 +65,44 @@ jobs:
       - id: matrix-step
         shell: python
         run: |
-          ADAPTERS = ['postgres', 'bigquery', 'snowflake']
-          OUTPUT = ADAPTERS
+          OPTIONS = [
+            'postgres',
+            'bigquery',
+            'snowflake',
+          ]
+          EXTRA_OPTIONS = [
+            'redshift',
+            'duckdb',
+          ]
+          OUTPUT = OPTIONS
 
           if '${{ github.event_name }}' == 'pull_request':
-            ADAPTERS += ['redshift', 'duckdb']
+            import re
+
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
             PR_BRANCH = '${{ github.head_ref }}'.lower()
             PR_DESCRIPTION = '''${{ github.event.pull_request.body }}'''.lower()
+            PR_DESCRIPTION = re.sub("<!--.*?-->", "", PR_DESCRIPTION)
 
             # Only test adapters mentioned in the pull request title or branch.
             # We always test postgres as a sanity check.
             OUTPUT = [
-              a for a in ADAPTERS
+              a for a in OPTIONS + EXTRA_OPTIONS
               if a == 'postgres' or
                 a in PR_TITLE or
                 a in PR_BRANCH or
                 a in PR_DESCRIPTION
-              ]
+            ]
 
           elif '${{ github.event_name }}' == 'push':
             OUTPUT = ['postgres']
 
           elif '${{ github.event_name }}' == 'workflow_dispatch':
-            ADAPTER_CHOICE = '${{ github.event.inputs.adapter }}'
-            if ADAPTER_CHOICE != '<ALL>':
-              OUTPUT = [ADAPTER_CHOICE]
+            INPUT_CHOICE = '${{ github.event.inputs.adapter }}'
+            if INPUT_CHOICE == '<ALL>':
+              OUTPUT = OPTIONS + EXTRA_OPTIONS
+            else:
+              OUTPUT = [INPUT_CHOICE]
 
           import json
           print("::set-output name=list::" + json.dumps(OUTPUT))
@@ -89,22 +115,38 @@ jobs:
       - id: matrix-step
         shell: python
         run: |
-          VERSIONS=["3.7", "3.8", "3.9", "3.10"]
-          OUTPUT=["3.8"]
+          OPTIONS = ["3.7", "3.8", "3.9", "3.10"]
+          OUTPUT = ["3.8"]
 
           if '${{ github.event_name }}' == 'pull_request':
+            import re
+
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
             PR_BRANCH = '${{ github.head_ref }}'.lower()
+            PR_DESCRIPTION = '''${{ github.event.pull_request.body }}'''.lower()
+            PR_DESCRIPTION = re.sub("<!--.*?-->", "", PR_DESCRIPTION)
 
             # Test version mentioned in the pull request title or branch.
-            OUTPUT = [v for v in VERSIONS if v in PR_TITLE or v in PR_BRANCH]
+            OUTPUT = [
+              v for v in OPTIONS
+              if v in PR_TITLE or
+                v in PR_BRANCH or
+                v in PR_DESCRIPTION
+            ]
 
             if not OUTPUT:
               # If none were found in PR info
               OUTPUT=["3.8"]
 
           elif '${{ github.event_name }}' in ('schedule', 'push'):
-            OUTPUT=VERSIONS
+            OUTPUT=OPTIONS
+
+          elif '${{ github.event_name }}' == 'workflow_dispatch':
+            INPUT_CHOICE = '${{ github.event.inputs.python }}'
+            if INPUT_CHOICE == '<ALL>':
+              OUTPUT = OPTIONS
+            else:
+              OUTPUT = [INPUT_CHOICE]
 
           import json
           print("::set-output name=list::" + json.dumps(OUTPUT))
@@ -117,11 +159,15 @@ jobs:
       - id: matrix-step
         shell: python
         run: |
-          OUTPUT=["1.0.*", "1.1.*", "1.2.*"]
+          OPTIONS = ["1.0.*", "1.1.*", "1.2.*"]
+          OUTPUT = OPTIONS
 
           if '${{ github.event_name }}' == 'workflow_dispatch':
-            DBT_CHOICE = '${{ github.event.inputs.dbt }}'
-            OUTPUT = [DBT_CHOICE]
+            INPUT_CHOICE = '${{ github.event.inputs.dbt }}'
+            if INPUT_CHOICE == '<ALL>':
+              OUTPUT = OPTIONS
+            else:
+              OUTPUT = [INPUT_CHOICE]
 
           import json
           print("::set-output name=list::" + json.dumps(OUTPUT))
