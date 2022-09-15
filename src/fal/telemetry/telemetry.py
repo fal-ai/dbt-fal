@@ -174,11 +174,16 @@ def check_uid():
 def check_stats_enabled():
     """
     Check if the user allows us to use telemetry. In order of precedence:
-    1. If FAL_STATS_ENABLED defined, check its value
-    2. Otherwise use the value in stats_enabled in the config.yaml file
+    1. If FAL_STATS_ENABLED is defined, check its value
+    2. If DO_NOT_TRACK is defined, check its value
+    3. Otherwise use the value in stats_enabled in the config.yaml file
     """
     if "FAL_STATS_ENABLED" in os.environ:
         return os.environ["FAL_STATS_ENABLED"].lower() == "true"
+
+    if "DO_NOT_TRACK" in os.environ:
+        do_not_track = os.environ["DO_NOT_TRACK"].lower()
+        return do_not_track == "0" or do_not_track == "false"
 
     # Check if local config exists
     config_path = Path(check_dir_exist(CONF_DIR), "config.yaml")
