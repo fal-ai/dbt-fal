@@ -61,6 +61,23 @@ def run_client(address: str, *, with_pdb: bool = False) -> int:
         return result
 
 
+def _get_shell_bootstrap() -> str:
+    # Return a string that contains environment variables that
+    # might be used during isolated hook's execution.
+    return " ".join(
+        f"{session_variable}={os.getenv(session_variable)}"
+        for session_variable in [
+            # PYTHONPATH is customized by the Dual Environment IPC
+            # system to make sure that the isolated process can
+            # import stuff from the primary environment. Without this
+            # the isolated process will not be able to run properly
+            # on the newly created debug session.
+            "PYTHONPATH",
+        ]
+        if session_variable in os.environ
+    )
+
+
 def main() -> None:
     LOGGER.debug("Starting the isolated process at PID {}", os.getpid())
 
@@ -74,7 +91,7 @@ def main() -> None:
         message = "=" * 60
         message += "\n" * 3
         message += "Debug mode successfully activated. You can start your debugging session with the following command:\n"
-        message += f"    $ {sys.executable} {os.path.abspath(__file__)} --with-pdb {options.listen_at}"
+        message += f"    $ {_get_shell_bootstrap()} {sys.executable} {os.path.abspath(__file__)} --with-pdb {options.listen_at}"
         message += "\n" * 3
         message += "=" * 60
         LOGGER.info(message)
