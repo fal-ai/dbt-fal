@@ -91,7 +91,7 @@ def main() -> None:
         message = "=" * 60
         message += "\n" * 3
         message += "Debug mode successfully activated. You can start your debugging session with the following command:\n"
-        message += f"    $ {_get_shell_bootstrap()} {sys.executable} {os.path.abspath(__file__)} --with-pdb {options.listen_at}"
+        message += f"    $ {_get_shell_bootstrap()}\\\n     {sys.executable} {os.path.abspath(__file__)} --with-pdb {options.listen_at}"
         message += "\n" * 3
         message += "=" * 60
         LOGGER.info(message)
