@@ -1,0 +1,15 @@
+config:
+  send_anonymous_usage_stats: False
+
+fal_test:
+  target: integration_tests
+  outputs:
+    integration_tests:
+      type: athena
+      s3_staging_dir: "{{ env_var('ATHENA_S3_STAGING_DIR') }}"
+      region_name: us-east-1
+      database: "{{ env_var('ATHENA_DATABASE') }}"
+      schema: "{{ env_var('ATHENA_SCHEMA') }}"
+      num_retries: 0
+      # work_group: "{{ env_var('ATHENA_WORK_GROUP') }}"
+      # aws_profile_name: "{{ env_var('ATHENA_PROFILE') }}"

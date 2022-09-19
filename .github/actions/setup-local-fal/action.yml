@@ -37,16 +37,27 @@ runs:
     - name: Install dbt
       shell: bash
       run: |
+        package=dbt-${{ inputs.adapter }}
+        # overwrite for specific adapters
+        if [[ '${{ inputs.adapter }}' == 'athena' ]]
+        then
+          package=dbt-athena-adapter
+        fi
+
         if [[ '${{ inputs.dbt }}' == 'latest' ]]
         then
-          pip install dbt-${{ inputs.adapter }}
+          version='*'
+          pip install ${package}
         elif [[ '${{ inputs.dbt }}' =~ ^1.*$ ]]
         then
-          pip install dbt-${{ inputs.adapter }}==${{ inputs.dbt }}
+          version='${{ inputs.dbt }}'
         else
           echo "Invalid dbt version to install"
           exit 2
         fi
+
+        echo "${package}==${version}"
+        pip install ${package}==${version}
 
     - name: List requirements.txt
       shell: sh

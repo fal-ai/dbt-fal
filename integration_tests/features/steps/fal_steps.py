@@ -400,7 +400,14 @@ def _get_fal_results_file_name(context):
 
 def _set_profiles_dir(context) -> Path:
     # TODO: Ideally this needs to change in just one place
-    available_profiles = ["postgres", "bigquery", "redshift", "snowflake", "duckdb"]
+    available_profiles = [
+        "postgres",
+        "bigquery",
+        "redshift",
+        "snowflake",
+        "duckdb",
+        "athena",
+    ]
     if "profile" in context.config.userdata:
         profile = context.config.userdata["profile"]
         if profile not in available_profiles:

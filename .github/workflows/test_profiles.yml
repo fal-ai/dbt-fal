@@ -31,6 +31,7 @@ on:
           - snowflake
           - redshift
           - duckdb
+          - athena
 
       python:
         description: Python version to test with
@@ -73,6 +74,7 @@ jobs:
           EXTRA_OPTIONS = [
             'redshift',
             'duckdb',
+            'athena',
           ]
           OUTPUT = OPTIONS
 
@@ -210,6 +212,15 @@ jobs:
         if: contains(fromJSON('["redshift", "postgres"]'), matrix.profile)
         run: docker-compose up -d
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        # TODO: make redshift use a real connection
+        if: contains(fromJSON('["redshift", "athena"]'), matrix.profile)
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Setup behave
         working-directory: integration_tests
         run: pip install behave
@@ -241,6 +252,13 @@ jobs:
           SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
           # Duckdb
           DB_PATH: ${{ github.workspace }}/duck.db
+          # Athena
+          ATHENA_S3_STAGING_DIR: ${{ secrets.ATHENA_S3_STAGING_DIR }}
+          ATHENA_REGION: ${{ secrets.ATHENA_REGION }}
+          ATHENA_WORK_GROUP: ${{ secrets.ATHENA_WORK_GROUP }}
+          ATHENA_PROFILE: ${{ secrets.ATHENA_PROFILE }}
+          ATHENA_DATABASE: ${{ secrets.ATHENA_DATABASE }}
+          ATHENA_SCHEMA: ${{ secrets.ATHENA_SCHEMA }}
         run: |
           # Database and schema setup for sources
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
@@ -254,6 +272,17 @@ jobs:
           if [[ '${{ matrix.profile }}' == "snowflake" ]]
           then
             export DBT_DATABASE="$SF_DATABASE" DBT_SCHEMA="$SF_SCHEMA"
+          fi
+          if [[ '${{ matrix.profile }}' == "duckdb" ]]
+          then
+            # TODO: which to use for sources? Example:
+            #   database: "{{ env_var('DBT_DATABASE', 'test') }}"
+            #   schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
+            export DBT_DATABASE="" DBT_SCHEMA=""
+          fi
+          if [[ '${{ matrix.profile }}' == "athena" ]]
+          then
+            export DBT_DATABASE="$ATHENA_DATABASE" DBT_SCHEMA="$ATHENA_SCHEMA"
           fi
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
