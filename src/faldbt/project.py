@@ -515,6 +515,10 @@ class FalDbt:
 
         self.features = self._find_features()
         self._environments = None
+        telemetry.log_api(
+            action="faldbt_initialized",
+            additional_props={"config_hash": self._config.hashed_name()})
+
 
     @property
     def source_paths(self) -> List[str]:

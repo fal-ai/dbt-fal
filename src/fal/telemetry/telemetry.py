@@ -17,13 +17,13 @@ from pathlib import Path
 import sys
 import uuid
 from functools import wraps
-from typing import Any, List, Optional, Dict
+from typing import Any, List, Optional
 import inspect
 
 import platform
 
 
-TELEMETRY_VERSION = "0.0.1"
+TELEMETRY_VERSION = "0.0.2"
 DEFAULT_HOME_DIR = "~/.fal"
 CONF_DIR = "stats"
 posthog.project_api_key = "phc_Yf1tsGPPb4POvqVjelT3rPPv2c3FH91zYURyyL30Phy"
