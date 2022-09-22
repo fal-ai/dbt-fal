@@ -29,8 +29,9 @@ overview between these two features:
 |---------------------------------------------------------------------|--------------------------------------|----------------------------------------------|
 | Runs after the bound model                                          | ✅                                   | ✅                                           |
 | Run before dependant models (Runs _as part_ of the bound model)     | ✅ (after 0.4.0)                     | ✅                                           |
-| Runs even if the underlying model's `dbt run` fails                 | ❌                                   | ✅                                           |
 | Parallelization (thread-level) is enabled                           | ✅                                   | ✅                                           |
+| Runs even if the underlying model's `dbt run` fails                 | ❌                                   | ✅                                           |
+| Can be [parametrized](/Docs/fal-cli/structured-hooks)               | ❌                                   | ✅                                           |
 | Can be individually selected / executed                             | ✅                                   | ❌                                           |
 | Can use `write_to_source`/`write_to_model`                          | ✅                                   | ❌ (use [Python models](/Docs/fal-cli/python-models) instead) |
 
