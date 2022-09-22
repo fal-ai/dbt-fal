@@ -1,21 +1,19 @@
 from __future__ import annotations
 
 import hashlib
-import os
-import shutil
 import subprocess
-import sysconfig
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import ContextManager, List, Dict, Any
+from typing import List, Dict, Any
 
-from fal.packages import bridge, isolated_runner
 from fal.packages.dependency_analysis import get_default_pip_dependencies
 from fal.packages.environments.base import (
     BASE_CACHE_DIR,
     BaseEnvironment,
-    IsolatedProcessConnection,
+    DualPythonIPC,
+    get_executable_path,
     log_env,
+    python_path_for,
     rmdir_on_fail,
 )
 from fal.utils import cache_static
@@ -37,19 +35,10 @@ class VirtualPythonEnvironment(BaseEnvironment[Path], make_thread_safe=True):
     def key(self) -> str:
         return hashlib.sha256(" ".join(self.requirements).encode()).hexdigest()
 
-    def _python_path_for(self, *search_paths) -> str:
-        assert len(search_paths) >= 1
-        return os.pathsep.join(
-            # sysconfig takes the virtual environment path and returns
-            # the directory where all the site packages are located.
-            sysconfig.get_path("purelib", vars={"base": search_path})
-            for search_path in search_paths
-        )
-
     def _verify_dependencies(self, primary_path: Path, secondary_path: Path) -> None:
         # Ensure that there are no dependency mismatches between the
         # primary environment and the secondary environment.
-        python_path = self._python_path_for(secondary_path, primary_path)
+        python_path = python_path_for(secondary_path, primary_path)
         original_pip = get_executable_path(primary_path, "pip")
         subprocess.check_call([original_pip, "check"], env={"PYTHONPATH": python_path})
 
@@ -79,65 +68,13 @@ class VirtualPythonEnvironment(BaseEnvironment[Path], make_thread_safe=True):
 
         return path
 
-    def open_connection(self, conn_info: Path) -> VenvConnection:
+    def open_connection(self, conn_info: Path) -> DualPythonIPC:
         primary_venv = get_primary_virtual_env()
         primary_venv_path = primary_venv.get_or_create()
         secondary_venv_path = conn_info
-        return VenvConnection(self, primary_venv_path, secondary_venv_path)
-
-
-@dataclass
-class VenvConnection(IsolatedProcessConnection[VirtualPythonEnvironment]):
-    primary_path: Path
-    secondary_path: Path
-
-    def start_process(
-        self,
-        service: bridge.Listener,
-        *args,
-        **kwargs,
-    ) -> ContextManager[subprocess.Popen]:
-        # We are going to use the primary environment to run the Python
-        # interpreter, but at the same time we are going to inherit all
-        # the packages from the secondary environment (user's environment)
-        # so that they can technically override anything.
-
-        # The search order is important, we want the secondary path to
-        # take precedence.
-        python_path = self.env._python_path_for(self.secondary_path, self.primary_path)
-        python_executable = get_executable_path(self.primary_path, "python")
-        return subprocess.Popen(
-            [
-                python_executable,
-                isolated_runner.__file__,
-                bridge.encode_service_address(service.address),
-            ],
-            env={"PYTHONPATH": python_path, **os.environ},
-        )
-
-
-# We manage user-defined virtual-environments in two steps.
-#   1. Create a primary environment which contains the default dependencies
-#      to run a fal script (like fal, dbt-core, and required dbt adapters).
-#   2. Create a secondary environment which contains the user-defined dependencies.
-#
-# This is an optimization we apply to reduce the cost of user-defined virtual-environments
-# where we can actually reuse the primary environment and save a lot of time from not installing
-# heavy dependencies like dbt adapters again and again.
+        return DualPythonIPC(self, primary_venv_path, secondary_venv_path)
 
 
 @cache_static
 def get_primary_virtual_env() -> VirtualPythonEnvironment:
     return VirtualPythonEnvironment(get_default_pip_dependencies())
-
-
-def get_executable_path(search_path: Path, executable_name: str) -> Path:
-    bin_dir = (search_path / "bin").as_posix()
-    executable_path = shutil.which(executable_name, path=bin_dir)
-    if executable_path is None:
-        raise RuntimeError(
-            f"Could not find {executable_name} in {search_path}. "
-            f"Is the virtual environment corrupted?"
-        )
-
-    return Path(executable_path)

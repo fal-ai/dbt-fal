@@ -5,20 +5,18 @@ import os
 import shutil
 import subprocess
 import sysconfig
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import ContextManager, List, Dict, Any
+from typing import List, Dict, Any
 
-from fal.packages import bridge, isolated_runner
-from fal.packages.dependency_analysis import get_default_pip_dependencies
 from fal.packages.environments.base import (
     BASE_CACHE_DIR,
     BaseEnvironment,
-    IsolatedProcessConnection,
+    DualPythonIPC,
     log_env,
     rmdir_on_fail,
 )
-from fal.packages.environments.virtual_env import get_executable_path
+from fal.packages.environments.virtual_env import get_primary_virtual_env
 from fal.utils import cache_static
 
 _BASE_CONDA_DIR = BASE_CACHE_DIR / "conda"
@@ -83,18 +81,6 @@ class CondaEnvironment(BaseEnvironment[Path], make_thread_safe=True):
                 env_path,
                 *self.packages,
             )
-
-            # See in conda docs:
-            # manage-environments#using-pip-in-an-environment
-            self._run_conda(
-                "run",
-                "--no-capture-output",
-                "--prefix",
-                env_path,
-                "pip",
-                "install",
-                *get_default_pip_dependencies(),
-            )
         return env_path
 
     def _run_conda(self, *args, **kwargs) -> None:
@@ -102,29 +88,11 @@ class CondaEnvironment(BaseEnvironment[Path], make_thread_safe=True):
         conda_executable = get_conda_executable()
         subprocess.check_call([conda_executable, *args], **kwargs, text=True)
 
-    def open_connection(self, conn_info: Path) -> CondaConnection:
-        conda_path = conn_info
-        return CondaConnection(self, conda_path)
-
-
-@dataclass
-class CondaConnection(IsolatedProcessConnection[CondaEnvironment]):
-    environment_path: Path
-
-    def start_process(
-        self,
-        service: bridge.Listener,
-        *args,
-        **kwargs,
-    ) -> ContextManager[subprocess.Popen]:
-        python_executable = get_executable_path(self.environment_path, "python")
-        return subprocess.Popen(
-            [
-                python_executable,
-                isolated_runner.__file__,
-                bridge.encode_service_address(service.address),
-            ],
-        )
+    def open_connection(self, conn_info: Path) -> DualPythonIPC:
+        primary_env = get_primary_virtual_env()
+        primary_env_path = primary_env.get_or_create()
+        secondary_env_path = conn_info
+        return DualPythonIPC(self, primary_env_path, secondary_env_path)
 
 
 @cache_static
