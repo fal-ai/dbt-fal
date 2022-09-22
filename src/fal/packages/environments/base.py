@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
+import sysconfig
 import threading
 from collections import defaultdict
 from contextlib import ExitStack, contextmanager, nullcontext
@@ -12,7 +14,7 @@ from typing import Any, Callable, ContextManager, Generic, Iterator, TypeVar, Di
 from platformdirs import user_cache_dir
 
 from fal.logger import LOGGER
-from fal.packages import bridge
+from fal.packages import bridge, isolated_runner
 
 BASE_CACHE_DIR = Path(user_cache_dir("fal", "fal"))
 BASE_CACHE_DIR.mkdir(exist_ok=True)
@@ -182,3 +184,71 @@ class IsolatedProcessConnection(EnvironmentConnection[K]):
                     kind="error",
                 )
                 raise exception
+
+
+@dataclass
+class DualPythonIPC(IsolatedProcessConnection[BaseEnvironment]):
+    # We manage user-defined dual-Python environments in two steps.
+    #   1. Create a primary environment which contains the default dependencies
+    #      to run a fal script (like fal, dbt-core, and required dbt adapters).
+    #   2. Create a secondary environment which contains the user-defined dependencies.
+    #
+    # This is an optimization we apply to reduce the cost of user-defined environments
+    # where we can actually share the primary environment and save a lot of time from not
+    # installing heavy dependencies like dbt adapters again and again. This also heavily
+    # reduces the disk usage.
+
+    primary_path: Path
+    secondary_path: Path
+
+    def start_process(
+        self,
+        service: bridge.Listener,
+        *args,
+        **kwargs,
+    ) -> ContextManager[subprocess.Popen]:
+        # We are going to use the primary environment to run the Python
+        # interpreter, but at the same time we are going to inherit all
+        # the packages from the secondary environment (user's environment)
+        # so that they can technically override anything.
+
+        # The search order is important, we want the secondary path to
+        # take precedence.
+        python_path = python_path_for(self.secondary_path, self.primary_path)
+
+        # The environment which the python executable is going to be used
+        # shouldn't matter much for the virtual-env based installations but
+        # in conda, the Python executable between the primary and the secondary
+        # environment might differ and we'll give precedence to the user's
+        # choice (the secondary environment).
+        python_executable = get_executable_path(self.secondary_path, "python")
+        return subprocess.Popen(
+            [
+                python_executable,
+                isolated_runner.__file__,
+                bridge.encode_service_address(service.address),
+            ],
+            env={"PYTHONPATH": python_path, **os.environ},
+        )
+
+
+def python_path_for(*search_paths) -> str:
+    assert len(search_paths) >= 1
+    return os.pathsep.join(
+        # sysconfig takes the virtual environment path and returns
+        # the directory where all the site packages are located.
+        sysconfig.get_path("purelib", vars={"base": search_path})
+        for search_path in search_paths
+    )
+
+
+def get_executable_path(search_path: Path, executable_name: str) -> Path:
+    bin_dir = (search_path / "bin").as_posix()
+    executable_path = shutil.which(executable_name, path=bin_dir)
+    if executable_path is None:
+        raise RuntimeError(
+            f"Could not find {executable_name} in {search_path}. "
+            f"Is the virtual environment corrupted?"
+        )
+
+    return Path(executable_path)
