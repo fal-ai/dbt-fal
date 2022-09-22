@@ -7,6 +7,18 @@ Feature: Context object information
       dbt run --profiles-dir $profilesDir --project-dir $baseDir
       """
 
+  Scenario: Get target info in post hook
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select some_model
+      """
+    Then the following models are calculated:
+      | some_model |
+    Then the following scripts are ran:
+      | some_model.lists.py | some_model.context.py |
+    And the script some_model.context.py output file has the lines:
+      | target profile: fal_test |
+
   Scenario: Get rows affected in post hook for fal flow run
     When the following command is invoked:
       """

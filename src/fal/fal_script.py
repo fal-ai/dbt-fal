@@ -99,11 +99,21 @@ class ContextConfig:
             os.path.realpath(os.path.join(config.project_root, config.target_path))
         )
 
+@dataclass
+class ContextTarget:
+    def __init__(self, config: RuntimeConfig):
+        self.profile_name = config.profile_name
+        self.name = config.target_name
+        self.threads = config.threads
+        self.type = config.credentials.type
+        self.database = config.credentials.database
+        self.schema = config.credentials.schema
 
 @dataclass
 class Context:
     current_model: Union[CurrentModel, None]
     config: ContextConfig
+    target: ContextTarget
     _arguments: Optional[Dict[str, Any]] = field(repr=False, default=None)
 
     @property
@@ -233,9 +243,12 @@ class FalScript:
         return "<GLOBAL>" if self.is_global else self.model.name  # type: ignore
 
     def _build_script_context(self) -> Context:
-        context_config = ContextConfig(self.faldbt._config)
+        config: RuntimeConfig = self.faldbt._config
+        context_config = ContextConfig(config)
+        target = ContextTarget(config)
+
         if self.is_global:
-            return Context(current_model=None, config=context_config)
+            return Context(current_model=None, target=target, config=context_config)
 
         model: DbtModel = self.model  # type: ignore
 
@@ -264,6 +277,7 @@ class FalScript:
 
         return Context(
             current_model=current_model,
+            target=target,
             config=context_config,
             _arguments=self.hook_arguments,
         )

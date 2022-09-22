@@ -6,6 +6,10 @@ assert context.current_model
 extra = ""
 extra += f"context: {context}\n"
 extra += f"model: {context.current_model}\n"
+extra += f"target: {context.target}\n"
+extra += f"target name: {context.target.name}\n"
+extra += f"target profile: {context.target.profile_name}\n"
+extra += f"target database: {context.target.database}\n"
 
 response = context.current_model.adapter_response
 assert response
