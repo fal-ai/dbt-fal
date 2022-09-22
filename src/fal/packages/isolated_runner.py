@@ -4,7 +4,6 @@ import time
 from argparse import ArgumentParser
 
 from fal.logger import LOGGER, log_manager
-
 from fal.packages import bridge
 
 # Isolated processes are really tricky to debug properly

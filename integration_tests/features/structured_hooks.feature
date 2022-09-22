@@ -63,3 +63,26 @@ Feature: Structured Hooks
       | Environment: local |
     And the script model_f.environment_type_3.py output file has the lines
       | Environment: venv |
+
+  # Since conda requires an external installation step that we don't
+  # automatically do in (at least not yet), we can't assume all testing
+  # environments has it so it is guarded by a tag.
+  #
+  # We will check whether conda is available on runtime, and if so, we'll
+  # run the test. Otherwise, we'll skip it.
+  @requires-conda
+  Scenario: Run local hooks on isolated models with conda
+    When the following command is invoked:
+      """
+      fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select model_g
+      """
+    Then the following models are calculated:
+      | model_g |
+    And the following scripts are ran:
+      | model_g.check_imports.py | model_g.environment_type.py | model_g.environment_type_2.py | model_g.environment_type_3.py |
+    And the script model_g.environment_type.py output file has the lines
+      | Environment: conda |
+    And the script model_g.environment_type_2.py output file has the lines
+      | Environment: venv |
+    And the script model_g.environment_type_3.py output file has the lines
+      | Environment: local |

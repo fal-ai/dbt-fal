@@ -7,18 +7,11 @@ from collections import defaultdict
 from contextlib import ExitStack, contextmanager, nullcontext
 from dataclasses import dataclass
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    ContextManager,
-    Generic,
-    Iterator,
-    TypeVar,
-)
+from typing import Any, Callable, ContextManager, Generic, Iterator, TypeVar, Dict, Any
 
-from fal.logger import LOGGER
 from platformdirs import user_cache_dir
 
+from fal.logger import LOGGER
 from fal.packages import bridge
 
 BASE_CACHE_DIR = Path(user_cache_dir("fal", "fal"))
@@ -34,11 +27,12 @@ def rmdir_on_fail(path: Path) -> Iterator[None]:
     try:
         yield
     except Exception:
-        shutil.rmtree(path)
+        if path.exists():
+            shutil.rmtree(path)
         raise
 
 
-def log_env(env: BaseEnvironment, message: str, *args, kind: str = "trace", **kwargs):
+def log_env(env: BaseEnvironment, message: str, *args, kind: str = "info", **kwargs):
     message = f"[{env.key}] {message}"
     log_method = getattr(LOGGER, kind)
     log_method(message, *args, **kwargs)
@@ -53,6 +47,11 @@ class BaseEnvironment(Generic[T]):
 
         cls.lock_manager = defaultdict(lock_cls)
         return cls
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> BaseEnvironment:
+        """Create a new environment from the given configuration."""
+        raise NotImplementedError
 
     @property
     def key(self) -> str:
@@ -168,6 +167,7 @@ class IsolatedProcessConnection(EnvironmentConnection[K]):
             try:
                 result, exception = connection.recv()
             except EOFError:
+                log_env(self.env, "The isolated process has unexpectedly exited.", kind="error")
                 raise RuntimeError("The isolated process has unexpectedly exited.")
 
             if exception is None:

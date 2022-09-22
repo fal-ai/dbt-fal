@@ -32,3 +32,14 @@ def before_tag(context, tag):
     if "TODO-logging" == tag:
         # print here is not captured by behave
         print("WARN: should have thrown an exception (TODO-logging)")
+    elif "requires-conda" == tag:
+        # See if conda is available, and if not skip the
+        # current scenerio.
+        from fal.packages.environments.conda import get_conda_executable
+
+        try:
+            executable = get_conda_executable()
+        except RuntimeError:
+            context.scenario.skip(
+                reason="this test requires conda, but conda is not installed."
+            )

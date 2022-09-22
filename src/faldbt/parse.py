@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 import glob
 from pathlib import Path
-from typing import List, Dict, Optional, Union, TYPE_CHECKING
+from typing import Any, List, Dict, Optional, Union, TYPE_CHECKING
 
 from dbt.contracts.project import Project as ProjectContract
 from dbt.config import RuntimeConfig, Project
@@ -174,6 +174,12 @@ def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:
     return global_scripts
 
 
+def _get_required_key(data: Dict[str, Any], name: str) -> Any:
+    if name not in data:
+        raise FalParseError("Missing required key: " + name)
+    return data[name]
+
+
 def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
     from fal.packages.environments import create_environment
     from fal.fal_script import _is_local_environment
@@ -186,18 +192,14 @@ def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
 
     environments = {}
     for environment in fal_project.get("environments", []):
-        if "name" not in environment:
-            raise FalParseError("Environment must have a name")
-
-        name = environment.get("name")
-        if _is_local_environment(name):
+        env_name = _get_required_key(environment, "name")
+        if _is_local_environment(env_name):
             raise FalParseError(
-                f"Environment name conflicts with a reserved name: {name}."
+                f"Environment name conflicts with a reserved name: {env_name}."
             )
 
-        environments[name] = create_environment(
-            requirements=environment.get("requirements", [])
-        )
+        env_kind = _get_required_key(environment, "type")
+        environments[env_name] = create_environment(env_name, env_kind, environment)
     return environments
 
 
