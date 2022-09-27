@@ -1,10 +1,8 @@
 import os
 import sys
 import time
+import site
 from argparse import ArgumentParser
-
-from fal.logger import LOGGER, log_manager
-from fal.packages import bridge
 
 # Isolated processes are really tricky to debug properly
 # so we want to a smooth way to enter the process and see
@@ -38,6 +36,9 @@ DEBUG_TIMEOUT = 60 * 15
 
 
 def run_client(address: str, *, with_pdb: bool = False) -> int:
+    from fal.logger import LOGGER
+    from fal.packages import bridge
+
     if with_pdb:
         # This condition will only be activated if we want to
         # debug the isolated process by passing the --with-pdb
@@ -77,7 +78,10 @@ def _get_shell_bootstrap() -> str:
     )
 
 
-def main() -> None:
+def _fal_main() -> None:
+    from fal.logger import LOGGER
+    from fal.packages import bridge
+
     LOGGER.debug("Starting the isolated process at PID {}", os.getpid())
 
     parser = ArgumentParser()
@@ -100,7 +104,24 @@ def main() -> None:
     return run_client(address, with_pdb=options.with_pdb)
 
 
-if __name__ == "__main__":
+def _process_primary_env_packages() -> None:
+    python_path = os.getenv("PYTHONPATH")
+    if python_path is None:
+        return None
+
+    for site_dir in python_path.split(os.pathsep):
+        site.addsitedir(site_dir)
+
+
+def main():
+    _process_primary_env_packages()
+
+    from fal.logger import log_manager
+
     # TODO: do we still need this?
     with log_manager.applicationbound():
-        sys.exit(main())
+        _fal_main()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
