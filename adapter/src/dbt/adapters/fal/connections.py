@@ -1,36 +1,29 @@
 from typing import Tuple
 
-from dbt.adapters.base import BaseConnectionManager, Credentials
+from dbt.adapters.base import Credentials
+from dbt.adapters.python.connections import PythonConnectionManager
 
-from dbt.adapters.fal._utils import ignore_implementations
 
-
-class FalConnectionManager(
-    ignore_implementations(
-        BaseConnectionManager,
-        methods=[
-            # These methods are not implemented in the Fal connection
-            # manager.
-            "exception_handler",
-            "cancel_open",
-            "open",
-            "begin",
-            "commit",
-            "clear_transaction",
-            "execute",
-        ],
-    )
-):
+class FalConnectionManager(PythonConnectionManager):
     TYPE = "fal"
 
+    @classmethod
+    def open(cls, connection):
+        raise NotImplementedError
 
-# We are going to assume that the dbt itself will create this object
-# with the database/schema properties of the encapsulating database.
+    def execute(self, compiled_code: str):
+        raise NotImplementedError
+
+    def cancel(self, connection):
+        raise NotImplementedError
+
+
 class FalCredentials(Credentials):
-    db_credentials: Credentials
+    default_environment: str = "local"
 
-    def type(self) -> str:
+    @property
+    def type(self):
         return "fal"
 
-    def _connection_keys(self) -> Tuple[str, ...]:
-        return self.db_credentials._connection_keys()
+    def _connection_keys(self):
+        return ()
