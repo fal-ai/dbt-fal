@@ -1,7 +1,7 @@
 from typing import Tuple
 
 from dbt.adapters.base import Credentials
-from dbt.adapters.python.connections import PythonConnectionManager
+from faldbt.adapters.python import PythonConnectionManager
 
 
 class FalConnectionManager(PythonConnectionManager):
