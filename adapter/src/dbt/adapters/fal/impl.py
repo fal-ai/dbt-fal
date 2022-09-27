@@ -1,113 +1,64 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from contextlib import contextmanager, nullcontext
 from functools import partial
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, Any, Dict
+from typing import Any, Callable, Iterator
 
-from dbt.adapters.base import BaseAdapter, PythonJobHelper
+import pandas as pd
+from dbt.adapters.base import BaseAdapter
 from dbt.adapters.python.impl import PythonAdapter
+from dbt.config import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
-from fal.planner.tasks import (
-    FAILURE,
-    SUCCESS,
-    FalIsolatedHookTask,
-    FalLocalHookTask,
-    HookType,
-    Task,
+from fal.packages.environments import BaseEnvironment
+
+from .adapter_support import (
+    prepare_for_adapter,
+    read_relation_as_df,
+    reconstruct_adapter,
+    reload_adapter_cache,
+    write_df_to_relation,
 )
-
-from .connections import FalConnectionManager, FalCredentials
-
-if TYPE_CHECKING:
-    from fal.planner.tasks import Task
-    from faldbt.project import FalDbt
+from .connections import FalConnectionManager
+from .utils import fetch_environment, retrieve_symbol
 
 
-@dataclass
-class DBTModelReference:
-    """Reference for a DBT Python model."""
-
-    unique_id: str
-
-
-@dataclass
-class StaticRunIndex:
-    run_index: int = 0
-
-    def next(self):
-        return self.run_index
+def _run_with_adapter(code: str, adapter: BaseAdapter) -> Any:
+    # main symbol is defined during dbt-fal's compilation
+    # and acts as an entrypoint for us to run the model.
+    main = retrieve_symbol(code, "main")
+    return main(
+        read_df=prepare_for_adapter(adapter, read_relation_as_df),
+        write_df=prepare_for_adapter(adapter, write_df_to_relation),
+    )
 
 
-class FalExecutionHelper(PythonJobHelper):
-    def __init__(
-        self, parsed_model: Dict[str, Any], credentials: FalCredentials
-    ) -> None:
-        self.parsed_model = parsed_model
-        self.credentials = credentials
+def _isolated_runner(code: str, config: RuntimeConfig) -> Any:
+    # This function can be run in an entirely separate
+    # process or an environment, so we need to reconstruct
+    # the DB adapter solely from the config.
+    adapter = reconstruct_adapter(config)
+    return _run_with_adapter(code, adapter)
 
-        # fal_environment specifies the environment in which the
-        # given model should be run in. All environments must be
-        # initially defined inside fal_project.yml.
-        self.environment = parsed_model["config"].get("fal_environment", "local")
-        self.model_id = parsed_model["unique_id"]
-        self.index_provider = StaticRunIndex()
 
-    def _create_fal_task(self, code_path: Path) -> Task:
-        task = FalLocalHookTask(
-            code_path,
-            bound_model=DBTModelReference(self.model_id),
-            hook_type=HookType.MODEL_SCRIPT,
-        )
+def run_in_environment(
+    environment: BaseEnvironment,
+    code: str,
+    config: RuntimeConfig,
+) -> AdapterResponse:
+    """Run the 'main' function inside the given code on the
+    specified environment.
 
-        if self.environment != "local":
-            # If the model needs to run in an isolated environment,
-            # we'll mark it as such.
-            task = FalIsolatedHookTask(self.environment, local_hook=task)
+    The environment_name must be defined inside fal_project.yml file
+    in your project's root directory."""
 
-        task.set_run_index(self.index_provider)
-        return task
-
-    def _execute_fal_task(self, task: Task) -> int:
-        fal_dbt = self.credentials.to_fal_dbt()
-        return task.execute(None, fal_dbt)
-
-    def submit(self, compiled_code: str) -> int:
-        """Execute the given `compiled_code` in the target environment
-        via Fal."""
-
-        # We are going to save the generated code in a temporary file
-        # on the disk and then execuute it as if we are exeucting a
-        # Fal Python model (by constructing a task object).
-        with NamedTemporaryFile(mode="w+t") as tmp_file:
-            tmp_file.write(compiled_code)
-            tmp_file.flush()
-
-            task = self._create_fal_task(Path(tmp_file.name))
-            return self._execute_fal_task(task)
+    with environment.connect() as connection:
+        execute_model = partial(_isolated_runner, code, config)
+        result = connection.run(execute_model)
+        return result
 
 
 class FalAdapter(PythonAdapter):
     ConnectionManager = FalConnectionManager
-
-    def generate_python_submission_response(
-        self, submission_result: int
-    ) -> AdapterResponse:
-        if submission_result == SUCCESS:
-            return AdapterResponse("SUCCESS")
-        else:
-            return AdapterResponse("FAILURE")
-
-    @property
-    def default_python_submission_method(self) -> str:
-        return "fal"
-
-    @property
-    def python_submission_helpers(self) -> Dict[str, PythonJobHelper]:
-        return {
-            "fal": FalExecutionHelper,
-        }
 
     @classmethod
     def type(cls):
@@ -116,3 +67,45 @@ class FalAdapter(PythonAdapter):
     @classmethod
     def is_cancelable(cls) -> bool:
         return False
+
+    def submit_python_job(
+        self, parsed_model: dict, compiled_code: str
+    ) -> AdapterResponse:
+        """Execute the given `compiled_code` in the target environment."""
+        environment_name = parsed_model["config"].get(
+            "fal_environment",
+            self.credentials.default_environment,
+        )
+
+        environment, is_local = fetch_environment(
+            self.config.project_root, environment_name
+        )
+
+        if is_local:
+            return _run_with_adapter(compiled_code, self._db_adapter)
+
+        with self._invalidate_db_cache():
+            return run_in_environment(environment, compiled_code, self.config)
+
+    @contextmanager
+    def _invalidate_db_cache(self) -> Iterator[None]:
+        try:
+            yield
+        finally:
+            # Since executed Python code might alter the database
+            # layout, we need to regenerate the relations cache
+            # after every time we execute a Python model.
+            #
+            # TODO: maybe propagate a list of tuples with the changes
+            # from the Python runner, so that we can tell the cache
+            # manager about what is going on instead of hard-resetting
+            # the cache-db.
+            reload_adapter_cache(self._db_adapter, self.config)
+
+    @property
+    def credentials(self) -> Any:
+        python_creds = self.config.python_adapter_credentials
+        # dbt-fal is not configured as a Python adapter,
+        # maybe we should raise an error?
+        assert python_creds is not None
+        return python_creds
