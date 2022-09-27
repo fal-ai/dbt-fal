@@ -44,10 +44,6 @@ def _get_dbt_packages() -> Iterator[Tuple[str]]:
         if dbt_plugin_name == "dbt-fal" and _is_fal_pre_release():
             adapter_path = _get_fal_root_path() / "adapter"
             yield str(adapter_path), None
-        elif distribution._path.suffix == ".egg-info":
-            # HACK: This is a hack to make dependency analysis work
-            # with local installations of dbt-core/dbt-postgres
-            yield str(distribution.locate_file(".")), None
         else:
             yield dbt_plugin_name, distribution.version
 
