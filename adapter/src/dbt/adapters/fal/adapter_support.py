@@ -24,10 +24,15 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
     adapter_type = adapter.type()
 
     sqlalchemy_kwargs = {}
+    format_url = lambda url: url
     if adapter_type in ("postgres", "redshift", "snowflake", "duckdb"):
         # If the given adapter supports the DBAPI (PEP 249), we can
         # use its connection directly for the engine.
-        sqlalchemy_kwargs["creator"] = lambda: connection.handle
+        sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
+        if adapter_type == "snowflake":
+            format_url = (
+                lambda url: url + connection.handle.host + ":" + connection.handle.port
+            )
     elif adapter_type == "bigquery":
         # BigQuery's connection object returns a google-cloud
         # client, which doesn't directly support the DBAPI but
@@ -41,6 +46,7 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
         )
 
     url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
+    url = format_url(url)
     return sqlalchemy.create_engine(url, **sqlalchemy_kwargs)
 
 
