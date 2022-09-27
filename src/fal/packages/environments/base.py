@@ -34,7 +34,7 @@ def rmdir_on_fail(path: Path) -> Iterator[None]:
         raise
 
 
-def log_env(env: BaseEnvironment, message: str, *args, kind: str = "info", **kwargs):
+def log_env(env: BaseEnvironment, message: str, *args, kind: str = "trace", **kwargs):
     message = f"[{env.key}] {message}"
     log_method = getattr(LOGGER, kind)
     log_method(message, *args, **kwargs)

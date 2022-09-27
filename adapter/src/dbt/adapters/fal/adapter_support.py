@@ -122,8 +122,8 @@ def reconstruct_adapter(config: RuntimeConfig) -> BaseAdapter:
     do_not_track()
 
     # Prepare the plugin loading system to handle the adapter.
-    factory.load_plugin("postgres")
-    factory.load_plugin("fal")
+    factory.load_plugin(config.credentials.type)
+    factory.load_plugin(config.python_adapter_credentials.type)
     factory.register_adapter(config)
 
     # Initialize the adapter
