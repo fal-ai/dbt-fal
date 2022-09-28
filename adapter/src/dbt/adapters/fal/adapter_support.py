@@ -70,14 +70,14 @@ def write_df_to_relation(
     dataframe to the targeted relation on the adapter."""
 
     if adapter.type() == "snowflake":
-        from dbt.adapters.fal.teleport.snowflake import write_df_to_relation
+        import dbt.adapters.fal.support.snowflake as support_snowflake
 
-        return write_df_to_relation(adapter, dataframe, relation)
+        return support_snowflake.write_df_to_relation(adapter, dataframe, relation)
 
     elif adapter.type() == "duckdb":
-        from dbt.adapters.fal.teleport.duckdb import write_df_to_relation
+        import dbt.adapters.fal.support.duckdb as support_duckdb
 
-        return write_df_to_relation(adapter, dataframe, relation)
+        return support_duckdb.write_df_to_relation(adapter, dataframe, relation)
 
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
@@ -110,14 +110,14 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
     """Generic version of the read_df_from_relation."""
 
     if adapter.type() == "snowflake":
-        from dbt.adapters.fal.teleport.snowflake import read_relation_as_df
+        import dbt.adapters.fal.support.snowflake as support_snowflake
 
-        return read_relation_as_df(adapter, relation)
+        return support_snowflake.read_relation_as_df(adapter, relation)
     
     elif adapter.type() == "duckdb":
-        from dbt.adapters.fal.teleport.duckdb import read_relation_as_df
-        
-        return read_relation_as_df(adapter, relation)
+        import dbt.adapters.fal.support.duckdb as support_duckdb
+
+        return support_duckdb.read_relation_as_df(adapter, relation)
 
     else:
         with new_connection(adapter, "fal:read_relation_as_df") as connection:
