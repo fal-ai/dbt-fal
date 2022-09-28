@@ -10,21 +10,23 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
 
     assert adapter.type() == "snowflake"
 
-    with new_connection(adapter, "fal-snowflake:read_relation_as_df") as conn:
-        cur = conn.handle.cursor()
-        cur.execute(sql)
-        df: pd.DataFrame = cur.fetch_pandas_all()
+    connection = adapter.connections.get_if_exists()
+    assert connection, "Connection should be present"
 
-        # HACK: manually parse ARRAY and VARIANT since they are returned as strings right now
-        # Related issue: https://github.com/snowflakedb/snowflake-connector-python/issues/544
-        for desc in cur.description:
-            # 5=VARIANT, 10=ARRAY -- https://docs.snowflake.com/en/user-guide/python-connector-api.html#type-codes
-            if desc.type_code in [5, 10]:
-                import json
+    cur = connection.handle.cursor()
+    cur.execute(sql)
+    df: pd.DataFrame = cur.fetch_pandas_all()
 
-                df[desc.name] = df[desc.name].map(lambda v: json.loads(v))
+    # HACK: manually parse ARRAY and VARIANT since they are returned as strings right now
+    # Related issue: https://github.com/snowflakedb/snowflake-connector-python/issues/544
+    for desc in cur.description:
+        # 5=VARIANT, 10=ARRAY -- https://docs.snowflake.com/en/user-guide/python-connector-api.html#type-codes
+        if desc.type_code in [5, 10]:
+            import json
 
-        return df
+            df[desc.name] = df[desc.name].map(lambda v: json.loads(v))
+
+    return df
 
 
 def write_df_to_relation(

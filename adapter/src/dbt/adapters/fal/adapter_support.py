@@ -3,9 +3,8 @@ from typing import Any
 
 import pandas as pd
 import sqlalchemy
-from contextlib import contextmanager
 from dbt.adapters.base import BaseAdapter, BaseRelation, RelationType
-from dbt.adapters.base.connections import AdapterResponse, Connection
+from dbt.adapters.base.connections import AdapterResponse
 from dbt.config import RuntimeConfig
 from dbt.parser.manifest import ManifestLoader
 
@@ -17,11 +16,13 @@ _SQLALCHEMY_DIALECTS = {
 }
 
 
-def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
+def _get_alchemy_engine(adapter: BaseAdapter) -> Any:
     # The following code heavily depends on the implementation
     # details of the known adapters, hence it can't work for
     # arbitrary ones.
     adapter_type = adapter.type()
+    connection = adapter.connections.get_if_exists()
+    assert connection, "Connection should be present"
 
     sqlalchemy_kwargs = {}
     format_url = lambda url: url
@@ -80,30 +81,29 @@ def write_df_to_relation(
         return support_duckdb.write_df_to_relation(adapter, dataframe, relation)
 
     else:
-        with new_connection(adapter, "fal:write_df_to_relation") as connection:
-            # TODO: this should probably live in the materialization macro.
-            temp_relation = relation.replace_path(
-                identifier=f"__dbt_fal_temp_{relation.identifier}"
-            )
-            drop_relation_if_it_exists(adapter, temp_relation)
+        # TODO: this should probably live in the materialization macro.
+        temp_relation = relation.replace_path(
+            identifier=f"__dbt_fal_temp_{relation.identifier}"
+        )
+        drop_relation_if_it_exists(adapter, temp_relation)
 
-            alchemy_engine = _get_alchemy_engine(adapter, connection)
+        alchemy_engine = _get_alchemy_engine(adapter)
 
-            # TODO: probably worth handling errors here an returning
-            # a proper adapter response.
-            rows_affected = dataframe.to_sql(
-                con=alchemy_engine,
-                name=temp_relation.identifier,
-                schema=temp_relation.schema,
-                if_exists=if_exists,
-                index=False,
-            )
-            adapter.cache.add(temp_relation)
-            drop_relation_if_it_exists(adapter, relation)
-            adapter.rename_relation(temp_relation, relation)
-            adapter.commit_if_has_connection()
+        # TODO: probably worth handling errors here an returning
+        # a proper adapter response.
+        rows_affected = dataframe.to_sql(
+            con=alchemy_engine,
+            name=temp_relation.identifier,
+            schema=temp_relation.schema,
+            if_exists=if_exists,
+            index=False,
+        )
+        adapter.cache.add(temp_relation)
+        drop_relation_if_it_exists(adapter, relation)
+        adapter.rename_relation(temp_relation, relation)
+        adapter.commit_if_has_connection()
 
-            return AdapterResponse("OK", rows_affected=rows_affected)
+        return AdapterResponse("OK", rows_affected=rows_affected)
 
 
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
@@ -120,13 +120,12 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
         return support_duckdb.read_relation_as_df(adapter, relation)
 
     else:
-        with new_connection(adapter, "fal:read_relation_as_df") as connection:
-            alchemy_engine = _get_alchemy_engine(adapter, connection)
-            return pd.read_sql_table(
-                con=alchemy_engine,
-                table_name=relation.identifier,
-                schema=relation.schema,
-            )
+        alchemy_engine = _get_alchemy_engine(adapter)
+        return pd.read_sql_table(
+            con=alchemy_engine,
+            table_name=relation.identifier,
+            schema=relation.schema,
+        )
 
 
 def prepare_for_adapter(adapter: BaseAdapter, function: Any) -> Any:
@@ -163,11 +162,4 @@ def reconstruct_adapter(config: RuntimeConfig) -> BaseAdapter:
 
 def reload_adapter_cache(adapter: BaseAdapter, config: RuntimeConfig) -> None:
     manifest = ManifestLoader.get_full_manifest(config)
-    with new_connection(adapter, "fal:reload_adapter_cache"):
-        adapter.set_relations_cache(manifest, True)
-
-
-@contextmanager
-def new_connection(adapter: BaseAdapter, connection_name: str) -> Connection:
-    with adapter.connection_named(connection_name):
-        yield adapter.connections.get_thread_connection()
+    adapter.set_relations_cache(manifest, True)

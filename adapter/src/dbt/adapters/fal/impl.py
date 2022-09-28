@@ -26,10 +26,12 @@ def _run_with_adapter(code: str, adapter: BaseAdapter) -> Any:
     # main symbol is defined during dbt-fal's compilation
     # and acts as an entrypoint for us to run the model.
     main = retrieve_symbol(code, "main")
-    return main(
-        read_df=prepare_for_adapter(adapter, read_relation_as_df),
-        write_df=prepare_for_adapter(adapter, write_df_to_relation),
-    )
+
+    with adapter.connection_named("fal:model"):
+        return main(
+            read_df=prepare_for_adapter(adapter, read_relation_as_df),
+            write_df=prepare_for_adapter(adapter, write_df_to_relation),
+        )
 
 
 def _isolated_runner(code: str, config: RuntimeConfig) -> Any:
