@@ -6,7 +6,7 @@ from typing import Any, Callable, Iterator
 
 import pandas as pd
 from dbt.adapters.base import BaseAdapter
-from faldbt.adapters.python import PythonAdapter
+from dbt.adapters.fal.python import PythonAdapter
 from dbt.config import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from fal.packages.environments import BaseEnvironment
