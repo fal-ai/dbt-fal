@@ -97,7 +97,17 @@ class CondaEnvironment(BaseEnvironment[Path], make_thread_safe=True):
 
 @cache_static
 def get_conda_executable() -> Path:
-    for path in [_FAL_CONDA_HOME, None]:
+    paths_to_check = [None]
+    if _FAL_CONDA_HOME is not None:
+        paths_to_check = [_FAL_CONDA_HOME, None]
+        if _FAL_CONDA_HOME.endswith('conda'):
+            paths_to_check = [_FAL_CONDA_HOME, os.path.dirname(_FAL_CONDA_HOME), None]
+
+    for path in paths_to_check:
+        if path is not None:
+            # In case the conda binary is set in _FAL_CONDA_HOME
+            path = os.path.dirname(path)
+
         conda_path = shutil.which(_CONDA_COMMAND, path=path)
         if conda_path is not None:
             return conda_path
