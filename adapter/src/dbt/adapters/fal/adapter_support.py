@@ -74,6 +74,11 @@ def write_df_to_relation(
 
         return write_df_to_relation(adapter, dataframe, relation)
 
+    elif adapter.type() == "duckdb":
+        from dbt.adapters.fal.teleport.duckdb import write_df_to_relation
+
+        return write_df_to_relation(adapter, dataframe, relation)
+
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
             # TODO: this should probably live in the materialization macro.
@@ -107,6 +112,11 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
     if adapter.type() == "snowflake":
         from dbt.adapters.fal.teleport.snowflake import read_relation_as_df
 
+        return read_relation_as_df(adapter, relation)
+    
+    elif adapter.type() == "duckdb":
+        from dbt.adapters.fal.teleport.duckdb import read_relation_as_df
+        
         return read_relation_as_df(adapter, relation)
 
     else:
