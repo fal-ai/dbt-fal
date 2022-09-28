@@ -69,42 +69,54 @@ def write_df_to_relation(
     """Generic version of the write_df_to_relation. Materialize the given
     dataframe to the targeted relation on the adapter."""
 
-    with new_connection(adapter, "fal:write_df_to_relation") as connection:
-        # TODO: this should probably live in the materialization macro.
-        temp_relation = relation.replace_path(
-            identifier=f"__dbt_fal_temp_{relation.identifier}"
-        )
-        drop_relation_if_it_exists(adapter, temp_relation)
+    if adapter.type() == "snowflake":
+        from dbt.adapters.fal.teleport.snowflake import write_df_to_relation
 
-        alchemy_engine = _get_alchemy_engine(adapter, connection)
+        return write_df_to_relation(adapter, dataframe, relation)
 
-        # TODO: probably worth handling errors here an returning
-        # a proper adapter response.
-        rows_affected = dataframe.to_sql(
-            con=alchemy_engine,
-            name=temp_relation.identifier,
-            schema=temp_relation.schema,
-            if_exists=if_exists,
-            index=False,
-        )
-        adapter.cache.add(temp_relation)
-        drop_relation_if_it_exists(adapter, relation)
-        adapter.rename_relation(temp_relation, relation)
-        adapter.commit_if_has_connection()
+    else:
+        with new_connection(adapter, "fal:write_df_to_relation") as connection:
+            # TODO: this should probably live in the materialization macro.
+            temp_relation = relation.replace_path(
+                identifier=f"__dbt_fal_temp_{relation.identifier}"
+            )
+            drop_relation_if_it_exists(adapter, temp_relation)
 
-    return AdapterResponse("OK", rows_affected=rows_affected)
+            alchemy_engine = _get_alchemy_engine(adapter, connection)
+
+            # TODO: probably worth handling errors here an returning
+            # a proper adapter response.
+            rows_affected = dataframe.to_sql(
+                con=alchemy_engine,
+                name=temp_relation.identifier,
+                schema=temp_relation.schema,
+                if_exists=if_exists,
+                index=False,
+            )
+            adapter.cache.add(temp_relation)
+            drop_relation_if_it_exists(adapter, relation)
+            adapter.rename_relation(temp_relation, relation)
+            adapter.commit_if_has_connection()
+
+            return AdapterResponse("OK", rows_affected=rows_affected)
 
 
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
     """Generic version of the read_df_from_relation."""
 
-    with new_connection(adapter, "fal:read_relation_as_df") as connection:
-        alchemy_engine = _get_alchemy_engine(adapter, connection)
-        return pd.read_sql_table(
-            con=alchemy_engine,
-            table_name=relation.identifier,
-            schema=relation.schema,
-        )
+    if adapter.type() == "snowflake":
+        from dbt.adapters.fal.teleport.snowflake import read_relation_as_df
+
+        return read_relation_as_df(adapter, relation)
+
+    else:
+        with new_connection(adapter, "fal:read_relation_as_df") as connection:
+            alchemy_engine = _get_alchemy_engine(adapter, connection)
+            return pd.read_sql_table(
+                con=alchemy_engine,
+                table_name=relation.identifier,
+                schema=relation.schema,
+            )
 
 
 def prepare_for_adapter(adapter: BaseAdapter, function: Any) -> Any:
