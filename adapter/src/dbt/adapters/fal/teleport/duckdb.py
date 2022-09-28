@@ -22,8 +22,7 @@ def write_df_to_relation(
 
     db_path = adapter.config.credentials.path    
     con = duckdb.connect(database=db_path)
-    con.execute(f"DROP TABLE IF EXISTS {relation.identifier}")
     rows_affected = con.execute(
-        f"CREATE TABLE {relation.identifier} AS SELECT * FROM data;"
+        f"CREATE OR REPLACE TABLE {relation.identifier} AS SELECT * FROM data;"
     ).fetchall()[0][0]
     return AdapterResponse("OK", rows_affected=rows_affected)
