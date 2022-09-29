@@ -65,7 +65,7 @@ def run_client(address: str, *, with_pdb: bool = False) -> int:
                     # still try to dump it to the stdout as the last
                     # resort.
                     import traceback
-                    traceback.print_exc(exception)
+                    traceback.print_exception(type(exception), exception, exception.__traceback__)
                 raise
         return result
 

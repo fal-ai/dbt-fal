@@ -103,6 +103,7 @@ jobs:
           # Duckdb
           DB_PATH: ${{ github.workspace }}/duck.db
         run: |
+          set -xe
           source ../.venv/bin/activate
 
           # Database and schema setup for sources
@@ -138,11 +139,6 @@ jobs:
 
           # Let's seed
           dbt seed --profile=fal_test
-
-          # Initially try running with venv
-          mv _testing/environments/venv/fal_project.yml fal_project.yml
-          mv _testing/environments/venv/properties.yml models/properties.yml
-          dbt run --profile=fal_test
 
           # And then with conda
           mv _testing/environments/conda/fal_project.yml fal_project.yml
