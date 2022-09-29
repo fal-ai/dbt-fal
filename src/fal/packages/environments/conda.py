@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import hashlib
 import os
 import shutil
@@ -31,6 +32,7 @@ _FAL_CONDA_HOME = os.getenv("FAL_CONDA_HOME")
 @dataclass
 class CondaEnvironment(BaseEnvironment[Path], make_thread_safe=True):
     packages: List[str]
+    inherit_from_local: bool = False
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> CondaEnvironment:
@@ -60,7 +62,10 @@ class CondaEnvironment(BaseEnvironment[Path], make_thread_safe=True):
         # conda environment that is created also uses the same Python version.
         python_version = sysconfig.get_python_version()
         final_packages = user_provided_packages + [f"python={python_version}"]
-        return cls(final_packages)
+
+        # NOTE: default is True for act1 testing
+        inherit_from_local = config.get("_inherit_from_local", True)
+        return cls(final_packages, inherit_from_local=inherit_from_local)
 
     @property
     def key(self) -> str:
@@ -89,8 +94,16 @@ class CondaEnvironment(BaseEnvironment[Path], make_thread_safe=True):
         subprocess.check_call([conda_executable, *args], **kwargs, text=True)
 
     def open_connection(self, conn_info: Path) -> DualPythonIPC:
-        primary_env = get_primary_virtual_env()
-        primary_env_path = primary_env.get_or_create()
+        if self.inherit_from_local:
+            # Instead of creating a separate environment that only has
+            # the same versions of fal/dbt-core etc. you have locally,
+            # we can also use your environment as the primary. This is
+            # mainly for the development time where the fal or dbt-core
+            # you are using is not available on PyPI yet.
+            primary_env_path = Path(sys.exec_prefix)
+        else:
+            primary_env = get_primary_virtual_env()
+            primary_env_path = primary_env.get_or_create()
         secondary_env_path = conn_info
         return DualPythonIPC(self, primary_env_path, secondary_env_path)
 
