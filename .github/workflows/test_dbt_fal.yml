@@ -21,18 +21,10 @@ jobs:
       matrix:
         profile: ["postgres", "bigquery", "snowflake", "duckdb"]
         python: ["3.8"]
-        environment: ["local", "venv", "conda"]
-        # bigquery implementation fails due to concurrency, let's
-        # limit it to 1 for now.
-        exclude:
-          - profile: "bigquery"
-            environment: "venv"
-          - profile: "bigquery"
-            environment: "conda"
 
     # Run only the latest commit pushed to PR
     concurrency:
-      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}-${{ matrix.environment }}"
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
       cancel-in-progress: true
 
     steps:
@@ -142,26 +134,22 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          # Could not get the real job_id easily from context
-          UUID=$(uuidgen | head -c8)
-          export DB_NAMESPACE="${{ github.run_id }}_${UUID}"
           export DBT_PROFILES_DIR="_testing/profiles/${{ matrix.profile }}"
 
-          # Configure the environment
-          if [[ '${{ matrix.environment }}' == "local" ]]
-          then
-            pip install prophet
-          fi
-          if [[ '${{ matrix.environment }}' == "venv" ]]
-          then
-            cp _testing/environments/venv/fal_project.yml .
-            cp _testing/environments/venv/properties.yml models/properties.yml
-          fi
-          if [[ '${{ matrix.environment }}' == "conda" ]]
-          then
-            cp _testing/environments/conda/fal_project.yml .
-            cp _testing/environments/conda/properties.yml models/properties.yml
-          fi
-
+          # Let's seed
           dbt seed --profile=fal_test
+
+          # Initially try running with venv
+          mv _testing/environments/venv/fal_project.yml fal_project.yml
+          mv _testing/environments/venv/properties.yml models/properties.yml
+          dbt run --profile=fal_test
+
+          # And then with conda
+          mv _testing/environments/conda/fal_project.yml fal_project.yml
+          mv _testing/environments/conda/properties.yml models/properties.yml
+          dbt run --profile=fal_test
+
+          # Finally with local
+          rm fal_project.yml models/properties.yml
+          pip install prophet
           dbt run --profile=fal_test
