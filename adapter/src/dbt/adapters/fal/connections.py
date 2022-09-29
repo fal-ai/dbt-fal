@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Tuple
 
 from dbt.adapters.base import Credentials
@@ -18,8 +19,14 @@ class FalConnectionManager(PythonConnectionManager):
         raise NotImplementedError
 
 
+@dataclass
 class FalCredentials(Credentials):
     default_environment: str = "local"
+
+    # NOTE: So we can not set them in profiles.yml
+    # they are ignored for now
+    database: str = ''
+    schema: str = ''
 
     @property
     def type(self):
