@@ -1,0 +1,155 @@
+name: Test dbt-fal adapter
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+    paths-ignore:
+      - "examples/**"
+      - "docsite/**"
+      - "README.md"
+      - "LICENSE"
+      - "docker/**"
+
+  push:
+    branches: [act1]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: ["postgres", "bigquery", "snowflake", "duckdb"]
+        python: ["3.8"]
+
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: 'fal'
+
+      - uses: actions/checkout@v2
+        with:
+          repository: fal-ai/dbt-core
+          ref: act1
+          path: 'dbt-core'
+
+      - uses: actions/checkout@v2
+        with:
+          repository: fal-ai/jaffle_shop_with_fal
+          ref: act1
+          path: 'jaffle_shop'
+
+      - name: Start Docker database
+        working-directory: fal/integration_tests
+        if: contains(fromJSON('["postgres"]'), matrix.profile)
+        run: docker-compose up -d
+
+      - name: Install conda
+        uses: s-weigand/setup-conda@v1
+        if: contains(fromJSON('["conda"]'), matrix.environment)
+        with:
+          activate-conda: false
+          python-version: ${{ matrix.python }}
+          conda-channels: anaconda, conda-forge
+
+      - name: Setup latest dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip==20.3
+          pip install build wheel
+
+          # First install the adapters. Since they depend on
+          # a fixed dbt-core version; if we install them after
+          # the dbt-core installation, they'll try to overwrite
+          # the existing revision.
+
+          pip install dbt-${{ matrix.profile }} -c fal/adapter/compatible_adapters.txt
+
+          pushd dbt-core
+          pip install -r dev-requirements.txt -r editable-requirements.txt
+          popd
+
+          pushd fal
+          pip install .
+          popd
+
+          pushd fal/adapter
+          pip install --use-deprecated=legacy-resolver ".[${{ matrix.profile }}]"
+          popd
+
+      - name: Run tests
+        id: test_run
+        working-directory: jaffle_shop
+        env:
+          FAL_STATS_ENABLED: false
+          # BigQuery
+          KEYFILE: ${{ secrets.GCP_SA_KEY }}
+          GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          BQ_DATASET: ${{ secrets.BQ_DATASET }}
+          # Snowflake
+          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+          SF_USER: ${{ secrets.SF_USER }}
+          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+          SF_ROLE: ${{ secrets.SF_ROLE }}
+          SF_DATABASE: ${{ secrets.SF_DATABASE }}
+          SF_WAREHOUSE: ${{ secrets.SF_WAREHOUSE }}
+          SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
+          # Duckdb
+          DB_PATH: ${{ github.workspace }}/duck.db
+        run: |
+          source ../.venv/bin/activate
+
+          # Database and schema setup for sources
+          if [[ '${{ matrix.profile }}' == "bigquery" ]]
+          then
+            export DBT_DATABASE="$GCLOUD_PROJECT" DBT_SCHEMA="$BQ_DATASET"
+          fi
+          if [[ '${{ matrix.profile }}' == "snowflake" ]]
+          then
+            export DBT_DATABASE="$SF_DATABASE" DBT_SCHEMA="$SF_SCHEMA"
+          fi
+          if [[ '${{ matrix.profile }}' == "duckdb" ]]
+          then
+            # TODO: which to use for sources? Example:
+            #   database: "{{ env_var('DBT_DATABASE', 'test') }}"
+            #   schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
+            export DBT_DATABASE="" DBT_SCHEMA=""
+          fi
+
+          if [[ '${{ matrix.profile }}' == "bigquery" ]]
+          then
+            # This is needed until sqlalchemy-bigquery is released with 1.5.0
+            pip install --force-reinstall git+https://github.com/googleapis/python-bigquery-sqlalchemy
+
+            # Save the credentials to a keyfile
+            echo $KEYFILE > $HOME/keyfile.json
+            ls -la $HOME/keyfile.json
+            export KEYFILE_DIR=$HOME
+            echo 'keyfile is ready'
+          fi
+
+          export DBT_PROFILES_DIR="_testing/profiles/${{ matrix.profile }}"
+
+          # Let's seed
+          dbt seed --profile=fal_test
+
+          # Initially try running with venv
+          mv _testing/environments/venv/fal_project.yml fal_project.yml
+          mv _testing/environments/venv/properties.yml models/properties.yml
+          dbt run --profile=fal_test
+
+          # And then with conda
+          mv _testing/environments/conda/fal_project.yml fal_project.yml
+          mv _testing/environments/conda/properties.yml models/properties.yml
+          dbt run --profile=fal_test
+
+          # Finally with local
+          rm fal_project.yml models/properties.yml
+          pip install prophet
+          dbt run --profile=fal_test

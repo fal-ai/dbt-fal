@@ -57,7 +57,16 @@ def run_client(address: str, *, with_pdb: bool = False) -> int:
             result = None
             exception = exc
         finally:
-            connection.send((result, exception))
+            try:
+                connection.send((result, exception))
+            except BaseException:
+                if exception:
+                    # If we can't even send it through the connection
+                    # still try to dump it to the stdout as the last
+                    # resort.
+                    import traceback
+                    traceback.print_exc(exception)
+                raise
         return result
 
 

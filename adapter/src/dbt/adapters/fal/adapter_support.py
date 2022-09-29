@@ -39,6 +39,7 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
         # we can still partially leverage it to construct the
         # engine object.
         sqlalchemy_kwargs["connect_args"] = {"client": connection.handle}
+        format_url = lambda url: url + "?user_supplied_client=True"
     else:
         # TODO: maybe tell them to open an issue?
         raise NotImplementedError(
@@ -113,7 +114,7 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
         import dbt.adapters.fal.support.snowflake as support_snowflake
 
         return support_snowflake.read_relation_as_df(adapter, relation)
-    
+
     elif adapter.type() == "duckdb":
         import dbt.adapters.fal.support.duckdb as support_duckdb
 

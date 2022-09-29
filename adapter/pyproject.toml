@@ -12,8 +12,27 @@ python = ">=3.7.1, <3.11"
 dbt-core = "1.3.0b2"
 fal = ">=0.6.0"
 
+## snowflake
+snowflake-connector-python = { version = "~2.7.10", extras = ["pandas"], optional = true }
+
+## bigquery
+# We need the 1.5.0 version to support passing our own client.
+sqlalchemy-bigquery = { version = "^1.4.4", optional = true }
+
+## redshift
+sqlalchemy-redshift = { version = "^0.8.9", optional = true }
+
+
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+
+[tool.poetry.extras]
+postgres = []
+snowflake = ["snowflake-connector-python", "pyarrow"]
+bigquery = ["sqlalchemy-bigquery"]
+redshift = ["sqlalchemy-redshift"]
+duckdb = []
+athena = []
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
