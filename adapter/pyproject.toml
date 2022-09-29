@@ -13,8 +13,7 @@ dbt-core = "1.3.0b2"
 fal = ">=0.6.0"
 
 ## snowflake
-pyarrow = "^8.0.0"
-snowflake-connector-python = { version = "^2.7.12", optional = true }
+snowflake-connector-python = { version = "~2.7.10", extras = ["pandas"], optional = true }
 
 ## bigquery
 # We need the 1.5.0 version to support passing our own client.
