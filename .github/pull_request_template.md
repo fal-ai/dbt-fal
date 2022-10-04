@@ -1,33 +1,33 @@
+## Description
 <!---
   Describe the Pull Request here. Add any references and info to help reviewers
   understand your changes. Include any tradeoffs you considered.
 -->
 
+<!-- If applicable: -->
 <!--
-Include the number of the issue addressed by this PR above if applicable:
-
-    resolves #XXX
+GitHub: resolves #XXX
+Linear: closes FEA-XXX
 -->
-
-<!--
-If this closes a Linear issue, you can add it in a <details> section like so:
-
-    closes FEA-XXX
--->
-
 
 ### Integration tests
 
 Adapter to test:
+<!-- Add relevant ones -->
 - postgres
-<!-- - snowflake -->
-<!-- - bigquery -->
-<!-- - redshift -->
-<!-- - duckdb -->
-<!-- - athena -->
+<!--
+- snowflake
+- bigquery
+- redshift
+- duckdb
+- athena
+-->
 
 Python version to test:
-<!-- - 3.7 -->
+<!-- Add relevant ones -->
 - 3.8
-<!-- - 3.9 -->
-<!-- - 3.10 -->
+<!--
+- 3.7
+- 3.9
+- 3.10
+-->
