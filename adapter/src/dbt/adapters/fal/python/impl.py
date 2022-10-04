@@ -34,6 +34,7 @@ from dbt.events.types import (
 from dbt.adapters.base.connections import Connection, AdapterResponse
 from dbt.adapters.base.meta import AdapterMeta, available
 from dbt.adapters.base import Credentials
+from dbt.adapters.base.impl import BaseAdapter
 
 
 SeedModel = Union[ParsedSeedNode, CompiledSeedNode]
@@ -108,7 +109,6 @@ class PythonAdapter(metaclass=AdapterMeta):
     def __init__(self, config):
         self.config = config
         self.connections = self.ConnectionManager(config)
-        self._macro_manifest_lazy: Optional[MacroManifest] = None
 
         # HACK: A Python adapter does not have _available_ all the attributes a DB adapter does.
         # Since we use the DB adapter as the storage for the Python adapter, we must proxy to it
@@ -117,7 +117,7 @@ class PythonAdapter(metaclass=AdapterMeta):
         # Another option is to write a PythonAdapter-specific DBWrapper (PythonWrapper?) that is
         # aware of this case. This may be appealing because a _complete_ adapter (DB+Python) would
         # then be more easily used to replace the Python part of any other adapter.
-        self._db_adapter = get_adapter(config)
+        self._db_adapter: BaseAdapter = get_adapter(config)  # type: ignore
         self.Relation = self._db_adapter.Relation
         self.Column = self._db_adapter.Column
 
@@ -131,10 +131,7 @@ class PythonAdapter(metaclass=AdapterMeta):
     @classmethod
     def date_function(cls):
         # HACK: to appease the ProviderContext
-        return '''
-        import datetime
-        return datetime.datetime.now()
-        '''
+        return None
 
     ###
     # Methods that pass through to the connection manager
@@ -186,39 +183,6 @@ class PythonAdapter(metaclass=AdapterMeta):
         :rtype: str
         """
         return cls.ConnectionManager.TYPE
-
-    @property
-    def _macro_manifest(self) -> MacroManifest:
-        if self._macro_manifest_lazy is None:
-            return self.load_macro_manifest()
-        return self._macro_manifest_lazy
-
-    def check_macro_manifest(self) -> Optional[MacroManifest]:
-        """Return the internal manifest (used for executing macros) if it's
-        been initialized, otherwise return None.
-        """
-        return self._macro_manifest_lazy
-
-    def load_macro_manifest(self, base_macros_only=False) -> MacroManifest:
-        # base_macros_only is for the test framework
-        if self._macro_manifest_lazy is None:
-            # avoid a circular import
-            from dbt.parser.manifest import ManifestLoader
-
-            manifest = ManifestLoader.load_macros(
-                self.config,
-                self.connections.set_query_header,
-                base_macros_only=base_macros_only,
-            )
-            # TODO CT-211
-            self._macro_manifest_lazy = manifest  # type: ignore[assignment]
-        # TODO CT-211
-        return self._macro_manifest_lazy  # type: ignore[return-value]
-
-    def clear_macro_manifest(self):
-        if self._macro_manifest_lazy is not None:
-            self._macro_manifest_lazy = None
-
 
     ###
     # ODBC FUNCTIONS -- these should not need to change for every adapter,
