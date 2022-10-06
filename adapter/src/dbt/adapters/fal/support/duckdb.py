@@ -1,9 +1,8 @@
+import duckdb
+import pandas as pd
 from dbt.adapters.base import BaseAdapter, BaseRelation
 from dbt.adapters.base.connections import AdapterResponse
-from dbt.adapters.fal.adapter_support import new_connection
-import pandas as pd
 from dbt.adapters.sql import SQLAdapter
-import duckdb
 
 
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:

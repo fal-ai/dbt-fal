@@ -1,40 +1,19 @@
 import abc
-from contextlib import contextmanager
 import time
-from typing import (
-    Optional,
-    Type,
-    Dict,
-    Any,
-    Mapping,
-    Iterator,
-    Union,
-)
+from contextlib import contextmanager
+from typing import Any, Dict, Iterator, Mapping, Optional, Type, Union
+
+from dbt.adapters.base import Credentials
+from dbt.adapters.base.connections import AdapterResponse, Connection
+from dbt.adapters.base.meta import AdapterMeta, available
 from dbt.adapters.factory import get_adapter
-
-
-from dbt.exceptions import (
-    NotImplementedException,
-    RuntimeException,
-)
-
-from dbt.adapters.protocol import (
-    AdapterConfig,
-    ConnectionManagerProtocol,
-)
-from dbt.contracts.graph.compiled import CompileResultNode, CompiledSeedNode
+from dbt.adapters.protocol import AdapterConfig, ConnectionManagerProtocol
+from dbt.contracts.graph.compiled import CompiledSeedNode, CompileResultNode
 from dbt.contracts.graph.manifest import MacroManifest
 from dbt.contracts.graph.parsed import ParsedSeedNode
 from dbt.events.functions import fire_event
-from dbt.events.types import (
-    CodeExecution,
-    CodeExecutionStatus,
-)
-
-from dbt.adapters.base.connections import Connection, AdapterResponse
-from dbt.adapters.base.meta import AdapterMeta, available
-from dbt.adapters.base import Credentials
-
+from dbt.events.types import CodeExecution, CodeExecutionStatus
+from dbt.exceptions import NotImplementedException, RuntimeException
 
 SeedModel = Union[ParsedSeedNode, CompiledSeedNode]
 

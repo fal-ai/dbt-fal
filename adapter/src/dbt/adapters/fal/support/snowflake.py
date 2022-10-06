@@ -1,8 +1,9 @@
+import pandas as pd
 from dbt.adapters.base import BaseAdapter, BaseRelation
 from dbt.adapters.base.connections import AdapterResponse
-from dbt.adapters.fal.adapter_support import new_connection
-import pandas as pd
 from dbt.adapters.sql import SQLAdapter
+
+from dbt.adapters.fal.adapter_support import new_connection
 
 
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
@@ -32,9 +33,9 @@ def write_df_to_relation(
     data: pd.DataFrame,
     relation: BaseRelation,
 ) -> AdapterResponse:
-    from dbt.adapters.snowflake import SnowflakeAdapter, SnowflakeConnectionManager
     import snowflake.connector as snowflake
     import snowflake.connector.pandas_tools as snowflake_pandas
+    from dbt.adapters.snowflake import SnowflakeAdapter, SnowflakeConnectionManager
 
     assert adapter.type() == "snowflake"
 

@@ -27,7 +27,7 @@ ENV ISOLATE_INHERIT_FROM_LOCAL=1
 
 # Install fal
 COPY --from=dbt-fal . /opt/adapter
-RUN pip install /opt/adapter
+RUN pip install "/opt/adapter[snowflake]"
 
 # Install isolate
 COPY . .

@@ -1,13 +1,13 @@
 import functools
+from contextlib import contextmanager
 from typing import Any, Optional
 
 import pandas as pd
 import sqlalchemy
-from contextlib import contextmanager
 from dbt.adapters.base import BaseAdapter, BaseRelation, RelationType
 from dbt.adapters.base.connections import AdapterResponse, Connection
 from dbt.config import RuntimeConfig
-from dbt.parser.manifest import ManifestLoader, Manifest, MacroManifest
+from dbt.parser.manifest import MacroManifest, Manifest
 
 from dbt.adapters import factory
 
@@ -144,7 +144,9 @@ def prepare_for_adapter(adapter: BaseAdapter, function: Any) -> Any:
     return wrapped
 
 
-def reconstruct_adapter(config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest) -> BaseAdapter:
+def reconstruct_adapter(
+    config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest
+) -> BaseAdapter:
     from dbt.tracking import do_not_track
 
     # Prepare the DBT to not to track us.

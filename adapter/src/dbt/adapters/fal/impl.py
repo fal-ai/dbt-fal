@@ -1,88 +1,16 @@
 from __future__ import annotations
 
-import dbt.exceptions
-from contextlib import contextmanager, nullcontext
-from functools import partial
-from typing import Any, Callable, Iterator, Dict, Any
+from contextlib import contextmanager
+from typing import Any, Iterator
 
-import pandas as pd
-from dbt.parser.manifest import Manifest, ManifestLoader, MacroManifest
-from dbt.adapters.base import BaseAdapter
-from dbt.adapters.fal.python import PythonAdapter
-from dbt.config import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
+from dbt.parser.manifest import MacroManifest, Manifest, ManifestLoader
 
-from .adapter_support import (
-    prepare_for_adapter,
-    read_relation_as_df,
-    reconstruct_adapter,
-    reload_adapter_cache,
-    write_df_to_relation,
-)
-from .connections import FalConnectionManager, FalCredentials
-from .utils import fetch_environment, retrieve_symbol
-from .environments import create_environment, run_function, iter_logs
+from dbt.adapters.fal.python import PythonAdapter
 
-# Delay between polls.
-POLL_DELAY = 0.1
-
-
-def _isolated_runner(
-    code: str,
-    config: RuntimeConfig,
-    manifest: Manifest,
-    macro_manifest: MacroManifest,
-) -> Any:
-    # This function is going to run in an entirely different machine.
-    adapter = reconstruct_adapter(config, manifest, macro_manifest)
-    main = retrieve_symbol(code, "main")
-    return main(
-        read_df=prepare_for_adapter(adapter, read_relation_as_df),
-        write_df=prepare_for_adapter(adapter, write_df_to_relation),
-    )
-
-
-def run_in_environment(
-    credentials: FalCredentials,
-    manifest: Manifest,
-    macro_manifest: MacroManifest,
-    kind: str,
-    configuration: Dict[str, Any],
-    code: str,
-    config: RuntimeConfig,
-) -> AdapterResponse:
-    """Run the 'main' function inside the given code on the
-    specified environment."""
-
-    if not credentials.fal_api_base:
-        raise dbt.exceptions.RuntimeException(
-            "The 'fal_api_base' field is required for running fal environments."
-            "\nYou can start your own fal server by running 'docker run -p 5000:5000"
-            " fal-ai/isolate-server' and\nsetting 'fal_api_base' to 'http://localhost:5000'."
-        )
-
-    # User's environment
-    environment_token = create_environment(
-        credentials.fal_api_base, kind, configuration
-    )
-
-    # Start running the entrypoint function in the remote environment.
-    status_token = run_function(
-        credentials.fal_api_base,
-        environment_token,
-        partial(_isolated_runner, code, config, manifest, macro_manifest),
-    )
-
-    for log in iter_logs(credentials.fal_api_base, status_token):
-        if log["source"] == "user":
-            print(f"[{log['level']}]", log["message"])
-        elif log["source"] == "builder":
-            print(f"[environment builder] [{log['level']}]", log["message"])
-        elif log["source"] == "bridge":
-            print(f"[environment bridge] [{log['level']}]", log["message"])
-
-    # TODO: we should somehow tell whether the run was successful or not.
-    return AdapterResponse("OK")
+from .adapter_support import reload_adapter_cache
+from .connections import FalConnectionManager
+from .environments import read_env_definition, run_on_host_machine, run_on_local_machine
 
 
 class FalAdapter(PythonAdapter):
@@ -100,35 +28,29 @@ class FalAdapter(PythonAdapter):
         self, parsed_model: dict, compiled_code: str
     ) -> AdapterResponse:
         """Execute the given `compiled_code` in the target environment."""
-        environment_name = parsed_model["config"].get(
+        env_name = parsed_model["config"].get(
             "fal_environment",
             self.credentials.default_environment,
         )
+        env_definition = read_env_definition(self.config.project_root, env_name)
 
-        # local => exec() or subprocess?
-        # local isolate => venv creation
-        # remote isolate => venv creation docker
-
-        assert environment_name != "local", "local running is disabled."
-
-        environment_definition = fetch_environment(
-            self.config.project_root, environment_name
-        )
-
-        kind = environment_definition.pop("kind")
-        if kind == "venv":
-            # Alias venv to virtualenv, as isolate calls it.
-            kind = "virtualenv"
+        kind = env_definition.pop("kind")
+        if self.credentials.host and kind != "local":
+            runner = run_on_host_machine
+        else:
+            runner = run_on_local_machine
 
         with self._invalidate_db_cache():
-            return run_in_environment(
+            return runner(
                 self.credentials,
-                self.manifest,
-                self.macro_manifest,
                 kind,
-                environment_definition,
+                env_definition,
                 compiled_code,
-                self.config,
+                model_state={
+                    "config": self.config,
+                    "manifest": self.manifest,
+                    "macro_manifest": self.macro_manifest,
+                },
             )
 
     @contextmanager

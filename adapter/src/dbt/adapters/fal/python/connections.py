@@ -1,43 +1,44 @@
 import abc
 import os
-from time import sleep
 import sys
 
 # multiprocessing.RLock is a function returning this type
 from multiprocessing.synchronize import RLock
 from threading import get_ident
+from time import sleep
 from typing import (
     Any,
+    Callable,
     Dict,
-    Tuple,
     Hashable,
-    Optional,
+    Iterable,
     List,
+    Optional,
+    Tuple,
     Type,
     Union,
-    Iterable,
-    Callable,
 )
 
 import dbt.exceptions
 from dbt.contracts.connection import (
-    Connection,
-    Identifier,
-    ConnectionState,
     AdapterRequiredConfig,
-    LazyHandle,
     AdapterResponse,
+    Connection,
+    ConnectionState,
+    Identifier,
+    LazyHandle,
 )
 from dbt.events import AdapterLogger
 from dbt.events.functions import fire_event
 from dbt.events.types import (
-    NewConnection,
-    ConnectionReused,
-    ConnectionLeftOpen,
-    ConnectionLeftOpen2,
     ConnectionClosed,
     ConnectionClosed2,
+    ConnectionLeftOpen,
+    ConnectionLeftOpen2,
+    ConnectionReused,
+    NewConnection,
 )
+
 from dbt import flags
 
 SleepTime = Union[int, float]  # As taken by time.sleep.

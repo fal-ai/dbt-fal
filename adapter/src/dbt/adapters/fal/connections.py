@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Tuple, Optional
+from typing import Optional
 
 from dbt.adapters.base import Credentials
+
 from dbt.adapters.fal.python import PythonConnectionManager
 
 
@@ -21,7 +22,7 @@ class FalConnectionManager(PythonConnectionManager):
 
 @dataclass
 class FalCredentials(Credentials):
-    fal_api_base: Optional[str] = None
+    host: Optional[str] = None
     default_environment: str = "local"
 
     # NOTE: So we can not set them in profiles.yml
