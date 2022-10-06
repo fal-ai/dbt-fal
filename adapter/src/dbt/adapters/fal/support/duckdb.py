@@ -20,7 +20,7 @@ def write_df_to_relation(
     relation: BaseRelation,
 ) -> AdapterResponse:
 
-    db_path = adapter.config.credentials.path    
+    db_path = adapter.config.credentials.path
     con = duckdb.connect(database=db_path)
     rows_affected = con.execute(
         f"CREATE OR REPLACE TABLE {relation.identifier} AS SELECT * FROM data;"

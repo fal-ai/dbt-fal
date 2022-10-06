@@ -65,7 +65,9 @@ class PythonJobHelper:
         raise NotImplementedError("PythonJobHelper is not implemented yet")
 
     def submit(self, compiled_code: str) -> Any:
-        raise NotImplementedError("PythonJobHelper submit function is not implemented yet")
+        raise NotImplementedError(
+            "PythonJobHelper submit function is not implemented yet"
+        )
 
 
 class PythonAdapter(metaclass=AdapterMeta):
@@ -131,10 +133,10 @@ class PythonAdapter(metaclass=AdapterMeta):
     @classmethod
     def date_function(cls):
         # HACK: to appease the ProviderContext
-        return '''
+        return """
         import datetime
         return datetime.datetime.now()
-        '''
+        """
 
     ###
     # Methods that pass through to the connection manager
@@ -172,7 +174,9 @@ class PythonAdapter(metaclass=AdapterMeta):
     @classmethod
     @abc.abstractmethod
     def is_cancelable(cls) -> bool:
-        raise NotImplementedException("`is_cancelable` is not implemented for this adapter!")
+        raise NotImplementedException(
+            "`is_cancelable` is not implemented for this adapter!"
+        )
 
     ###
     # Methods that should never be overridden
@@ -218,7 +222,6 @@ class PythonAdapter(metaclass=AdapterMeta):
     def clear_macro_manifest(self):
         if self._macro_manifest_lazy is not None:
             self._macro_manifest_lazy = None
-
 
     ###
     # ODBC FUNCTIONS -- these should not need to change for every adapter,
@@ -270,7 +273,9 @@ class PythonAdapter(metaclass=AdapterMeta):
         raise NotImplementedError("default_python_submission_method is not specified")
 
     @log_code_execution
-    def submit_python_job(self, parsed_model: dict, compiled_code: str) -> AdapterResponse:
+    def submit_python_job(
+        self, parsed_model: dict, compiled_code: str
+    ) -> AdapterResponse:
         submission_method = parsed_model["config"].get(
             "submission_method", self.default_python_submission_method
         )
@@ -287,7 +292,9 @@ class PythonAdapter(metaclass=AdapterMeta):
         # process submission result to generate adapter response
         return self.generate_python_submission_response(submission_result)
 
-    def generate_python_submission_response(self, submission_result: Any) -> AdapterResponse:
+    def generate_python_submission_response(
+        self, submission_result: Any
+    ) -> AdapterResponse:
         raise NotImplementedException(
             "Your adapter need to implement generate_python_submission_response"
         )

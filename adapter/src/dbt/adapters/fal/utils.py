@@ -1,42 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
+import yaml
 
 import dbt.exceptions
-from fal.packages.environments.base import (
-    BaseEnvironment,
-    BasicCallable,
-    EnvironmentConnection,
-)
-from faldbt.parse import load_environments
-
-
-@dataclass
-class LocalEnvironment(BaseEnvironment[None]):
-    """A dummy environment for Fal to run the given executable
-    locally."""
-
-    @property
-    def key(self) -> str:
-        return "local"
-
-    @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> BaseEnvironment:
-        return cls()
-
-    def _get_or_create(self) -> None:
-        return None
-
-    def open_connection(self, conn_info: None) -> LocalConnection:
-        return LocalConnection(self)
-
-
-@dataclass
-class LocalConnection(EnvironmentConnection[LocalEnvironment]):
-    def run(self, executable: BasicCallable, *args, **kwargs) -> Any:
-        return executable(*args, **kwargs)
 
 
 def retrieve_symbol(source_code: str, symbol_name: str) -> Any:
@@ -46,22 +14,30 @@ def retrieve_symbol(source_code: str, symbol_name: str) -> Any:
     return namespace[symbol_name]
 
 
-def fetch_environment(project_root: str, environment_name: str) -> Tuple[BaseEnvironment, bool]:
+def fetch_environment(project_root: str, environment_name: str) -> Dict[str, Any]:
     """Fetch the environment with the given name from the project's
     fal_project.yml file."""
-    # Local is a special environment where it doesn't need to be defined
-    # since it will mirror user's execution context directly.
-    if environment_name == "local":
-        return LocalEnvironment(), True
 
-    try:
-        environments = load_environments(project_root)
-    except Exception as exc:
-        raise dbt.exceptions.RuntimeException(str(exc)) from exc
+    fal_project = Path(project_root) / "fal_project.yml"
+    if not fal_project.exists():
+        raise dbt.exceptions.RuntimeException(
+            f"Can't access environment {environment_name} since "
+            f"fal_project.yml does not exist under {project_root}"
+        )
 
-    if environment_name not in environments:
+    with open(fal_project) as stream:
+        fal_project = yaml.safe_load(stream)
+
+    for environment in fal_project.get("environments", []):
+        if "name" not in environment or "kind" not in environment:
+            raise dbt.exceptions.RuntimeException(
+                f"Invalid environment definition in fal_project.yml: {environment} (name and kind fields are required)"
+            )
+
+        if environment["name"] == environment_name:
+            environment.pop("name")
+            return environment
+    else:
         raise dbt.exceptions.RuntimeException(
             f"Environment '{environment_name}' was used but not defined in fal_project.yml"
         )
-
-    return environments[environment_name], False

@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+import dbt.exceptions
 from contextlib import contextmanager, nullcontext
 from functools import partial
-from typing import Any, Callable, Iterator
+from typing import Any, Callable, Iterator, Dict, Any
 
 import pandas as pd
+from dbt.parser.manifest import Manifest, ManifestLoader, MacroManifest
 from dbt.adapters.base import BaseAdapter
 from dbt.adapters.fal.python import PythonAdapter
 from dbt.config import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
-from fal.packages.environments import BaseEnvironment
 
 from .adapter_support import (
     prepare_for_adapter,
@@ -18,13 +19,22 @@ from .adapter_support import (
     reload_adapter_cache,
     write_df_to_relation,
 )
-from .connections import FalConnectionManager
+from .connections import FalConnectionManager, FalCredentials
 from .utils import fetch_environment, retrieve_symbol
+from .environments import create_environment, run_function, iter_logs
+
+# Delay between polls.
+POLL_DELAY = 0.1
 
 
-def _run_with_adapter(code: str, adapter: BaseAdapter) -> Any:
-    # main symbol is defined during dbt-fal's compilation
-    # and acts as an entrypoint for us to run the model.
+def _isolated_runner(
+    code: str,
+    config: RuntimeConfig,
+    manifest: Manifest,
+    macro_manifest: MacroManifest,
+) -> Any:
+    # This function is going to run in an entirely different machine.
+    adapter = reconstruct_adapter(config, manifest, macro_manifest)
     main = retrieve_symbol(code, "main")
     return main(
         read_df=prepare_for_adapter(adapter, read_relation_as_df),
@@ -32,29 +42,47 @@ def _run_with_adapter(code: str, adapter: BaseAdapter) -> Any:
     )
 
 
-def _isolated_runner(code: str, config: RuntimeConfig) -> Any:
-    # This function can be run in an entirely separate
-    # process or an environment, so we need to reconstruct
-    # the DB adapter solely from the config.
-    adapter = reconstruct_adapter(config)
-    return _run_with_adapter(code, adapter)
-
-
 def run_in_environment(
-    environment: BaseEnvironment,
+    credentials: FalCredentials,
+    manifest: Manifest,
+    macro_manifest: MacroManifest,
+    kind: str,
+    configuration: Dict[str, Any],
     code: str,
     config: RuntimeConfig,
 ) -> AdapterResponse:
     """Run the 'main' function inside the given code on the
-    specified environment.
+    specified environment."""
 
-    The environment_name must be defined inside fal_project.yml file
-    in your project's root directory."""
+    if not credentials.fal_api_base:
+        raise dbt.exceptions.RuntimeException(
+            "The 'fal_api_base' field is required for running fal environments."
+            "\nYou can start your own fal server by running 'docker run -p 5000:5000"
+            " fal-ai/isolate-server' and\nsetting 'fal_api_base' to 'http://localhost:5000'."
+        )
 
-    with environment.connect() as connection:
-        execute_model = partial(_isolated_runner, code, config)
-        result = connection.run(execute_model)
-        return result
+    # User's environment
+    environment_token = create_environment(
+        credentials.fal_api_base, kind, configuration
+    )
+
+    # Start running the entrypoint function in the remote environment.
+    status_token = run_function(
+        credentials.fal_api_base,
+        environment_token,
+        partial(_isolated_runner, code, config, manifest, macro_manifest),
+    )
+
+    for log in iter_logs(credentials.fal_api_base, status_token):
+        if log["source"] == "user":
+            print(f"[{log['level']}]", log["message"])
+        elif log["source"] == "builder":
+            print(f"[environment builder] [{log['level']}]", log["message"])
+        elif log["source"] == "bridge":
+            print(f"[environment bridge] [{log['level']}]", log["message"])
+
+    # TODO: we should somehow tell whether the run was successful or not.
+    return AdapterResponse("OK")
 
 
 class FalAdapter(PythonAdapter):
@@ -77,15 +105,31 @@ class FalAdapter(PythonAdapter):
             self.credentials.default_environment,
         )
 
-        environment, is_local = fetch_environment(
+        # local => exec() or subprocess?
+        # local isolate => venv creation
+        # remote isolate => venv creation docker
+
+        assert environment_name != "local", "local running is disabled."
+
+        environment_definition = fetch_environment(
             self.config.project_root, environment_name
         )
 
-        if is_local:
-            return _run_with_adapter(compiled_code, self._db_adapter)
+        kind = environment_definition.pop("kind")
+        if kind == "venv":
+            # Alias venv to virtualenv, as isolate calls it.
+            kind = "virtualenv"
 
         with self._invalidate_db_cache():
-            return run_in_environment(environment, compiled_code, self.config)
+            return run_in_environment(
+                self.credentials,
+                self.manifest,
+                self.macro_manifest,
+                kind,
+                environment_definition,
+                compiled_code,
+                self.config,
+            )
 
     @contextmanager
     def _invalidate_db_cache(self) -> Iterator[None]:
@@ -100,7 +144,7 @@ class FalAdapter(PythonAdapter):
             # from the Python runner, so that we can tell the cache
             # manager about what is going on instead of hard-resetting
             # the cache-db.
-            reload_adapter_cache(self._db_adapter, self.config)
+            reload_adapter_cache(self._db_adapter, self.manifest)
 
     @property
     def credentials(self) -> Any:
@@ -109,3 +153,11 @@ class FalAdapter(PythonAdapter):
         # maybe we should raise an error?
         assert python_creds is not None
         return python_creds
+
+    @property
+    def manifest(self) -> Manifest:
+        return ManifestLoader.get_full_manifest(self.config)
+
+    @property
+    def macro_manifest(self) -> MacroManifest:
+        return self._db_adapter.load_macro_manifest()

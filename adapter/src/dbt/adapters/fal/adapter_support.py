@@ -1,5 +1,5 @@
 import functools
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 import sqlalchemy
@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from dbt.adapters.base import BaseAdapter, BaseRelation, RelationType
 from dbt.adapters.base.connections import AdapterResponse, Connection
 from dbt.config import RuntimeConfig
-from dbt.parser.manifest import ManifestLoader
+from dbt.parser.manifest import ManifestLoader, Manifest, MacroManifest
 
 from dbt.adapters import factory
 
@@ -144,7 +144,7 @@ def prepare_for_adapter(adapter: BaseAdapter, function: Any) -> Any:
     return wrapped
 
 
-def reconstruct_adapter(config: RuntimeConfig) -> BaseAdapter:
+def reconstruct_adapter(config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest) -> BaseAdapter:
     from dbt.tracking import do_not_track
 
     # Prepare the DBT to not to track us.
@@ -157,13 +157,16 @@ def reconstruct_adapter(config: RuntimeConfig) -> BaseAdapter:
 
     # Initialize the adapter
     db_adapter = factory.get_adapter(config)
-    reload_adapter_cache(db_adapter, config)
+    db_adapter._macro_manifest_lazy = macro_manifest
+    reload_adapter_cache(db_adapter, manifest)
 
     return db_adapter
 
 
-def reload_adapter_cache(adapter: BaseAdapter, config: RuntimeConfig) -> None:
-    manifest = ManifestLoader.get_full_manifest(config)
+def reload_adapter_cache(
+    adapter: BaseAdapter,
+    manifest: Optional[Manifest] = None,
+) -> None:
     with new_connection(adapter, "fal:reload_adapter_cache"):
         adapter.set_relations_cache(manifest, True)
 
