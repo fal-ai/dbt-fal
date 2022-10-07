@@ -1,11 +1,8 @@
 import argparse
-from itertools import chain
 from pathlib import Path
-from pydoc import ModuleScanner
-from typing import Dict, List, Iterable
-import os
+from typing import Dict, List
 
-from dbt.config.profile import DEFAULT_PROFILES_DIR
+from dbt.flags import PROFILES_DIR
 from fal.planner.executor import parallel_executor
 from fal.planner.schedule import Scheduler
 from fal.planner.tasks import FalLocalHookTask, Status, TaskGroup
@@ -17,13 +14,9 @@ from faldbt.project import DbtModel, FalDbt, FalGeneralException
 def create_fal_dbt(
     args: argparse.Namespace, generated_models: Dict[str, Path] = {}
 ) -> FalDbt:
-    env_profiles_dir = os.getenv("DBT_PROFILES_DIR")
-
-    profiles_dir = DEFAULT_PROFILES_DIR
+    profiles_dir = PROFILES_DIR
     if args.profiles_dir is not None:
         profiles_dir = args.profiles_dir
-    elif env_profiles_dir:
-        profiles_dir = env_profiles_dir
 
     real_state = None
     if hasattr(args, "state") and args.state is not None:
