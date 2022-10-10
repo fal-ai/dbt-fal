@@ -3,6 +3,9 @@ name: Check Poetry Lock
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
+    paths:
+      - "**/pyproject.toml"
+      - "**/poetry.lock"
 
 jobs:
   run:
