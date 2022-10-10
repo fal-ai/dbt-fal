@@ -45,7 +45,16 @@ Feature: global scripts
       fal run --profiles-dir $profilesDir --project-dir $baseDir --before
       """
     Then the following scripts are ran:
-      | GLOBAL.before.py | some_model.before.py |
+      | GLOBAL.before.py | GLOBAL.before_b.py | some_model.before.py |
+
+  Scenario: Fal works with global before script selection
+    Given the project 004_globals
+    When the following command is invoked:
+      """
+      fal run --profiles-dir $profilesDir --project-dir $baseDir --before --script fal_scripts/before.py
+      """
+    Then the following scripts are ran:
+      | GLOBAL.before.py |
 
   Scenario: fal flow run does not trigger globals
     Given the project 004_globals

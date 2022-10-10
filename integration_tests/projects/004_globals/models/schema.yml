@@ -14,5 +14,6 @@ fal:
   scripts:
     before:
       - fal_scripts/before.py
+      - fal_scripts/before_b.py
     after:
       - fal_scripts/after.py
