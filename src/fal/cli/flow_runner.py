@@ -10,6 +10,8 @@ from fal.fal_script import FalScript
 from fal.node_graph import DbtModelNode, FalFlowNode, NodeGraph, ScriptNode
 from faldbt.project import FalDbt, NodeStatus
 import argparse
+import faldbt.version as version
+
 
 DBT_RUN_RESULTS_FILENAME = "run_results.json"
 FAL_RUN_RESULTS_FILENAME = "fal_results.json"
@@ -50,7 +52,9 @@ def fal_flow_run(parsed: argparse.Namespace) -> int:
 
     # Python models
     delete_generated_models(parsed.project_dir)
-    generated_models = generate_python_dbt_models(parsed.project_dir)
+
+    if not version.IS_DBT_WITH_PYTHON_MODELS:
+        generated_models = generate_python_dbt_models(parsed.project_dir)
 
     fal_dbt = create_fal_dbt(parsed, generated_models)
     _mark_dbt_nodes_status(fal_dbt, NodeStatus.Skipped)
