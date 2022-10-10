@@ -10,7 +10,7 @@ from fal.cli.model_generator.module_check import (
     write_to_model_check,
 )
 
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 
 from fal.telemetry import telemetry
 

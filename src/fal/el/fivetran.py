@@ -9,7 +9,7 @@ from requests.exceptions import RequestException
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 from dateutil import parser
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 
 BASE_URL = "https://api.fivetran.com/v1/connectors/"
 

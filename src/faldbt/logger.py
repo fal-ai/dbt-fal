@@ -11,6 +11,8 @@ from dbt.events.base_types import (
     ErrorLevel as _ErrorLevel,
 )
 
+import faldbt.version as version
+
 
 class FireEventLogger:
     def test(self, msg: str, *args, **kwargs):
@@ -46,10 +48,7 @@ def _prepare_msg(msg: str, *args, **kwargs):
 
 LOGGER = FireEventLogger()
 
-# NOTE: fal.logger is imported in faldbt.lib, so import must be here
-import faldbt.lib as lib
-
-if lib.version_compare("1.1.0") < 0:
+if version.version_compare("1.1.0") < 0:
     from dbt.events.base_types import Cli, Event
 
     _EXTRA_CLASS_INHERIT = Cli, Event

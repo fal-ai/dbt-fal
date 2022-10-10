@@ -38,13 +38,13 @@ from dbt.contracts.results import (
     FreshnessExecutionResultArtifact,
     FreshnessNodeOutput,
 )
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 from dbt.task.compile import CompileTask
 import dbt.tracking
 
-from .lib import WriteModeEnum
 from . import parse
 from . import lib
+from . import version
 from .el_client import FalElClient
 
 from fal.feature_store.feature import Feature
@@ -433,9 +433,9 @@ class FalDbt:
         args_vars: str = "{}",
         generated_models: Dict[str, Path] = {},
     ):
-        if not lib.IS_DBT_V1PLUS:
+        if not version.IS_DBT_V1PLUS:
             raise NotImplementedError(
-                f"dbt version {lib.DBT_VCURRENT} is no longer supported, please upgrade to dbt 1.0.0 or above"
+                f"dbt version {version.DBT_VCURRENT} is no longer supported, please upgrade to dbt 1.0.0 or above"
             )
 
         self.project_dir = os.path.realpath(os.path.expanduser(project_dir))
@@ -709,8 +709,8 @@ class FalDbt:
 
         target_source = self._source(target_source_name, target_table_name)
 
-        write_mode = WriteModeEnum(mode.lower().strip())
-        if write_mode == WriteModeEnum.APPEND:
+        write_mode = lib.WriteModeEnum(mode.lower().strip())
+        if write_mode == lib.WriteModeEnum.APPEND:
             lib.write_target(
                 data,
                 self.project_dir,
@@ -721,7 +721,7 @@ class FalDbt:
                 config=self._config,
             )
 
-        elif write_mode == WriteModeEnum.OVERWRITE:
+        elif write_mode == lib.WriteModeEnum.OVERWRITE:
             lib.overwrite_target(
                 data,
                 self.project_dir,
@@ -756,8 +756,8 @@ class FalDbt:
 
         target_model = self._model(target_model_name, target_package_name)
 
-        write_mode = WriteModeEnum(mode.lower().strip())
-        if write_mode == WriteModeEnum.APPEND:
+        write_mode = lib.WriteModeEnum(mode.lower().strip())
+        if write_mode == lib.WriteModeEnum.APPEND:
             lib.write_target(
                 data,
                 self.project_dir,
@@ -768,7 +768,7 @@ class FalDbt:
                 config=self._config,
             )
 
-        elif write_mode == WriteModeEnum.OVERWRITE:
+        elif write_mode == lib.WriteModeEnum.OVERWRITE:
             lib.overwrite_target(
                 data,
                 self.project_dir,

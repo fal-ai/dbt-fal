@@ -1,7 +1,7 @@
 """Fal utilities."""
 import copy
 import functools
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:

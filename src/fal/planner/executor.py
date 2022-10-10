@@ -21,7 +21,7 @@ from fal.planner.tasks import (
 )
 from faldbt.project import FalDbt
 
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 
 
 class State(Enum):

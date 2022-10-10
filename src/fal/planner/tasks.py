@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Iterator, List, Any, Optional, Dict, Tuple, Union
 
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 
 from fal.node_graph import FalScript
 from fal.utils import print_run_info, DynamicIndexProvider
