@@ -123,17 +123,11 @@ def _select_scripts(
 
 def _get_global_scripts(faldbt: FalDbt, args: argparse.Namespace):
     scripts_flag = _scripts_flag(args)
-    if scripts_flag:
-        scripts = []
-        for path in faldbt._global_script_paths["before" if args.before else "after"]:
-            if path in args.scripts:
-                scripts.append(FalScript(faldbt, None, path))
-        return scripts
-    else:
-        return [
-            FalScript(faldbt, None, path)
-            for path in faldbt._global_script_paths["before" if args.before else "after"]
-        ]
+    return [
+        FalScript(faldbt, None, path)
+        for path in faldbt._global_script_paths["before" if args.before else "after"]
+        if not scripts_flag or path in args.scripts
+    ]
 
 
 def _get_models_with_keyword(faldbt: FalDbt) -> List[DbtModel]:
