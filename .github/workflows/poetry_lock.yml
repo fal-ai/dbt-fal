@@ -1,0 +1,39 @@
+name: Check Poetry Lock
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+          
+      - name: Install poetry
+        shell: bash
+        run: pip install poetry-core=="1.0.*" poetry=="1.1.4"
+
+      - name: Check poetry lock
+        run: |
+          poetry install
+          poetry lock --no-update
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Poetry lock updated
+          commit_user_email: batuhan+bot@fal.ai
+          commit_user_name: Fal Bot
