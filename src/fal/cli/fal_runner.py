@@ -50,15 +50,15 @@ def fal_run(args: argparse.Namespace):
     models = _get_filtered_models(faldbt, args.all, selector_flags, args.before)
 
     scripts = _select_scripts(args, models, faldbt)
-
-    global_scripts = _get_global_scripts(faldbt, args.before)
+    global_scripts = _get_global_scripts(faldbt, args)
 
     if args.before:
-        if not _scripts_flag(args):
-            # run globals when no --script is passed
+        if not _scripts_flag(args) or not selector_flags:
+            # run globals when no --script is passed or no selector is passed
             _run_scripts(args, global_scripts, faldbt)
 
         pre_hook_scripts = _get_hooks_for_model(models, faldbt, "pre-hook")
+
         _run_scripts(args, pre_hook_scripts, faldbt)
 
         _run_scripts(args, scripts, faldbt)
@@ -69,7 +69,7 @@ def fal_run(args: argparse.Namespace):
         post_hook_scripts = _get_hooks_for_model(models, faldbt, "post-hook")
         _run_scripts(args, post_hook_scripts, faldbt)
 
-        if not _scripts_flag(args):
+        if not _scripts_flag(args) or not selector_flags:
             # run globals when no --script is passed
             _run_scripts(args, global_scripts, faldbt)
 
@@ -121,10 +121,12 @@ def _select_scripts(
     return scripts
 
 
-def _get_global_scripts(faldbt: FalDbt, is_before: bool):
+def _get_global_scripts(faldbt: FalDbt, args: argparse.Namespace):
+    scripts_flag = _scripts_flag(args)
     return [
         FalScript(faldbt, None, path)
-        for path in faldbt._global_script_paths["before" if is_before else "after"]
+        for path in faldbt._global_script_paths["before" if args.before else "after"]
+        if not scripts_flag or path in args.scripts
     ]
 
 
