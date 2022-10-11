@@ -400,6 +400,7 @@ def _clean_args_list(args: List[str]) -> List[str]:
         "--vars",
         "--var",
         "--target",
+        "--globals"
     ]
     REDACTED = "[REDACTED]"
     output = []
