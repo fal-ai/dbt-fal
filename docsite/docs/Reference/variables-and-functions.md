@@ -8,7 +8,10 @@ Inside a Python script, you get access to some useful variables and functions.
 
 ## `context` Variable
 
-A `context` object with information relevant to the model through which the script was run. For the [`meta` Syntax](#meta-syntax) example, we would get the following:
+`context` is an object with information about the current script context.
+
+### `context.current_model`
+This propery holds information relevant to the model, which is associated with the running script. For the [`meta` Syntax](#meta-syntax) example, we would get the following:
 
 ```python
 context.current_model.name
@@ -29,13 +32,19 @@ context.current_model.meta
 #= {'owner': '@me'}
 ```
 
-`context` object also has access to test information related to the current model. If the previous dbt command was either `test` or `build`, the `context.current_model.test` property is populated with a list of tests:
+`context.current_model` object also has access to test information related to the current model. If the previous dbt command was either `test` or `build`, the `context.current_model.test` property is populated with a list of tests:
 
 ```python
 context.current_model.tests
 #= [CurrentTest(name='not_null', modelname='historical_ozone_levels, column='ds', status='Pass')]
 ```
 
+Another relevant property of the `current_model` is `adapter_response`. It contains information that was received from the dbt SQL adapter after computing the model:
+
+```python
+context.current_model.adapter_response
+#= CurrentAdapterResponse(message='SELECT 10', code='SELECT', rows_affected=10)
+```
 ## Read functions
 
 The familiar dbt functions `ref` and `source` are available in fal scripts to read the models and sources as a Pandas DataFrame.
