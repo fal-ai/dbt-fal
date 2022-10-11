@@ -12,11 +12,20 @@ Feature: global scripts
     Then the following scripts are ran:
       | some_model.after.py | GLOBAL.after.py |
 
-  Scenario: fal run triggers globals with select flag
+  Scenario: fal run doesn't trigger globals with select flag
     Given the project 004_globals
     When the following command is invoked:
       """
       fal run --profiles-dir $profilesDir --project-dir $baseDir --select some_model
+      """
+    Then the following scripts are ran:
+      | some_model.after.py |
+
+  Scenario: fal run triggers globals with select and globals flags
+    Given the project 004_globals
+    When the following command is invoked:
+      """
+      fal run --profiles-dir $profilesDir --project-dir $baseDir --select some_model --globals
       """
     Then the following scripts are ran:
       | some_model.after.py | GLOBAL.after.py |
@@ -34,20 +43,29 @@ Feature: global scripts
     Then the following scripts are ran:
       | GLOBAL.before.py | GLOBAL.before_b.py | some_model.before.py |
 
-  Scenario: Fal works with global before script selection
+  Scenario: --before script selection doesn't run globals
     Given the project 004_globals
     When the following command is invoked:
       """
-      fal run --profiles-dir $profilesDir --project-dir $baseDir --before --script fal_scripts/before_b.py
+      fal run --profiles-dir $profilesDir --project-dir $baseDir --before --script fal_scripts/before.py
       """
     Then the following scripts are ran:
-      | GLOBAL.before_b.py |
+      | some_model.before.py |
+
+  Scenario: global before scripts are run with --globals flag and script selection
+    Given the project 004_globals
+    When the following command is invoked:
+      """
+      fal run --profiles-dir $profilesDir --project-dir $baseDir --before --script fal_scripts/before.py --globals
+      """
+    Then the following scripts are ran:
+      | GLOBAL.before.py | some_model.before.py |
 
   Scenario: Fal selects global and not-global scripts
     Given the project 004_globals
     When the following command is invoked:
       """
-      fal run --profiles-dir $profilesDir --project-dir $baseDir --before --script fal_scripts/before.py
+      fal run --profiles-dir $profilesDir --project-dir $baseDir --before --script fal_scripts/before.py --globals
       """
     Then the following scripts are ran:
       | GLOBAL.before.py | some_model.before.py |

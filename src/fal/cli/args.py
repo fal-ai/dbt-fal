@@ -202,6 +202,13 @@ def _build_run_parser(sub: argparse.ArgumentParser):
         action="store_true",
         help="Run scripts specified in model `before` tag",
     )
+
+    sub.add_argument(
+        "--globals",
+        action="store_true",
+        default=False,
+        help="Run global scripts along with selected scripts",
+    )
     # fmt: on
 
 
