@@ -1,15 +1,20 @@
-"""
-DEPENDENCY:
-# not really used, but we put it to make sure it is picked up
-- ref('model_a')
-"""
-from _fal_testing.utils import create_model_artifact
-from fal.typing import *
+def model(dbt, session):
+    dbt.config(materialized="table")
 
-df = ref("model_b")
+    import pandas as pd
 
-df["my_bool"] = True
+    df_b = dbt.ref("model_b")
 
-write_to_model(df)
+    if not isinstance(df_b, pd.DataFrame):
+        # runs on several datawarehouses
+        if hasattr(df_b, "to_pandas"):
+            # Snowflake:
+            df_b = df_b.to_pandas()
+        if hasattr(df_b, "toPandas"):
+            # PySpark:
+            df_b = df_b.toPandas()
 
-create_model_artifact(context)
+    df_b["my_bool"] = True
+    res = df_b.append(df_b)
+
+    return res

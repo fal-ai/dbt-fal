@@ -1,11 +1,13 @@
-import pyjokes
-from fal.typing import *
 from _fal_testing import create_model_artifact
 
-df = ref("model_c")
+def model(dbt, fal):
+    dbt.config(materialized='table')
 
-df["model_e_data"] = True
+    import pyjokes
 
-write_to_model(df)
+    df = dbt.ref("model_c")
+    df["model_e_data"] = True
 
-create_model_artifact(context, f"PyJokes version: {pyjokes.__version__}")
+    create_model_artifact(fal, f"PyJokes version: {pyjokes.__version__}")
+
+    return df

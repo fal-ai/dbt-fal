@@ -73,8 +73,7 @@ models:
       fal:
         environment: pyjokes-0.6.0
         pre-hook:
-          # We override the default environment here
-          # for only this hook, and expect the import
+          # We override the default environment here and expect the import
           # of pyjokes to fail under 'not-funny' environment.
           - path: check_imports.py
             environment: not-funny
