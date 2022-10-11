@@ -1,7 +1,7 @@
 {% materialization table, adapter='fal', supported_languages=['python'] -%}
 
   -- TODO: change to sync_teleport() when available in dbt-core
-  {%- if adapter.is_teleport -%}
+  {%- if adapter.is_teleport() -%}
     {%- for _ref in model.refs -%}
         {%- set resolved = ref(*_ref) -%}
         {%- do adapter.sync_teleport_relation(ref(*_ref)) -%}

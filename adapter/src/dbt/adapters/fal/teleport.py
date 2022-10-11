@@ -23,7 +23,7 @@ def _prepare_for_teleport(function: Callable, teleport: TeleportInfo, locations:
 
 def _teleport_df_from_external_storage(teleport_info: TeleportInfo, locations: DataLocation, relation: str) -> pd.DataFrame:
     if relation not in locations:
-        raise RuntimeError(f"Could not find url for '{relation}'")
+        raise RuntimeError(f"Could not find url for '{relation}' in {locations}")
 
     if teleport_info.format == 'parquet':
         relation_path = locations[relation]

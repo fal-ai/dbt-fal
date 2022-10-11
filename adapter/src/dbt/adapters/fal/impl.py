@@ -36,8 +36,8 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
     def __init__(self, config):
         super().__init__(config)
         self._relation_data_location_cache: DataLocation = DataLocation({})
-        if self.is_teleport:
-            self._db_adapter = wrap_db_adapter(self._db_adapter)
+        if self.is_teleport():
+            self._wrapper = wrap_db_adapter(self._db_adapter)
 
     @classmethod
     def type(cls):
@@ -47,7 +47,6 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
     def is_cancelable(cls) -> bool:
         return False
 
-    @property
     @available
     def is_teleport(self) -> bool:
         return self.credentials.teleport is not None
@@ -65,7 +64,7 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
             self.config.project_root, environment_name
         )
 
-        if self.is_teleport:
+        if self.is_teleport():
             # We need to build teleport_info because we read from the external storage,
             # we did not _localize_ the data in `teleport_from_external_storage`
             teleport_info = self._build_teleport_info()
@@ -136,7 +135,7 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         teleport_creds = self.credentials.teleport
         assert teleport_creds
 
-        teleport_format = TeleportAdapter.find_format(self, self._db_adapter)
+        teleport_format = TeleportAdapter.find_format(self, self._wrapper)
 
         if teleport_creds.type == TeleportTypeEnum.LOCAL:
             assert teleport_creds.local_path
@@ -156,7 +155,7 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         Internal implementation of sync to avoid dbt-core changes
         """
         teleport_info = self._build_teleport_info()
-        data_path = self._db_adapter.teleport_to_external_storage(relation, teleport_info)
+        data_path = self._wrapper.teleport_to_external_storage(relation, teleport_info)
         self.teleport_from_external_storage(relation, data_path, teleport_info)
 
     def _sync_result_table(self, relation: BaseRelation):
@@ -169,4 +168,4 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         """
         teleport_info = self._build_teleport_info()
         data_path = self.teleport_to_external_storage(relation, teleport_info)
-        self._db_adapter.teleport_from_external_storage(relation, data_path, teleport_info)
+        self._wrapper.teleport_from_external_storage(relation, data_path, teleport_info)
