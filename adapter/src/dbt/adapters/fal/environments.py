@@ -70,13 +70,13 @@ def read_env_definition(project_root: str, environment_name: str) -> Dict[str, A
 
 def check_isolate_server(func):
     @functools.wraps(func)
-    def wrapper(host, *args, **kwargs):
+    def wrapper(session, *args, **kwargs):
         try:
-            return func(host, *args, **kwargs)
+            return func(session, *args, **kwargs)
         except httpx.ConnectError:
             raise dbt.exceptions.RuntimeException(
                 f"Can't seem to access the given fal server server.\n"
-                f"Ensure that it is running at {host}.\n"
+                f"Ensure that it is running at {session.base_url}.\n"
                 f"See <docs link> for setting up your own server."
             )
 
@@ -84,10 +84,12 @@ def check_isolate_server(func):
 
 
 @check_isolate_server
-def create_environment(host: str, kind: str, configuration: Dict[str, Any]) -> str:
+def create_environment(
+    session: httpx.Client, kind: str, configuration: Dict[str, Any]
+) -> str:
     """Create a new environment with the given definition."""
-    response = httpx.post(
-        host + "/environments/create",
+    response = session.post(
+        "/environments",
         json={"kind": kind, "configuration": configuration},
     )
     response.raise_for_status()
@@ -98,10 +100,10 @@ def create_environment(host: str, kind: str, configuration: Dict[str, Any]) -> s
 
 
 @check_isolate_server
-def run_function(host: str, environment_token: str, function: Any) -> None:
+def run_function(session: httpx.Client, environment_token: str, function: Any) -> None:
     """Run the given function in the given environment."""
-    response = httpx.post(
-        host + "/environments/runs",
+    response = session.post(
+        "/environments/runs",
         params={
             "environment_token": environment_token,
             "serialization_backend": "dill",
@@ -116,10 +118,12 @@ def run_function(host: str, environment_token: str, function: Any) -> None:
 
 
 @check_isolate_server
-def check_run_status(host: str, token: str, logs_start: int = 0) -> Dict[str, Any]:
+def check_run_status(
+    session: httpx.Client, token: str, logs_start: int = 0
+) -> Dict[str, Any]:
     """Check the status of a run."""
-    response = httpx.get(
-        host + f"/environments/runs/{token}/status",
+    response = session.get(
+        f"/environments/runs/{token}/status",
         params={
             "logs_start": logs_start,
         },
@@ -131,11 +135,11 @@ def check_run_status(host: str, token: str, logs_start: int = 0) -> Dict[str, An
     return data
 
 
-def iter_logs(host: str, token: str) -> Iterator[Dict[str, Any]]:
+def iter_logs(session: httpx.Client, token: str) -> Iterator[Dict[str, Any]]:
     """Iterate over the logs of a run."""
     logs_start = 0
     while True:
-        data = check_run_status(host, token, logs_start)
+        data = check_run_status(session, token, logs_start)
         for log in data["logs"]:
             yield log
 
@@ -169,26 +173,27 @@ def run_on_host_machine(
     model_state: Dict[str, Any],
 ) -> AdapterResponse:
     """Run the given code on a remote machine (through fal-isolate-server)."""
-    # User's environment
-    environment_token = create_environment(credentials.host, kind, configuration)
+    with httpx.Client(base_url=credentials.host) as session:
+        # User's environment
+        environment_token = create_environment(session, kind, configuration)
 
-    # Start running the entrypoint function in the remote environment.
-    status_token = run_function(
-        credentials.host,
-        environment_token,
-        partial(_isolated_runner, code, **model_state),
-    )
+        # Start running the entrypoint function in the remote environment.
+        status_token = run_function(
+            session,
+            environment_token,
+            partial(_isolated_runner, code, **model_state),
+        )
 
-    for log in iter_logs(credentials.host, status_token):
-        if log["source"] == "user":
-            print(f"[{log['level']}]", log["message"])
-        elif log["source"] == "builder":
-            print(f"[environment builder] [{log['level']}]", log["message"])
-        elif log["source"] == "bridge":
-            print(f"[environment bridge] [{log['level']}]", log["message"])
+        for log in iter_logs(session, status_token):
+            if log["source"] == "user":
+                print(f"[{log['level']}]", log["message"])
+            elif log["source"] == "builder":
+                print(f"[environment builder] [{log['level']}]", log["message"])
+            elif log["source"] == "bridge":
+                print(f"[environment bridge] [{log['level']}]", log["message"])
 
-    # TODO: we should somehow tell whether the run was successful or not.
-    return AdapterResponse("OK")
+        # TODO: we should somehow tell whether the run was successful or not.
+        return AdapterResponse("OK")
 
 
 def run_on_local_machine(
