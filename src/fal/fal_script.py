@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from deprecation import deprecated
 
 from faldbt.parse import normalize_path
-from faldbt.project import DbtModel, FalDbt
+from faldbt.project import DbtModel, FalDbt, FAL
 
 from dbt.contracts.results import RunStatus
 from dbt.config.runtime import RuntimeConfig
@@ -253,7 +253,7 @@ class FalScript:
         model: DbtModel = self.model  # type: ignore
 
         meta = model.meta or {}
-        _del_key(meta, self.faldbt.keyword)
+        _del_key(meta, FAL)
 
         tests = _process_tests(model.tests)
 

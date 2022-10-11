@@ -8,7 +8,7 @@ from fal.planner.schedule import Scheduler
 from fal.planner.tasks import FalLocalHookTask, Status, TaskGroup
 
 from fal.fal_script import FalScript
-from faldbt.project import DbtModel, FalDbt, FalGeneralException
+from faldbt.project import FAL, DbtModel, FalDbt, FalGeneralException
 
 
 def create_fal_dbt(
@@ -28,7 +28,6 @@ def create_fal_dbt(
         args.select,
         args.exclude,
         args.selector,
-        args.keyword,
         args.threads,
         real_state,
         args.target,
@@ -109,7 +108,7 @@ def _select_scripts(
     scripts_flag = _scripts_flag(args)
 
     for model in models:
-        model_scripts = model.get_scripts(args.keyword, before=bool(args.before))
+        model_scripts = model.get_scripts(before=bool(args.before))
         for path in model_scripts:
             if not scripts_flag:
                 # run all scripts when no --script is passed
@@ -132,7 +131,7 @@ def _get_global_scripts(faldbt: FalDbt, args: argparse.Namespace):
 
 def _get_models_with_keyword(faldbt: FalDbt) -> List[DbtModel]:
     return list(
-        filter(lambda model: faldbt.keyword in model.meta, faldbt.list_models())
+        filter(lambda model: FAL in model.meta, faldbt.list_models())
     )
 
 
@@ -159,7 +158,7 @@ def _get_filtered_models(faldbt: FalDbt, all, selected, before) -> List[DbtModel
             if node.unique_id in selected_ids:
                 filtered_models.append(node)
         elif before:
-            if node.get_scripts(faldbt.keyword, before=before) != []:
+            if node.get_scripts(before=before) != []:
                 filtered_models.append(node)
         elif all:
             filtered_models.append(node)

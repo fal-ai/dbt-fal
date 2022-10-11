@@ -287,39 +287,6 @@ def test_before(capfd):
         assert "model_with_before_scripts" in captured.out
 
 
-def test_flag_level(capfd):
-    with ProjectTemporaryDirectory() as tmp_dir:
-
-        captured = _run_fal(
-            [
-                # fmt: off
-                "--keyword", "wrong",
-                "run",
-                "--project-dir", tmp_dir,
-                "--profiles-dir", profiles_dir,
-                "--select", "model_with_scripts",
-                # fmt: on
-            ],
-            capfd,
-        )
-        assert "model_with_scripts" not in captured.out
-
-        captured = _run_fal(
-            [
-                # fmt: off
-                "--keyword", "wrong",
-                "run",
-                "--keyword", "fal",
-                "--project-dir", tmp_dir,
-                "--profiles-dir", profiles_dir,
-                "--select", "model_with_scripts",
-                # fmt: on
-            ],
-            capfd,
-        )
-        assert "model_with_scripts" in captured.out
-
-
 def test_target(capfd):
     with ProjectTemporaryDirectory() as tmp_dir:
 

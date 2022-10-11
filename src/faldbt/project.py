@@ -68,6 +68,7 @@ if TYPE_CHECKING:
 class FalGeneralException(Exception):
     pass
 
+FAL = "fal"
 
 @dataclass
 class _DbtNode:
@@ -244,13 +245,12 @@ class DbtModel(_DbtTestableNode):
     def _get_hooks(
         self,
         hook_type: str,
-        keyword: str = "fal",
     ) -> List["Hook"]:
         from fal.fal_script import create_hook
 
         meta = self.meta or {}
 
-        keyword_dict = meta.get(keyword) or {}
+        keyword_dict = meta.get(FAL) or {}
         if not isinstance(keyword_dict, dict):
             return []
 
@@ -266,11 +266,11 @@ class DbtModel(_DbtTestableNode):
     get_pre_hook_paths = partialmethod(_get_hooks, hook_type="pre-hook")
     get_post_hook_paths = partialmethod(_get_hooks, hook_type="post-hook")
 
-    def get_scripts(self, keyword: str, *, before: bool) -> List[str]:
+    def get_scripts(self, *, before: bool) -> List[str]:
         # sometimes properties can *be* there and still be None
         meta = self.meta or {}
 
-        keyword_dict = meta.get(keyword) or {}
+        keyword_dict = meta.get(FAL) or {}
         if not isinstance(keyword_dict, dict):
             return []
 
@@ -426,7 +426,6 @@ class FalDbt:
         select: List[str] = [],
         exclude: Tuple[str] = tuple(),
         selector_name: Optional[str] = None,
-        keyword: str = "fal",
         threads: Optional[int] = None,
         state: Optional[str] = None,
         profile_target: Optional[str] = None,
@@ -440,7 +439,6 @@ class FalDbt:
 
         self.project_dir = os.path.realpath(os.path.expanduser(project_dir))
         self.profiles_dir = os.path.realpath(os.path.expanduser(profiles_dir))
-        self.keyword = keyword
         self._firestore_client = None
         self._state = None
         if state is not None:
@@ -584,14 +582,13 @@ class FalDbt:
 
     def _find_features(self) -> List[Feature]:
         """List features defined in schema.yml files."""
-        keyword = self.keyword
         models = self.models
         models = list(
             filter(
                 # Find models that have both feature store and column defs
-                lambda model: keyword in model.meta
-                and isinstance(model.meta[keyword], dict)
-                and "feature_store" in model.meta[keyword]
+                lambda model: FAL in model.meta
+                and isinstance(model.meta[FAL], dict)
+                and "feature_store" in model.meta[FAL]
                 and len(list(model.columns.keys())) > 0,
                 models,
             )
@@ -599,11 +596,11 @@ class FalDbt:
         features = []
         for model in models:
             for column_name in model.columns.keys():
-                if column_name == model.meta[keyword]["feature_store"]["entity_column"]:
+                if column_name == model.meta[FAL]["feature_store"]["entity_column"]:
                     continue
                 if (
                     column_name
-                    == model.meta[keyword]["feature_store"]["timestamp_column"]
+                    == model.meta[FAL]["feature_store"]["timestamp_column"]
                 ):
                     continue
                 features.append(
@@ -611,10 +608,10 @@ class FalDbt:
                         model=model.name,
                         column=column_name,
                         description=model.columns[column_name].description,
-                        entity_column=model.meta[keyword]["feature_store"][
+                        entity_column=model.meta[FAL]["feature_store"][
                             "entity_column"
                         ],
-                        timestamp_column=model.meta[keyword]["feature_store"][
+                        timestamp_column=model.meta[FAL]["feature_store"][
                             "timestamp_column"
                         ],
                     )

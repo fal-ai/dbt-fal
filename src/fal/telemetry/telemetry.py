@@ -372,7 +372,6 @@ def log_call(action, args: List[str] = []):
 def _clean_args_list(args: List[str]) -> List[str]:
     ALLOWLIST = [
         "--disable-logging",
-        "--keyword",
         "--project-dir",
         "--profiles-dir",
         "--defer",

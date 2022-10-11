@@ -16,7 +16,6 @@ def test_add_after_scripts(parsed_node, fal_dbt_class):
 
     fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
     fal_dbt_instance.scripts_dir = "/dir"
-    fal_dbt_instance.keyword = "fal"
     graph, node_lookup = _add_after_scripts(
         modelA, "model.modelA", fal_dbt_instance, graph, node_lookup
     )
@@ -42,7 +41,6 @@ def test_add_before_scripts(parsed_node, fal_dbt_class):
 
     fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
     fal_dbt_instance.scripts_dir = "/dir"
-    fal_dbt_instance.keyword = "fal"
     graph, node_lookup = _add_before_scripts(
         modelA, "model.modelA", fal_dbt_instance, graph, node_lookup
     )
@@ -62,7 +60,6 @@ def test_add_before_scripts(parsed_node, fal_dbt_class):
 def test_empty_fal_dbt(fal_dbt_class):
     fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
     fal_dbt_instance.scripts_dir = "/dir"
-    fal_dbt_instance.keyword = "fal"
     fal_dbt_instance.list_models = MagicMock(return_value=[])
     node_graph = NodeGraph.from_fal_dbt(fal_dbt_instance)
 
@@ -79,7 +76,6 @@ def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
     )
     fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
     fal_dbt_instance.scripts_dir = "/dir"
-    fal_dbt_instance.keyword = "fal"
     fal_dbt_instance.list_models = MagicMock(return_value=[modelA, modelB, modelC])
 
     node_graph = NodeGraph.from_fal_dbt(fal_dbt_instance)
