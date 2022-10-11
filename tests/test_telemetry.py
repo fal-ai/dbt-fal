@@ -347,6 +347,7 @@ def test_redaction():
                     "--debug",
                     "--vars",
                     "{env: 'some'}",
+                    "--globals"
                 ]
             },
         )
@@ -400,6 +401,7 @@ def test_redaction():
                     "--debug",
                     "--vars",
                     "[REDACTED]",
+                    "--globals"
                 ],
             },
         )

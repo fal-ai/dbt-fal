@@ -73,7 +73,7 @@ Feature: `run` command
       """
     And the following command is invoked:
       """
-      fal run --profiles-dir $profilesDir --project-dir $baseDir --exclude '*'
+      fal run --profiles-dir $profilesDir --project-dir $baseDir --exclude '*' --globals
       """
     Then the following scripts are ran:
       | GLOBAL.freshness.py |

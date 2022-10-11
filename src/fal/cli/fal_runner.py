@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from dbt.flags import PROFILES_DIR
 from fal.planner.executor import parallel_executor
@@ -52,9 +52,7 @@ def fal_run(args: argparse.Namespace):
     global_scripts = _get_global_scripts(faldbt, args)
 
     if args.before:
-        if not _scripts_flag(args) or not selector_flags:
-            # run globals when no --script is passed or no selector is passed
-            _run_scripts(args, global_scripts, faldbt)
+        _handle_global_scripts(args, global_scripts, faldbt, selector_flags)
 
         pre_hook_scripts = _get_hooks_for_model(models, faldbt, "pre-hook")
 
@@ -67,10 +65,19 @@ def fal_run(args: argparse.Namespace):
 
         post_hook_scripts = _get_hooks_for_model(models, faldbt, "post-hook")
         _run_scripts(args, post_hook_scripts, faldbt)
+        _handle_global_scripts(args, global_scripts, faldbt, selector_flags)
 
-        if not _scripts_flag(args) or not selector_flags:
-            # run globals when no --script is passed
-            _run_scripts(args, global_scripts, faldbt)
+
+def _handle_global_scripts(args: argparse.Namespace,
+                           global_scripts: List[FalScript],
+                           faldbt: FalDbt,
+                           selector_flags: Any) -> None:
+    scripts_flag = _scripts_flag(args)
+    if not scripts_flag and not selector_flags:
+        # run globals when no --script is passed and no selector is passed
+        _run_scripts(args, global_scripts, faldbt)
+    if (scripts_flag or selector_flags) and args.globals:
+        _run_scripts(args, global_scripts, faldbt)
 
 
 def _run_scripts(args: argparse.Namespace, scripts: List[FalScript], faldbt: FalDbt):
