@@ -21,7 +21,7 @@ def create_mock_model(
     node.name = name
     model = DbtModel(node)
 
-    def script_calculations(keyword: str, before: bool = False):
+    def script_calculations(before: bool = False):
         if before:
             return before_script_paths
         else:

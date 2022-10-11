@@ -49,13 +49,6 @@ def _build_fal_common_options(parser: argparse.ArgumentParser):
         dest=_flag_level("disable_logging"),
     )
 
-    parser.add_argument(
-        "--keyword",
-        metavar="KEYWORD",
-        help="Property in dbt relations meta to look for fal configurations.",
-        dest=_flag_level("keyword", "fal"),
-    )
-
 
 # Use right after creating the parser, before adding subparsers to it
 def _build_dbt_common_options(parser: argparse.ArgumentParser):
