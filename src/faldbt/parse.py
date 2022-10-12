@@ -12,7 +12,7 @@ from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultAr
 from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
 from dbt.exceptions import IncompatibleSchemaException, RuntimeException
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 
 from faldbt.utils.yaml_helper import load_yaml
 

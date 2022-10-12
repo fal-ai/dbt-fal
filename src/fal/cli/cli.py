@@ -10,7 +10,7 @@ from fal.telemetry import telemetry
 
 import dbt.exceptions
 import dbt.ui
-from fal.logger import log_manager
+from faldbt.logger import log_manager
 
 
 def cli(argv: List[str] = sys.argv):

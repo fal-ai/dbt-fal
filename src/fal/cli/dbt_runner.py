@@ -3,7 +3,7 @@ from multiprocessing.connection import Connection
 from typing import Any, Dict, Optional, List
 import warnings
 import json
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 import os
 import argparse
 

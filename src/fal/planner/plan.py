@@ -5,7 +5,7 @@ from typing import Callable, Iterator, List, Set
 import networkx as nx
 from fal.node_graph import NodeKind
 from fal.cli.selectors import ExecutionPlan, _is_before_script, _is_after_script
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 from dataclasses import dataclass
 
 

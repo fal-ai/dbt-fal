@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 import requests
 import time
 from requests.exceptions import RequestException
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 
 from fal.telemetry import telemetry
 

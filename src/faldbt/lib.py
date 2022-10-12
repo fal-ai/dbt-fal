@@ -8,19 +8,14 @@ from typing import Iterator, List, Optional, Tuple
 from urllib.parse import quote_plus
 import threading
 
-import dbt.version
-from dbt.semver import VersionSpecifier
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
-from fal.logger import LOGGER
 
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.base import BaseRelation, BaseAdapter, BaseConnectionManager
 from dbt.contracts.graph.compiled import CompileResultNode
 from dbt.config import RuntimeConfig
-
-from . import parse
 
 import pandas as pd
 from pandas.io import sql as pdsql
@@ -32,19 +27,8 @@ from sqlalchemy.sql import Insert
 
 from dbt.contracts.sql import RemoteRunResult
 
-DBT_VCURRENT = dbt.version.installed
-
-
-def version_compare(version_string: str):
-    return DBT_VCURRENT.compare(VersionSpecifier.from_version_string(version_string))
-
-
-IS_DBT_V1PLUS = version_compare("1.0.0") >= 0
-
-_DBT_V1 = VersionSpecifier.from_version_string("1.0.0")
-DBT_VCURRENT = dbt.version.installed
-
-IS_DBT_V1PLUS = DBT_VCURRENT.compare(_DBT_V1) >= 0
+from faldbt import parse
+from faldbt.logger import LOGGER
 
 
 class WriteModeEnum(Enum):

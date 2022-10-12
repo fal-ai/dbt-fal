@@ -11,7 +11,7 @@ from faldbt.project import DbtModel, FalDbt, FAL
 
 from dbt.contracts.results import RunStatus
 from dbt.config.runtime import RuntimeConfig
-from fal.logger import LOGGER
+from faldbt.logger import LOGGER
 
 from dbt.contracts.graph.parsed import ColumnInfo
 
