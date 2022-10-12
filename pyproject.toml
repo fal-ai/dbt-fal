@@ -8,9 +8,9 @@ repository = "https://github.com/fal-ai/fal"
 readme = "README.md"
 authors = [ "Features & Labels <hello@fal.ai>" ]
 packages = [
-        { include = "fal", from = "src" },
-        { include = "faldbt", from = "src" },
-        { include = "_fal_testing", from = "tests" }
+    { include = "fal", from = "src" },
+    { include = "faldbt", from = "src" },
+    { include = "_fal_testing", from = "tests" }
 ]
 
 keywords = [ "dbt", "pandas" ]
@@ -51,6 +51,14 @@ sqlalchemy-redshift = { version = "^0.8.9", optional = true }
 ## duckdb
 duckdb-engine = { version = "^0.1.8", optional = true }
 
+## dev
+pytest = { version = "^5.2", optional = true }
+black = { version = "^22.3", optional = true }
+behave = { version = "^1.2.6", optional = true }
+mock = { version = "^4.0.3", optional = true }
+pytest-mock = { version = "^3.7.0", optional = true }
+matplotlib = { version = "^3.5.2", optional = true }
+
 [tool.poetry.extras]
 postgres = []
 snowflake = ["snowflake-connector-python"]
@@ -58,14 +66,24 @@ bigquery = []
 redshift = ["sqlalchemy-redshift"]
 duckdb = ["duckdb-engine"]
 athena = []
+test = [
+    "pytest",
+    "black",
+    "behave",
+    "mock",
+    "pytest-mock",
+]
+dev = [
+    "matplotlib"
+]
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
-black = "^22.3"
-behave = "^1.2.6"
-mock = "^4.0.3"
-pytest-mock = "^3.7.0"
-matplotlib = "^3.5.2"
+pytest = { version = "^5.2", optional = true }
+black = { version = "^22.3", optional = true }
+behave = { version = "^1.2.6", optional = true }
+mock = { version = "^4.0.3", optional = true }
+pytest-mock = { version = "^3.7.0", optional = true }
+matplotlib = { version = "^3.5.2", optional = true }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
