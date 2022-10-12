@@ -85,7 +85,7 @@ jobs:
             PR_TITLE = '${{ github.event.pull_request.title }}'.lower()
             PR_BRANCH = '${{ github.head_ref }}'.lower()
             PR_DESCRIPTION = '''${{ github.event.pull_request.body }}'''.lower()
-            PR_DESCRIPTION = re.sub("<!--.*?-->", "", PR_DESCRIPTION)
+            PR_DESCRIPTION = re.sub("<!--.*?-->", "", PR_DESCRIPTION, flags=re.DOTALL)
 
             # Only test adapters mentioned in the pull request title or branch.
             # We always test postgres as a sanity check.
