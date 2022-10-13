@@ -7,3 +7,5 @@ data-paths: ["data"]
 macro-paths: ["macros", "custom_macros"]
 snapshot-paths: ["snapshots"]
 target-path: "{{ env_var('temp_dir') }}/target"
+vars:
+  fal-models-paths: ["fal_models"]
