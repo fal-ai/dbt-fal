@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fal"
-version = "0.6.1-alpha.0"
+version = "0.7.1-alpha.0"
 description = "fal allows you to run python scripts directly from your dbt project."
 homepage = "https://github.com/fal-ai/fal"
 documentation = "https://docs.fal.ai"
