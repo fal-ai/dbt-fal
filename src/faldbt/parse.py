@@ -13,9 +13,10 @@ from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
 from dbt.exceptions import IncompatibleSchemaException, RuntimeException
 from fal.utils import cache_static
-from faldbt.logger import LOGGER
 
+from faldbt.logger import LOGGER
 from faldbt.utils.yaml_helper import load_yaml
+from fal.telemetry import telemetry
 
 if TYPE_CHECKING:
     from fal.packages.environments import BaseEnvironment
@@ -105,6 +106,9 @@ def get_fal_models_dirs(project_dir: str, args_vars: str) -> List[str]:
             "Python models in a separate model directory and set it as the variable. "
             "e.g. {FAL_MODELS_PATHS}: ['fal_models']"
         )
+
+        telemetry.log_api(action="fal_models_paths_not_set")
+
     if not isinstance(model_paths, list):
         raise FalParseError(
             f"Error parsing '{FAL_MODELS_PATHS}'. Expected list of strings and got '{type(model_paths)}'"
