@@ -37,7 +37,7 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         super().__init__(config)
         self._relation_data_location_cache: DataLocation = DataLocation({})
         if self.is_teleport():
-            self._wrapper = wrap_db_adapter(self._db_adapter)
+            self._wrapper = wrap_db_adapter(self._db_adapter, self.credentials.teleport)
 
     @classmethod
     def type(cls):

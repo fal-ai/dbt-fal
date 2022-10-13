@@ -2,7 +2,7 @@
     COPY {{ relation }} TO '{{ url }}'
 {%- endmacro %}
 
-{% macro duckdb__copy_from(relation, url) -%}
+{% macro duckdb__copy_from_parquet(relation, url) -%}
     CREATE OR REPLACE TABLE {{ relation }} AS
-        SELECT * FROM '{{ url }}'
+        SELECT * FROM read_parquet('{{ url }}');
 {%- endmacro %}
