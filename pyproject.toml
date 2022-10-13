@@ -28,6 +28,7 @@ requests = "^2.27.1"
 posthog = "^1.4.5"
 astor = "^0.8.1"
 deprecation = "^2.1.0"
+"backports.functools_lru_cache" = "^1.6.4"
 
 # Environment management related dependencies
 platformdirs = "^2.5.2"
