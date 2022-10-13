@@ -29,11 +29,6 @@ runs:
       shell: sh
       run: pip install markupsafe==2.0.1
 
-    - name: Install fal
-      shell: sh
-      run: |
-        pip install -e '.[${{ inputs.adapter }}]'
-
     - name: Install dbt
       shell: bash
       run: |
@@ -58,6 +53,11 @@ runs:
 
         echo "${package}==${version}"
         pip install ${package}==${version}
+
+    - name: Install fal
+      shell: sh
+      run: |
+        pip install -e '.[${{ inputs.adapter }}]'
 
     - name: List requirements.txt
       shell: sh

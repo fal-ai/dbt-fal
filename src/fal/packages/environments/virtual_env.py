@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import hashlib
 import subprocess
 from dataclasses import dataclass, field
@@ -25,11 +26,14 @@ _BASE_VENV_DIR.mkdir(exist_ok=True)
 @dataclass
 class VirtualPythonEnvironment(BaseEnvironment[Path], make_thread_safe=True):
     requirements: List[str]
+    inherit_from_local: bool = False
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> VirtualPythonEnvironment:
         requirements = config.get("requirements", [])
-        return cls(requirements)
+        # NOTE: default is True for act1 testing
+        inherit_from_local = config.get("_inherit_from_local", True)
+        return cls(requirements, inherit_from_local=inherit_from_local)
 
     @property
     def key(self) -> str:
@@ -62,15 +66,24 @@ class VirtualPythonEnvironment(BaseEnvironment[Path], make_thread_safe=True):
                 pip_path = get_executable_path(path, "pip")
                 subprocess.check_call([pip_path, "install"] + self.requirements)
 
-            primary_env = get_primary_virtual_env()
-            if self is not primary_env:
-                self._verify_dependencies(primary_env._get_or_create(), path)
+            if not self.inherit_from_local:
+                primary_env = get_primary_virtual_env()
+                if self is not primary_env:
+                    self._verify_dependencies(primary_env._get_or_create(), path)
 
         return path
 
     def open_connection(self, conn_info: Path) -> DualPythonIPC:
-        primary_venv = get_primary_virtual_env()
-        primary_venv_path = primary_venv.get_or_create()
+        if self.inherit_from_local:
+            # Instead of creating a separate environment that only has
+            # the same versions of fal/dbt-core etc. you have locally,
+            # we can also use your environment as the primary. This is
+            # mainly for the development time where the fal or dbt-core
+            # you are using is not available on PyPI yet.
+            primary_venv_path = Path(sys.exec_prefix)
+        else:
+            primary_venv = get_primary_virtual_env()
+            primary_venv_path = primary_venv.get_or_create()
         secondary_venv_path = conn_info
         return DualPythonIPC(self, primary_venv_path, secondary_venv_path)
 

@@ -186,7 +186,7 @@ def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
 
     fal_project_path = os.path.join(base_dir, "fal_project.yml")
     if not os.path.exists(fal_project_path):
-        raise FalParseError("{fal_project_path} must exist to define environments")
+        raise FalParseError(f"{fal_project_path} must exist to define environments")
 
     fal_project = load_yaml(fal_project_path)
 

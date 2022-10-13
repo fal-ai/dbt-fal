@@ -10,6 +10,24 @@ from fal.utils import cache_static
 import importlib_metadata
 
 
+def _is_fal_pre_release() -> bool:
+    from dbt.semver import VersionSpecifier
+
+    raw_fal_version = importlib_metadata.version("fal")
+    fal_version = VersionSpecifier.from_version_string(raw_fal_version)
+    return fal_version.prerelease
+
+
+def _get_fal_root_path() -> Path:
+    import fal
+
+    # If this is a development version, we'll install
+    # the current fal itself.
+    base_dir = Path(fal.__file__).parent.parent.parent
+    assert (base_dir / ".git").exists()
+    return base_dir
+
+
 def _get_dbt_packages() -> Iterator[Tuple[str]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (
     # the PyPI names instead of the import names). An example distirbution info is the following, which
@@ -22,7 +40,12 @@ def _get_dbt_packages() -> Iterator[Tuple[str]]:
     # to replicate the exact environment.
     package_distributions = importlib_metadata.packages_distributions()
     for dbt_plugin_name in package_distributions.get("dbt", []):
-        yield dbt_plugin_name, importlib_metadata.version(dbt_plugin_name)
+        distribution = importlib_metadata.distribution(dbt_plugin_name)
+        if dbt_plugin_name == "dbt-fal" and _is_fal_pre_release():
+            adapter_path = _get_fal_root_path() / "adapter"
+            yield str(adapter_path), None
+        else:
+            yield dbt_plugin_name, distribution.version
 
 
 def _find_fal_extras() -> Iterator[str]:
@@ -60,23 +83,13 @@ def _find_fal_extras() -> Iterator[str]:
 
 
 def _get_fal_package_name() -> Tuple[str, Optional[str]]:
-    from dbt.semver import VersionSpecifier
-
-    raw_fal_version = importlib_metadata.version("fal")
-    fal_version = VersionSpecifier.from_version_string(raw_fal_version)
-    fal_extras = _find_fal_extras()
-    if fal_version.prerelease:
-        import fal
-
-        # If this is a development version, we'll install
-        # the current fal itself.
-        base_dir = Path(fal.__file__).parent.parent.parent
-        assert (base_dir / ".git").exists()
-        fal_dep, fal_version = str(base_dir), None
+    if _is_fal_pre_release():
+        fal_dep, fal_version = str(_get_fal_root_path()), None
     else:
-        fal_dep, fal_version = "fal", raw_fal_version
+        fal_dep, fal_version = "fal", importlib_metadata.version("fal")
 
     fal_package_name = fal_dep
+    fal_extras = _find_fal_extras()
     if fal_extras:
         fal_package_name += f"[{' ,'.join(fal_extras)}]"
     return fal_package_name, fal_version
