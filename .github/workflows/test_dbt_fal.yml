@@ -3,15 +3,17 @@ name: Test dbt-fal adapter
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
-    paths-ignore:
-      - "examples/**"
-      - "docsite/**"
-      - "README.md"
-      - "LICENSE"
-      - "docker/**"
+    paths:
+      - "adapter/**"
 
   push:
-    branches: [act1]
+    branches: [main]
+    paths:
+      - "adapter/**"
+
+  schedule:
+    # every midnight
+    - cron: "0 0 * * *"
 
 jobs:
   run:
