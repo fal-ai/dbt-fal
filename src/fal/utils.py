@@ -1,8 +1,13 @@
 """Fal utilities."""
 import copy
-import functools
 from faldbt.logger import LOGGER
 from typing import List, TYPE_CHECKING
+
+
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
 
 if TYPE_CHECKING:
     from fal.fal_script import FalScript
@@ -51,18 +56,6 @@ def has_side_effects(cls):
     return type(cls.__name__, (_ReInitialize, cls), {})
 
 
-_NO_HIT = object()
-
-
 def cache_static(func):
-    """Cache the result of an parameter-less function."""
-    _function_cache = _NO_HIT
-
-    @functools.wraps(func)
-    def wrapper():
-        nonlocal _function_cache
-        if _function_cache is _NO_HIT:
-            _function_cache = func()
-        return _function_cache
-
-    return wrapper
+    """Cache the result of a function."""
+    return lru_cache(maxsize=None)(func)

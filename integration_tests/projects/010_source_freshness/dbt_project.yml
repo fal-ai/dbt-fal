@@ -10,3 +10,5 @@ target-path: "target"
 clean-targets:
   - "target"
   - "dbt_modules"
+vars:
+  fal-models-paths: ["fal_models"]
