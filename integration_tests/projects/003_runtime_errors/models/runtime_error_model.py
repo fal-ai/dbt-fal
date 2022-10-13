@@ -1,8 +1,5 @@
-def model(dbt, fal):
-    dbt.config(materialized='table')
+df = ref("working_model")
 
-    df = dbt.ref("working_model")
+assert False, "expected"
 
-    assert False, "expected"
-
-    return df
+write_to_model(df)

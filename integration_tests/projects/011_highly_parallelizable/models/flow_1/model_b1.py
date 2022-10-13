@@ -1,12 +1,8 @@
 from _fal_testing import create_model_artifact
 
-def model(dbt, fal):
-    dbt.config(materialized='table')
+# weird way to call, but added in the docstring
+df = ref("model_a1")
+df["b1_data"] = 1
+write_to_model(df)
 
-    df = dbt.ref("model_a1")
-    df["b1_data"] = 1
-
-    create_model_artifact(fal)
-
-    return df
-
+create_model_artifact(context)

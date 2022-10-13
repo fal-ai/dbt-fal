@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+
+from fal.typing import *
 from fal.packages.environments.virtual_env import _BASE_VENV_DIR
 from _fal_testing import create_model_artifact
 
@@ -5,20 +9,13 @@ from _fal_testing import create_model_artifact
 # we'll check whether the executable that is running this script
 # is located under _BASE_VENV_DIR
 
-def model(dbt, fal):
-    dbt.config(materialized='table')
+executable_path = Path(sys.executable)
+environment_type = "venv" if _BASE_VENV_DIR in executable_path.parents else "local"
 
-    import sys
-    from pathlib import Path
+df = ref("model_c")
 
-    executable_path = Path(sys.executable)
-    environment_type = "venv" if _BASE_VENV_DIR in executable_path.parents else "local"
+df["model_e_data"] = True
 
-    df = dbt.ref("model_c")
+write_to_model(df)
 
-    df["model_e_data"] = True
-
-    create_model_artifact(fal, additional_data=f"Environment: {environment_type}")
-
-    return df
-
+create_model_artifact(context, additional_data=f"Environment: {environment_type}")

@@ -1,7 +1,3 @@
-{{
-    config(materialized='incremental')
-}}
-
 WITH data AS (
     SELECT 
         cast(1 AS integer) AS my_int,

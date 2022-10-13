@@ -25,35 +25,32 @@ def plot_forecast(model: Prophet, forecast: pd.DataFrame, filename: str):
     fig = plot_plotly(model, forecast)
     fig.write_image(f"{context.current_model.name}_{filename}.jpg")
 
-def model(dbt, fal):
-    dbt.config(materialized='table')
 
-    df: pd.DataFrame = dbt.ref("orders_daily")
-    print(df)
+df: pd.DataFrame = ref("orders_daily")
+print(df)
 
-    df_count = df[["order_date", "order_count"]]
-    df_count = df_count.rename(columns={"order_date": "ds", "order_count": "y"})
-    model_count, forecast_count = make_forecast(df_count, 50)
-    # plot_forecast(model_count, forecast_count, "count")
+df_count = df[["order_date", "order_count"]]
+df_count = df_count.rename(columns={"order_date": "ds", "order_count": "y"})
+model_count, forecast_count = make_forecast(df_count, 50)
+# plot_forecast(model_count, forecast_count, "count")
 
-    df_amount = df[["order_date", "order_amount"]]
-    df_amount = df_amount.rename(columns={"order_date": "ds", "order_amount": "y"})
-    model_amount, forecast_amount = make_forecast(df_amount, 50)
-    # plot_forecast(model_amount, forecast_amount, "amount")
+df_amount = df[["order_date", "order_amount"]]
+df_amount = df_amount.rename(columns={"order_date": "ds", "order_amount": "y"})
+model_amount, forecast_amount = make_forecast(df_amount, 50)
+# plot_forecast(model_amount, forecast_amount, "amount")
 
-    joined_forecast = forecast_count.join(
-        forecast_amount.set_index("ds"),
-        on="ds",
-        lsuffix="_count",
-        rsuffix="_amount",
-    )
-    print(joined_forecast.dtypes)
+joined_forecast = forecast_count.join(
+    forecast_amount.set_index("ds"),
+    on="ds",
+    lsuffix="_count",
+    rsuffix="_amount",
+)
+print(joined_forecast.dtypes)
 
-    # HACK: have to figure out how to write dates (or datetimes) to the database
-    # TODO: The types.DATE did not work when testing for `dtype={"ds": types.DATE}`
-    joined_forecast["ds"] = joined_forecast["ds"].map(lambda x: x.strftime("%Y-%m-%d"))
+# HACK: have to figure out how to write dates (or datetimes) to the database
+# TODO: The types.DATE did not work when testing for `dtype={"ds": types.DATE}`
+joined_forecast["ds"] = joined_forecast["ds"].map(lambda x: x.strftime("%Y-%m-%d"))
 
-    return joined_forecast
 # Generates a table with a BUNCH of columns
 # It will use the current model as target, no need to pass it
-# write_to_model(joined_forecast, mode="overwrite")
+write_to_model(joined_forecast, mode="overwrite")
