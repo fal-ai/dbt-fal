@@ -72,8 +72,7 @@ class PythonAdapter(metaclass=AdapterMeta):
     """The PythonAdapter provides an abstract base class for Python adapters.
 
     Adapters must implement the following methods and macros. Some of the
-    methods can be safely overridden as a noop, where it makes sense
-    (transactions on databases that don't support them, for instance). Those
+    methods can be safely overridden as a noop, where it makes sense. Those
     methods are marked with a (passable) in their docstrings. Check docstrings
     for type information, etc.
 

@@ -1,8 +1,29 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional
+import os
 
 from dbt.adapters.base import Credentials
-from dbt.adapters.fal.python import PythonConnectionManager
+from dbt.dataclass_schema import StrEnum, ExtensibleDbtClassMixin
+
+from dbt.fal.adapters.python import PythonConnectionManager
+
+
+class TeleportTypeEnum(StrEnum):
+    LOCAL = "local"
+    REMOTE_S3 = "s3"
+
+@dataclass
+class TeleportCredentials(ExtensibleDbtClassMixin):
+    type: TeleportTypeEnum
+
+    # local
+    local_path: Optional[str] = os.getcwd()
+
+    # s3
+    s3_bucket: Optional[str] = None
+    s3_region: Optional[str] = None
+    s3_access_key_id: Optional[str] = None
+    s3_access_key: Optional[str] = None
 
 
 class FalConnectionManager(PythonConnectionManager):
@@ -23,7 +44,9 @@ class FalConnectionManager(PythonConnectionManager):
 class FalCredentials(Credentials):
     default_environment: str = "local"
 
-    # NOTE: So we can not set them in profiles.yml
+    teleport: Optional[TeleportCredentials] = None
+
+    # NOTE: So we are allowed to not set them in profiles.yml
     # they are ignored for now
     database: str = ''
     schema: str = ''

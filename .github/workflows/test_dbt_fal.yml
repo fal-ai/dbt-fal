@@ -23,6 +23,10 @@ jobs:
       matrix:
         profile: ["postgres", "bigquery", "snowflake", "duckdb"]
         python: ["3.8"]
+        teleport: [false]
+        include:
+          - profile: duckdb
+            teleport: true
 
     # Run only the latest commit pushed to PR
     concurrency:
@@ -136,7 +140,13 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          export DBT_PROFILES_DIR="_testing/profiles/${{ matrix.profile }}"
+          if [[ '${{ matrix.teleport }}' == "true" ]]
+          then
+            export DBT_PROFILES_DIR="_testing/profiles/${{ matrix.profile }}-teleport"
+          else
+            export DBT_PROFILES_DIR="_testing/profiles/${{ matrix.profile }}"
+          fi
+
 
           # Let's seed
           dbt seed --profile=fal_test

@@ -1,64 +1,43 @@
 from __future__ import annotations
 
-from contextlib import contextmanager, nullcontext
-from functools import partial
-from typing import Any, Callable, Iterator
+from contextlib import contextmanager
+from typing import Iterator
 
-import pandas as pd
-from dbt.adapters.base import BaseAdapter
-from dbt.adapters.fal.python import PythonAdapter
-from dbt.config import RuntimeConfig
+from dbt.adapters.base.meta import available
+from dbt.adapters.base.relation import BaseRelation
 from dbt.contracts.connection import AdapterResponse
-from fal.packages.environments import BaseEnvironment
 
-from .adapter_support import (
-    prepare_for_adapter,
-    read_relation_as_df,
-    reconstruct_adapter,
-    reload_adapter_cache,
-    write_df_to_relation,
+from dbt.fal.adapters.teleport.info import TeleportInfo, S3TeleportInfo, LocalTeleportInfo
+from dbt.fal.adapters.teleport.impl import TeleportAdapter
+from dbt.fal.adapters.python.impl import PythonAdapter
+
+from .connections import FalConnectionManager, FalCredentials, TeleportTypeEnum
+
+from .teleport_adapter_support import wrap_db_adapter
+from .teleport import (
+    DataLocation,
+    run_in_environment_with_teleport,
+    run_with_teleport
 )
-from .connections import FalConnectionManager
-from .utils import fetch_environment, retrieve_symbol
+
+from .adapter_support import reload_adapter_cache
+from .adapter import run_in_environment_with_adapter, run_with_adapter
+
+from .utils import fetch_environment
 
 
-def _run_with_adapter(code: str, adapter: BaseAdapter) -> Any:
-    # main symbol is defined during dbt-fal's compilation
-    # and acts as an entrypoint for us to run the model.
-    main = retrieve_symbol(code, "main")
-    return main(
-        read_df=prepare_for_adapter(adapter, read_relation_as_df),
-        write_df=prepare_for_adapter(adapter, write_df_to_relation),
-    )
-
-
-def _isolated_runner(code: str, config: RuntimeConfig) -> Any:
-    # This function can be run in an entirely separate
-    # process or an environment, so we need to reconstruct
-    # the DB adapter solely from the config.
-    adapter = reconstruct_adapter(config)
-    return _run_with_adapter(code, adapter)
-
-
-def run_in_environment(
-    environment: BaseEnvironment,
-    code: str,
-    config: RuntimeConfig,
-) -> AdapterResponse:
-    """Run the 'main' function inside the given code on the
-    specified environment.
-
-    The environment_name must be defined inside fal_project.yml file
-    in your project's root directory."""
-
-    with environment.connect() as connection:
-        execute_model = partial(_isolated_runner, code, config)
-        result = connection.run(execute_model)
-        return result
-
-
-class FalAdapter(PythonAdapter):
+class FalAdapter(PythonAdapter, TeleportAdapter):
     ConnectionManager = FalConnectionManager
+
+    @classmethod
+    def storage_formats(cls):
+        return ['csv', 'parquet']
+
+    def __init__(self, config):
+        super().__init__(config)
+        self._relation_data_location_cache: DataLocation = DataLocation({})
+        if self.is_teleport():
+            self._wrapper = wrap_db_adapter(self._db_adapter)
 
     @classmethod
     def type(cls):
@@ -67,6 +46,10 @@ class FalAdapter(PythonAdapter):
     @classmethod
     def is_cancelable(cls) -> bool:
         return False
+
+    @available
+    def is_teleport(self) -> bool:
+        return self.credentials.teleport is not None
 
     def submit_python_job(
         self, parsed_model: dict, compiled_code: str
@@ -81,11 +64,35 @@ class FalAdapter(PythonAdapter):
             self.config.project_root, environment_name
         )
 
-        if is_local:
-            return _run_with_adapter(compiled_code, self._db_adapter)
+        if self.is_teleport():
+            # We need to build teleport_info because we read from the external storage,
+            # we did not _localize_ the data in `teleport_from_external_storage`
+            teleport_info = self._build_teleport_info()
+            if is_local:
+                result_table_path = run_with_teleport(
+                    compiled_code,
+                    teleport_info=teleport_info,
+                    locations=self._relation_data_location_cache,
+                )
+            else:
+                result_table_path = run_in_environment_with_teleport(
+                    environment,
+                    compiled_code,
+                    teleport_info=teleport_info,
+                    locations=self._relation_data_location_cache,
+                )
 
-        with self._invalidate_db_cache():
-            return run_in_environment(environment, compiled_code, self.config)
+            relation = self._db_adapter.Relation.create(parsed_model['database'], parsed_model['schema'], parsed_model['alias'])
+            self._sync_result_table(relation)
+
+            return AdapterResponse("OK")
+
+        else:
+            if is_local:
+                return run_with_adapter(compiled_code, self._db_adapter)
+
+            with self._invalidate_db_cache():
+                return run_in_environment_with_adapter(environment, compiled_code, self.config)
 
     @contextmanager
     def _invalidate_db_cache(self) -> Iterator[None]:
@@ -103,9 +110,62 @@ class FalAdapter(PythonAdapter):
             reload_adapter_cache(self._db_adapter, self.config)
 
     @property
-    def credentials(self) -> Any:
-        python_creds = self.config.python_adapter_credentials
+    def credentials(self):
+        python_creds: FalCredentials = self.config.python_adapter_credentials
         # dbt-fal is not configured as a Python adapter,
         # maybe we should raise an error?
         assert python_creds is not None
         return python_creds
+
+    def teleport_from_external_storage(self, relation: BaseRelation, relation_path: str, teleport_info: TeleportInfo):
+        """
+        Store the teleport urls for later use
+        """
+
+        rel_name = teleport_info.relation_name(relation)
+        self._relation_data_location_cache[rel_name] = relation_path
+
+    def teleport_to_external_storage(self, relation: BaseRelation, teleport_info: TeleportInfo):
+        # Already in external_storage, we do not have local storage
+        # Just return the path
+        return teleport_info.build_relation_path(relation)
+
+    # TODO: cache this?
+    def _build_teleport_info(self):
+        teleport_creds = self.credentials.teleport
+        assert teleport_creds
+
+        teleport_format = TeleportAdapter.find_format(self, self._wrapper)
+
+        if teleport_creds.type == TeleportTypeEnum.LOCAL:
+            assert teleport_creds.local_path
+            return LocalTeleportInfo(teleport_format, teleport_creds, teleport_creds.local_path)
+        elif teleport_creds.type == TeleportTypeEnum.REMOTE_S3:
+            assert teleport_creds.s3_bucket
+            return S3TeleportInfo(teleport_format, teleport_creds, teleport_creds.s3_bucket, "teleport")
+        else:
+            raise NotImplementedError(f"Teleport credentials of type {teleport_creds.type} not supported")
+
+    ######
+    # HACK: Following implementations only necessary until dbt-core adds Teleport.
+    #####
+    @available
+    def sync_teleport_relation(self, relation: BaseRelation):
+        """
+        Internal implementation of sync to avoid dbt-core changes
+        """
+        teleport_info = self._build_teleport_info()
+        data_path = self._wrapper.teleport_to_external_storage(relation, teleport_info)
+        self.teleport_from_external_storage(relation, data_path, teleport_info)
+
+    def _sync_result_table(self, relation: BaseRelation):
+        """
+        Internal implementation of sync to put data back into datawarehouse.
+        This is necessary because Teleport is not part of dbt-core.
+        Once it is and adapters implement it, we will sync the result table back.
+        Instead the other adapter will call `sync_teleport` and it will automatically call
+        FalAdapter's `teleport_to_external_storage` and the adapter's `teleport_from_external_storage`.
+        """
+        teleport_info = self._build_teleport_info()
+        data_path = self.teleport_to_external_storage(relation, teleport_info)
+        self._wrapper.teleport_from_external_storage(relation, data_path, teleport_info)

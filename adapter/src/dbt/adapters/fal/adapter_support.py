@@ -1,4 +1,5 @@
 import functools
+from time import sleep
 from typing import Any
 
 import pandas as pd
@@ -103,6 +104,11 @@ def write_df_to_relation(
             drop_relation_if_it_exists(adapter, relation)
             adapter.rename_relation(temp_relation, relation)
             adapter.commit_if_has_connection()
+
+        if adapter.type() == "bigquery":
+            # HACK: sleep after a bigquery write to make it propagate.
+            # A real solution is to use fal's bigquery implementation here
+            sleep(4)
 
             return AdapterResponse("OK", rows_affected=rows_affected)
 
