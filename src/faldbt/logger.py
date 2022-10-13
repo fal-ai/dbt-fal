@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-
+from dbt import ui
 from dbt.logger import log_manager  # For export
 from dbt.events.functions import fire_event
 from dbt.events.base_types import (
@@ -89,7 +89,7 @@ class WarnMessage(_WarnLevel, *_EXTRA_CLASS_INHERIT):
     code: str = "FAL3000"
 
     def message(self) -> str:
-        return self.msg
+        return ui.warning_tag(self.msg)
 
 
 @dataclass

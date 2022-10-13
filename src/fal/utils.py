@@ -59,10 +59,10 @@ def cache_static(func):
     _function_cache = _NO_HIT
 
     @functools.wraps(func)
-    def wrapper():
+    def wrapper(*func_args, **func_kwargs):
         nonlocal _function_cache
         if _function_cache is _NO_HIT:
-            _function_cache = func()
+            _function_cache = func(*func_args, **func_kwargs)
         return _function_cache
 
     return wrapper

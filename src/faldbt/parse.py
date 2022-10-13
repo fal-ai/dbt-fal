@@ -12,6 +12,7 @@ from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultAr
 from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
 from dbt.exceptions import IncompatibleSchemaException, RuntimeException
+from fal.utils import cache_static
 from faldbt.logger import LOGGER
 
 from faldbt.utils.yaml_helper import load_yaml
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from fal.packages.environments import BaseEnvironment
 
 FAL_SCRIPTS_PATH = "fal-scripts-path"
+FAL_MODELS_PATHS = "fal-models-paths"
 
 
 class FalParseError(Exception):
@@ -81,22 +83,44 @@ def get_el_configs(
     return sync_configs
 
 
-def get_scripts_dir(project_dir: str, args_vars: str) -> str:
+def get_vars_dict(project_dir: str, args_vars: str) -> Dict[str, Any]:
     project_contract = load_dbt_project_contract(project_dir)
 
-    # This happens inside unit tests usually
-    if project_contract is None:
-        return project_dir
-
+    # NOTE: This happens usually inside unit tests
+    vars = (project_contract is not None and project_contract.vars) or {}
     cli_vars = parse_cli_vars(args_vars)
-    scripts_dir = cli_vars.get(FAL_SCRIPTS_PATH, None)
 
-    if scripts_dir is None:
-        vars = project_contract.vars or {}
-        scripts_dir = vars.get(FAL_SCRIPTS_PATH, project_dir)
+    # cli_vars have higher priority
+    return {**vars, **cli_vars}
+
+
+@cache_static
+def get_fal_models_dirs(project_dir: str, args_vars: str) -> List[str]:
+    vars = get_vars_dict(project_dir, args_vars)
+    model_paths = vars.get(FAL_MODELS_PATHS) or []
+    if not model_paths:
+        # None or empty list
+        LOGGER.warn(
+            f"Variable '{FAL_MODELS_PATHS}' not defined. Locate fal-format "
+            "Python models in a separate model directory and set it as the variable. "
+            "e.g. {FAL_MODELS_PATHS}: ['fal_models']"
+        )
+    if not isinstance(model_paths, list):
+        raise FalParseError(
+            f"Error parsing '{FAL_MODELS_PATHS}'. Expected list of strings and got '{type(model_paths)}'"
+        )
+
+    return model_paths
+
+
+def get_scripts_dir(project_dir: str, args_vars: str) -> str:
+    vars = get_vars_dict(project_dir, args_vars)
+    scripts_dir = vars.get(FAL_SCRIPTS_PATH, project_dir)
 
     if not isinstance(scripts_dir, str):
-        raise FalParseError("Error parsing scripts_dir")
+        raise FalParseError(
+            f"Error parsing '{FAL_SCRIPTS_PATH}'. Expected string and got '{type(scripts_dir)}'"
+        )
 
     return os.path.join(project_dir, scripts_dir)
 

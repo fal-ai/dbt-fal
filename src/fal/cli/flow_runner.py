@@ -5,12 +5,11 @@ from typing import Any, Dict, Optional, cast, Union
 
 from fal.cli.fal_runner import create_fal_dbt
 from fal.cli.selectors import ExecutionPlan
-from fal.cli.model_generator import generate_python_dbt_models, delete_generated_models
+from fal.cli.model_generator import generate_python_dbt_models
 from fal.fal_script import FalScript
 from fal.node_graph import DbtModelNode, FalFlowNode, NodeGraph, ScriptNode
 from faldbt.project import FalDbt, NodeStatus
 import argparse
-import faldbt.version as version
 
 
 DBT_RUN_RESULTS_FILENAME = "run_results.json"
@@ -48,13 +47,10 @@ def run_threaded(
 
 
 def fal_flow_run(parsed: argparse.Namespace) -> int:
-    generated_models: Dict[str, Path] = {}
+    arg_vars = getattr(parsed, "vars", "{}")
 
-    # Python models
-    delete_generated_models(parsed.project_dir)
-
-    if not version.IS_DBT_WITH_PYTHON_MODELS:
-        generated_models = generate_python_dbt_models(parsed.project_dir)
+    # fal-format Python models
+    generated_models = generate_python_dbt_models(parsed.project_dir, arg_vars)
 
     fal_dbt = create_fal_dbt(parsed, generated_models)
     _mark_dbt_nodes_status(fal_dbt, NodeStatus.Skipped)
