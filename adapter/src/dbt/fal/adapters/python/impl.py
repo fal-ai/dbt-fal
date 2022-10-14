@@ -18,12 +18,8 @@ from dbt.exceptions import (
     RuntimeException,
 )
 
-from dbt.adapters.protocol import (
-    AdapterConfig,
-    ConnectionManagerProtocol,
-)
+from dbt.adapters.protocol import AdapterConfig, ConnectionManagerProtocol
 from dbt.contracts.graph.compiled import CompileResultNode, CompiledSeedNode
-from dbt.contracts.graph.manifest import MacroManifest
 from dbt.contracts.graph.parsed import ParsedSeedNode
 from dbt.events.functions import fire_event
 from dbt.events.types import (
@@ -31,9 +27,8 @@ from dbt.events.types import (
     CodeExecutionStatus,
 )
 
-from dbt.adapters.base.connections import Connection, AdapterResponse
 from dbt.adapters.base.meta import AdapterMeta, available
-from dbt.adapters.base import Credentials
+from dbt.contracts.connection import Credentials, Connection, AdapterResponse
 
 
 SeedModel = Union[ParsedSeedNode, CompiledSeedNode]
@@ -65,7 +60,9 @@ class PythonJobHelper:
         raise NotImplementedError("PythonJobHelper is not implemented yet")
 
     def submit(self, compiled_code: str) -> Any:
-        raise NotImplementedError("PythonJobHelper submit function is not implemented yet")
+        raise NotImplementedError(
+            "PythonJobHelper submit function is not implemented yet"
+        )
 
 
 class PythonAdapter(metaclass=AdapterMeta):
@@ -107,7 +104,6 @@ class PythonAdapter(metaclass=AdapterMeta):
     def __init__(self, config):
         self.config = config
         self.connections = self.ConnectionManager(config)
-        self._macro_manifest_lazy: Optional[MacroManifest] = None
 
         # HACK: A Python adapter does not have _available_ all the attributes a DB adapter does.
         # Since we use the DB adapter as the storage for the Python adapter, we must proxy to it
@@ -116,6 +112,7 @@ class PythonAdapter(metaclass=AdapterMeta):
         # Another option is to write a PythonAdapter-specific DBWrapper (PythonWrapper?) that is
         # aware of this case. This may be appealing because a _complete_ adapter (DB+Python) would
         # then be more easily used to replace the Python part of any other adapter.
+
         self._db_adapter = get_adapter(config)
         self.Relation = self._db_adapter.Relation
         self.Column = self._db_adapter.Column
@@ -130,10 +127,10 @@ class PythonAdapter(metaclass=AdapterMeta):
     @classmethod
     def date_function(cls):
         # HACK: to appease the ProviderContext
-        return '''
+        return """
         import datetime
         return datetime.datetime.now()
-        '''
+        """
 
     ###
     # Methods that pass through to the connection manager
@@ -171,7 +168,9 @@ class PythonAdapter(metaclass=AdapterMeta):
     @classmethod
     @abc.abstractmethod
     def is_cancelable(cls) -> bool:
-        raise NotImplementedException("`is_cancelable` is not implemented for this adapter!")
+        raise NotImplementedException(
+            "`is_cancelable` is not implemented for this adapter!"
+        )
 
     ###
     # Methods that should never be overridden
@@ -185,39 +184,6 @@ class PythonAdapter(metaclass=AdapterMeta):
         :rtype: str
         """
         return cls.ConnectionManager.TYPE
-
-    @property
-    def _macro_manifest(self) -> MacroManifest:
-        if self._macro_manifest_lazy is None:
-            return self.load_macro_manifest()
-        return self._macro_manifest_lazy
-
-    def check_macro_manifest(self) -> Optional[MacroManifest]:
-        """Return the internal manifest (used for executing macros) if it's
-        been initialized, otherwise return None.
-        """
-        return self._macro_manifest_lazy
-
-    def load_macro_manifest(self, base_macros_only=False) -> MacroManifest:
-        # base_macros_only is for the test framework
-        if self._macro_manifest_lazy is None:
-            # avoid a circular import
-            from dbt.parser.manifest import ManifestLoader
-
-            manifest = ManifestLoader.load_macros(
-                self.config,
-                self.connections.set_query_header,
-                base_macros_only=base_macros_only,
-            )
-            # TODO CT-211
-            self._macro_manifest_lazy = manifest  # type: ignore[assignment]
-        # TODO CT-211
-        return self._macro_manifest_lazy  # type: ignore[return-value]
-
-    def clear_macro_manifest(self):
-        if self._macro_manifest_lazy is not None:
-            self._macro_manifest_lazy = None
-
 
     ###
     # ODBC FUNCTIONS -- these should not need to change for every adapter,
@@ -269,7 +235,9 @@ class PythonAdapter(metaclass=AdapterMeta):
         raise NotImplementedError("default_python_submission_method is not specified")
 
     @log_code_execution
-    def submit_python_job(self, parsed_model: dict, compiled_code: str) -> AdapterResponse:
+    def submit_python_job(
+        self, parsed_model: dict, compiled_code: str
+    ) -> AdapterResponse:
         submission_method = parsed_model["config"].get(
             "submission_method", self.default_python_submission_method
         )
@@ -286,7 +254,9 @@ class PythonAdapter(metaclass=AdapterMeta):
         # process submission result to generate adapter response
         return self.generate_python_submission_response(submission_result)
 
-    def generate_python_submission_response(self, submission_result: Any) -> AdapterResponse:
+    def generate_python_submission_response(
+        self, submission_result: Any
+    ) -> AdapterResponse:
         raise NotImplementedException(
             "Your adapter need to implement generate_python_submission_response"
         )
