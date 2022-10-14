@@ -3,22 +3,23 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Iterator
 
-from dbt.adapters.base.meta import available
+from dbt.adapters.base.impl import BaseAdapter
+from dbt.adapters.base.meta import AdapterMeta, available
 from dbt.adapters.base.relation import BaseRelation
 from dbt.contracts.connection import AdapterResponse
 
-from dbt.fal.adapters.teleport.info import TeleportInfo, S3TeleportInfo, LocalTeleportInfo
+from dbt.fal.adapters.teleport.info import (
+    TeleportInfo,
+    S3TeleportInfo,
+    LocalTeleportInfo,
+)
 from dbt.fal.adapters.teleport.impl import TeleportAdapter
 from dbt.fal.adapters.python.impl import PythonAdapter
 
 from .connections import FalConnectionManager, FalCredentials, TeleportTypeEnum
 
 from .teleport_adapter_support import wrap_db_adapter
-from .teleport import (
-    DataLocation,
-    run_in_environment_with_teleport,
-    run_with_teleport
-)
+from .teleport import DataLocation, run_in_environment_with_teleport, run_with_teleport
 
 from .adapter_support import reload_adapter_cache
 from .adapter import run_in_environment_with_adapter, run_with_adapter
@@ -26,15 +27,13 @@ from .adapter import run_in_environment_with_adapter, run_with_adapter
 from .utils import fetch_environment
 
 
-class FalAdapter(PythonAdapter, TeleportAdapter):
+class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
     ConnectionManager = FalConnectionManager
 
-    @classmethod
-    def storage_formats(cls):
-        return ['csv', 'parquet']
+    def __init__(self, config, db_adapter: BaseAdapter):
+        self.config = config
+        self._db_adapter = db_adapter
 
-    def __init__(self, config):
-        super().__init__(config)
         self._relation_data_location_cache: DataLocation = DataLocation({})
         if self.is_teleport():
             self._wrapper = wrap_db_adapter(self._db_adapter, self.credentials.teleport)
@@ -44,7 +43,12 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         return "fal"
 
     @classmethod
+    def storage_formats(cls):
+        return ["csv", "parquet"]
+
+    @classmethod
     def is_cancelable(cls) -> bool:
+        # TODO: maybe it is?
         return False
 
     @available
@@ -82,7 +86,9 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
                     locations=self._relation_data_location_cache,
                 )
 
-            relation = self._db_adapter.Relation.create(parsed_model['database'], parsed_model['schema'], parsed_model['alias'])
+            relation = self._db_adapter.Relation.create(
+                parsed_model["database"], parsed_model["schema"], parsed_model["alias"]
+            )
             self._sync_result_table(relation)
 
             return AdapterResponse("OK")
@@ -92,7 +98,9 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
                 return run_with_adapter(compiled_code, self._db_adapter)
 
             with self._invalidate_db_cache():
-                return run_in_environment_with_adapter(environment, compiled_code, self.config)
+                return run_in_environment_with_adapter(
+                    environment, compiled_code, self.config
+                )
 
     @contextmanager
     def _invalidate_db_cache(self) -> Iterator[None]:
@@ -117,7 +125,9 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         assert python_creds is not None
         return python_creds
 
-    def teleport_from_external_storage(self, relation: BaseRelation, relation_path: str, teleport_info: TeleportInfo):
+    def teleport_from_external_storage(
+        self, relation: BaseRelation, relation_path: str, teleport_info: TeleportInfo
+    ):
         """
         Store the teleport urls for later use
         """
@@ -125,7 +135,9 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         rel_name = teleport_info.relation_name(relation)
         self._relation_data_location_cache[rel_name] = relation_path
 
-    def teleport_to_external_storage(self, relation: BaseRelation, teleport_info: TeleportInfo):
+    def teleport_to_external_storage(
+        self, relation: BaseRelation, teleport_info: TeleportInfo
+    ):
         # Already in external_storage, we do not have local storage
         # Just return the path
         return teleport_info.build_relation_path(relation)
@@ -139,12 +151,18 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
 
         if teleport_creds.type == TeleportTypeEnum.LOCAL:
             assert teleport_creds.local_path
-            return LocalTeleportInfo(teleport_format, teleport_creds, teleport_creds.local_path)
+            return LocalTeleportInfo(
+                teleport_format, teleport_creds, teleport_creds.local_path
+            )
         elif teleport_creds.type == TeleportTypeEnum.REMOTE_S3:
             assert teleport_creds.s3_bucket
-            return S3TeleportInfo(teleport_format, teleport_creds, teleport_creds.s3_bucket, "teleport")
+            return S3TeleportInfo(
+                teleport_format, teleport_creds, teleport_creds.s3_bucket, "teleport"
+            )
         else:
-            raise NotImplementedError(f"Teleport credentials of type {teleport_creds.type} not supported")
+            raise NotImplementedError(
+                f"Teleport credentials of type {teleport_creds.type} not supported"
+            )
 
     ######
     # HACK: Following implementations only necessary until dbt-core adds Teleport.
@@ -169,3 +187,8 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         teleport_info = self._build_teleport_info()
         data_path = self.teleport_to_external_storage(relation, teleport_info)
         self._wrapper.teleport_from_external_storage(relation, data_path, teleport_info)
+
+class FalAdapter(PythonAdapter, FalAdapterMixin):
+    def __init__(self, config):
+        PythonAdapter.__init__(self, config)
+        FalAdapterMixin.__init__(self, config, self._db_adapter)
