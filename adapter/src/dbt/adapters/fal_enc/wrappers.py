@@ -1,16 +1,30 @@
+from typing import Any, Optional, Type
 from dbt.adapters.fal.impl import FalAdapterMixin
 from dbt.adapters.factory import get_adapter_by_type
 from dbt.adapters.base.impl import BaseAdapter
+from dbt.contracts.connection import Credentials
 
-class FalTypeCredentialMixin():
+
+class FalCredentialsWrapper:
+    _db_creds: Optional[Credentials] = None
+
+    def __init__(self, db_creds: Credentials):
+        self._db_creds = db_creds
+
     @property
     def type(self):
         return "fal_enc"
 
+    def __getattr__(self, name: str) -> Any:
+        """
+        Directly proxy to the DB adapter, just shadowing the type
+        """
+        return getattr(self._db_creds, name)
 
-class FalEncAdapterMixin(FalAdapterMixin):
-    def __init__(self, config, db_adapter_type: BaseAdapter):
-        # Use the db_adapter connection manager
+
+class FalEncAdapterWrapper(FalAdapterMixin):
+    def __init__(self, db_adapter_type: Type[BaseAdapter], config):
+        # Use the db_adapter_type connection manager
         self.ConnectionManager = db_adapter_type.ConnectionManager
 
         db_adapter = get_adapter_by_type(db_adapter_type.type())

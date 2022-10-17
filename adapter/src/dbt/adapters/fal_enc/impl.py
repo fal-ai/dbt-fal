@@ -6,7 +6,7 @@ from dbt.config.profile import Profile, read_profile
 from dbt.config.renderer import ProfileRenderer
 from dbt.config.utils import parse_cli_vars
 
-from .mixins import FalEncAdapterMixin, FalTypeCredentialMixin
+from .wrappers import FalEncAdapterWrapper, FalCredentialsWrapper
 
 
 @contextmanager
@@ -32,6 +32,12 @@ def load_db_profile(config):
         )
 
 # NOTE: cls.Relation = BaseRelation, which may be problematic?
+# TODO: maybe assign FalEncAdapter.Relation in `__init__` Plugin and have this directly inherit from FalAdapterMixin
+#
+# *****
+#
+# TODO: does not work for non-teleport environment management. I think it's related to adapter rebuilding.
+# Is it because we are reconstructing the adapter and we get type `fal_enc` and then building that fails?
 class FalEncAdapter(BaseAdapter):
     def __new__(cls, config):
         db_profile = load_db_profile(config)
@@ -39,20 +45,15 @@ class FalEncAdapter(BaseAdapter):
 
         fal_credentials = config.credentials
 
+        # TODO: maybe we can do this better?
         with _release_plugin_lock():
             original_plugin = FACTORY.get_plugin_by_name(fal_credentials.type)
             db_adapter_plugin = FACTORY.get_plugin_by_name(db_credentials.type)
 
-        db_type = db_adapter_plugin.adapter
+        db_type: BaseAdapter = db_adapter_plugin.adapter  # type: ignore
         db_creds_type = db_adapter_plugin.credentials
 
         original_plugin.dependencies = [db_credentials.type]
-
-        dynamic_credentials_type = type(
-            f"FalWrapper_{db_type.__name__}",
-            (FalTypeCredentialMixin, db_creds_type),
-            {},
-        )
 
         raw_credential_data = {
             key: value
@@ -60,16 +61,17 @@ class FalEncAdapter(BaseAdapter):
             if key not in db_credentials._ALIASES
         }
 
-        config.db_credentials = db_creds_type(**raw_credential_data)
         config.python_adapter_credentials = fal_credentials
-
+        config.sql_adapter_credentials = db_creds_type(**raw_credential_data)
 
         with _release_plugin_lock():
-            config.credentials = config.db_credentials
+            # Temporary credentials for register
+            config.credentials = config.sql_adapter_credentials
             FACTORY.register_adapter(config)
-            config.credentials = dynamic_credentials_type(**raw_credential_data)
 
-        return FalEncAdapterMixin(config, db_type)
+        config.credentials = FalCredentialsWrapper(config.sql_adapter_credentials)
+
+        return FalEncAdapterWrapper(db_type, config)
 
     @classmethod
     def type(cls):

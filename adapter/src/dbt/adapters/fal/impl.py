@@ -188,7 +188,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
         data_path = self.teleport_to_external_storage(relation, teleport_info)
         self._wrapper.teleport_from_external_storage(relation, data_path, teleport_info)
 
-class FalAdapter(PythonAdapter, FalAdapterMixin):
+class FalAdapter(FalAdapterMixin, PythonAdapter):
     def __init__(self, config):
         PythonAdapter.__init__(self, config)
         FalAdapterMixin.__init__(self, config, self._db_adapter)
