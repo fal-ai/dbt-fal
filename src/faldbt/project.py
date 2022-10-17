@@ -871,7 +871,10 @@ class FalDbt:
         # this workaround.
 
         # NOTE: changed in version 1.3.0 to `compiled_code`
-        sql = getattr(compiled_result, "compiled_sql", compiled_result.compiled_code)  # type: ignore
+        if hasattr(compiled_result, "compiled_code"):
+            sql = compiled_result.compiled_code
+        else:
+            sql = compiled_result.compiled_sql
         return lib.execute_sql(
             self.project_dir,
             self.profiles_dir,
