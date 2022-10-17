@@ -69,13 +69,13 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
             # we did not _localize_ the data in `teleport_from_external_storage`
             teleport_info = self._build_teleport_info()
             if is_local:
-                result_table_path, result_columns = run_with_teleport(
+                result_table_path = run_with_teleport(
                     compiled_code,
                     teleport_info=teleport_info,
                     locations=self._relation_data_location_cache,
                 )
             else:
-                result_table_path, result_columns = run_in_environment_with_teleport(
+                result_table_path = run_in_environment_with_teleport(
                     environment,
                     compiled_code,
                     teleport_info=teleport_info,
@@ -84,7 +84,7 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
 
             relation = self._db_adapter.Relation.create(parsed_model['database'], parsed_model['schema'], parsed_model['alias'])
 
-            self._sync_result_table(relation, result_columns)
+            self._sync_result_table(relation)
 
             return AdapterResponse("OK")
 
@@ -159,7 +159,7 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         data_path = self._wrapper.teleport_to_external_storage(relation, teleport_info)
         self.teleport_from_external_storage(relation, data_path, teleport_info)
 
-    def _sync_result_table(self, relation: BaseRelation, columns: List[str]):
+    def _sync_result_table(self, relation: BaseRelation):
         """
         Internal implementation of sync to put data back into datawarehouse.
         This is necessary because Teleport is not part of dbt-core.
@@ -169,4 +169,4 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
         """
         teleport_info = self._build_teleport_info()
         data_path = self.teleport_to_external_storage(relation, teleport_info)
-        self._wrapper.teleport_from_external_storage(relation, data_path, teleport_info, columns)
+        self._wrapper.teleport_from_external_storage(relation, data_path, teleport_info)

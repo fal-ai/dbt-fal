@@ -10,11 +10,12 @@ from dbt.adapters.base.impl import BaseAdapter
 class SnowflakeAdapterTeleport(TeleportAdapter):
 
     def __init__(self, db_adapter: BaseAdapter, teleport_credentials: TeleportCredentials):
+        from dbt.adapters.fal.adapter_support import new_connection
         self._db_adapter = db_adapter
         self._credentials = teleport_credentials
-        url = f's3://{teleport_credentials.s3_bucket}/teleport'
 
-        from dbt.adapters.fal.adapter_support import new_connection
+        # TODO: put this in teleport_info
+        url = f's3://{teleport_credentials.s3_bucket}/teleport'
 
         with new_connection(self._db_adapter, "fal-snowflake:setup-teleport") as conn:
             cur = conn.handle.cursor()
@@ -34,21 +35,28 @@ class SnowflakeAdapterTeleport(TeleportAdapter):
     def storage_formats(cls):
         return ['parquet']
 
-    def teleport_from_external_storage(self, relation: BaseRelation, relation_path: str, teleport_info: TeleportInfo, columns: List[str]) -> None:
+    def teleport_from_external_storage(self, relation: BaseRelation, relation_path: str, teleport_info: TeleportInfo) -> None:
         assert teleport_info.format == 'parquet', "snowflake only supports parquet format for Teleport"
         location = f"@falstage/{relation_path}"
-        columns_str = ', '.join([f"$1:{c}" for c in columns])
-
-        rendered_macro = self._db_adapter.execute_macro(
-            'snowflake__copy_from_parquet',
-            kwargs={
-                'relation': relation,
-                'location': location,
-                'columns': columns_str
-            })
 
         with self._db_adapter.connection_named('teleport:copy_from'):
-            self._db_adapter.execute(rendered_macro)
+            create_macro = self._db_adapter.execute_macro(
+                'snowflake__create_table_from_parquet',
+                kwargs={
+                    'relation': relation,
+                    'location': location,
+                })
+
+            self._db_adapter.execute(create_macro)
+
+            copy_macro = self._db_adapter.execute_macro(
+                'snowflake__copy_from_parquet',
+                kwargs={
+                    'relation': relation,
+                    'location': location,
+                }
+            )
+            self._db_adapter.execute(copy_macro)
 
     def teleport_to_external_storage(self, relation: BaseRelation, teleport_info: TeleportInfo) -> str:
         assert teleport_info.format == 'parquet', "snowflake only supports parquet format for Teleport"

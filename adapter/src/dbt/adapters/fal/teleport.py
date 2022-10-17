@@ -44,7 +44,7 @@ def _teleport_df_to_external_storage(teleport_info: TeleportInfo, locations: Dat
 
         data.to_parquet(url, storage_options=storage_options)
         locations[relation] = relation_path
-        return relation_path, data.columns.to_list()
+        return relation_path
     else:
         raise RuntimeError(f"Format {teleport_info.format} not supported")
 

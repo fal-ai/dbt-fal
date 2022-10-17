@@ -1,4 +1,4 @@
-{% macro snowflake__copy_from_parquet(relation, location, columns) -%}
+{% macro snowflake__create_table_from_parquet(relation, location) -%}
     CREATE OR REPLACE TABLE {{ relation }} USING template (
       SELECT array_agg(object_construct(*))
 	  	FROM table(
@@ -8,7 +8,16 @@
 			  )
   		)
     );
-    COPY INTO {{ relation }} FROM (SELECT {{ columns }} FROM {{ location }})
+{%- endmacro %}
+
+{% macro snowflake__copy_from_parquet(relation, location) -%}
+    COPY INTO {{ relation }} FROM (
+      SELECT
+        {% for col in adapter.get_columns_in_relation(relation) %}
+          $1:{{col.column}}
+          {%- if not loop.last -%},{%- endif -%}
+        {% endfor %}
+      FROM {{ location }})
     FILE_FORMAT = (FORMAT_NAME = 'falparquet');
 {%- endmacro %}
 
