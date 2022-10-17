@@ -15,9 +15,9 @@ def wrap_db_adapter(db_adapter: BaseAdapter, teleport_credentials: TeleportCrede
 
     if db_adapter.type() == 'snowflake':
         import dbt.adapters.fal.teleport_support.snowflake as support_snowflake
-        if teleport_credentials.type == TeleportTypeEnum.LOCAL:
-            raise RuntimeError("Teleporting between Snowflake and local is not supported.")
-        return support_snowflake.SnowflakeAdapterTeleport(db_adapter, teleport_credentials)
+        if teleport_credentials.type == TeleportTypeEnum.REMOTE_S3:
+            return support_snowflake.SnowflakeAdapterTeleport(db_adapter, teleport_credentials)
+        else:
+            raise RuntimeError("Snowflake teleporting works only with S3.")
 
     raise NotImplementedError(f"Teleport support has not been implemented for adapter {db_adapter.type()}")
-
