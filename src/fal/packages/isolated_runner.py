@@ -87,7 +87,7 @@ def _get_shell_bootstrap() -> str:
     )
 
 
-def _fal_main() -> None:
+def _fal_main():
     from faldbt.logger import LOGGER
     from fal.packages import bridge
 

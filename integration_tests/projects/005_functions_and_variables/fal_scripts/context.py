@@ -11,6 +11,8 @@ extra += f"target name: {context.target.name}\n"
 extra += f"target profile: {context.target.profile_name}\n"
 extra += f"target database: {context.target.database}\n"
 
+extra += f"run result: {context.current_model.run_result}\n"
+
 response = context.current_model.adapter_response
 assert response
 

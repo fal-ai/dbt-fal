@@ -209,6 +209,8 @@ class DbtModel(_DbtTestableNode):
 
     _adapter_response: Optional[AdapterResponse] = field(default=None)
 
+    run_result = Optional[Any]
+
     def __repr__(self):
         attrs = ["name", "alias", "unique_id", "columns", "tests", "status"]
         props = ", ".join([f"{item}={repr(getattr(self, item))}" for item in attrs])
@@ -382,6 +384,7 @@ class DbtManifest:
             if result:
                 model.status = result.status.value
                 model.adapter_response = result.adapter_response
+                model.run_result = result
 
             models.append(model)
 
