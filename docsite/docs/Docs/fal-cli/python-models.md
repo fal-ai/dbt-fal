@@ -2,14 +2,31 @@
 sidebar_position: 2
 ---
 
-# Creating Python dbt models
+# Creating fal Python models
 
-As of version `0.4.0`, fal supports a new building block: _Pure Python models_. This type of model allows you to represent a `dbt` model purely in Python code leveraging its rich ecosystem of libraries. With Python models, you can build:
+With version `0.4.0`, fal supports a new building block: _Pure Python models_. This type of model allows you to represent a `dbt` model purely in Python code leveraging its rich ecosystem of libraries. With Python models, you can build:
 
 1. Data transformations that Python is better suited for. (e.g. text manipulation, leveraging external Python modules)
 2. ML model artifacts (like predictions) as dbt models, using Data Science libraries such as `sklearn` and `xgboost`.
 
-To create a Python model, create a Python (`.py`) or [Notebook (`.ipynb`)](./notebook-files.md) file in your [`model-paths`](https://docs.getdbt.com/reference/project-configs/model-paths) and make sure your file calls the [`write_to_model`](../../Reference/variables-and-functions.md#writetomodel-function) function _exactly once_.
+From version `0.7.0` onwards, to start using fal Python models, add a dbt variable `fal-models-paths` with a list of directories/folders in which to look for Python models.
+Think of it like [`model-paths` of dbt](https://docs.getdbt.com/reference/project-configs/model-paths), but for fal.
+This folder **must not** be in the dbt `model-paths` list because [dbt has now added](https://docs.getdbt.com/docs/build/python-models)
+its own implementation of Python models for some adapters.
+
+```yaml
+# dbt_project.yml
+name: "jaffle_shop"
+# ...
+model-paths: ["models"]
+# ...
+
+vars:
+  # Add this to your dbt_project.yml
+  fal-models-paths: ["fal_models"]
+```
+
+Then, to create a Python model, create a Python (`.py`) or [Notebook (`.ipynb`)](./notebook-files.md) file in your fal models folder and make sure your file calls the [`write_to_model`](../../Reference/variables-and-functions.md#writetomodel-function) function.
 
 ```py
 df = ref('model_a')
