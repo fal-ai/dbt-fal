@@ -24,7 +24,7 @@ from .teleport import DataLocation, run_in_environment_with_teleport, run_with_t
 from .adapter_support import reload_adapter_cache
 from .adapter import run_in_environment_with_adapter, run_with_adapter
 
-from .utils import fetch_environment
+from .utils import fetch_environment, db_adapter_config
 
 
 class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
@@ -53,7 +53,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
 
     @available
     def is_teleport(self) -> bool:
-        return self.credentials.teleport is not None
+        return getattr(self.credentials, "teleport", None) is not None
 
     def submit_python_job(
         self, parsed_model: dict, compiled_code: str
@@ -99,7 +99,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
 
             with self._invalidate_db_cache():
                 return run_in_environment_with_adapter(
-                    environment, compiled_code, self.config
+                    environment, compiled_code, db_adapter_config(self.config)
                 )
 
     @contextmanager
