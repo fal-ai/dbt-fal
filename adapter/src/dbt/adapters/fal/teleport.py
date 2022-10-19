@@ -18,6 +18,7 @@ DataLocation = NewType('DataLocation', Dict[str, str])
 def _prepare_for_teleport(function: Callable, teleport: TeleportInfo, locations: DataLocation) -> Callable:
     @functools.wraps(function)
     def wrapped(relation: str, *args, **kwargs) -> Any:
+        relation = relation.lower()
         return function(teleport, locations, relation, *args, **kwargs)
 
     return wrapped

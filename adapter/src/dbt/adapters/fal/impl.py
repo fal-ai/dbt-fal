@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Iterator, List
 
 from dbt.adapters.base.meta import available
 from dbt.adapters.base.relation import BaseRelation
@@ -83,6 +83,7 @@ class FalAdapter(PythonAdapter, TeleportAdapter):
                 )
 
             relation = self._db_adapter.Relation.create(parsed_model['database'], parsed_model['schema'], parsed_model['alias'])
+
             self._sync_result_table(relation)
 
             return AdapterResponse("OK")
