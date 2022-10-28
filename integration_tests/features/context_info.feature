@@ -15,7 +15,7 @@ Feature: Context object information
     Then the following models are calculated:
       | some_model |
     Then the following scripts are ran:
-      | some_model.lists.py | some_model.context.py |
+      | some_model.lists.py | some_model.context.py | some_model.execute_sql.py |
     And the script some_model.context.py output file has the lines:
       | target profile: fal_test |
 
@@ -27,7 +27,7 @@ Feature: Context object information
     Then the following models are calculated:
       | some_model |
     Then the following scripts are ran:
-      | some_model.lists.py | some_model.context.py |
+      | some_model.lists.py | some_model.context.py | some_model.execute_sql.py |
     And the script some_model.context.py output file has the lines:
       | adapter response: rows affected 1 |
 
@@ -37,7 +37,7 @@ Feature: Context object information
       fal run --profiles-dir $profilesDir --project-dir $baseDir --select some_model --scripts context.py
       """
     Then the following scripts are ran:
-      | some_model.lists.py | some_model.context.py |
+      | some_model.lists.py | some_model.context.py | some_model.execute_sql.py |
     And the script some_model.context.py output file has the lines:
       | adapter response: rows affected 1 |
 

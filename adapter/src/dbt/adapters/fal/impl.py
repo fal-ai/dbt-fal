@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Iterator, List
 
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.adapters.base.meta import AdapterMeta, available

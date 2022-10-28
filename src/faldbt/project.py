@@ -68,7 +68,9 @@ if TYPE_CHECKING:
 class FalGeneralException(Exception):
     pass
 
+
 FAL = "fal"
+
 
 @dataclass
 class _DbtNode:
@@ -515,8 +517,8 @@ class FalDbt:
         self._environments = None
         telemetry.log_api(
             action="faldbt_initialized",
-            additional_props={"config_hash": self._config.hashed_name()})
-
+            additional_props={"config_hash": self._config.hashed_name()},
+        )
 
     @property
     def source_paths(self) -> List[str]:
@@ -598,19 +600,14 @@ class FalDbt:
             for column_name in model.columns.keys():
                 if column_name == model.meta[FAL]["feature_store"]["entity_column"]:
                     continue
-                if (
-                    column_name
-                    == model.meta[FAL]["feature_store"]["timestamp_column"]
-                ):
+                if column_name == model.meta[FAL]["feature_store"]["timestamp_column"]:
                     continue
                 features.append(
                     Feature(
                         model=model.name,
                         column=column_name,
                         description=model.columns[column_name].description,
-                        entity_column=model.meta[FAL]["feature_store"][
-                            "entity_column"
-                        ],
+                        entity_column=model.meta[FAL]["feature_store"]["entity_column"],
                         timestamp_column=model.meta[FAL]["feature_store"][
                             "timestamp_column"
                         ],
@@ -872,11 +869,17 @@ class FalDbt:
         # ran from GitHub Actions. For some reason, it can not find the right profile.
         # Haven't been able to reproduce this behavior locally and therefore developed
         # this workaround.
+
+        # NOTE: changed in version 1.3.0 to `compiled_code`
+        if hasattr(compiled_result, "compiled_code"):
+            sql = compiled_result.compiled_code
+        else:
+            sql = compiled_result.compiled_sql
         return lib.execute_sql(
             self.project_dir,
             self.profiles_dir,
             self._profile_target,
-            compiled_result.compiled_sql,  # type: ignore
+            sql,
             config=self._config,
         )
 
