@@ -63,8 +63,7 @@ class CondaEnvironment(BaseEnvironment[Path], make_thread_safe=True):
         python_version = sysconfig.get_python_version()
         final_packages = user_provided_packages + [f"python={python_version}"]
 
-        # NOTE: default is True for act1 testing
-        inherit_from_local = config.get("_inherit_from_local", True)
+        inherit_from_local = config.get("_inherit_from_local", False)
         return cls(final_packages, inherit_from_local=inherit_from_local)
 
     @property

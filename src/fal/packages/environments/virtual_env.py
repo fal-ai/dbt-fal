@@ -31,8 +31,7 @@ class VirtualPythonEnvironment(BaseEnvironment[Path], make_thread_safe=True):
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> VirtualPythonEnvironment:
         requirements = config.get("requirements", [])
-        # NOTE: default is True for act1 testing
-        inherit_from_local = config.get("_inherit_from_local", True)
+        inherit_from_local = config.get("_inherit_from_local", False)
         return cls(requirements, inherit_from_local=inherit_from_local)
 
     @property

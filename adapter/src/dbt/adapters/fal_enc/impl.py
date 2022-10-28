@@ -35,11 +35,6 @@ def load_db_profile(config) -> Profile:
 
 # NOTE: cls.Relation = BaseRelation, which may be problematic?
 # TODO: maybe assign FalEncAdapter.Relation in `__init__` Plugin and have this directly inherit from FalAdapterMixin
-#
-# *****
-#
-# TODO: does not work for non-teleport environment management. I think it's related to adapter rebuilding.
-# Is it because we are reconstructing the adapter and we get type `fal_enc` and then building that fails?
 class FalEncAdapter(BaseAdapter):
     def __new__(cls, config):
         # There are two different credentials types which can be passed to FalEncAdapter
