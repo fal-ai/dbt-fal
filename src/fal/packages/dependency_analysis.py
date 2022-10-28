@@ -28,7 +28,7 @@ def _get_fal_root_path() -> Path:
     return base_dir
 
 
-def _get_dbt_packages() -> Iterator[Tuple[str]]:
+def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (
     # the PyPI names instead of the import names). An example distirbution info is the following, which
     # contains both the main exporter of the top-level name (dbt-core) as well as all the packages that
@@ -41,14 +41,34 @@ def _get_dbt_packages() -> Iterator[Tuple[str]]:
     package_distributions = importlib_metadata.packages_distributions()
     for dbt_plugin_name in package_distributions.get("dbt", []):
         distribution = importlib_metadata.distribution(dbt_plugin_name)
-        if dbt_plugin_name == "dbt-fal" and _is_fal_pre_release():
-            adapter_path = _get_fal_root_path() / "adapter"
-            yield str(adapter_path), None
-        else:
-            yield dbt_plugin_name, distribution.version
+
+        # Handle dbt-fal separately (since it needs to be installed
+        # with its extras).
+        if dbt_plugin_name == "dbt-fal":
+            continue
+
+        yield dbt_plugin_name, distribution.version
+
+    try:
+        dbt_fal_version = importlib_metadata.version("dbt-fal")
+    except importlib_metadata.PackageNotFoundError:
+        # It might not be installed.
+        return None
+
+    if _is_fal_pre_release():
+        dbt_fal_dep = str(_get_fal_root_path() / "adapter")
+        # We are going to install it from the local path.
+        dbt_fal_version = None
+    else:
+        dbt_fal_dep = "dbt-fal"
+
+    dbt_fal_extras = _find_fal_extras("dbt-fal")
+    if dbt_fal_extras:
+        dbt_fal_dep += f"[{' ,'.join(dbt_fal_extras)}]"
+    yield dbt_fal_dep, dbt_fal_version
 
 
-def _find_fal_extras() -> Iterator[str]:
+def _find_fal_extras(package: str) -> Iterator[str]:
     # Return a possible set of extras that might be required when installing
     # fal in the new environment. The original form which the user has installed
     # is not present to us (it is not saved anywhere during the package installation
@@ -62,7 +82,7 @@ def _find_fal_extras() -> Iterator[str]:
 
     import dbt.adapters
 
-    fal_dist = importlib_metadata.distribution("fal")
+    fal_dist = importlib_metadata.distribution(package)
     all_extras = fal_dist.metadata.get_all("Provides-Extra", [])
 
     # This list is different from the one we obtain in _get_dbt_packages
@@ -89,7 +109,7 @@ def _get_fal_package_name() -> Tuple[str, Optional[str]]:
         fal_dep, fal_version = "fal", importlib_metadata.version("fal")
 
     fal_package_name = fal_dep
-    fal_extras = _find_fal_extras()
+    fal_extras = _find_fal_extras("fal")
     if fal_extras:
         fal_package_name += f"[{' ,'.join(fal_extras)}]"
     return fal_package_name, fal_version
