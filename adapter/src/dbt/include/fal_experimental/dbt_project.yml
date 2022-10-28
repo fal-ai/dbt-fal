@@ -1,5 +1,5 @@
 config-version: 2
-name: dbt_fal_enc
+name: dbt_fal_experimental
 version: 1.0
 
 macro-paths: ["macros"]
