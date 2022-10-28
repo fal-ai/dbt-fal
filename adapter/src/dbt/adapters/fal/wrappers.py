@@ -1,5 +1,5 @@
 from typing import Any, Optional, Type
-from dbt.adapters.fal.impl import FalAdapterMixin
+from dbt.adapters.fal_experimental.impl import FalAdapterMixin
 from dbt.adapters.factory import get_adapter_by_type
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.contracts.connection import Credentials
@@ -14,7 +14,7 @@ class FalCredentialsWrapper:
 
     @property
     def type(self):
-        return "fal_enc"
+        return "fal"
 
     def __getattr__(self, name: str) -> Any:
         """
@@ -43,7 +43,7 @@ class FalEncAdapterWrapper(FalAdapterMixin):
 
     @classmethod
     def type(cls):
-        return "fal_enc"
+        return "fal"
 
     def __getattr__(self, name):
         """
