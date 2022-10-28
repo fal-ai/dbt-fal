@@ -3,6 +3,7 @@ from dbt.adapters.fal.impl import FalAdapterMixin
 from dbt.adapters.factory import get_adapter_by_type
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.contracts.connection import Credentials
+from fal.telemetry import telemetry
 
 
 class FalCredentialsWrapper:
@@ -23,6 +24,7 @@ class FalCredentialsWrapper:
 
 
 class FalEncAdapterWrapper(FalAdapterMixin):
+    @telemetry.log_call("encapsulate_init")
     def __init__(self, db_adapter_type: Type[BaseAdapter], config):
         # Use the db_adapter_type connection manager
         self.ConnectionManager = db_adapter_type.ConnectionManager
@@ -35,6 +37,7 @@ class FalEncAdapterWrapper(FalAdapterMixin):
         # all the unhandled calls.
         self._available_ = self._db_adapter._available_.union(self._available_)
 
+    @telemetry.log_call("encapsulate_submit_python_job")
     def submit_python_job(self, *args, **kwargs):
         return super().submit_python_job(*args, **kwargs)
 
