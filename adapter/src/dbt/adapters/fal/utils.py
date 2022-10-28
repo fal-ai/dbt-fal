@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
@@ -11,6 +11,7 @@ from fal.packages.environments.base import (
     EnvironmentConnection,
 )
 from faldbt.parse import load_environments
+from dbt.config.runtime import RuntimeConfig
 
 
 @dataclass
@@ -46,7 +47,9 @@ def retrieve_symbol(source_code: str, symbol_name: str) -> Any:
     return namespace[symbol_name]
 
 
-def fetch_environment(project_root: str, environment_name: str) -> Tuple[BaseEnvironment, bool]:
+def fetch_environment(
+    project_root: str, environment_name: str
+) -> Tuple[BaseEnvironment, bool]:
     """Fetch the environment with the given name from the project's
     fal_project.yml file."""
     # Local is a special environment where it doesn't need to be defined
@@ -65,3 +68,15 @@ def fetch_environment(project_root: str, environment_name: str) -> Tuple[BaseEnv
         )
 
     return environments[environment_name], False
+
+
+def db_adapter_config(config: RuntimeConfig) -> RuntimeConfig:
+    """Return a config object that has the database adapter as its primary. Only
+    applicable when the underlying db adapter is encapsulated."""
+    if hasattr(config, "sql_adapter_credentials"):
+        new_config = replace(config, credentials=config.sql_adapter_credentials)
+        new_config.python_adapter_credentials = config.credentials
+    else:
+        new_config = config
+
+    return new_config

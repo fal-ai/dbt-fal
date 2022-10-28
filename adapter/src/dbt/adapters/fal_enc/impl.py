@@ -6,6 +6,7 @@ from dbt.config.profile import Profile, read_profile
 from dbt.config.renderer import ProfileRenderer
 from dbt.config.utils import parse_cli_vars
 
+from .connections import FalEncCredentials
 from .wrappers import FalEncAdapterWrapper, FalCredentialsWrapper
 
 
@@ -18,7 +19,7 @@ def _release_plugin_lock():
         FACTORY.lock.acquire()
 
 
-def load_db_profile(config):
+def load_db_profile(config) -> Profile:
     fal_credentials = config.credentials
 
     raw_profile_data = read_profile(flags.PROFILES_DIR)
@@ -31,6 +32,7 @@ def load_db_profile(config):
             target_override=fal_credentials.db_profile,
         )
 
+
 # NOTE: cls.Relation = BaseRelation, which may be problematic?
 # TODO: maybe assign FalEncAdapter.Relation in `__init__` Plugin and have this directly inherit from FalAdapterMixin
 #
@@ -40,10 +42,26 @@ def load_db_profile(config):
 # Is it because we are reconstructing the adapter and we get type `fal_enc` and then building that fails?
 class FalEncAdapter(BaseAdapter):
     def __new__(cls, config):
-        db_profile = load_db_profile(config)
-        db_credentials = db_profile.credentials
+        # There are two different credentials types which can be passed to FalEncAdapter
+        # 1. FalEncCredentials
+        # 2. FalCredentialsWrapper
+        #
+        # For the first one, we have to go through parsing the profiles.yml (so that we
+        # can obtain the real 'db' credentials). But for the other one, we can just use
+        # the bound credentials directly (e.g. in isolated mode where we don't actually
+        # have access to the profiles.yml file).
 
         fal_credentials = config.credentials
+        if isinstance(fal_credentials, FalEncCredentials):
+            db_profile = load_db_profile(config)
+            db_credentials = db_profile.credentials
+        else:
+            # Since profile construction (in the case above) already registers the
+            # adapter plugin for the db type, we need to also mimic that here.
+            assert isinstance(fal_credentials, FalCredentialsWrapper)
+            db_credentials = fal_credentials._db_creds
+            with _release_plugin_lock():
+                FACTORY.load_plugin(db_credentials.type)
 
         # TODO: maybe we can do this better?
         with _release_plugin_lock():
