@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: ["postgres", "bigquery", "snowflake", "duckdb"]
+        profile: ["postgres", "bigquery", "duckdb"]
         python: ["3.8"]
 
     concurrency:
