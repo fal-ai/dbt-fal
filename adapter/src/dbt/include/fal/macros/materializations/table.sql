@@ -1,5 +1,9 @@
-{# HACK: materialization must be custom `fal_table` in order for `table` materializations to go into DB adapter #}
-{% materialization fal_table, adapter='fal', supported_languages=['python'] -%}
+{% materialization table, adapter='fal', supported_languages=['python', 'sql'] -%}
+
+{%- set language = model['language'] -%}
+
+{%- if language == 'python' -%}
+
   {%- if adapter.is_teleport() -%}
     {%- for _ref in model.refs -%}
         {%- set resolved = ref(*_ref) -%}
@@ -9,13 +13,21 @@
 
   {%- set relation = this.incorporate(type='table') -%}
 
-  {%- call statement('main', language='python') -%}
+  {%- call statement('main', language=language) -%}
 
     {{- py_write(compiled_code, relation) }}
 
   {%- endcall %}
 
-  {{- return({'relations': [relation]}) }}
+{{- return({'relations': [relation]}) }}
+
+{%- elif language == 'sql' -%}
+
+  {# HACK: proxy to the db adapter table materialization #}
+  {{- return(adapter.db_materialization(context, "table")) }}
+
+{%- endif -%}
+
 {% endmaterialization %}
 
 {% macro py_write(code, relation) -%}
