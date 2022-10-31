@@ -1,0 +1,12 @@
+config:
+  send_anonymous_usage_stats: False
+
+fal_test:
+  target: integration_tests
+  outputs:
+    integration_tests:
+      type: fal
+      db_profile: db
+    db:
+      type: duckdb
+      path: "{{ env_var('DB_PATH') }}"
