@@ -64,18 +64,11 @@ class FalEncAdapter(BaseAdapter):
             db_adapter_plugin = FACTORY.get_plugin_by_name(db_credentials.type)
 
         db_type: BaseAdapter = db_adapter_plugin.adapter  # type: ignore
-        db_creds_type = db_adapter_plugin.credentials
 
         original_plugin.dependencies = [db_credentials.type]
 
-        raw_credential_data = {
-            key: value
-            for key, value in db_credentials.to_dict().items()
-            if key not in db_credentials._ALIASES
-        }
-
         config.python_adapter_credentials = fal_credentials
-        config.sql_adapter_credentials = db_creds_type(**raw_credential_data)
+        config.sql_adapter_credentials = db_credentials
 
         with _release_plugin_lock():
             # Temporary credentials for register
