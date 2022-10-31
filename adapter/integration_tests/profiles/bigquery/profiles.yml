@@ -1,0 +1,19 @@
+config:
+  send_anonymous_usage_stats: False
+
+fal_test:
+  target: integration_tests
+  outputs:
+    integration_tests:
+      type: fal
+      db_profile: db
+    db:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('KEYFILE_DIR') }}/keyfile.json"
+      project: "{{ env_var('GCLOUD_PROJECT') }}"
+      dataset: "{{ env_var('BQ_DATASET') }}"
+      threads: 4
+      timeout_seconds: 300
+      location: US
+      priority: interactive

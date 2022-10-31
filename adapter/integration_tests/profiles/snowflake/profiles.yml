@@ -1,0 +1,19 @@
+config:
+  send_anonymous_usage_stats: False
+
+fal_test:
+  target: integration_tests
+  outputs:
+    integration_tests:
+      type: fal
+      db_profile: db
+    db:
+      type: snowflake
+      account: "{{ env_var('SF_ACCOUNT') }}"
+      user: "{{ env_var('SF_USER') }}"
+      password: "{{ env_var('SF_PASSWORD') }}"
+      role: "{{ env_var('SF_ROLE') }}"
+      warehouse: "{{ env_var('SF_WAREHOUSE') }}"
+      database: "{{ env_var('SF_DATABASE') }}"
+      schema: "{{ env_var('SF_SCHEMA') }}"
+      threads: 4
