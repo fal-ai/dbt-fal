@@ -1,19 +1,21 @@
-name: Test dbt-fal adapter
+name: Test dbt-fal encapsulate adapter
 
 on:
   pull_request:
-    # types: [assigned, opened, synchronize, reopened]
-    # paths:
-    #   - "adapter/**"
+    types: [assigned, opened, synchronize, reopened]
+    paths:
+      - "adapter/**"
 
   push:
-    # branches: [main]
-    # paths:
-    #   - "adapter/**"
+    branches: [main]
+    paths:
+      - "adapter/**"
 
   schedule:
     # every midnight
-    # - cron: "0 0 * * *"
+    - cron: "0 0 * * *"
+
+  workflow_dispatch:
 
 jobs:
   run:
@@ -23,12 +25,7 @@ jobs:
       matrix:
         profile: ["postgres", "bigquery", "snowflake", "duckdb"]
         python: ["3.8"]
-        teleport: [false]
-        include:
-          - profile: duckdb
-            teleport: true
 
-    # Run only the latest commit pushed to PR
     concurrency:
       group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
       cancel-in-progress: true
@@ -43,43 +40,27 @@ jobs:
         if: contains(fromJSON('["postgres"]'), matrix.profile)
         run: docker-compose up -d
 
-      - name: Install conda
-        uses: s-weigand/setup-conda@v1
-        if: contains(fromJSON('["conda"]'), matrix.environment)
-        with:
-          activate-conda: false
-          python-version: ${{ matrix.python }}
-          conda-channels: anaconda, conda-forge
-
       - name: Setup latest dependencies
+        working-directory: fal/adapter/integration_tests
         run: |
           python -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip==20.3
           pip install build wheel
 
-          # First install the adapters. Since they depend on
-          # a fixed dbt-core version; if we install them after
-          # the dbt-core installation, they'll try to overwrite
-          # the existing revision.
+          pip install dbt-${{ matrix.profile }}
 
-          pip install dbt-${{ matrix.profile }} -c fal/adapter/compatible_adapters.txt
-
-          pushd dbt-core
-          pip install -r dev-requirements.txt -r editable-requirements.txt
-          popd
-
-          pushd fal
-          pip install .
-          popd
-
-          pushd fal/adapter
+          pushd ..
           pip install --use-deprecated=legacy-resolver ".[${{ matrix.profile }}]"
           popd
 
+      - name: Setup behave
+        working-directory: fal/adapter/integration_tests
+        run: pip install behave
+
       - name: Run tests
         id: test_run
-        working-directory: jaffle_shop
+        working-directory: fal/adapter/integration_tests
         env:
           FAL_STATS_ENABLED: false
           # BigQuery
@@ -97,7 +78,7 @@ jobs:
           # Duckdb
           DB_PATH: ${{ github.workspace }}/duck.db
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
 
           # Database and schema setup for sources
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
@@ -128,28 +109,24 @@ jobs:
             echo 'keyfile is ready'
           fi
 
-          if [[ '${{ matrix.teleport }}' == "true" ]]
-          then
-            export DBT_PROFILES_DIR="_testing/profiles/${{ matrix.profile }}-teleport"
-          else
-            export DBT_PROFILES_DIR="_testing/profiles/${{ matrix.profile }}"
-          fi
+          # TODO: setup teleport tests
 
+          # Could not get the real job_id easily from context
+          UUID=$(uuidgen | head -c8)
+          export DB_NAMESPACE="${{ github.run_id }}_${UUID}"
 
-          # Let's seed
-          dbt seed --profile=fal_test
+          behave -fplain -D profile=${{ matrix.profile }}
 
-          # Initially try running with venv
-          mv _testing/environments/venv/fal_project.yml fal_project.yml
-          mv _testing/environments/venv/properties.yml models/properties.yml
-          dbt run --profile=fal_test
-
-          # And then with conda
-          mv _testing/environments/conda/fal_project.yml fal_project.yml
-          mv _testing/environments/conda/properties.yml models/properties.yml
-          dbt run --profile=fal_test
-
-          # Finally with local
-          rm fal_project.yml models/properties.yml
-          pip install prophet
-          dbt run --profile=fal_test
+      - name: Send custom JSON data to Slack workflow
+        if: (failure() || cancelled()) && github.event_name == 'schedule'
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
+        with:
+          # For posting a rich message using Block Kit
+          payload: |
+            {
+              "text": "Integration tests failed for dbt-${{ matrix.profile }}@${{ matrix.dbt }} (Python ${{ matrix.python }})\nhttps://github.com/fal-ai/fal/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
