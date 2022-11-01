@@ -1,7 +1,7 @@
 from typing import Any, Callable, Dict, NewType
 from functools import partial
 import functools
-from dbt.adapters.fal.connections import TeleportTypeEnum
+from dbt.adapters.fal_experimental.connections import TeleportTypeEnum
 import pandas as pd
 
 from dbt.contracts.connection import AdapterResponse

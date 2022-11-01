@@ -1,5 +1,6 @@
-{# HACK: materialization must be custom `fal_table` in order for `table` materializations to go into DB adapter #}
-{% materialization fal_table, adapter='fal', supported_languages=['python'] -%}
+{% materialization table, adapter='fal_experimental', supported_languages=['python'] -%}
+
+  -- TODO: change to sync_teleport() when available in dbt-core
   {%- if adapter.is_teleport() -%}
     {%- for _ref in model.refs -%}
         {%- set resolved = ref(*_ref) -%}
@@ -16,6 +17,7 @@
   {%- endcall %}
 
   {{- return({'relations': [relation]}) }}
+
 {% endmaterialization %}
 
 {% macro py_write(code, relation) -%}

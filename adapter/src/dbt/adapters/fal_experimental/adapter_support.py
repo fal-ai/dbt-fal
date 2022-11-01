@@ -72,12 +72,12 @@ def write_df_to_relation(
     dataframe to the targeted relation on the adapter."""
 
     if adapter.type() == "snowflake":
-        import dbt.adapters.fal.support.snowflake as support_snowflake
+        import dbt.adapters.fal_experimental.support.snowflake as support_snowflake
 
         return support_snowflake.write_df_to_relation(adapter, dataframe, relation)
 
     elif adapter.type() == "duckdb":
-        import dbt.adapters.fal.support.duckdb as support_duckdb
+        import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
         return support_duckdb.write_df_to_relation(adapter, dataframe, relation)
 
@@ -117,12 +117,12 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
     """Generic version of the read_df_from_relation."""
 
     if adapter.type() == "snowflake":
-        import dbt.adapters.fal.support.snowflake as support_snowflake
+        import dbt.adapters.fal_experimental.support.snowflake as support_snowflake
 
         return support_snowflake.read_relation_as_df(adapter, relation)
 
     elif adapter.type() == "duckdb":
-        import dbt.adapters.fal.support.duckdb as support_duckdb
+        import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
         return support_duckdb.read_relation_as_df(adapter, relation)
 
