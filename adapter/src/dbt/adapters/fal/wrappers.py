@@ -9,6 +9,7 @@ from dbt.clients.jinja import MacroGenerator
 
 from dbt.adapters.fal_experimental.impl import FalAdapterMixin
 from fal.telemetry import telemetry
+from fal.utils import cache_static
 
 class FalCredentialsWrapper:
     _db_creds: Optional[Credentials] = None
@@ -48,14 +49,18 @@ class FalEncAdapterWrapper(FalAdapterMixin):
     @available
     def db_materialization(self, context, materialization):
         # NOTE: inspired by https://github.com/dbt-labs/dbt-core/blob/be4a91a0fe35a619587b7a0145e190690e3771c6/core/dbt/task/run.py#L254-L290
-        manifest = ManifestLoader.get_full_manifest(self.config)
-        materialization_macro = manifest.find_materialization_macro_by_name(
+        materialization_macro = self.manifest.find_materialization_macro_by_name(
             self.config.project_name, materialization, self._db_adapter.type()
         )
 
         return MacroGenerator(
             materialization_macro, context, stack=context["context_macro_stack"]
         )()
+
+    @property
+    @cache_static
+    def manifest(self):
+        return ManifestLoader.get_full_manifest(self.config)
 
     @classmethod
     def type(cls):
