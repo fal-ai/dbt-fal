@@ -15,6 +15,7 @@ from dbt.fal.adapters.teleport.info import (
 )
 from dbt.fal.adapters.teleport.impl import TeleportAdapter
 from dbt.fal.adapters.python.impl import PythonAdapter
+from dbt.parser.manifest import MacroManifest, Manifest, ManifestLoader
 
 from . import telemetry
 
@@ -56,6 +57,15 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
     @available
     def is_teleport(self) -> bool:
         return getattr(self.credentials, "teleport", None) is not None
+
+    @property
+    def manifest(self) -> Manifest:
+        return ManifestLoader.get_full_manifest(self.config)
+
+    @property
+    def macro_manifest(self) -> MacroManifest:
+        return self._db_adapter.load_macro_manifest()
+
 
     @telemetry.log_call("experimental_submit_python_job", config=True)
     def submit_python_job(
@@ -111,7 +121,11 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
 
             with self._invalidate_db_cache():
                 return run_in_environment_with_adapter(
-                    environment, compiled_code, db_adapter_config(self.config)
+                    environment,
+                    compiled_code,
+                    db_adapter_config(self.config),
+                    self.manifest,
+                    self.macro_manifest
                 )
 
     @contextmanager
@@ -127,7 +141,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
             # from the Python runner, so that we can tell the cache
             # manager about what is going on instead of hard-resetting
             # the cache-db.
-            reload_adapter_cache(self._db_adapter, self.config)
+            reload_adapter_cache(self._db_adapter, self.manifest)
 
     @property
     def credentials(self):
