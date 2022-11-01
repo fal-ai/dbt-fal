@@ -3,8 +3,6 @@
 name: PyPI Release
 
 on:
-  push:
-    branches: [release]
   workflow_dispatch:
     inputs:
       version:
@@ -15,9 +13,17 @@ on:
         options:
           - patch
           - minor
+      publish_from_any_branch:
+        description: Publish from any branch
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy:
+    # Run only for `release` branch or if marked as acceptable
+    if: github.ref == 'refs/heads/release' || inputs.publish_from_any_branch
+
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +31,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
 
@@ -38,11 +44,7 @@ jobs:
           PYPI_USERNAME: ${{ secrets.PYPI_USER }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          VERSION_TYPE="patch"
-          if [[ '${{ github.event_name }}' == 'workflow_dispatch' ]]
-          then
-            VERSION_TYPE="${{ github.event.inputs.version }}"
-          fi
+          VERSION_TYPE="${{ inputs.version }}"
 
           poetry version $VERSION_TYPE
 
