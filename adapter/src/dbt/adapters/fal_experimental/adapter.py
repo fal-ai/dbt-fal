@@ -6,8 +6,10 @@ from typing import Any
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
+from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
+from fal.packages.dependency_analysis import get_default_pip_dependencies
 
-from fal.packages.environments import BaseEnvironment
+from isolate.backends import BaseEnvironment
 
 from .adapter_support import (
     prepare_for_adapter,
@@ -45,7 +47,11 @@ def run_in_environment_with_adapter(
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
 
-    with environment.connect() as connection:
+    deps = get_default_pip_dependencies()
+    stage = VirtualPythonEnvironment(deps)
+
+    # Create returns the path of an environment
+    with PythonIPC(environment, environment.create(), extra_inheritance_paths=[stage.create()]) as connection:
         execute_model = partial(_isolated_runner, code, config)
         result = connection.run(execute_model)
         return result

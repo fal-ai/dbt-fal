@@ -118,6 +118,7 @@ def _get_fal_package_name() -> Tuple[str, Optional[str]]:
 def get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
     yield _get_fal_package_name()
     yield from _get_dbt_packages()
+    yield "isolate", importlib_metadata.version("isolate")
 
 
 @cache_static

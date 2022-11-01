@@ -11,14 +11,18 @@ import re
 
 @when("the following shell command is invoked")
 def run_command_step(context):
+    context.exc = None
     profiles_dir = _set_profiles_dir(context)
     command = (
         context.text.replace("$baseDir", context.base_dir)
         .replace("$profilesDir", str(profiles_dir))
         .replace("$tempDir", str(context.temp_dir.name))
     )
-
-    os.system(command)
+    try:
+        os.system(command)
+    except:
+        import sys
+        context.exc = sys.exc_info()
 
 
 @given("the project {project}")
@@ -52,6 +56,14 @@ def check_model_results(context):
     sorted_model_names = [model[0] for model in sorted_models]
     expected_model_names = context.table.headings
     assert sorted_model_names == expected_model_names, f"Expected {expected_model_names}, got {sorted_model_names}"
+
+
+@then('model {model_name} fails with message "{msg}"')
+def invoke_command_error(context, model_name: str, msg: str):
+    results = _load_dbt_result_file(context)
+    model_result = [i for i in results if model_name in i['unique_id']][0]
+    assert model_result['status'] == 'error'
+    assert model_result['message'] == msg
 
 
 def _get_dated_dbt_models(context):

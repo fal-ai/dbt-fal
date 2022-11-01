@@ -6,12 +6,16 @@ from typing import Any, Dict, Tuple
 
 import dbt.exceptions
 from fal.packages.environments.base import (
-    BaseEnvironment,
     BasicCallable,
     EnvironmentConnection,
 )
-from faldbt.parse import load_environments
+
+from isolate.backends import BaseEnvironment
+
 from dbt.config.runtime import RuntimeConfig
+from faldbt.parse import FalParseError
+
+from faldbt.utils.yaml_helper import load_yaml
 
 
 @dataclass
@@ -80,3 +84,54 @@ def db_adapter_config(config: RuntimeConfig) -> RuntimeConfig:
         new_config = config
 
     return new_config
+
+
+def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
+    import os
+    fal_project_path = os.path.join(base_dir, "fal_project.yml")
+    if not os.path.exists(fal_project_path):
+        raise FalParseError(f"{fal_project_path} must exist to define environments")
+
+    fal_project = load_yaml(fal_project_path)
+    environments = {}
+    for environment in fal_project.get("environments", []):
+        env_name = _get_required_key(environment, "name")
+        if _is_local_environment(env_name):
+            raise FalParseError(
+                f"Environment name conflicts with a reserved name: {env_name}."
+            )
+
+        env_kind = _get_required_key(environment, "type")
+        environments[env_name] = create_environment(env_name, env_kind, environment)
+    return environments
+
+
+def create_environment(name: str, kind: str, config: Dict[str, Any]):
+    from isolate.backends.virtualenv import VirtualPythonEnvironment
+    from isolate.backends.conda import CondaEnvironment
+
+    REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
+        "conda": CondaEnvironment,
+        "venv": VirtualPythonEnvironment,
+    }
+    env_type = REGISTERED_ENVIRONMENTS.get(kind)
+    if env_type is None:
+        raise ValueError(
+            f"Invalid environment type (of {kind}) for {name}. Please choose from: "
+            + ", ".join(REGISTERED_ENVIRONMENTS.keys())
+        )
+
+    parsed_config = {
+        'requirements': config.get('requirements', [])
+    }
+
+    return env_type.from_config(parsed_config)
+
+
+def _is_local_environment(environment_name: str) -> bool:
+    return environment_name == "local"
+
+def _get_required_key(data: Dict[str, Any], name: str) -> Any:
+    if name not in data:
+        raise FalParseError("Missing required key: " + name)
+    return data[name]
