@@ -59,6 +59,7 @@ behave = { version = "^1.2.6", optional = true }
 mock = { version = "^4.0.3", optional = true }
 pytest-mock = { version = "^3.7.0", optional = true }
 matplotlib = { version = "^3.5.2", optional = true }
+isolate = "^0.3.0"
 
 [tool.poetry.extras]
 postgres = []
