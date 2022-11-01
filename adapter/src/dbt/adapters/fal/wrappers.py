@@ -1,10 +1,15 @@
 from typing import Any, Optional, Type
-from dbt.adapters.fal_experimental.impl import FalAdapterMixin
+
 from dbt.adapters.factory import get_adapter_by_type
+from dbt.adapters.base.meta import available
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.contracts.connection import Credentials
-from fal.telemetry import telemetry
+from dbt.parser.manifest import ManifestLoader
+from dbt.clients.jinja import MacroGenerator
 
+from dbt.adapters.fal_experimental.impl import FalAdapterMixin
+from fal.telemetry import telemetry
+from fal.utils import cache_static
 
 class FalCredentialsWrapper:
     _db_creds: Optional[Credentials] = None
@@ -40,6 +45,22 @@ class FalEncAdapterWrapper(FalAdapterMixin):
     @telemetry.log_call("encapsulate_submit_python_job")
     def submit_python_job(self, *args, **kwargs):
         return super().submit_python_job(*args, **kwargs)
+
+    @available
+    def db_materialization(self, context, materialization):
+        # NOTE: inspired by https://github.com/dbt-labs/dbt-core/blob/be4a91a0fe35a619587b7a0145e190690e3771c6/core/dbt/task/run.py#L254-L290
+        materialization_macro = self.manifest.find_materialization_macro_by_name(
+            self.config.project_name, materialization, self._db_adapter.type()
+        )
+
+        return MacroGenerator(
+            materialization_macro, context, stack=context["context_macro_stack"]
+        )()
+
+    @property
+    @cache_static
+    def manifest(self):
+        return ManifestLoader.get_full_manifest(self.config)
 
     @classmethod
     def type(cls):
