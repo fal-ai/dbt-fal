@@ -1,0 +1,18 @@
+config:
+  send_anonymous_usage_stats: False
+
+fal_test:
+  target: integration_tests
+  outputs:
+    integration_tests:
+      type: fal
+      db_profile: db
+    db:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: pguser
+      password: pass
+      dbname: test
+      schema: dbt_fal
+      threads: 4
