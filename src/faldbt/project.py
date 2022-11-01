@@ -883,12 +883,14 @@ class FalDbt:
             config=self._config,
         )
 
-    def _load_environment(self, name: str) -> Optional["BaseEnvironment"]:
-        """Return the environment for the given ``name``. If the environment does not
-        exist, return None."""
+    def _load_environment(self, name: str) -> "BaseEnvironment":
+        """
+        Return the environment for the given ``name``.
+        If the environment does not exist, it raises an exception.
+        """
         if self._environments is None:
             self._environments = parse.load_environments(self.project_dir)
-        return self._environments.get(name)
+        return self._environments[name]
 
 
 def _firestore_dict_to_document(data: Dict, key_column: str):
