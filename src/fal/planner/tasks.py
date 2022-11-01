@@ -253,9 +253,11 @@ class FalIsolatedHookTask(Task):
         self.local_hook.set_run_index(index_provider)
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        environment = fal_dbt._load_environment(self.environment_name)
-        if environment is None:
-            LOGGER.error("Could not find environment: {}", self.environment_name)
+        try:
+            environment = fal_dbt._load_environment(self.environment_name)
+        except:
+            import traceback
+            LOGGER.error("Could not find environment: {}\n{}", self.environment_name, traceback.format_exc())
             return FAILURE
 
         with environment.connect() as connection:

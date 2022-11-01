@@ -212,24 +212,26 @@ def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
     from fal.packages.environments import create_environment
     from fal.fal_script import _is_local_environment
 
-    fal_project_path = os.path.join(base_dir, "fal_project.yml")
-    if not os.path.exists(fal_project_path):
-        raise FalParseError(f"{fal_project_path} must exist to define environments")
+    try:
+        fal_project_path = os.path.join(base_dir, "fal_project.yml")
+        if not os.path.exists(fal_project_path):
+            raise FalParseError(f"{fal_project_path} must exist to define environments")
 
-    fal_project = load_yaml(fal_project_path)
+        fal_project = load_yaml(fal_project_path)
 
-    environments = {}
-    for environment in fal_project.get("environments", []):
-        env_name = _get_required_key(environment, "name")
-        if _is_local_environment(env_name):
-            raise FalParseError(
-                f"Environment name conflicts with a reserved name: {env_name}."
-            )
+        environments = {}
+        for environment in fal_project.get("environments", []):
+            env_name = _get_required_key(environment, "name")
+            if _is_local_environment(env_name):
+                raise FalParseError(
+                    f"Environment name conflicts with a reserved name: {env_name}."
+                )
 
-        env_kind = _get_required_key(environment, "type")
-        environments[env_name] = create_environment(env_name, env_kind, environment)
-    return environments
-
+            env_kind = _get_required_key(environment, "type")
+            environments[env_name] = create_environment(env_name, env_kind, environment)
+        return environments
+    except FalParseError as e:
+        raise RuntimeError("Error loading environments from fal_project.yml") from e
 
 def normalize_path(base: str, path: Union[Path, str]):
     real_base = os.path.realpath(os.path.normpath(base))
