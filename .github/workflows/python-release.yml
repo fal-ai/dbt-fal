@@ -87,8 +87,16 @@ jobs:
         uses: orhun/git-cliff-action@v1
         id: git-cliff
         with:
-          config: ${{ env.PACKAGE_DIR }}/cliff.toml
-          args: ${{ env.prev_version_tag }}..${{ github.ref }}
+          config: cliff.toml
+          args: >
+            -v
+            ${{ env.prev_version_tag }}..${{ github.ref }}
+            --include-path '.github/**'
+            --include-path '${{ env.PACKAGE_DIR }}/src/**'
+            --include-path '${{ env.PACKAGE_DIR }}/integration_tests/**'
+            --include-path '${{ env.PACKAGE_DIR }}/tests/**'
+            --include-path '${{ env.PACKAGE_DIR }}/poetry.lock'
+            --include-path '${{ env.PACKAGE_DIR }}/pyproject.toml'
         env:
           OUTPUT: CHANGES.md
 
