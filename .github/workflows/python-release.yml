@@ -5,6 +5,14 @@ name: PyPI Release
 on:
   workflow_dispatch:
     inputs:
+      package:
+        description: Package
+        required: false
+        default: fal
+        type: choice
+        options:
+          - fal
+          - dbt-fal
       version:
         description: Version
         required: false
@@ -18,6 +26,11 @@ on:
         required: false
         default: false
         type: boolean
+      next_version:
+        description: Next version
+        required: false
+        default: prepatch
+        type: string
 
 jobs:
   deploy:
@@ -35,11 +48,23 @@ jobs:
         with:
           python-version: "3.8"
 
+      - name: Package setup
+        run: |
+          if [[ ${{ inputs.package }} == fal ]]
+          then
+            "PACKAGE_DIR=." >> $GITHUB_ENV
+            "TAG_PREFIX=v" >> $GITHUB_ENV
+          else if [[ ${{ inputs.package }} == dbt-fal ]]
+            "PACKAGE_DIR=adapter" >> $GITHUB_ENV
+            "TAG_PREFIX=adapter-v" >> $GITHUB_ENV
+          fi
+
       - name: Install poetry
         shell: bash
         run: pip install poetry-core=="1.0.*" poetry=="1.1.4"
 
       - name: Build package
+        working-directory: ${{ env.PACKAGE_DIR }}
         env:
           PYPI_USERNAME: ${{ secrets.PYPI_USER }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
@@ -53,7 +78,7 @@ jobs:
           echo "current_version=$current_version" >> $GITHUB_ENV
 
           # tag has format 'v0.4.0' (note the 'v')
-          prev_version_tag=$(git describe --tags --abbrev=0)
+          prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}0.*' --abbrev=0)
           echo "prev_version_tag=$prev_version_tag" >> $GITHUB_ENV
 
           poetry build
@@ -80,24 +105,26 @@ jobs:
       - name: Publish GitHub
         uses: softprops/action-gh-release@v1
         with:
-          name: fal ${{ env.current_version }}
+          name: ${{ inputs.package }} ${{ env.current_version }}
           body: ${{ steps.release.outputs.RELEASE_BODY }}
-          tag_name: v${{ env.current_version }}
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.current_version }}
           files: |
-            dist/fal-${{env.current_version}}-py3-none-any.whl
-            dist/fal-${{env.current_version}}.tar.gz
+            ${{ env.PACKAGE_DIR }}/dist/${{ inputs.package }}-${{ env.current_version }}-py3-none-any.whl
+            ${{ env.PACKAGE_DIR }}/dist/${{ inputs.package }}-${{ env.current_version }}.tar.gz
 
       - name: Publish PyPI
+        working-directory: ${{ env.PACKAGE_DIR }}
         env:
           PYPI_USERNAME: ${{ secrets.PYPI_USER }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: poetry publish -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
 
       - name: Bump repo version
+        working-directory: ${{ env.PACKAGE_DIR }}
         run: |
           git clean -fxd # Clear all the changes
-          poetry version ${{env.current_version}}
-          poetry version prepatch
+          poetry version ${{ env.current_version }}
+          poetry version ${{ inputs.next_version }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
