@@ -92,11 +92,13 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
     from isolate.backends.virtualenv import VirtualPythonEnvironment
     from isolate.backends.conda import CondaEnvironment
     from isolate.backends.local import LocalPythonEnvironment
+    from isolate.backends.remote import IsolateServer
 
 
     REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
         "conda": CondaEnvironment,
-        "venv": VirtualPythonEnvironment
+        "venv": VirtualPythonEnvironment,
+        "remote": IsolateServer
     }
 
     env_type = REGISTERED_ENVIRONMENTS.get(kind)
@@ -116,6 +118,16 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
     elif env_type is VirtualPythonEnvironment:
         parsed_config = {
             'requirements': config.get('requirements', []),
+        }
+
+    if kind == "remote":
+        parsed_config = {
+            "host": config.get("host"),
+            "target_environment_kind": config.get("remote_type"),
+            "target_environment_config": {
+                # for now only virtualenv is supported in remote
+                'requirements': config.get('requirements', []),
+            }
         }
 
 
