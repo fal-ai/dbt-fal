@@ -644,22 +644,6 @@ python-versions = "*"
 six = "*"
 
 [[package]]
-name = "isolate"
-version = "0.3.0"
-description = "Managed isolated environments for Python"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-importlib-metadata = ">=4.4"
-virtualenv = ">=20.4"
-
-[package.extras]
-grpc = ["grpcio (>=1.49)", "protobuf"]
-server = ["grpcio (>=1.49)", "protobuf"]
-
-[[package]]
 name = "kiwisolver"
 version = "1.4.4"
 description = "A fast implementation of the Cassowary constraint solver"
@@ -1328,7 +1312,7 @@ test = ["pytest", "black", "behave", "mock", "pytest-mock"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.11"
-content-hash = "514fff920f4b5995e41a33952a4c52b40ea75a4ebe8233dbf9fd4b95a7c4c77f"
+content-hash = "fc271b9684b0124d187707440fe473f3c166eb27aa8de8b32efabddc2f8b7163"
 
 [metadata.files]
 agate = [
@@ -1828,10 +1812,6 @@ importlib-metadata = [
 isodate = [
     {file = "isodate-0.6.1-py2.py3-none-any.whl", hash = "sha256:0751eece944162659049d35f4f549ed815792b38793f07cf73381c1c87cbed96"},
     {file = "isodate-0.6.1.tar.gz", hash = "sha256:48c5881de7e8b0a0d648cb024c8062dc84e7b840ed81e864c7614fd3c127bde9"},
-]
-isolate = [
-    {file = "isolate-0.3.0-py3-none-any.whl", hash = "sha256:f8a16dbec502d75fa19c3cb021aa3e2ac222cfe88402a7ab70bac9992a109e30"},
-    {file = "isolate-0.3.0.tar.gz", hash = "sha256:370e4b8d9ea3ab0a3e579ca724fa33a486dcf6cd542841a866789b79cdd1b47a"},
 ]
 kiwisolver = [
     {file = "kiwisolver-1.4.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:2f5e60fabb7343a836360c4f0919b8cd0d6dbf08ad2ca6b9cf90bf0c76a3c4f6"},
