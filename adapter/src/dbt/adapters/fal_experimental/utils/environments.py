@@ -125,10 +125,15 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
             + ", ".join(REGISTERED_ENVIRONMENTS.keys())
         )
 
-    parsed_config = {
-        'requirements': config.get('requirements', []),
-        'packages': config.get('packages', [])
-    }
+    if env_type is CondaEnvironment:
+        parsed_config = {
+            'packages': config.get('packages', [])
+        }
+    else:
+        parsed_config = {
+            'requirements': config.get('requirements', []),
+        }
+
 
     return env_type.from_config(parsed_config)
 
