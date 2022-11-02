@@ -59,7 +59,9 @@ def fetch_environment(
     try:
         environments = load_environments(project_root)
     except Exception as exc:
-        raise dbt.exceptions.RuntimeException(str(exc)) from exc
+        raise dbt.exceptions.RuntimeException(
+            "Error loading environments from fal_project.yml"
+        ) from exc
 
     if environment_name not in environments:
         raise dbt.exceptions.RuntimeException(
@@ -97,7 +99,7 @@ def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
             )
 
         env_kind = _get_required_key(environment, "type")
-        if environments.get(env_name) != None:
+        if environments.get(env_name) is not None:
             raise FalParseError("Environment names must be unique.")
 
         environments[env_name] = create_environment(env_name, env_kind, environment)
@@ -112,6 +114,7 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
     REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
         "conda": CondaEnvironment,
         "venv": VirtualPythonEnvironment,
+        "local": LocalEnvironment
     }
 
     env_type = REGISTERED_ENVIRONMENTS.get(kind)
@@ -123,7 +126,8 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
         )
 
     parsed_config = {
-        'requirements': config.get('requirements', [])
+        'requirements': config.get('requirements', []),
+        'packages': config.get('packages', [])
     }
 
     return env_type.from_config(parsed_config)
