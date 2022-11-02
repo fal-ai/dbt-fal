@@ -62,6 +62,7 @@ def run_in_environment_with_adapter(
 
 
     else:
+        deps = get_default_pip_dependencies()
         stage = VirtualPythonEnvironment(deps)
 
         with PythonIPC(environment, environment.create(), extra_inheritance_paths=[stage.create()]) as connection:
