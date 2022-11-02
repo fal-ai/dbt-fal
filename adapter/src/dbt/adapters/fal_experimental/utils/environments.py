@@ -97,7 +97,11 @@ def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
             )
 
         env_kind = _get_required_key(environment, "type")
+        if environments.get(env_name) != None:
+            raise FalParseError("Environment names must be unique.")
+
         environments[env_name] = create_environment(env_name, env_kind, environment)
+
     return environments
 
 
