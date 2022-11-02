@@ -87,8 +87,8 @@ jobs:
         uses: orhun/git-cliff-action@v1
         id: git-cliff
         with:
-          config: cliff.toml
-          args: ${{ env.prev_version_tag }}..HEAD
+          config: ${{ env.PACKAGE_DIR }}/cliff.toml
+          args: ${{ env.prev_version_tag }}..${{ github.ref }}
         env:
           OUTPUT: CHANGES.md
 
