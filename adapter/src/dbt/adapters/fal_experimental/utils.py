@@ -5,17 +5,15 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 
 import dbt.exceptions
-from fal.packages.environments.base import (
-    BasicCallable,
-    EnvironmentConnection,
-)
 
-from isolate.backends import BaseEnvironment
+from isolate.backends import BaseEnvironment, BasicCallable, EnvironmentConnection
 
 from dbt.config.runtime import RuntimeConfig
-from faldbt.parse import FalParseError
 
-from faldbt.utils.yaml_helper import load_yaml
+from .yaml_helper import load_yaml
+
+class FalParseError(Exception):
+    pass
 
 
 @dataclass
@@ -86,7 +84,7 @@ def db_adapter_config(config: RuntimeConfig) -> RuntimeConfig:
     return new_config
 
 
-def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
+def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
     import os
     fal_project_path = os.path.join(base_dir, "fal_project.yml")
     if not os.path.exists(fal_project_path):
@@ -114,7 +112,9 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
         "conda": CondaEnvironment,
         "venv": VirtualPythonEnvironment,
     }
+
     env_type = REGISTERED_ENVIRONMENTS.get(kind)
+
     if env_type is None:
         raise ValueError(
             f"Invalid environment type (of {kind}) for {name}. Please choose from: "
