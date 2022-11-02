@@ -10,6 +10,7 @@ import importlib_metadata
 from isolate.backends import BaseEnvironment, BasicCallable, EnvironmentConnection
 
 from dbt.config.runtime import RuntimeConfig
+from isolate.backends.local import LocalPythonEnvironment
 
 from . import cache_static
 
@@ -18,26 +19,6 @@ from .yaml_helper import load_yaml
 
 class FalParseError(Exception):
     pass
-
-
-@dataclass
-class LocalEnvironment(BaseEnvironment[None]):
-    """A dummy environment for Fal to run the given executable
-    locally."""
-
-    @property
-    def key(self) -> str:
-        return "local"
-
-    @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> BaseEnvironment:
-        return cls()
-
-    def _get_or_create(self) -> None:
-        return None
-
-    def open_connection(self, conn_info: None) -> LocalConnection:
-        return LocalConnection(self)
 
 
 @dataclass
@@ -54,7 +35,7 @@ def fetch_environment(
     # Local is a special environment where it doesn't need to be defined
     # since it will mirror user's execution context directly.
     if environment_name == "local":
-        return LocalEnvironment(), True
+        return LocalPythonEnvironment(), True
 
     try:
         environments = load_environments(project_root)
@@ -110,11 +91,12 @@ def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
 def create_environment(name: str, kind: str, config: Dict[str, Any]):
     from isolate.backends.virtualenv import VirtualPythonEnvironment
     from isolate.backends.conda import CondaEnvironment
+    from isolate.backends.local import LocalPythonEnvironment
+
 
     REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
         "conda": CondaEnvironment,
-        "venv": VirtualPythonEnvironment,
-        "local": LocalEnvironment
+        "venv": VirtualPythonEnvironment
     }
 
     env_type = REGISTERED_ENVIRONMENTS.get(kind)
@@ -125,11 +107,13 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
             + ", ".join(REGISTERED_ENVIRONMENTS.keys())
         )
 
+    parsed_config = {}
+
     if env_type is CondaEnvironment:
         parsed_config = {
             'packages': config.get('packages', [])
         }
-    else:
+    elif env_type is VirtualPythonEnvironment:
         parsed_config = {
             'requirements': config.get('requirements', []),
         }
