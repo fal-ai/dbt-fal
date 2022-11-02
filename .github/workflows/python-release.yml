@@ -52,13 +52,31 @@ jobs:
         run: |
           if [[ ${{ inputs.package }} == fal ]]
           then
-            echo "PACKAGE_DIR=." >> $GITHUB_ENV
-            echo "TAG_PREFIX=v" >> $GITHUB_ENV
+            PACKAGE_DIR=.
+            TAG_PREFIX=v
           elif [[ ${{ inputs.package }} == dbt-fal ]]
           then
-            echo "PACKAGE_DIR=adapter" >> $GITHUB_ENV
-            echo "TAG_PREFIX=adapter-v" >> $GITHUB_ENV
+            PACKAGE_DIR=adapter
+            TAG_PREFIX=adapter-v
           fi
+
+          echo "PACKAGE_DIR=$PACKAGE_DIR" >> $GITHUB_ENV
+          echo "TAG_PREFIX=$TAG_PREFIX" >> $GITHUB_ENV
+
+
+          INCLUDE=""
+          for val in src integration_tests tests
+          do
+            INCLUDE="$INCLUDE $PACKAGE_DIR/$val/*"
+          done
+
+          INCLUDE=""
+          for val in poetry.lock pyproject.toml
+          do
+            INCLUDE="$INCLUDE $PACKAGE_DIR/$val"
+          done
+
+          echo "GIT_CLIFF_INCLUDE_PATH=$INCLUDE" >> $GITHUB_ENV
 
       - name: Install poetry
         shell: bash
@@ -89,17 +107,10 @@ jobs:
         id: git-cliff
         with:
           config: cliff.toml
-          args: >
-            -v
-            ${{ env.prev_version_tag }}..${{ github.ref }}
-            --include-path '.github/**'
-            --include-path '${{ env.PACKAGE_DIR }}/src/**'
-            --include-path '${{ env.PACKAGE_DIR }}/integration_tests/**'
-            --include-path '${{ env.PACKAGE_DIR }}/tests/**'
-            --include-path '${{ env.PACKAGE_DIR }}/poetry.lock'
-            --include-path '${{ env.PACKAGE_DIR }}/pyproject.toml'
+          args: -v ${{ env.prev_version_tag }}..${{ github.ref }}
         env:
           OUTPUT: CHANGES.md
+          GIT_CLIFF_INCLUDE_PATH: ${{ env.GIT_CLIFF_INCLUDE_PATH }}
 
       - name: Set the release body
         id: release
