@@ -2,13 +2,12 @@ from typing import Any, Callable, Dict, NewType
 from functools import partial
 import functools
 from dbt.adapters.fal_experimental.connections import TeleportTypeEnum
+from isolate.backends import BaseEnvironment
 import pandas as pd
 
 from dbt.contracts.connection import AdapterResponse
 
 from dbt.fal.adapters.teleport.info import TeleportInfo
-
-from fal.packages.environments import BaseEnvironment
 
 from .utils import retrieve_symbol
 
