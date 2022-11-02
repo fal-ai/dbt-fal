@@ -9,7 +9,7 @@ from dbt.clients.jinja import MacroGenerator
 
 from dbt.adapters.fal_experimental.impl import FalAdapterMixin
 from fal.telemetry import telemetry
-from fal.utils import cache_static
+from dbt.adapters.fal_experimental.utils import cache_static
 
 class FalCredentialsWrapper:
     _db_creds: Optional[Credentials] = None
