@@ -79,7 +79,7 @@ jobs:
           echo "current_version=$current_version" >> $GITHUB_ENV
 
           # tag has format 'v0.4.0' (note the 'v')
-          prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}0.*' --abbrev=0)
+          prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}*' --abbrev=0)
           echo "prev_version_tag=$prev_version_tag" >> $GITHUB_ENV
 
           poetry build
