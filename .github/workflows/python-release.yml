@@ -35,7 +35,7 @@ on:
 jobs:
   deploy:
     # Run only for `release` branch or if marked as acceptable
-    if: github.ref == 'refs/heads/release' || inputs.publish_from_any_branch
+    # if: github.ref == 'refs/heads/release' || inputs.publish_from_any_branch
 
     runs-on: ubuntu-latest
 
@@ -111,6 +111,7 @@ jobs:
           echo "::set-output name=RELEASE_BODY::$r"
 
       - name: Publish GitHub
+        if: false
         uses: softprops/action-gh-release@v1
         with:
           name: ${{ inputs.package }} ${{ env.current_version }}
@@ -121,6 +122,7 @@ jobs:
             ${{ env.PACKAGE_DIR }}/dist/${{ inputs.package }}-${{ env.current_version }}.tar.gz
 
       - name: Publish PyPI
+        if: false
         working-directory: ${{ env.PACKAGE_DIR }}
         env:
           PYPI_USERNAME: ${{ secrets.PYPI_USER }}
@@ -128,6 +130,7 @@ jobs:
         run: poetry publish -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
 
       - name: Bump repo version
+        if: false
         working-directory: ${{ env.PACKAGE_DIR }}
         run: |
           git clean -fxd # Clear all the changes
@@ -135,9 +138,14 @@ jobs:
           poetry version ${{ inputs.next_version }}
 
       - name: Create Pull Request
+        if: false
         uses: peter-evans/create-pull-request@v4
         with:
           delete-branch: true
           title: Bump the pyproject.toml version
           base: main
           token: ${{ secrets.RELEASER_GITHUB_PAT }}
+
+      - name: show the body
+        shell: bash
+        run: cat "${{ steps.git-cliff.outputs.changelog }}"
