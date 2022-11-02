@@ -109,7 +109,7 @@ jobs:
           r="${r//'%'/'%25'}"     # Multiline escape sequences for %
           r="${r//$'\n'/'%0A'}"   # Multiline escape sequences for '\n'
           r="${r//$'\r'/'%0D'}"   # Multiline escape sequences for '\r'
-          echo "::set-output name=RELEASE_BODY::$r"
+          echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT
 
       - name: Publish GitHub
         if: false
