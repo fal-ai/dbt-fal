@@ -7,7 +7,7 @@ from dbt.adapters.base.impl import BaseAdapter
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
-from dbt.adapters.fal_experimental.utils import get_default_pip_dependencies
+from dbt.adapters.fal_experimental.utils.environments import get_default_pip_dependencies
 
 from isolate.backends import BaseEnvironment
 

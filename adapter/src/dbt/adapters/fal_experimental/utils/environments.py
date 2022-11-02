@@ -11,12 +11,10 @@ from isolate.backends import BaseEnvironment, BasicCallable, EnvironmentConnecti
 
 from dbt.config.runtime import RuntimeConfig
 
+from . import cache_static
+
 from .yaml_helper import load_yaml
 
-try:
-    from functools import lru_cache
-except ImportError:
-    from backports.functools_lru_cache import lru_cache
 
 class FalParseError(Exception):
     pass
@@ -46,13 +44,6 @@ class LocalEnvironment(BaseEnvironment[None]):
 class LocalConnection(EnvironmentConnection):
     def run(self, executable: BasicCallable, *args, **kwargs) -> Any:
         return executable(*args, **kwargs)
-
-
-def retrieve_symbol(source_code: str, symbol_name: str) -> Any:
-    """Retrieve the function with the given name from the source code."""
-    namespace = {}
-    exec(source_code, namespace)
-    return namespace[symbol_name]
 
 
 def fetch_environment(
@@ -137,14 +128,12 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
 def _is_local_environment(environment_name: str) -> bool:
     return environment_name == "local"
 
+
 def _get_required_key(data: Dict[str, Any], name: str) -> Any:
     if name not in data:
         raise FalParseError("Missing required key: " + name)
     return data[name]
 
-def cache_static(func):
-    """Cache the result of a function."""
-    return lru_cache(maxsize=None)(func)
 
 def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (

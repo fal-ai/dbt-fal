@@ -24,7 +24,7 @@ from .teleport import DataLocation, run_in_environment_with_teleport, run_with_t
 from .adapter_support import reload_adapter_cache
 from .adapter import run_in_environment_with_adapter, run_with_adapter
 
-from .utils import fetch_environment, db_adapter_config
+from .utils.environments import fetch_environment, db_adapter_config
 
 
 class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
