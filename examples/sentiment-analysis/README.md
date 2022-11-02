@@ -24,7 +24,7 @@ models:
 
 ## Seeding data to the warehouse
 
-If you are just following this example for some practice with fal or dbt, one useful feature of dbt is to [seed csv data to your warehouse](https://docs.getdbt.com/docs/building-a-dbt-project/seeds). Instead of adding the dummy data to your warehouse you can put [Fivetran dbt-zendesk](https://github.com/fivetran/dbt_zendesk/tree/main/integration_tests/data) ticket data in the data folder of your project and run `dbt seed`. Just a friendly warning that seeding should only be used with small amount of data.
+If you are just following this example for some practice with fal or dbt, one useful feature of dbt is to [seed csv data to your warehouse](https://docs.getdbt.com/docs/building-a-dbt-project/seeds). Instead of adding the dummy data to your warehouse you can put [Fivetran dbt-zendesk](https://github.com/fivetran/dbt_zendesk/tree/main/integration_tests/seeds) ticket data in the data folder of your project and run `dbt seed`. Just a friendly warning that seeding should only be used with small amount of data.
 
 Alternatively you can load this data to your warehouse with in any way as you like.
 
