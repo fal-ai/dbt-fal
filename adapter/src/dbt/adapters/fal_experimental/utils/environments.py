@@ -120,16 +120,8 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
             'requirements': config.get('requirements', []),
         }
 
-    if kind == "remote":
-        parsed_config = {
-            "host": config.get("host"),
-            "target_environment_kind": config.get("remote_type"),
-            "target_environment_config": {
-                # for now only virtualenv is supported in remote
-                'requirements': config.get('requirements', []),
-            }
-        }
-
+    elif kind == "remote":
+        parsed_config = _parse_remote_config(config)
 
     return env_type.from_config(parsed_config)
 
@@ -143,6 +135,25 @@ def _get_required_key(data: Dict[str, Any], name: str) -> Any:
         raise FalParseError("Missing required key: " + name)
     return data[name]
 
+def _parse_remote_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    REMOTE_TYPES_DICT = {
+        "venv": "virtualenv",
+        "conda": "conda"
+    }
+
+    assert config.get("remote_type"), "remote_type needs to be specified."
+
+    remote_type = REMOTE_TYPES_DICT.get(config["remote_type"])
+
+    assert remote_type, f"{config['remote_type']} not recognised. Available remote types: {list(REMOTE_TYPES_DICT.keys())}"
+
+    return {
+        "host": config.get("host"),
+        "target_environment_kind": remote_type,
+        "target_environment_config": {
+            'requirements': config.get('requirements', []),
+        }
+    }
 
 def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (
