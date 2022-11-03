@@ -99,9 +99,6 @@ jobs:
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
           then
-            # This is needed until sqlalchemy-bigquery is released with 1.5.0
-            pip install --force-reinstall git+https://github.com/googleapis/python-bigquery-sqlalchemy
-
             # Save the credentials to a keyfile
             echo $KEYFILE > $HOME/keyfile.json
             ls -la $HOME/keyfile.json
