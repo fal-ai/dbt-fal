@@ -18,7 +18,7 @@ snowflake-connector-python = { version = "~2.7.10", extras = ["pandas"], optiona
 
 ## bigquery
 # We need the 1.5.0 version to support passing our own client.
-sqlalchemy-bigquery = { version = "^1.4.4", optional = true }
+sqlalchemy-bigquery = { git = "https://github.com/googleapis/python-bigquery-sqlalchemy", rev = "f1889443bd4d680550387b9bb14daeea8eb792d4", optional = true }
 
 ## redshift
 sqlalchemy-redshift = { version = "^0.8.9", optional = true }
