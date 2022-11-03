@@ -7,9 +7,10 @@ from dbt.contracts.connection import Credentials
 from dbt.parser.manifest import ManifestLoader
 from dbt.clients.jinja import MacroGenerator
 
-from dbt.adapters.fal_experimental.impl import FalAdapterMixin
-from fal.telemetry import telemetry
-from dbt.adapters.fal_experimental.utils import cache_static
+from ..fal_experimental.utils import cache_static
+from ..fal_experimental.impl import FalAdapterMixin
+from ..fal_experimental import telemetry
+
 
 class FalCredentialsWrapper:
     _db_creds: Optional[Credentials] = None
@@ -29,7 +30,6 @@ class FalCredentialsWrapper:
 
 
 class FalEncAdapterWrapper(FalAdapterMixin):
-    @telemetry.log_call("encapsulate_init")
     def __init__(self, db_adapter_type: Type[BaseAdapter], config):
         # Use the db_adapter_type connection manager
         self.ConnectionManager = db_adapter_type.ConnectionManager
@@ -42,11 +42,19 @@ class FalEncAdapterWrapper(FalAdapterMixin):
         # all the unhandled calls.
         self._available_ = self._db_adapter._available_.union(self._available_)
 
-    @telemetry.log_call("encapsulate_submit_python_job")
+        telemetry.log_api(
+            "encapsulate_init",
+            config=config,
+            additional_props={"is_teleport": self.is_teleport()},
+        )
+
     def submit_python_job(self, *args, **kwargs):
         return super().submit_python_job(*args, **kwargs)
 
     @available
+    @telemetry.log_call(
+        "encapsulate_db_materialization", log_args=["materialization"], config=True
+    )
     def db_materialization(self, context, materialization):
         # NOTE: inspired by https://github.com/dbt-labs/dbt-core/blob/be4a91a0fe35a619587b7a0145e190690e3771c6/core/dbt/task/run.py#L254-L290
         materialization_macro = self.manifest.find_materialization_macro_by_name(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator, List
+from typing import Iterator
 
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.adapters.base.meta import AdapterMeta, available
@@ -15,6 +15,8 @@ from dbt.fal.adapters.teleport.info import (
 )
 from dbt.fal.adapters.teleport.impl import TeleportAdapter
 from dbt.fal.adapters.python.impl import PythonAdapter
+
+from . import telemetry
 
 from .connections import FalConnectionManager, FalCredentials, TeleportTypeEnum
 
@@ -55,6 +57,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
     def is_teleport(self) -> bool:
         return getattr(self.credentials, "teleport", None) is not None
 
+    @telemetry.log_call("experimental_submit_python_job", config=True)
     def submit_python_job(
         self, parsed_model: dict, compiled_code: str
     ) -> AdapterResponse:
@@ -66,6 +69,15 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
 
         environment, is_local = fetch_environment(
             self.config.project_root, environment_name
+        )
+
+        telemetry.log_api(
+            "experimental_submit_python_job_config",
+            config=self.config,
+            additional_props={
+                "is_teleport": self.is_teleport(),
+                "environment_is_local": is_local,
+            },
         )
 
         if self.is_teleport():
@@ -188,7 +200,14 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
         data_path = self.teleport_to_external_storage(relation, teleport_info)
         self._wrapper.teleport_from_external_storage(relation, data_path, teleport_info)
 
+
 class FalAdapter(FalAdapterMixin, PythonAdapter):
     def __init__(self, config):
         PythonAdapter.__init__(self, config)
         FalAdapterMixin.__init__(self, config, self._db_adapter)
+
+        telemetry.log_api(
+            "experimental_init",
+            config=config,
+            additional_props={"is_teleport": self.is_teleport()},
+        )
