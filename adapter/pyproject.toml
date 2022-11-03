@@ -17,12 +17,10 @@ isolate = ">=0.3.0"
 snowflake-connector-python = { version = "~2.7.10", extras = ["pandas"], optional = true }
 
 ## bigquery
-# We need the 1.5.0 version to support passing our own client.
-sqlalchemy-bigquery = { git = "https://github.com/googleapis/python-bigquery-sqlalchemy", rev = "f1889443bd4d680550387b9bb14daeea8eb792d4", optional = true }
 
 ## redshift
 sqlalchemy-redshift = { version = "^0.8.9", optional = true }
-## teleport
+### teleport
 s3fs = { version = ">=2022.8.2" }
 
 
@@ -32,7 +30,7 @@ pytest = "^5.2"
 [tool.poetry.extras]
 postgres = []
 snowflake = ["snowflake-connector-python", "pyarrow"]
-bigquery = ["sqlalchemy-bigquery"]
+bigquery = []
 redshift = ["sqlalchemy-redshift"]
 duckdb = []
 athena = []
