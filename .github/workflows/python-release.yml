@@ -105,8 +105,7 @@ jobs:
           r="${r//'%'/'%25'}"     # Multiline escape sequences for %
           r="${r//$'\n'/'%0A'}"   # Multiline escape sequences for '\n'
           r="${r//$'\r'/'%0D'}"   # Multiline escape sequences for '\r'
-
-          echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT
+          echo "::set-output name=RELEASE_BODY::$r"
 
       - name: Publish GitHub
         uses: softprops/action-gh-release@v1
