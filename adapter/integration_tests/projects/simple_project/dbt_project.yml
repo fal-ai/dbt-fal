@@ -14,12 +14,5 @@ vars:
   fal-scripts-path: "scripts"
   fal-models-paths: ["fal_models"]
 
-# NOTE: necessary for snowflake projects
-# dbt uses adapter_class.Relation, and that is BaseRelation
-quoting:
-  database: false
-  schema: false
-  identifier: false
-
 models:
   +schema: custom
