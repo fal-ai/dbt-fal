@@ -10,6 +10,7 @@ on:
       - "LICENSE"
       - "docker/**"
       - "adapter/**"
+      - ".github/workflows/*adapter*"
 
   push:
     branches: [main]
