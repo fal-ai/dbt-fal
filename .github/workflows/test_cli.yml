@@ -9,6 +9,8 @@ on:
       - "README.md"
       - "LICENSE"
       - "docker/**"
+      - "adapter/**"
+      - ".github/workflows/*adapter*"
   workflow_dispatch:
 
 jobs:
