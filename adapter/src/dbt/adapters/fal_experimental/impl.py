@@ -48,11 +48,6 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
     def storage_formats(cls):
         return ["csv", "parquet"]
 
-    @classmethod
-    def is_cancelable(cls) -> bool:
-        # TODO: maybe it is?
-        return False
-
     @available
     def is_teleport(self) -> bool:
         return getattr(self.credentials, "teleport", None) is not None
@@ -211,3 +206,8 @@ class FalAdapter(FalAdapterMixin, PythonAdapter):
             config=config,
             additional_props={"is_teleport": self.is_teleport()},
         )
+
+    @classmethod
+    def is_cancelable(cls) -> bool:
+        # TODO: maybe it is?
+        return False
