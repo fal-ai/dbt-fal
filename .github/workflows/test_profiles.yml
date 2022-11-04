@@ -9,6 +9,7 @@ on:
       - "README.md"
       - "LICENSE"
       - "docker/**"
+      - "adapter/**"
 
   push:
     branches: [main]
