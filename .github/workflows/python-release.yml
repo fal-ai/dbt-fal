@@ -52,11 +52,12 @@ jobs:
         run: |
           if [[ ${{ inputs.package }} == fal ]]
           then
-            "PACKAGE_DIR=." >> $GITHUB_ENV
-            "TAG_PREFIX=v" >> $GITHUB_ENV
-          else if [[ ${{ inputs.package }} == dbt-fal ]]
-            "PACKAGE_DIR=adapter" >> $GITHUB_ENV
-            "TAG_PREFIX=adapter-v" >> $GITHUB_ENV
+            echo "PACKAGE_DIR=." >> $GITHUB_ENV
+            echo "TAG_PREFIX=v" >> $GITHUB_ENV
+          elif [[ ${{ inputs.package }} == dbt-fal ]]
+          then
+            echo "PACKAGE_DIR=adapter" >> $GITHUB_ENV
+            echo "TAG_PREFIX=adapter-v" >> $GITHUB_ENV
           fi
 
       - name: Install poetry
@@ -78,7 +79,7 @@ jobs:
           echo "current_version=$current_version" >> $GITHUB_ENV
 
           # tag has format 'v0.4.0' (note the 'v')
-          prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}0.*' --abbrev=0)
+          prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}*' --abbrev=0)
           echo "prev_version_tag=$prev_version_tag" >> $GITHUB_ENV
 
           poetry build
@@ -100,7 +101,7 @@ jobs:
           r="${r//'%'/'%25'}"     # Multiline escape sequences for %
           r="${r//$'\n'/'%0A'}"   # Multiline escape sequences for '\n'
           r="${r//$'\r'/'%0D'}"   # Multiline escape sequences for '\r'
-          echo "::set-output name=RELEASE_BODY::$r"
+          echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT
 
       - name: Publish GitHub
         uses: softprops/action-gh-release@v1
