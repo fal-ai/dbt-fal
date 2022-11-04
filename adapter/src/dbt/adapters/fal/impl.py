@@ -33,7 +33,7 @@ def load_db_profile(config) -> Profile:
         )
 
 
-# NOTE: cls.Relation = BaseRelation, which may be problematic?
+# NOTE: cls.Relation = BaseRelation, causes problems for Snowflake because BaseRelation has quoting = True for all
 # TODO: maybe assign FalEncAdapter.Relation in `__init__` Plugin and have this directly inherit from FalAdapterMixin
 class FalEncAdapter(BaseAdapter):
     def __new__(cls, config):
