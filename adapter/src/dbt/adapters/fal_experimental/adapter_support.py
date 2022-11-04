@@ -26,7 +26,7 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
 
     sqlalchemy_kwargs = {}
     format_url = lambda url: url
-    if adapter_type in ("postgres", "redshift", "snowflake", "duckdb"):
+    if adapter_type in ("postgres", "redshift"):
         # If the given adapter supports the DBAPI (PEP 249), we can
         # use its connection directly for the engine.
         sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
@@ -34,17 +34,10 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
             format_url = (
                 lambda url: url + connection.handle.host + ":" + connection.handle.port
             )
-    elif adapter_type == "bigquery":
-        # BigQuery's connection object returns a google-cloud
-        # client, which doesn't directly support the DBAPI but
-        # we can still partially leverage it to construct the
-        # engine object.
-        sqlalchemy_kwargs["connect_args"] = {"client": connection.handle}
-        format_url = lambda url: url + "?user_supplied_client=True"
     else:
         # TODO: maybe tell them to open an issue?
         raise NotImplementedError(
-            "dbt-fal does not support the given adapter " "for materializing relations."
+            "dbt-fal does not support the given adapter for materializing relations."
         )
 
     url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
@@ -76,6 +69,11 @@ def write_df_to_relation(
 
         return support_snowflake.write_df_to_relation(adapter, dataframe, relation)
 
+    elif adapter.type() == "bigquery":
+        import dbt.adapters.fal_experimental.support.bigquery as support_bq
+
+        return support_bq.write_df_to_relation(adapter, dataframe, relation)
+
     elif adapter.type() == "duckdb":
         import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
@@ -105,11 +103,6 @@ def write_df_to_relation(
             adapter.rename_relation(temp_relation, relation)
             adapter.commit_if_has_connection()
 
-        if adapter.type() == "bigquery":
-            # HACK: sleep after a bigquery write to make it propagate.
-            # A real solution is to use fal's bigquery implementation here
-            sleep(4)
-
             return AdapterResponse("OK", rows_affected=rows_affected)
 
 
@@ -120,6 +113,11 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
         import dbt.adapters.fal_experimental.support.snowflake as support_snowflake
 
         return support_snowflake.read_relation_as_df(adapter, relation)
+
+    elif adapter.type() == "bigquery":
+        import dbt.adapters.fal_experimental.support.bigquery as support_bq
+
+        return support_bq.read_relation_as_df(adapter, relation)
 
     elif adapter.type() == "duckdb":
         import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
