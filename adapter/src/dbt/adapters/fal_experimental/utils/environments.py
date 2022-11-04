@@ -159,11 +159,13 @@ def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
         # It might not be installed.
         return None
 
-    if _is_adapter_pre_release():
-        dbt_fal_dep = str(_get_adapter_root_path())
-        dbt_fal_version = None
-    else:
-        dbt_fal_dep = "dbt-fal"
+    dbt_fal_dep = "dbt-fal"
+    if _is_pre_release(dbt_fal_version):
+        dbt_fal_path = _get_adapter_root_path()
+        if dbt_fal_path is not None:
+            # Can be a pre-release from PyPI
+            dbt_fal_dep = str(dbt_fal_path)
+            dbt_fal_version = None
 
     dbt_fal_extras = _find_adapter_extras("dbt-fal")
 
@@ -208,19 +210,18 @@ def _find_adapter_extras(package: str) -> Iterator[str]:
 
 
 
-def _is_adapter_pre_release() -> bool:
+def _is_pre_release(raw_version: str) -> bool:
     from dbt.semver import VersionSpecifier
-    raw_adapter_version = importlib_metadata.version('dbt-fal')
-    adapter_version = VersionSpecifier.from_version_string(raw_adapter_version)
+    adapter_version = VersionSpecifier.from_version_string(raw_version)
     return adapter_version.prerelease
 
 
-def _get_adapter_root_path() -> Path:
+def _get_adapter_root_path() -> Optional[Path]:
     import dbt.adapters.fal as adapter
 
     base_dir = Path(adapter.__file__).parent.parent.parent.parent.parent
-    assert (base_dir.parent / ".git").exists()
-    return base_dir
+    # TODO: this can happen with REAL pre-releases
+    return base_dir if (base_dir.parent / ".git").exists() else None
 
 
 def get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
