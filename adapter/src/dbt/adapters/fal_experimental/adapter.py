@@ -52,6 +52,7 @@ def run_in_environment_with_adapter(
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
     if type(environment) == IsolateServer:
+        # TODO: make a specialized function for this case?
         deps = [i for i in get_default_pip_dependencies() if i.startswith('dbt-')]
 
         if environment.target_environment_kind == 'conda':
