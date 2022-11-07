@@ -5,7 +5,7 @@ Feature: Python models with defined envs
   Scenario: Run a project with a Python model that is calculated in a virtual environment
     When the following shell command is invoked:
       """
-      dbt --debug run --profiles-dir $profilesDir --project-dir $baseDir --select +model_c+
+      dbt run --profiles-dir $profilesDir --project-dir $baseDir --select +model_c+
       """
     Then the following models are calculated in order:
       | model_a | model_c | model_d |

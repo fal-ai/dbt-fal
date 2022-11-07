@@ -143,9 +143,7 @@ def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) 
     return {
         "host": config.get("host"),
         "target_environment_kind": remote_type,
-        "target_environment_config": {
-            'requirements': parsed_config
-        }
+        "target_environment_config": parsed_config
     }
 
 def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:

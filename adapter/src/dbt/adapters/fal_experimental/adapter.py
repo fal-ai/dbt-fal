@@ -53,7 +53,11 @@ def run_in_environment_with_adapter(
     in your project's root directory."""
     deps = [i for i in get_default_pip_dependencies() if i.startswith('dbt-')]
     if type(environment) == IsolateServer:
-        environment.target_environment_config['requirements'].extend(deps)
+        if environment.target_environment_kind == 'conda':
+            environment.target_environment_config['packages'].extend(deps)
+        else:
+            environment.target_environment_config['requirements'].extend(deps)
+
         key = environment.create()
 
         with environment.open_connection(key) as connection:
