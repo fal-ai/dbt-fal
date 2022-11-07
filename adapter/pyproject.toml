@@ -10,7 +10,6 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.7.2, <3.11"
 dbt-core = ">=1.3.0b1, <1.4"
-isolate = ">=0.3.0"
 posthog = "^1.4.5"
 pandas = "^1.3.4"
 "backports.functools_lru_cache" = "^1.6.4"
@@ -27,6 +26,7 @@ google-cloud-bigquery = { version = ">=2,<3", extras = ["pandas"], optional = tr
 sqlalchemy-redshift = { version = "^0.8.9", optional = true }
 ### teleport
 s3fs = { version = ">=2022.8.2" }
+isolate = {extras = ["grpc"], version = "^0.3.0"}
 
 
 [tool.poetry.dev-dependencies]

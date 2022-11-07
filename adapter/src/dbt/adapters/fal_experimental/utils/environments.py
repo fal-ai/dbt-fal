@@ -17,6 +17,9 @@ from . import cache_static
 from .yaml_helper import load_yaml
 
 
+CONFIG_KEYS_TO_IGNORE = ['host', 'remote_type', 'type', 'name']
+
+
 class FalParseError(Exception):
     pass
 
@@ -91,12 +94,13 @@ def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
 def create_environment(name: str, kind: str, config: Dict[str, Any]):
     from isolate.backends.virtualenv import VirtualPythonEnvironment
     from isolate.backends.conda import CondaEnvironment
-    from isolate.backends.local import LocalPythonEnvironment
+    from isolate.backends.remote import IsolateServer
 
 
     REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
         "conda": CondaEnvironment,
-        "venv": VirtualPythonEnvironment
+        "venv": VirtualPythonEnvironment,
+        "remote": IsolateServer
     }
 
     env_type = REGISTERED_ENVIRONMENTS.get(kind)
@@ -107,17 +111,10 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
             + ", ".join(REGISTERED_ENVIRONMENTS.keys())
         )
 
-    parsed_config = {}
+    parsed_config = { key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE}
 
-    if env_type is CondaEnvironment:
-        parsed_config = {
-            'packages': config.get('packages', [])
-        }
-    elif env_type is VirtualPythonEnvironment:
-        parsed_config = {
-            'requirements': config.get('requirements', []),
-        }
-
+    if kind == "remote":
+        parsed_config = _parse_remote_config(config, parsed_config)
 
     return env_type.from_config(parsed_config)
 
@@ -131,6 +128,23 @@ def _get_required_key(data: Dict[str, Any], name: str) -> Any:
         raise FalParseError("Missing required key: " + name)
     return data[name]
 
+def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) -> Dict[str, Any]:
+    REMOTE_TYPES_DICT = {
+        "venv": "virtualenv",
+        "conda": "conda"
+    }
+
+    assert config.get("remote_type"), "remote_type needs to be specified."
+
+    remote_type = REMOTE_TYPES_DICT.get(config["remote_type"])
+
+    assert remote_type, f"{config['remote_type']} not recognised. Available remote types: {list(REMOTE_TYPES_DICT.keys())}"
+
+    return {
+        "host": config.get("host"),
+        "target_environment_kind": remote_type,
+        "target_environment_config": parsed_config
+    }
 
 def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (
