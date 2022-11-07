@@ -54,7 +54,7 @@ def run_in_environment_with_adapter(
     deps = [i for i in get_default_pip_dependencies() if i.startswith('dbt-')]
     if type(environment) == IsolateServer:
         if environment.target_environment_kind == 'conda':
-            environment.target_environment_config['packages'].extend(deps)
+            raise NotImplementedError("Remote environment with `conda` is not supported yet.")
         else:
             environment.target_environment_config['requirements'].extend(deps)
 
