@@ -37,10 +37,14 @@ class FalEncAdapterWrapper(FalAdapterMixin):
         db_adapter = get_adapter_by_type(db_adapter_type.type())
         super().__init__(config, db_adapter)
 
-        # HACK: A Python adapter does not have _available_ all the attributes a DB adapter does.
+        # HACK: A Python adapter does not have self._available_ all the attributes a DB adapter does.
         # Since we use the DB adapter as the storage for the Python adapter, we must proxy to it
         # all the unhandled calls.
+
+        # self._available_ is set by metaclass=AdapterMeta
         self._available_ = self._db_adapter._available_.union(self._available_)
+        # self._parse_replacements_ is set by metaclass=AdapterMeta
+        self._parse_replacements_.update(self._db_adapter._parse_replacements_)
 
         telemetry.log_api(
             "encapsulate_init",
