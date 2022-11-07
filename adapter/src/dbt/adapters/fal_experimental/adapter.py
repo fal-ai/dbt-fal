@@ -51,8 +51,9 @@ def run_in_environment_with_adapter(
 
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
-    deps = [i for i in get_default_pip_dependencies() if i.startswith('dbt-')]
     if type(environment) == IsolateServer:
+        deps = [i for i in get_default_pip_dependencies() if i.startswith('dbt-')]
+
         if environment.target_environment_kind == 'conda':
             raise NotImplementedError("Remote environment with `conda` is not supported yet.")
         else:
