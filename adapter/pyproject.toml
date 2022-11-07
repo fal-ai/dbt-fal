@@ -10,7 +10,7 @@ packages = [
     { include = "dbt", from = "src" }
 ]
 
-keywords = [ "dbt", "pandas", "fal", "runtime", "cloud" ]
+keywords = [ "dbt", "pandas", "fal", "runtime" ]
 classifiers = [
     "Development Status :: 4 - Beta"
 ]
