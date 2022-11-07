@@ -28,8 +28,12 @@ jobs:
         profile:
           - postgres
           - bigquery
+          - duckdb
           - snowflake
         python: ["3.7", "3.8"]
+        include:
+          - profile: duckdb
+            adapter_version: 1.2.2
 
     concurrency:
       group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
@@ -53,10 +57,15 @@ jobs:
           pip install --upgrade pip
           pip install build wheel
 
-          pip install dbt-${{ matrix.profile }}
+          if [[ -z '${{ matrix.adapter_version }}' ]]
+          then
+            pip install 'dbt-${{ matrix.profile }}'
+          else
+            pip install 'dbt-${{ matrix.profile }}==${{ matrix.adapter_version }}'
+          fi
 
           pushd ..
-          pip install -e  ".[${{ matrix.profile }}]"
+          pip install -e ".[${{ matrix.profile }}]"
           popd
 
       - name: Setup behave
