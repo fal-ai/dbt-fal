@@ -51,13 +51,13 @@ jobs:
         run: |
           python -m venv .venv
           source .venv/bin/activate
-          pip install --upgrade pip==20.3
+          pip install --upgrade pip
           pip install build wheel
 
           pip install dbt-${{ matrix.profile }}
 
           pushd ..
-          pip install --use-deprecated=legacy-resolver ".[${{ matrix.profile }}]"
+          pip install -e  ".[${{ matrix.profile }}]"
           popd
 
       - name: Setup behave

@@ -1,0 +1,7 @@
+version: 2
+
+models:
+  - name: model_a
+  - name: model_b # broken Python model
+  - name: model_c # Python model
+  - name: model_d
