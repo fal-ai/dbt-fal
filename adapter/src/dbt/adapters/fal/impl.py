@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
 from contextlib import contextmanager
-from dbt.adapters.base.impl import BaseAdapter
+from dbt.adapters.base.impl import BaseAdapter, BaseRelation
 from dbt.adapters.factory import FACTORY
 
 from .connections import FalEncCredentials
@@ -67,8 +67,12 @@ def load_db_profile():
         if "circular import" in str(error):
             raise AttributeError("Do not wrap a type 'fal' profile with another type 'fal' profile") from error
 
-DB_PROFILE = load_db_profile()
-DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
+try:
+    DB_PROFILE = load_db_profile()
+    DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
+except BaseException as e:
+    DB_PROFILE = None
+    DB_RELATION = BaseRelation
 
 class FalEncAdapter(BaseAdapter):
     Relation = DB_RELATION  # type: ignore
