@@ -17,6 +17,9 @@ from . import cache_static
 from .yaml_helper import load_yaml
 
 
+CONFIG_KEYS_TO_IGNORE = ['host', 'remote_type', 'type', 'name']
+
+
 class FalParseError(Exception):
     pass
 
@@ -91,7 +94,6 @@ def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
 def create_environment(name: str, kind: str, config: Dict[str, Any]):
     from isolate.backends.virtualenv import VirtualPythonEnvironment
     from isolate.backends.conda import CondaEnvironment
-    from isolate.backends.local import LocalPythonEnvironment
     from isolate.backends.remote import IsolateServer
 
 
@@ -109,19 +111,10 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
             + ", ".join(REGISTERED_ENVIRONMENTS.keys())
         )
 
-    parsed_config = {}
+    parsed_config = { key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE}
 
-    if env_type is CondaEnvironment:
-        parsed_config = {
-            'packages': config.get('packages', [])
-        }
-    elif env_type is VirtualPythonEnvironment:
-        parsed_config = {
-            'requirements': config.get('requirements', []),
-        }
-
-    elif kind == "remote":
-        parsed_config = _parse_remote_config(config)
+    if kind == "remote":
+        parsed_config = _parse_remote_config(config, parsed_config)
 
     return env_type.from_config(parsed_config)
 
@@ -135,7 +128,7 @@ def _get_required_key(data: Dict[str, Any], name: str) -> Any:
         raise FalParseError("Missing required key: " + name)
     return data[name]
 
-def _parse_remote_config(config: Dict[str, Any]) -> Dict[str, Any]:
+def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) -> Dict[str, Any]:
     REMOTE_TYPES_DICT = {
         "venv": "virtualenv",
         "conda": "conda"
@@ -151,7 +144,7 @@ def _parse_remote_config(config: Dict[str, Any]) -> Dict[str, Any]:
         "host": config.get("host"),
         "target_environment_kind": remote_type,
         "target_environment_config": {
-            'requirements': config.get('requirements', []),
+            'requirements': parsed_config
         }
     }
 

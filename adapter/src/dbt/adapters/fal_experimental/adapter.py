@@ -6,7 +6,7 @@ from typing import Any
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
-from isolate.backends.remote import IsolateServer
+
 from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
 from dbt.adapters.fal_experimental.utils.environments import get_default_pip_dependencies
 from dbt.parser.manifest import MacroManifest, Manifest
@@ -45,6 +45,7 @@ def run_in_environment_with_adapter(
     manifest: Manifest,
     macro_manifest: MacroManifest
 ) -> AdapterResponse:
+    from isolate.backends.remote import IsolateServer
     """Run the 'main' function inside the given code on the
     specified environment.
 
