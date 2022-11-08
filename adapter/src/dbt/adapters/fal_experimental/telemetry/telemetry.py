@@ -250,13 +250,15 @@ def log_api(
     if "NO_UID" in uid:
         additional_props["uid_issue"] = str(uid_error) if uid_error is not None else ""
 
-    if config is not None:
-        additional_props["config_hash"] = config.hashed_name()
+    config_hash = ''
+    if config is not None and hasattr(config, "hashed_name"):
+        config_hash = str(config.hashed_name())
 
     opt_str_param(uid)
     str_param(action)
 
     props = {
+        "config_hash": config_hash,
         "event_id": str(event_id),
         "invocation_id": str(invocation_id),
         "user_id": uid,
