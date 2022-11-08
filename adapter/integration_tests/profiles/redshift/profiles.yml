@@ -1,0 +1,21 @@
+config:
+  send_anonymous_usage_stats: False
+
+fal_test:
+  target: integration_tests
+  outputs:
+    integration_tests:
+      type: fal
+      db_profile: db
+    db:
+      type: redshift
+      host: "{{ env_var('RS_HOST') }}"
+      port: 5439
+      user: "{{ env_var('RS_USER') }}"
+      password: "{{ env_var('RS_PASSWORD') }}"
+      dbname: "{{ env_var('RS_DBNAME') }}"
+      schema: "{{ env_var('RS_SCHEMA') }}"
+      threads: 4
+      keepalives_idle: 240 # default 240 seconds
+      connect_timeout: 20 # default 10 seconds
+      ra3_node: false

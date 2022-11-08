@@ -30,6 +30,7 @@ jobs:
           - bigquery
           - duckdb
           - snowflake
+          - redshift
         python: ["3.7", "3.8"]
         include:
           - profile: duckdb
@@ -91,6 +92,13 @@ jobs:
           SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
           # Duckdb
           DB_PATH: ${{ github.workspace }}/duck.db
+          # Redshift
+          RS_HOST: ${{ secrets.RS_HOST }}
+          RS_PORT: ${{ secrets.RS_PORT }}
+          RS_USER: ${{ secrets.RS_USER }}
+          RS_PASSWORD: ${{ secrets.RS_PASSWORD }}
+          RS_DBNAME: ${{ secrets.RS_DBNAME }}
+          RS_SCHEMA: ${{ secrets.RS_SCHEMA }}
         run: |
           source .venv/bin/activate
 
@@ -109,6 +117,10 @@ jobs:
             #   database: "{{ env_var('DBT_DATABASE', 'test') }}"
             #   schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
             export DBT_DATABASE="" DBT_SCHEMA=""
+          fi
+          if [[ '${{ matrix.profile }}' == "redshift" ]]
+          then
+            export DBT_DATABASE="$RS_DBNAME" DBT_SCHEMA="$RS_SCHEMA"
           fi
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
