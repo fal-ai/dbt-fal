@@ -37,6 +37,18 @@ jobs:
 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: Poetry lock updated
+          commit_message: CLI poetry lock updated
+          commit_user_email: batuhan+bot@fal.ai
+          commit_user_name: Fal Bot
+
+      - name: Check poetry lock
+        working-directory: adapter
+        run: |
+          poetry install
+          poetry lock --no-update
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Adapter poetry lock updated
           commit_user_email: batuhan+bot@fal.ai
           commit_user_name: Fal Bot
