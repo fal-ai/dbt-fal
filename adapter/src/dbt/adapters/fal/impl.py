@@ -7,6 +7,8 @@ from dbt.adapters.factory import FACTORY
 from .connections import FalEncCredentials
 from .wrappers import FalEncAdapterWrapper, FalCredentialsWrapper
 
+# TODO: offer in `from isolate import is_agent`
+from isolate.connections.common import is_agent
 
 @contextmanager
 def _release_plugin_lock():
@@ -67,12 +69,13 @@ def load_db_profile():
         if "circular import" in str(error):
             raise AttributeError("Do not wrap a type 'fal' profile with another type 'fal' profile") from error
 
-try:
+DB_PROFILE = None
+DB_RELATION = BaseRelation
+
+# NOTE: Should this file run on isolate agents? Could we skip it entirely and build a FalEncAdapterWrapper directly?
+if not is_agent():
     DB_PROFILE = load_db_profile()
     DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
-except BaseException as e:
-    DB_PROFILE = None
-    DB_RELATION = BaseRelation
 
 class FalEncAdapter(BaseAdapter):
     Relation = DB_RELATION  # type: ignore
