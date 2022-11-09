@@ -96,7 +96,8 @@ def _get_fal_scripts_path(config: RuntimeConfig):
     import pathlib
     cwp = pathlib.Path.cwd()
 
-    fal_scripts_path = config.project_root
+    # Default value
+    fal_scripts_path = 'fal_scripts'
 
     if hasattr(config, 'vars'):
         fal_scripts_path: str = config.vars.to_dict().get(FAL_SCRIPTS_PATH_VAR_NAME, fal_scripts_path)  # type: ignore
