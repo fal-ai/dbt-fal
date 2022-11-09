@@ -39,6 +39,9 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: poetry lock --no-update
 
+      - name: Pull Remote Changes
+        run: git pull
+
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Poetry lock updated
