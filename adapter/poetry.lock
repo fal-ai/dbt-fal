@@ -24,7 +24,7 @@ name = "aiobotocore"
 version = "2.4.0"
 description = "Async client for aws services using botocore and aiohttp"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -42,7 +42,7 @@ name = "aiohttp"
 version = "3.8.3"
 description = "Async http client/server framework (asyncio)"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -64,7 +64,7 @@ name = "aioitertools"
 version = "0.11.0"
 description = "itertools and builtins for AsyncIO and mixed iterables"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -75,7 +75,7 @@ name = "aiosignal"
 version = "1.2.0"
 description = "aiosignal: a list of registered asynchronous callbacks"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -94,7 +94,7 @@ name = "async-timeout"
 version = "4.0.2"
 description = "Timeout context manager for asyncio programs"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -105,7 +105,7 @@ name = "asynctest"
 version = "0.13.0"
 description = "Enhance the standard unittest package with features for testing asyncio libraries"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.5"
 
 [[package]]
@@ -166,7 +166,7 @@ name = "botocore"
 version = "1.27.59"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
-optional = false
+optional = true
 python-versions = ">= 3.7"
 
 [package.dependencies]
@@ -320,7 +320,7 @@ name = "frozenlist"
 version = "1.3.1"
 description = "A list-like structure which implements collections.abc.MutableSequence"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [[package]]
@@ -328,7 +328,7 @@ name = "fsspec"
 version = "2022.10.0"
 description = "File-system specification"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [package.extras]
@@ -608,7 +608,7 @@ name = "jmespath"
 version = "1.0.1"
 description = "JSON Matching Expressions"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [[package]]
@@ -724,7 +724,7 @@ name = "multidict"
 version = "6.0.2"
 description = "multidict implementation"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [[package]]
@@ -1103,7 +1103,7 @@ name = "s3fs"
 version = "2022.10.0"
 description = "Convenient Filesystem interface over S3"
 category = "main"
-optional = false
+optional = true
 python-versions = ">= 3.7"
 
 [package.dependencies]
@@ -1282,7 +1282,7 @@ name = "wrapt"
 version = "1.14.1"
 description = "Module for decorators, wrappers and monkey patching."
 category = "main"
-optional = false
+optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 
 [[package]]
@@ -1290,7 +1290,7 @@ name = "yarl"
 version = "1.8.1"
 description = "Yet another URL library"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -1317,11 +1317,12 @@ duckdb = []
 postgres = []
 redshift = ["sqlalchemy-redshift"]
 snowflake = ["snowflake-connector-python"]
+teleport = ["s3fs"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.11"
-content-hash = "f5e53266d40933a28e6aaf1d88ffd1e2189dd253f26135379d9746b849802835"
+content-hash = "9b054fef932bcb6836424cf8f0594f66add182efff6ed0efcd10053f41c9feca"
 
 [metadata.files]
 agate = [

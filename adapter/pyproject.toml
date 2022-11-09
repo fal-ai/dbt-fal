@@ -24,17 +24,19 @@ pandas = "^1.3.4"
 "backports.functools_lru_cache" = "^1.6.4"
 sqlalchemy = "^1.4.41"
 
+# adapters
 ## snowflake
 snowflake-connector-python = { version = "~2.7.10", extras = ["pandas"], optional = true }
 
 ## bigquery
-# version defined by dbt-bigquery, installs pyarrow<8
+### version defined by dbt-bigquery, installs pyarrow<8
 google-cloud-bigquery = { version = ">=2,<3", extras = ["pandas"], optional = true }
 
 ## redshift
 sqlalchemy-redshift = { version = "^0.8.9", optional = true }
-### teleport
-s3fs = { version = ">=2022.8.2" }
+
+# teleport
+s3fs = { version = ">=2022.8.2", optional = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -46,6 +48,7 @@ bigquery = ["google-cloud-bigquery"]
 redshift = ["sqlalchemy-redshift"]
 duckdb = []
 athena = []
+teleport = ["s3fs"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
