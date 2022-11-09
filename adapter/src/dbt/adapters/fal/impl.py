@@ -7,6 +7,7 @@ from dbt.adapters.factory import FACTORY
 from .connections import FalEncCredentials
 from .wrappers import FalEncAdapterWrapper, FalCredentialsWrapper
 
+from ..fal_experimental.utils.environments import db_adapter_config
 
 @contextmanager
 def _release_plugin_lock():
@@ -68,6 +69,7 @@ def load_db_profile():
             raise AttributeError("Do not wrap a type 'fal' profile with another type 'fal' profile") from error
 
 try:
+    # TODO: better way to avoid trying to load it
     DB_PROFILE = load_db_profile()
     DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
 except BaseException as e:
@@ -89,6 +91,7 @@ class FalEncAdapter(BaseAdapter):
 
         fal_credentials = config.credentials
         if isinstance(fal_credentials, FalEncCredentials):
+            assert DB_PROFILE, "Could not load database profile"
             db_credentials = DB_PROFILE.credentials
         else:
             # Since profile construction (in the case above) already registers the
@@ -107,12 +110,12 @@ class FalEncAdapter(BaseAdapter):
 
         config.python_adapter_credentials = fal_credentials
         config.sql_adapter_credentials = db_credentials
+        config.credentials = FalCredentialsWrapper(db_credentials)
 
         with _release_plugin_lock():
+            db_config = db_adapter_config(config)
             # Temporary credentials for register
-            config.credentials = config.sql_adapter_credentials
-            FACTORY.register_adapter(config)
-            config.credentials = FalCredentialsWrapper(config.sql_adapter_credentials)
+            FACTORY.register_adapter(db_config)
 
         return FalEncAdapterWrapper(db_adapter_class, config)
 

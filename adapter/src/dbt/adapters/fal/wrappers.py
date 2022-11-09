@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type
+from typing import Any, Type
 
 from dbt.adapters.factory import get_adapter_by_type
 from dbt.adapters.base.meta import available
@@ -13,7 +13,7 @@ from ..fal_experimental import telemetry
 
 
 class FalCredentialsWrapper:
-    _db_creds: Optional[Credentials] = None
+    _db_creds: Credentials
 
     def __init__(self, db_creds: Credentials):
         self._db_creds = db_creds
@@ -31,7 +31,6 @@ class FalCredentialsWrapper:
 
 class FalEncAdapterWrapper(FalAdapterMixin):
     def __init__(self, db_adapter_type: Type[BaseAdapter], config):
-        # Use the db_adapter_type connection manager
         self.ConnectionManager = db_adapter_type.ConnectionManager
 
         db_adapter = get_adapter_by_type(db_adapter_type.type())
