@@ -11,10 +11,14 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [".", "adapter"]
 
     # Run only the latest commit pushed to PR
     concurrency:
-      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.dbt }}-${{ matrix.python }}"
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.dir }}"
       cancel-in-progress: true
 
     steps:
@@ -32,24 +36,13 @@ jobs:
         run: pip install poetry-core=="1.0.*" poetry=="1.1.4"
 
       - name: Check poetry lock
+        working-directory: ${{ matrix.dir }}
         run: |
           poetry install
           poetry lock --no-update
 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: CLI poetry lock updated
-          commit_user_email: batuhan+bot@fal.ai
-          commit_user_name: Fal Bot
-
-      - name: Check poetry lock
-        working-directory: adapter
-        run: |
-          poetry install
-          poetry lock --no-update
-
-      - uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Adapter poetry lock updated
+          commit_message: Poetry lock updated
           commit_user_email: batuhan+bot@fal.ai
           commit_user_name: Fal Bot
