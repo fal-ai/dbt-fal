@@ -37,9 +37,7 @@ jobs:
 
       - name: Check poetry lock
         working-directory: ${{ matrix.dir }}
-        run: |
-          poetry install
-          poetry lock --no-update
+        run: poetry lock --no-update
 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
