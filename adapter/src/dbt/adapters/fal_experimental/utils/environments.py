@@ -241,6 +241,11 @@ def _get_adapter_root_path() -> Optional[Path]:
 def get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
     yield from _get_dbt_packages()
     yield "isolate", importlib_metadata.version("isolate")
+    try:
+        yield "s3fs", importlib_metadata.version("s3fs")
+    except importlib_metadata.PackageNotFoundError as e:
+        # Question: should we notify the user here? Maybe in debug logs
+        pass
 
 
 @cache_static

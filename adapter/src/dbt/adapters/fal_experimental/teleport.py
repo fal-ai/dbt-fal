@@ -1,8 +1,13 @@
 from typing import Any, Callable, Dict, NewType
 from functools import partial
 import functools
+from dbt.adapters.fal_experimental import adapter
+from dbt.adapters.fal_experimental.adapter_support import reconstruct_adapter
 from dbt.adapters.fal_experimental.connections import TeleportTypeEnum
+from dbt.adapters.fal_experimental.utils.environments import get_default_pip_dependencies
+from dbt.config.runtime import RuntimeConfig
 from isolate.backends import BaseEnvironment
+from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
 import pandas as pd
 
 from dbt.contracts.connection import AdapterResponse
@@ -75,13 +80,32 @@ def run_in_environment_with_teleport(
     teleport_info: TeleportInfo,
     locations: DataLocation,
 ) -> AdapterResponse:
+    from isolate.backends.remote import IsolateServer
     """Run the 'main' function inside the given code on the
     specified environment.
 
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
+    if type(environment) == IsolateServer:
+        deps = [i for i in get_default_pip_dependencies() if i.startswith('dbt-')]
 
-    with environment.connect() as connection:
-        execute_model = partial(run_with_teleport, code, teleport_info, locations)
-        result = connection.run(execute_model)  # type: ignore
-        return result
+        if environment.target_environment_kind == 'conda':
+            raise NotImplementedError("Remote environment with `conda` is not supported yet.")
+        else:
+            environment.target_environment_config['requirements'].extend(deps)
+
+        key = environment.create()
+
+        with environment.open_connection(key) as connection:
+            execute_model = partial(run_with_teleport, code, teleport_info, locations)
+            result = connection.run(execute_model)
+            return result
+
+    else:
+        deps = get_default_pip_dependencies()
+        stage = VirtualPythonEnvironment(deps)
+
+        with PythonIPC(environment, environment.create(), extra_inheritance_paths=[stage.create()]) as connection:
+            execute_model = partial(run_with_teleport, code, teleport_info, locations)
+            result = connection.run(execute_model)
+            return result

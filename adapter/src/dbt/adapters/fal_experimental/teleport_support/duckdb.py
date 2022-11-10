@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from typing import Optional
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.base.impl import BaseAdapter
-from dbt.adapters.fal.connections import TeleportCredentials, TeleportTypeEnum
+from dbt.adapters.fal_experimental.connections import TeleportCredentials, TeleportTypeEnum
 
 from dbt.fal.adapters.teleport.impl import TeleportAdapter
 from dbt.fal.adapters.teleport.info import TeleportInfo
