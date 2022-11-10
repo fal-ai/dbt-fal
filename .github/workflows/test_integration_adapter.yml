@@ -99,6 +99,9 @@ jobs:
           RS_PASSWORD: ${{ secrets.RS_PASSWORD }}
           RS_DBNAME: ${{ secrets.RS_DBNAME }}
           RS_SCHEMA: ${{ secrets.RS_SCHEMA }}
+          # Teleport
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           source .venv/bin/activate
 
@@ -138,7 +141,13 @@ jobs:
           UUID=$(uuidgen | head -c8)
           export DB_NAMESPACE="${{ github.run_id }}_${UUID}"
 
-          behave -fplain -D profile=${{ matrix.profile }}
+          BEHAVE_TAGS=""
+          if [[ '${{ matrix.profile }}' != 'snowflake' ]]
+          then
+            BEHAVE_TAGS="--tags=-teleport"
+          fi
+
+          behave $BEHAVE_TAGS -fplain -D profile=${{ matrix.profile }}
 
       - name: Send custom JSON data to Slack workflow
         if: (failure() || cancelled()) && github.event_name == 'schedule'

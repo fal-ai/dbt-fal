@@ -7,6 +7,15 @@ fal_test:
     integration_tests:
       type: fal
       db_profile: db
+    integration_tests_teleport:
+      type: fal
+      db_profile: db
+      teleport:
+        type: s3
+        s3_bucket: fal-dbt-test
+        s3_region: us-east-1
+        s3_access_key_id: "{{ env_var('AWS_ACCESS_KEY_ID') }}"
+        s3_access_key: "{{ env_var('AWS_SECRET_ACCESS_KEY') }}"
     db:
       type: snowflake
       account: "{{ env_var('SF_ACCOUNT') }}"
@@ -17,3 +26,5 @@ fal_test:
       database: "{{ env_var('SF_DATABASE') }}"
       schema: "{{ env_var('SF_SCHEMA') }}"
       threads: 4
+config:
+  send_anonymous_usage_stats: False
