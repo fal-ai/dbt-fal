@@ -112,7 +112,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
 
         else:
             if is_local:
-                return run_with_adapter(compiled_code, self._db_adapter)
+                return run_with_adapter(compiled_code, self._db_adapter, self.config)
 
             with self._invalidate_db_cache():
                 return run_in_environment_with_adapter(

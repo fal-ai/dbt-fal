@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from functools import partial
 from typing import Any
 
@@ -22,21 +23,25 @@ from .adapter_support import (
 
 from .utils import retrieve_symbol
 
-def run_with_adapter(code: str, adapter: BaseAdapter) -> Any:
+FAL_SCRIPTS_PATH_VAR_NAME = 'fal-scripts-path'
+
+def run_with_adapter(code: str, adapter: BaseAdapter, config: RuntimeConfig) -> Any:
     # main symbol is defined during dbt-fal's compilation
     # and acts as an entrypoint for us to run the model.
-    main = retrieve_symbol(code, "main")
-    return main(
-        read_df=prepare_for_adapter(adapter, read_relation_as_df),
-        write_df=prepare_for_adapter(adapter, write_df_to_relation),
-    )
+    fal_scripts_path = str(_get_fal_scripts_path(config))
+    with extra_path(fal_scripts_path):
+        main = retrieve_symbol(code, "main")
+        return main(
+            read_df=prepare_for_adapter(adapter, read_relation_as_df),
+            write_df=prepare_for_adapter(adapter, write_df_to_relation),
+        )
 
 def _isolated_runner(code: str, config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest) -> Any:
     # This function can be run in an entirely separate
     # process or an environment, so we need to reconstruct
     # the DB adapter solely from the config.
     adapter = reconstruct_adapter(config, manifest, macro_manifest)
-    return run_with_adapter(code, adapter)
+    return run_with_adapter(code, adapter, config)
 
 def run_in_environment_with_adapter(
     environment: BaseEnvironment,
@@ -71,8 +76,33 @@ def run_in_environment_with_adapter(
     else:
         deps = get_default_pip_dependencies()
         stage = VirtualPythonEnvironment(deps)
+        fal_scripts_path = _get_fal_scripts_path(config)
 
-        with PythonIPC(environment, environment.create(), extra_inheritance_paths=[stage.create()]) as connection:
+        with PythonIPC(environment, environment.create(), extra_inheritance_paths=[fal_scripts_path, stage.create()]) as connection:
             execute_model = partial(_isolated_runner, code, config, manifest, macro_manifest)
             result = connection.run(execute_model)
             return result
+
+@contextmanager
+def extra_path(path: str):
+    import sys
+    sys.path.append(path)
+    try:
+        yield
+    finally:
+        sys.path.remove(path)
+
+def _get_fal_scripts_path(config: RuntimeConfig):
+    import pathlib
+    project_path = pathlib.Path(config.project_root)
+
+    # Default value
+    fal_scripts_path = 'fal_scripts'
+
+    if hasattr(config, 'vars'):
+        fal_scripts_path: str = config.vars.to_dict().get(FAL_SCRIPTS_PATH_VAR_NAME, fal_scripts_path)  # type: ignore
+
+    if hasattr(config, 'cli_vars'):
+        fal_scripts_path = config.cli_vars.get(FAL_SCRIPTS_PATH_VAR_NAME, fal_scripts_path)
+
+    return project_path / fal_scripts_path

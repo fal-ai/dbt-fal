@@ -12,3 +12,6 @@ target-path: "{{ env_var('temp_dir') }}/target"
 
 models:
   +schema: custom
+
+vars:
+  fal-scripts-path: "utils"
