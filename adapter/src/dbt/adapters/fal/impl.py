@@ -31,8 +31,10 @@ def load_db_profile():
 
     args = parse_args(sys.argv[1:])
 
+    # dbt-core does os.chdir(project_dir) before reaching this location
+    project_root = os.getcwd()
+
     # from https://github.com/dbt-labs/dbt-core/blob/19c48e285ec381b7f7fa2dbaaa8d8361374136ba/core/dbt/config/runtime.py#L193-L203
-    project_root = args.project_dir if args.project_dir else os.getcwd()
     version_check = bool(flags.VERSION_CHECK)
     partial = Project.partial_load(project_root, verify_version=version_check)
 
