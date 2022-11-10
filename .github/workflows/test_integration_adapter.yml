@@ -66,7 +66,12 @@ jobs:
           fi
 
           pushd ..
-          pip install -e ".[${{ matrix.profile }}]"
+          if [[ '${{ matrix.profile }}' == 'snowflake' ]]
+          then
+            pip install -e ".[snowflake, teleport]"
+          else
+            pip install -e ".[${{ matrix.profile }}]"
+          fi
           popd
 
       - name: Setup behave
@@ -134,8 +139,6 @@ jobs:
             export KEYFILE_DIR=$HOME
             echo 'keyfile is ready'
           fi
-
-          # TODO: setup teleport tests
 
           # Could not get the real job_id easily from context
           UUID=$(uuidgen | head -c8)

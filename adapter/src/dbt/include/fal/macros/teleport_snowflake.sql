@@ -4,7 +4,8 @@
 	  	FROM table(
   			infer_schema(
 	  			LOCATION=>'{{ location }}',
-		  		file_format=>'falparquet'
+		  		FILE_FORMAT=>'falparquet',
+		  		IGNORE_CASE=>TRUE
 			  )
   		)
     );
