@@ -94,7 +94,7 @@ def extra_path(path: str):
 
 def _get_fal_scripts_path(config: RuntimeConfig):
     import pathlib
-    cwp = pathlib.Path.cwd()
+    project_path = pathlib.Path(config.project_root)
 
     # Default value
     fal_scripts_path = 'fal_scripts'
@@ -105,4 +105,4 @@ def _get_fal_scripts_path(config: RuntimeConfig):
     if hasattr(config, 'cli_vars'):
         fal_scripts_path = config.cli_vars.get(FAL_SCRIPTS_PATH_VAR_NAME, fal_scripts_path)
 
-    return cwp / fal_scripts_path
+    return project_path / fal_scripts_path
