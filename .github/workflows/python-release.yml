@@ -88,6 +88,13 @@ jobs:
 
           poetry build
 
+      - name: Set __version__ file
+        if: inputs.package == 'dbt-fal'
+        working-directory: adapter/src/dbt/adapters
+        run: |
+          VERSION_FILE='version = "${{ env.publishing_version }}"'
+          echo $VERSION_FILE > fal/__version__.py
+
       - name: Generate a changelog
         uses: orhun/git-cliff-action@v1
         id: git-cliff
