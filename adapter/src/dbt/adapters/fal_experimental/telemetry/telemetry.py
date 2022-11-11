@@ -279,6 +279,10 @@ def log_api(
 
     all_props = {**props, **additional_props}
 
+    if "argv" in all_props:
+        all_props["argv"] = _clean_args_list(all_props["argv"])
+
+
     if is_install:
         posthog.capture(distinct_id=uid, event="install_success", properties=all_props)
 
@@ -343,3 +347,55 @@ def log_call(action, log_args: List[str] = [], config: bool = False):
         return wrapper
 
     return _log_call
+
+
+def _clean_args_list(args: List[str]) -> List[str]:
+    ALLOWLIST = [
+        "--disable-logging",
+        "--project-dir",
+        "--profiles-dir",
+        "--defer",
+        "--threads",
+        "--thread",
+        "--state",
+        "--full-refresh",
+        "-s",
+        "--select",
+        "-m",
+        "--models",
+        "--model",
+        "--exclude",
+        "--selector",
+        "--all",
+        "run",
+        "dbt",
+        "-v",
+        "--version",
+        "--debug",
+        "--vars",
+        "--var",
+        "--target",
+        "build",
+        "clean",
+        "compile",
+        "debug",
+        "deps",
+        "docs",
+        "init",
+        "list",
+        "parse",
+        "seed",
+        "snapshot",
+        "source",
+        "test",
+        "rpc",
+        "run-operation"
+    ]
+    REDACTED = "[REDACTED]"
+    output = []
+    for item in args:
+        if item in ALLOWLIST:
+            output.append(item)
+        else:
+            output.append(REDACTED)
+    return output
