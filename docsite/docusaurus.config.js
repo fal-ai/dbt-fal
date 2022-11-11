@@ -56,19 +56,25 @@ const config = {
             type: 'docSidebar',
             position: 'left',
             sidebarId: 'docs',
-            label: 'Docs',
+            label: 'fal Docs ',
           },
           {
             type: 'docSidebar',
             position: 'left',
             sidebarId: 'reference',
-            label: 'Reference',
+            label: 'fal Reference',
           },
           {
             type: 'docSidebar',
             position: 'left',
             sidebarId: 'guides',
             label: 'Guides',
+          },
+          {
+            type: 'docSidebar',
+            position: 'left',
+            sidebarId: 'adapter',
+            label: 'Adapter Docs',
           },
           {
             to: 'https://blog.fal.ai',
