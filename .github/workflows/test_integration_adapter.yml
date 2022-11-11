@@ -35,6 +35,8 @@ jobs:
         include:
           - profile: duckdb
             adapter_version: 1.2.2
+          - profile: snowflake
+            teleport: true
 
     concurrency:
       group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
@@ -66,9 +68,9 @@ jobs:
           fi
 
           pushd ..
-          if [[ '${{ matrix.profile }}' == 'snowflake' ]]
+          if [[ '${{ matrix.teleport }}' == 'true' ]]
           then
-            pip install -e ".[snowflake, teleport]"
+            pip install -e ".[${{ matrix.profile }},teleport]"
           else
             pip install -e ".[${{ matrix.profile }}]"
           fi
@@ -145,7 +147,7 @@ jobs:
           export DB_NAMESPACE="${{ github.run_id }}_${UUID}"
 
           BEHAVE_TAGS=""
-          if [[ '${{ matrix.profile }}' != 'snowflake' ]]
+          if [[ '${{ matrix.teleport }}' != 'true' ]]
           then
             BEHAVE_TAGS="--tags=-teleport"
           fi
