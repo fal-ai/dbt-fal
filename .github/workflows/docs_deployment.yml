@@ -25,7 +25,7 @@ jobs:
           vercel-args: '--prod'
           working-directory: docsite
       - uses: amondnet/vercel-action@v20
-        if: ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ github.ref == 'refs/heads/main' }} or ${{ github.event_name == 'workflow_dispatch' }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}

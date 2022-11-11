@@ -56,19 +56,13 @@ const config = {
             type: 'docSidebar',
             position: 'left',
             sidebarId: 'docs',
-            label: 'Docs',
+            label: 'fal ',
           },
           {
             type: 'docSidebar',
             position: 'left',
-            sidebarId: 'reference',
-            label: 'Reference',
-          },
-          {
-            type: 'docSidebar',
-            position: 'left',
-            sidebarId: 'guides',
-            label: 'Guides',
+            sidebarId: 'adapter',
+            label: 'dbt-fal',
           },
           {
             to: 'https://blog.fal.ai',

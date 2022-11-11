@@ -2,5 +2,5 @@
     "position": 3,
     "label": "Running Python in a dbt project",
     "collapsible": true,
-    "collapsed": false
+    "collapsed": true
 }
