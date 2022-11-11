@@ -63,18 +63,15 @@ jobs:
         shell: bash
         run: pip install poetry-core=="1.0.*" poetry=="1.1.4"
 
-      - name: Build package
+      - name: Bump to publishing version
         working-directory: ${{ env.PACKAGE_DIR }}
         shell: bash
-        env:
-          PYPI_USERNAME: ${{ secrets.PYPI_USER }}
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
           VERSION_TYPE="${{ inputs.version }}"
 
           if [[ ! "$VERSION_TYPE" == prerelease ]]
           then
-            # Don't bump fopr prereleases, publish them
+            # Don't bump for prereleases, publish them
             poetry version $VERSION_TYPE
           fi
 
@@ -86,14 +83,20 @@ jobs:
           prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}*' --abbrev=0)
           echo "prev_version_tag=$prev_version_tag" >> $GITHUB_ENV
 
-          poetry build
+          # set __version__.py files in src directory
+          VERSION_FILE_CONTENT="version = '$publishing_version'"
+          VERSION_FILES=$(find src -name __version__.py)
+          for FILE_PATH in $VERSION_FILES; do
+            echo $VERSION_FILE_CONTENT > $FILE_PATH
+          done
 
-      - name: Set __version__ file
-        if: inputs.package == 'dbt-fal'
-        working-directory: adapter/src/dbt/adapters
-        run: |
-          VERSION_FILE='version = "${{ env.publishing_version }}"'
-          echo $VERSION_FILE > fal/__version__.py
+      - name: Build package
+        working-directory: ${{ env.PACKAGE_DIR }}
+        shell: bash
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USER }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: poetry build
 
       - name: Generate a changelog
         uses: orhun/git-cliff-action@v1
@@ -131,17 +134,21 @@ jobs:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: poetry publish -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
 
-      - name: Clear the repo changes
+      - name: Clear the repo untracked files
         run: git clean -fxd
 
       - name: Bump repo version
         working-directory: ${{ env.PACKAGE_DIR }}
         run: |
-          # re-do the poetry version change becuase we cleared the repo
-          poetry version ${{ env.publishing_version }}
-
-          # and bump for next release
           poetry version prerelease
+
+          # set __version__.py files in src directory
+          VERSION=$(poetry version -s)
+          VERSION_FILE_CONTENT="version = '$VERSION'"
+          VERSION_FILES=$(find src -name __version__.py)
+          for FILE_PATH in $VERSION_FILES; do
+            echo $VERSION_FILE_CONTENT > $FILE_PATH
+          done
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
