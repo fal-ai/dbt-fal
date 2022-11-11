@@ -65,9 +65,9 @@ def _build_teleport_storage_options(teleport_info: TeleportInfo) -> Dict[str, st
 def run_with_teleport(code: str, teleport_info: TeleportInfo, locations: DataLocation, config: RuntimeConfig) -> str:
     # main symbol is defined during dbt-fal's compilation
     # and acts as an entrypoint for us to run the model.
-    main = retrieve_symbol(code, "main")
     fal_scripts_path = str(get_fal_scripts_path(config))
     with extra_path(fal_scripts_path):
+        main = retrieve_symbol(code, "main")
         return main(
             read_df=_prepare_for_teleport(_teleport_df_from_external_storage, teleport_info, locations),
             write_df=_prepare_for_teleport(_teleport_df_to_external_storage, teleport_info, locations)
@@ -87,7 +87,7 @@ def run_in_environment_with_teleport(
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
     if type(environment) == IsolateServer:
-        deps = [i for i in get_default_pip_dependencies() if i.startswith('dbt-')]
+        deps = [i for i in get_default_pip_dependencies(is_teleport=True) if i.startswith('dbt-')]
 
         if environment.target_environment_kind == 'conda':
             raise NotImplementedError("Remote environment with `conda` is not supported yet.")
@@ -102,7 +102,7 @@ def run_in_environment_with_teleport(
             return result
 
     else:
-        deps = get_default_pip_dependencies()
+        deps = get_default_pip_dependencies(is_teleport=True)
         stage = VirtualPythonEnvironment(deps)
 
         with PythonIPC(environment, environment.create(), extra_inheritance_paths=[stage.create()]) as connection:
