@@ -1,1 +1,1 @@
-version = "1.3.0rc1"
+VERSION_FILE
