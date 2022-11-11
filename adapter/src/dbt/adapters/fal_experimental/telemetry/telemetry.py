@@ -258,6 +258,7 @@ def log_api(
     str_param(action)
 
     props = {
+        "tool": "dbt-fal",
         "config_hash": config_hash,
         "event_id": str(event_id),
         "invocation_id": str(invocation_id),
