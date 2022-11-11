@@ -3,7 +3,9 @@ sidebar_position: 1
 ---
 
 # Quickstart
-Starting with dbt v1.3, you can now build your [dbt models in Python](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/python-models). dbt-fal provides the best environment to run your Python models that works with all other data warehouses! With dbt-fal, you can:
+dbt-fal adapter is the ✨easiest✨ way to run your [dbt Python models](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/python-models).
+
+Starting with dbt v1.3, you can now build your dbt models in Python. dbt-fal provides the best environment to run your Python models that works with all other data warehouses! With dbt-fal, you can:
 
 - Build and test your models locally
 - Isolate each model to run in its own environment with its own dependencies
