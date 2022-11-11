@@ -1,5 +1,5 @@
 from typing import List
-from dbt.adapters.fal.connections import TeleportCredentials
+from dbt.adapters.fal_experimental.connections import TeleportCredentials
 from dbt.fal.adapters.teleport.impl import TeleportAdapter
 from dbt.fal.adapters.teleport.info import TeleportInfo
 from dbt.adapters.fal_experimental.adapter_support import new_connection
@@ -10,7 +10,7 @@ from dbt.adapters.base.impl import BaseAdapter
 class SnowflakeAdapterTeleport(TeleportAdapter):
 
     def __init__(self, db_adapter: BaseAdapter, teleport_credentials: TeleportCredentials):
-        from dbt.adapters.fal.adapter_support import new_connection
+        from dbt.adapters.fal_experimental.adapter_support import new_connection
         self._db_adapter = db_adapter
         self._credentials = teleport_credentials
 

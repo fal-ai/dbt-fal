@@ -94,6 +94,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
                     compiled_code,
                     teleport_info=teleport_info,
                     locations=self._relation_data_location_cache,
+                    config=db_adapter_config(self.config)
                 )
             else:
                 result_table_path = run_in_environment_with_teleport(
@@ -101,6 +102,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
                     compiled_code,
                     teleport_info=teleport_info,
                     locations=self._relation_data_location_cache,
+                    config=db_adapter_config(self.config)
                 )
 
             relation = self._db_adapter.Relation.create(

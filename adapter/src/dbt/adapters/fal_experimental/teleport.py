@@ -2,14 +2,16 @@ from typing import Any, Callable, Dict, NewType
 from functools import partial
 import functools
 from dbt.adapters.fal_experimental.connections import TeleportTypeEnum
+from dbt.adapters.fal_experimental.utils.environments import get_default_pip_dependencies
+from dbt.adapters.fal_experimental.utils import extra_path, get_fal_scripts_path, retrieve_symbol
+from dbt.config.runtime import RuntimeConfig
 from isolate.backends import BaseEnvironment
+from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
 import pandas as pd
 
 from dbt.contracts.connection import AdapterResponse
 
 from dbt.fal.adapters.teleport.info import TeleportInfo
-
-from .utils import retrieve_symbol
 
 
 DataLocation = NewType('DataLocation', Dict[str, str])
@@ -60,28 +62,52 @@ def _build_teleport_storage_options(teleport_info: TeleportInfo) -> Dict[str, st
         raise RuntimeError(f"Teleport storage type {teleport_info.credentials.type} not supported")
     return storage_options
 
-def run_with_teleport(code: str, teleport_info: TeleportInfo, locations: DataLocation) -> str:
+def run_with_teleport(code: str, teleport_info: TeleportInfo, locations: DataLocation, config: RuntimeConfig) -> str:
     # main symbol is defined during dbt-fal's compilation
     # and acts as an entrypoint for us to run the model.
-    main = retrieve_symbol(code, "main")
-    return main(
-        read_df=_prepare_for_teleport(_teleport_df_from_external_storage, teleport_info, locations),
-        write_df=_prepare_for_teleport(_teleport_df_to_external_storage, teleport_info, locations)
-    )
+    fal_scripts_path = str(get_fal_scripts_path(config))
+    with extra_path(fal_scripts_path):
+        main = retrieve_symbol(code, "main")
+        return main(
+            read_df=_prepare_for_teleport(_teleport_df_from_external_storage, teleport_info, locations),
+            write_df=_prepare_for_teleport(_teleport_df_to_external_storage, teleport_info, locations)
+        )
 
 def run_in_environment_with_teleport(
     environment: BaseEnvironment,
     code: str,
     teleport_info: TeleportInfo,
     locations: DataLocation,
+    config: RuntimeConfig
 ) -> AdapterResponse:
+    from isolate.backends.remote import IsolateServer
     """Run the 'main' function inside the given code on the
     specified environment.
 
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
+    if type(environment) == IsolateServer:
+        deps = [i for i in get_default_pip_dependencies(is_teleport=True) if i.startswith('dbt-')]
 
-    with environment.connect() as connection:
-        execute_model = partial(run_with_teleport, code, teleport_info, locations)
-        result = connection.run(execute_model)  # type: ignore
-        return result
+        if environment.target_environment_kind == 'conda':
+            raise NotImplementedError("Remote environment with `conda` is not supported yet.")
+        else:
+            environment.target_environment_config['requirements'].extend(deps)
+
+        key = environment.create()
+
+        # TODO: make it work with multiple environments and test fal_scripts_path
+        with environment.open_connection(key) as connection:
+            execute_model = partial(run_with_teleport, code, teleport_info, locations, config)
+            result = connection.run(execute_model)
+            return result
+
+    else:
+        deps = get_default_pip_dependencies(is_teleport=True)
+        stage = VirtualPythonEnvironment(deps)
+
+        # run_with_teleport already handles fal_scripts_path, so we don't need to pass it here
+        with PythonIPC(environment, environment.create(), extra_inheritance_paths=[stage.create()]) as connection:
+            execute_model = partial(run_with_teleport, code, teleport_info, locations, config)
+            result = connection.run(execute_model)
+            return result

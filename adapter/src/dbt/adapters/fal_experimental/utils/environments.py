@@ -146,7 +146,7 @@ def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) 
         "target_environment_config": parsed_config
     }
 
-def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
+def _get_dbt_packages(is_teleport: bool = False) -> Iterator[Tuple[str, Optional[str]]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (
     # the PyPI names instead of the import names). An example distirbution info is the following, which
     # contains both the main exporter of the top-level name (dbt-core) as well as all the packages that
@@ -181,7 +181,7 @@ def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
             dbt_fal_dep = str(dbt_fal_path)
             dbt_fal_version = None
 
-    dbt_fal_extras = _find_adapter_extras("dbt-fal")
+    dbt_fal_extras = _find_adapter_extras("dbt-fal", is_teleport)
 
     if dbt_fal_extras:
         dbt_fal_dep += f"[{' ,'.join(dbt_fal_extras)}]"
@@ -189,7 +189,7 @@ def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
     yield dbt_fal_dep, dbt_fal_version
 
 
-def _find_adapter_extras(package: str) -> Iterator[str]:
+def _find_adapter_extras(package: str, is_teleport: bool = False) -> Iterator[str]:
     # Return a possible set of extras that might be required when installing
     # adapter in the new environment. The original form which the user has installed
     # is not present to us (it is not saved anywhere during the package installation
@@ -209,18 +209,21 @@ def _find_adapter_extras(package: str) -> Iterator[str]:
     # This list is different from the one we obtain in _get_dbt_packages
     # since the names here are the actual import names, not the PyPI names
     # (e.g. this one will say athena, and the other one will say dbt-athena-adapter).
-    available_dbt_adapters = {
+    available_plugins = {
         module_info.name
         for module_info in pkgutil.iter_modules(dbt.adapters.__path__)
         if module_info.ispkg
     }
+
+    if is_teleport:
+        available_plugins.add('teleport')
 
     # There will be adapters which we won't have an extra for (e.g. oraceledb)
     # and there will be extras which the user did not install the adapter for
     # (e.g. dbt-redshift). We want to take the intersection of all the adapters
     # that the user has installed and all the extras that fal provides and find
     # the smallest possible subset of extras that we can install.
-    return available_dbt_adapters.intersection(all_extras)
+    return available_plugins.intersection(all_extras)
 
 
 
@@ -238,14 +241,14 @@ def _get_adapter_root_path() -> Optional[Path]:
     return base_dir if (base_dir.parent / ".git").exists() else None
 
 
-def get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
-    yield from _get_dbt_packages()
+def get_default_requirements(is_teleport: bool = False) -> Iterator[Tuple[str, Optional[str]]]:
+    yield from _get_dbt_packages(is_teleport)
     yield "isolate", importlib_metadata.version("isolate")
 
 
 @cache_static
-def get_default_pip_dependencies() -> List[str]:
+def get_default_pip_dependencies(is_teleport: bool = False) -> List[str]:
     return [
         f"{package}=={version}" if version else package
-        for package, version in get_default_requirements()
+        for package, version in get_default_requirements(is_teleport)
     ]
