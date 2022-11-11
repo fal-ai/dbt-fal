@@ -26,8 +26,11 @@ import platform
 TELEMETRY_VERSION = "0.0.2"
 DEFAULT_HOME_DIR = "~/.fal"
 CONF_DIR = "stats"
-posthog.project_api_key = "phc_Yf1tsGPPb4POvqVjelT3rPPv2c3FH91zYURyyL30Phy"
 FAL_HOME_DIR = os.getenv("FAL_HOME_DIR")
+
+posthog.project_api_key = "phc_Yf1tsGPPb4POvqVjelT3rPPv2c3FH91zYURyyL30Phy"
+
+invocation_id = uuid.uuid4()
 
 # Validate the input of type string
 def str_param(item: Any, name: str) -> str:
@@ -284,7 +287,9 @@ def log_api(action, client_time=None, total_runtime=None, additional_props=None)
             event_id, uid, action, client_time, total_runtime
         )
         props = {
+            "tool": "fal-cli",
             "event_id": event_id,
+            "invocation_id": str(invocation_id),
             "user_id": uid,
             "action": action,
             "client_time": str(client_time),

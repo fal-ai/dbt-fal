@@ -356,7 +356,9 @@ def test_redaction():
             distinct_id="test",
             event="some_action",
             properties={
+                "tool": "fal-cli",
                 "event_id": ANY,
+                "invocation_id": ANY,
                 "user_id": "test",
                 "action": "some_action",
                 "client_time": ANY,
