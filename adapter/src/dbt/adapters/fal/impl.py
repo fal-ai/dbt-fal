@@ -4,11 +4,12 @@ from contextlib import contextmanager
 from dbt.adapters.base.impl import BaseAdapter, BaseRelation
 from dbt.adapters.factory import FACTORY
 
+# TODO: offer in `from isolate import is_agent`
+from isolate.connections.common import is_agent
+
 from .connections import FalEncCredentials
 from .wrappers import FalEncAdapterWrapper, FalCredentialsWrapper
 
-# TODO: offer in `from isolate import is_agent`
-from isolate.connections.common import is_agent
 
 @contextmanager
 def _release_plugin_lock():
@@ -18,20 +19,23 @@ def _release_plugin_lock():
     finally:
         FACTORY.lock.acquire()
 
+
 def load_db_profile():
-    import sys
     import os
 
-    from dbt.main import parse_args
     from dbt.config.profile import Profile, read_profile
     from dbt.config.project import Project
     from dbt.config.renderer import ProfileRenderer
     from dbt.config.utils import parse_cli_vars
+    from dbt.main import _build_base_subparser
     from dbt import flags
 
-    args = parse_args(sys.argv[1:])
+    # includes vars, profile, target
+    parser = _build_base_subparser()
+    args, _unknown = parser.parse_known_args()
 
     # dbt-core does os.chdir(project_dir) before reaching this location
+    # from https://github.com/dbt-labs/dbt-core/blob/73116fb816498c4c45a01a2498199465202ec01b/core/dbt/task/base.py#L186
     project_root = os.getcwd()
 
     # from https://github.com/dbt-labs/dbt-core/blob/19c48e285ec381b7f7fa2dbaaa8d8361374136ba/core/dbt/config/runtime.py#L193-L203
@@ -43,7 +47,9 @@ def load_db_profile():
     project_profile_name = partial.render_profile_name(profile_renderer)
 
     # from https://github.com/dbt-labs/dbt-core/blob/19c48e285ec381b7f7fa2dbaaa8d8361374136ba/core/dbt/config/profile.py#L423-L425
-    profile_name = Profile.pick_profile_name(getattr(args, "profile", None), project_profile_name)
+    profile_name = Profile.pick_profile_name(
+        getattr(args, "profile", None), project_profile_name
+    )
     raw_profiles = read_profile(flags.PROFILES_DIR)
     raw_profile = raw_profiles[profile_name]
 
@@ -57,7 +63,7 @@ def load_db_profile():
         target_name = "default"
 
     fal_dict = Profile._get_profile_data(raw_profile, profile_name, target_name)
-    db_profile = fal_dict.get('db_profile')
+    db_profile = fal_dict.get("db_profile")
     assert db_profile, "fal credentials must have a `db_profile` property set"
 
     try:
@@ -69,7 +75,10 @@ def load_db_profile():
         )
     except AttributeError as error:
         if "circular import" in str(error):
-            raise AttributeError("Do not wrap a type 'fal' profile with another type 'fal' profile") from error
+            raise AttributeError(
+                "Do not wrap a type 'fal' profile with another type 'fal' profile"
+            ) from error
+
 
 DB_PROFILE = None
 DB_RELATION = BaseRelation
@@ -78,6 +87,7 @@ DB_RELATION = BaseRelation
 if not is_agent():
     DB_PROFILE = load_db_profile()
     DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
+
 
 class FalEncAdapter(BaseAdapter):
     Relation = DB_RELATION  # type: ignore
