@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 from contextlib import contextmanager
 from dbt.adapters.base.impl import BaseAdapter, BaseRelation
@@ -9,6 +9,7 @@ from .wrappers import FalEncAdapterWrapper, FalCredentialsWrapper
 
 # TODO: offer in `from isolate import is_agent`
 from isolate.connections.common import is_agent
+import sys
 
 @contextmanager
 def _release_plugin_lock():
@@ -18,8 +19,12 @@ def _release_plugin_lock():
     finally:
         FACTORY.lock.acquire()
 
-def load_db_profile():
-    import sys
+
+def _get_command(arglist: List[str]) -> Optional[str]:
+    if len(arglist[0]) >= 3:
+        return arglist[0][-3:]
+
+def load_db_profile(raw_args: List[str]):
     import os
 
     from dbt.main import parse_args
@@ -29,7 +34,8 @@ def load_db_profile():
     from dbt.config.utils import parse_cli_vars
     from dbt import flags
 
-    args = parse_args(sys.argv[1:])
+    args = parse_args(raw_args)
+
 
     # dbt-core does os.chdir(project_dir) before reaching this location
     project_root = os.getcwd()
@@ -75,9 +81,16 @@ DB_PROFILE = None
 DB_RELATION = BaseRelation
 
 # NOTE: Should this file run on isolate agents? Could we skip it entirely and build a FalEncAdapterWrapper directly?
+
 if not is_agent():
-    DB_PROFILE = load_db_profile()
-    DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
+    command = _get_command(sys.argv)
+    if command == "dbt":
+        DB_PROFILE = load_db_profile(sys.argv[1:])
+        DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
+    elif command == "fal" and sys.argv[1] == "flow":
+        DB_PROFILE = load_db_profile(sys.argv[2:])
+        DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
+
 
 class FalEncAdapter(BaseAdapter):
     Relation = DB_RELATION  # type: ignore
