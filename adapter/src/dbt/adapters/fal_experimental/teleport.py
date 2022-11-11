@@ -96,6 +96,7 @@ def run_in_environment_with_teleport(
 
         key = environment.create()
 
+        # TODO: make it work with multiple environments and test fal_scripts_path
         with environment.open_connection(key) as connection:
             execute_model = partial(run_with_teleport, code, teleport_info, locations, config)
             result = connection.run(execute_model)
@@ -105,6 +106,7 @@ def run_in_environment_with_teleport(
         deps = get_default_pip_dependencies(is_teleport=True)
         stage = VirtualPythonEnvironment(deps)
 
+        # run_with_teleport already handles fal_scripts_path, so we don't need to pass it here
         with PythonIPC(environment, environment.create(), extra_inheritance_paths=[stage.create()]) as connection:
             execute_model = partial(run_with_teleport, code, teleport_info, locations, config)
             result = connection.run(execute_model)
