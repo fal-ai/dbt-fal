@@ -122,6 +122,7 @@ class FalEncAdapter(BaseAdapter):
 
         config.python_adapter_credentials = fal_credentials
         config.sql_adapter_credentials = db_credentials
+        config.threads = DB_PROFILE.threads
 
         with _release_plugin_lock():
             # Temporary credentials for register
