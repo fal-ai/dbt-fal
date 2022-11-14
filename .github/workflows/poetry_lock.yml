@@ -1,0 +1,49 @@
+name: Check Poetry Lock
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/poetry_lock.yml"
+      - "**/pyproject.toml"
+      - "**/poetry.lock"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [".", "adapter"]
+
+    # Run only the latest commit pushed to PR
+    concurrency:
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.dir }}"
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+          
+      - name: Install poetry
+        shell: bash
+        run: pip install poetry==1.2.*
+
+      - name: Check poetry lock
+        working-directory: ${{ matrix.dir }}
+        run: poetry lock --no-update
+
+      - name: Pull Remote Changes
+        run: git pull
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Poetry lock updated
+          commit_user_email: batuhan+bot@fal.ai
+          commit_user_name: Fal Bot
