@@ -30,18 +30,15 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
         # If the given adapter supports the DBAPI (PEP 249), we can
         # use its connection directly for the engine.
         sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
-        if adapter_type == "snowflake":
-            format_url = (
-                lambda url: url + connection.handle.host + ":" + connection.handle.port
-            )
     else:
         # TODO: maybe tell them to open an issue?
         raise NotImplementedError(
-            "dbt-fal does not support the given adapter for materializing relations."
+            f"dbt-fal does not support {adapter_type} adapter for materializing relations."
         )
 
     url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
     url = format_url(url)
+
     return sqlalchemy.create_engine(url, **sqlalchemy_kwargs)
 
 
@@ -78,6 +75,11 @@ def write_df_to_relation(
         import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
         return support_duckdb.write_df_to_relation(adapter, dataframe, relation)
+
+    elif adapter.type() == "trino":
+        import dbt.adapters.fal_experimental.support.trino as support_trino
+
+        return support_trino.write_df_to_relation(adapter, dataframe, relation)
 
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
@@ -123,6 +125,11 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
         import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
         return support_duckdb.read_relation_as_df(adapter, relation)
+
+    elif adapter.type() == "trino":
+        import dbt.adapters.fal_experimental.support.trino as support_trino
+
+        return support_trino.read_relation_as_df(adapter, relation)
 
     else:
         with new_connection(adapter, "fal:read_relation_as_df") as connection:
