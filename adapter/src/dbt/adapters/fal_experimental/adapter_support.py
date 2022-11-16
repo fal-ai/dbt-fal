@@ -26,18 +26,24 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
 
     sqlalchemy_kwargs = {}
     format_url = lambda url: url
+    if adapter_type == 'trino':
+        import dbt.adapters.fal_experimental.support.trino as support_trino
+        return support_trino.create_engine(adapter)
+
     if adapter_type in ("postgres", "redshift"):
         # If the given adapter supports the DBAPI (PEP 249), we can
         # use its connection directly for the engine.
         sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
+        url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
+        url = format_url(url)
     else:
-        # TODO: maybe tell them to open an issue?
-        raise NotImplementedError(
-            f"dbt-fal does not support {adapter_type} adapter for materializing relations."
+        message = (
+            f"dbt-fal does not support {adapter_type} adapter. ",
+            f"If you need {adapter_type} support, you can create an issue ",
+            "in our GitHub repository: https://github.com/fal-ai/fal. ",
+            "We will look into it ASAP."
         )
-
-    url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
-    url = format_url(url)
+        raise NotImplementedError(message)
 
     return sqlalchemy.create_engine(url, **sqlalchemy_kwargs)
 
@@ -75,11 +81,6 @@ def write_df_to_relation(
         import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
         return support_duckdb.write_df_to_relation(adapter, dataframe, relation)
-
-    elif adapter.type() == "trino":
-        import dbt.adapters.fal_experimental.support.trino as support_trino
-
-        return support_trino.write_df_to_relation(adapter, dataframe, relation)
 
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
@@ -125,11 +126,6 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
         import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
         return support_duckdb.read_relation_as_df(adapter, relation)
-
-    elif adapter.type() == "trino":
-        import dbt.adapters.fal_experimental.support.trino as support_trino
-
-        return support_trino.read_relation_as_df(adapter, relation)
 
     else:
         with new_connection(adapter, "fal:read_relation_as_df") as connection:
