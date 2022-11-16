@@ -11,12 +11,11 @@ models:
   - name: modela
     meta:
       fal:
-        scripts:
-          pre-hook:
-            - prepare.py
-            - other.py
-          post-hook:
-            - send_slack_message.py
+        pre-hook:
+          - prepare.py
+          - other.py
+        post-hook:
+          - send_slack_message.py
 ```
 
 ### `after` and `before` scripts vs `post-hook`s and `pre-hook`s
@@ -25,14 +24,14 @@ Starting with `0.4.0`, we are deprecating `after` (and `before`) scripts in favo
 introduced `post-hook`s (and `pre-hook`s) for `fal flow run`. The table below is a general
 overview between these two features:
 
-|                                                                     | `after` scripts                      | `post-hook`s                                 |
-|---------------------------------------------------------------------|--------------------------------------|----------------------------------------------|
-| Runs after the bound model                                          | ✅                                   | ✅                                           |
-| Run before dependant models (Runs _as part_ of the bound model)     | ✅ (after 0.4.0)                     | ✅                                           |
-| Parallelization (thread-level) is enabled                           | ✅                                   | ✅                                           |
-| Runs even if the underlying model's `dbt run` fails                 | ❌                                   | ✅                                           |
-| Can be [parametrized](/Docs/fal-cli/structured-hooks)               | ❌                                   | ✅                                           |
-| Can be individually selected / executed                             | ✅                                   | ❌                                           |
-| Can use `write_to_source`/`write_to_model`                          | ✅                                   | ❌ (use [Python models](/Docs/fal-cli/python-models) instead) |
+|                                                                 | `after` scripts  | `post-hook`s                                                  |
+| --------------------------------------------------------------- | ---------------- | ------------------------------------------------------------- |
+| Runs after the bound model                                      | ✅               | ✅                                                            |
+| Run before dependant models (Runs _as part_ of the bound model) | ✅ (after 0.4.0) | ✅                                                            |
+| Parallelization (thread-level) is enabled                       | ✅               | ✅                                                            |
+| Runs even if the underlying model's `dbt run` fails             | ❌               | ✅                                                            |
+| Can be [parametrized](/Docs/fal-cli/structured-hooks)           | ❌               | ✅                                                            |
+| Can be individually selected / executed                         | ✅               | ❌                                                            |
+| Can use `write_to_source`/`write_to_model`                      | ✅               | ❌ (use [Python models](/Docs/fal-cli/python-models) instead) |
 
 If you have an existing project and want to move away from `after` scripts, please see the related section in the ["Compatibility" page](/Docs/compatibility).

@@ -3,7 +3,7 @@
 fal allows you to run Python scripts directly from your [dbt](https://www.getdbt.com/) project.
 
 - Sign up for the private beta of [fal Cloud](https://fal.ai#signup)
-  
+
 <p align="center">
   <a href="https://fal.ai#signup">
     <img src="https://badgen.net/badge/icon/Sign%20Up%20for%20fal%20Cloud/purple?icon=terminal&label" alt="fal Cloud" />
@@ -90,7 +90,7 @@ models:
           - send_slack_message.py
 ```
 
-## 5. (New!) Run `fal flow run` 
+## 5. (New!) Run `fal flow run`
 
 ```bash
 $ fal flow run
@@ -158,14 +158,13 @@ models:
     meta:
       owner: "@meder"
       fal:
-        scripts:
-          pre-hook:
-            - fal_scripts/trigger_fivetran.py
-          post-hook:
-            - fal_scripts/slack.py
+        pre-hook:
+          - fal_scripts/trigger_fivetran.py
+        post-hook:
+          - fal_scripts/slack.py
 ```
 
-`fal flow run` will run `fal_scripts/trigger_fivetran.py`, then the `boston` dbt model, and finally `fal_scripts/slack.py`. 
+`fal flow run` will run `fal_scripts/trigger_fivetran.py`, then the `boston` dbt model, and finally `fal_scripts/slack.py`.
 If a model is selected with a selection flag (e.g. `--select boston`), the hooks associated to the model will always run with it.
 
 ```bash
