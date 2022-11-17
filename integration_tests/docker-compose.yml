@@ -14,3 +14,9 @@ services:
       POSTGRES_DB: test
     ports:
       - 5432:5432
+  trino:
+    image: trinodb/trino:latest
+    volumes:
+      - ../adapter/integration_tests/configs/trino/catalog:/etc/trino/catalog
+    ports:
+      - 8080:8080

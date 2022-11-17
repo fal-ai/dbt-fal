@@ -1,3 +1,4 @@
+{{ config(materialized='table') }}
 WITH data AS (
 
     SELECT

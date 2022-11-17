@@ -26,17 +26,19 @@ jobs:
       fail-fast: false
       matrix:
         profile:
-          - postgres
-          - bigquery
-          - duckdb
-          - snowflake
-          - redshift
-        python: ["3.7", "3.8"]
-        include:
-          - profile: duckdb
-            adapter_version: 1.2.2
-          - profile: snowflake
-            teleport: true
+          # - postgres
+          # - bigquery
+          # - duckdb
+          # - snowflake
+          # - redshift
+          - trino
+        # python: ["3.7", "3.8"]
+        python: ["3.8"]
+        # include:
+        #   - profile: duckdb
+        #     adapter_version: 1.2.2
+        #   - profile: snowflake
+        #     teleport: true
 
     concurrency:
       group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
@@ -49,7 +51,7 @@ jobs:
 
       - name: Start Docker database
         working-directory: fal/integration_tests
-        if: contains(fromJSON('["postgres"]'), matrix.profile)
+        if: contains(fromJSON('["postgres"]'), matrix.profile) || contains(fromJSON('["trino"]'), matrix.profile)
         run: docker-compose up -d
 
       - name: Setup latest dependencies
@@ -60,11 +62,21 @@ jobs:
           pip install --upgrade pip
           pip install build wheel
 
-          if [[ -z '${{ matrix.adapter_version }}' ]]
+          if [[ '${{ matrix.profile }}' == 'trino' ]]
           then
-            pip install 'dbt-${{ matrix.profile }}'
+            # Temporary github install before latest changes are released
+            # We need this: https://github.com/starburstdata/dbt-trino/pull/179
+            pip install git+https://github.com/starburstdata/dbt-trino
+            # docker run -d -p 8080:8080 \
+            #   --volume $PWD/configs/trino/catalog:/etc/trino/catalog \
+            #   trinodb/trino
           else
-            pip install 'dbt-${{ matrix.profile }}==${{ matrix.adapter_version }}'
+            if [[ -z '${{ matrix.adapter_version }}' ]]
+            then
+              pip install 'dbt-${{ matrix.profile }}'
+            else
+              pip install 'dbt-${{ matrix.profile }}==${{ matrix.adapter_version }}'
+            fi
           fi
 
           pushd ..

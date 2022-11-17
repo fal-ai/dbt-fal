@@ -2,12 +2,11 @@ from typing import Any, Dict, Optional
 from dbt.adapters.base import BaseAdapter, Credentials
 from trino.sqlalchemy import URL
 from dbt.adapters.trino.connections import TrinoCredentials, TrinoNoneCredentials
+import sqlalchemy
 
 def create_engine(adapter: BaseAdapter) -> Any:
-    import sqlalchemy
     creds = adapter.config.credentials._db_creds
 
-    # Can be None
     connect_args = _build_connect_args(creds)
 
     url = URL(
@@ -19,7 +18,7 @@ def create_engine(adapter: BaseAdapter) -> Any:
     return sqlalchemy.create_engine(url, connect_args=connect_args)
 
 def _build_connect_args(credentials: TrinoCredentials) -> Optional[Dict[str, Any]]:
-    if credentials is TrinoNoneCredentials:
+    if isinstance(credentials, TrinoNoneCredentials):
         return
 
     # See:
