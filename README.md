@@ -6,7 +6,7 @@ fal allows you to run Python scripts directly from your [dbt](https://www.getdbt
 
 <p align="center">
   <a href="https://fal.ai#signup">
-    <img src="https://badgen.net/badge/icon/Sign%20Up%20for%20fal%20Cloud/purple?icon=terminal&label" alt="fal Cloud" />
+    <img src="https://badgen.net/badge/icon/Sign%20up%20for%20fal%20Cloud/purple?icon=terminal&label" alt="fal Cloud" />
   </a>&nbsp;
   <a href="https://pepy.tech/project/fal">
     <img src="https://static.pepy.tech/personalized-badge/fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads" alt="Total downloads" />
@@ -14,8 +14,11 @@ fal allows you to run Python scripts directly from your [dbt](https://www.getdbt
   <a href="https://pypi.org/project/fal/">
     <img src="https://badge.fury.io/py/fal.svg" alt="fal on PyPI" />
   </a>&nbsp;
+  <a href="https://getdbt.slack.com/archives/C02V8QW3Q4Q">
+    <img src="https://badgen.net/badge/icon/%23tools-fal%20on%20dbt%20Slack/orange?icon=slack&label" alt="Slack channel" />
+  </a>&nbsp;
   <a href="https://discord.com/invite/Fyc9PwrccF">
-    <img src="https://badgen.net/badge/icon/Join%20Us%20On%20Discord/red?icon=discord&label" alt="Discord conversation" />
+    <img src="https://badgen.net/badge/icon/Join%20us%20on%20Discord/red?icon=discord&label" alt="Discord conversation" />
   </a>
 </p>
 
