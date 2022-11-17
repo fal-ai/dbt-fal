@@ -31,6 +31,8 @@ jobs:
           - duckdb
           - snowflake
           - redshift
+          # enable with next release of dbt-trino
+          # - trino
         python: ["3.7", "3.8"]
         include:
           - profile: duckdb
@@ -50,6 +52,11 @@ jobs:
       - name: Start Docker database
         working-directory: fal/integration_tests
         if: contains(fromJSON('["postgres"]'), matrix.profile)
+        run: docker-compose up -d
+
+      - name: Start trino
+        working-directory: fal/adapter/integration_tests/configs/trino
+        if: contains(fromJSON('["trino"]'), matrix.profile)
         run: docker-compose up -d
 
       - name: Setup latest dependencies

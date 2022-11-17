@@ -94,6 +94,7 @@ def _set_profiles_dir(context) -> Path:
         "snowflake",
         "duckdb",
         "athena",
+        "trino"
     ]
     if "profile" in context.config.userdata:
         profile = context.config.userdata["profile"]

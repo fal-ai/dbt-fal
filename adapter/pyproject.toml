@@ -35,6 +35,9 @@ google-cloud-bigquery = { version = ">=2,<3", extras = ["pandas"], optional = tr
 ## redshift
 sqlalchemy-redshift = { version = "^0.8.9", optional = true }
 
+## trino
+trino = { version = "^0.319.0", extras = ["sqlalchemy"], optional = true }
+
 # teleport
 s3fs = { version = ">=2022.8.2", optional = true }
 
@@ -48,6 +51,7 @@ bigquery = ["google-cloud-bigquery"]
 redshift = ["sqlalchemy-redshift"]
 duckdb = []
 athena = []
+trino = ["trino"]
 teleport = ["s3fs"]
 
 [build-system]

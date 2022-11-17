@@ -26,22 +26,25 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
 
     sqlalchemy_kwargs = {}
     format_url = lambda url: url
+    if adapter_type == 'trino':
+        import dbt.adapters.fal_experimental.support.trino as support_trino
+        return support_trino.create_engine(adapter)
+
     if adapter_type in ("postgres", "redshift"):
         # If the given adapter supports the DBAPI (PEP 249), we can
         # use its connection directly for the engine.
         sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
-        if adapter_type == "snowflake":
-            format_url = (
-                lambda url: url + connection.handle.host + ":" + connection.handle.port
-            )
+        url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
+        url = format_url(url)
     else:
-        # TODO: maybe tell them to open an issue?
-        raise NotImplementedError(
-            "dbt-fal does not support the given adapter for materializing relations."
+        message = (
+            f"dbt-fal does not support {adapter_type} adapter. ",
+            f"If you need {adapter_type} support, you can create an issue ",
+            "in our GitHub repository: https://github.com/fal-ai/fal. ",
+            "We will look into it ASAP."
         )
+        raise NotImplementedError(message)
 
-    url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
-    url = format_url(url)
     return sqlalchemy.create_engine(url, **sqlalchemy_kwargs)
 
 

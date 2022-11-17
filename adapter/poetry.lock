@@ -1276,6 +1276,26 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "trino"
+version = "0.319.0"
+description = "Client for the Trino distributed SQL Engine"
+category = "main"
+optional = true
+python-versions = ">=3.7"
+
+[package.dependencies]
+pytz = "*"
+requests = "*"
+sqlalchemy = {version = ">=1.3,<2.0", optional = true, markers = "extra == \"sqlalchemy\""}
+
+[package.extras]
+all = ["requests-kerberos", "sqlalchemy (>=1.3,<2.0)"]
+external-authentication-token-cache = ["keyring"]
+kerberos = ["requests-kerberos"]
+sqlalchemy = ["sqlalchemy (>=1.3,<2.0)"]
+tests = ["black", "click", "httpretty (<1.1)", "isort", "pre-commit", "pytest", "pytest-runner", "requests-kerberos", "sqlalchemy (>=1.3,<2.0)", "sqlalchemy-utils"]
+
+[[package]]
 name = "typing-extensions"
 version = "4.4.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -1377,11 +1397,12 @@ postgres = []
 redshift = ["sqlalchemy-redshift"]
 snowflake = ["snowflake-connector-python"]
 teleport = ["s3fs"]
+trino = ["trino"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.11"
-content-hash = "1f8ef0aa75994fa360c54565166f199c171be63882496e60aea0d1418fec0a87"
+content-hash = "753d960db875800b98b33e05c59e81db3823bad6dd5da22a9b4b72bdfffebc45"
 
 [metadata.files]
 agate = [
@@ -2607,6 +2628,10 @@ sqlparse = [
 text-unidecode = [
     {file = "text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
     {file = "text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8"},
+]
+trino = [
+    {file = "trino-0.319.0-py3-none-any.whl", hash = "sha256:44e07da121a655da9f9eb92a0670bad8b4d769f7e42537281bd101ab7b7de3ee"},
+    {file = "trino-0.319.0.tar.gz", hash = "sha256:d5a01258ff48b4e6dbed9cdbb070e2bf5afdbec90c933b19f1acad6db2947f32"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.4.0-py3-none-any.whl", hash = "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"},
