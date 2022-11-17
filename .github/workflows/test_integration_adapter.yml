@@ -26,19 +26,19 @@ jobs:
       fail-fast: false
       matrix:
         profile:
-          # - postgres
-          # - bigquery
-          # - duckdb
-          # - snowflake
-          # - redshift
-          - trino
-        # python: ["3.7", "3.8"]
-        python: ["3.8"]
-        # include:
-        #   - profile: duckdb
-        #     adapter_version: 1.2.2
-        #   - profile: snowflake
-        #     teleport: true
+          - postgres
+          - bigquery
+          - duckdb
+          - snowflake
+          - redshift
+          # enable with next release of dbt-trino
+          # - trino
+        python: ["3.7", "3.8"]
+        include:
+          - profile: duckdb
+            adapter_version: 1.2.2
+          - profile: snowflake
+            teleport: true
 
     concurrency:
       group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
@@ -67,18 +67,11 @@ jobs:
           pip install --upgrade pip
           pip install build wheel
 
-          if [[ '${{ matrix.profile }}' == 'trino' ]]
+          if [[ -z '${{ matrix.adapter_version }}' ]]
           then
-            # Temporary github install before latest changes are released
-            # We need this: https://github.com/starburstdata/dbt-trino/pull/179
-            pip install git+https://github.com/starburstdata/dbt-trino
+            pip install 'dbt-${{ matrix.profile }}'
           else
-            if [[ -z '${{ matrix.adapter_version }}' ]]
-            then
-              pip install 'dbt-${{ matrix.profile }}'
-            else
-              pip install 'dbt-${{ matrix.profile }}==${{ matrix.adapter_version }}'
-            fi
+            pip install 'dbt-${{ matrix.profile }}==${{ matrix.adapter_version }}'
           fi
 
           pushd ..
