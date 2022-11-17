@@ -51,7 +51,12 @@ jobs:
 
       - name: Start Docker database
         working-directory: fal/integration_tests
-        if: contains(fromJSON('["postgres"]'), matrix.profile) || contains(fromJSON('["trino"]'), matrix.profile)
+        if: contains(fromJSON('["postgres"]'), matrix.profile)
+        run: docker-compose up -d
+
+      - name: Start trino
+        working-directory: fal/adapter/integration_tests/configs/trino
+        if: contains(fromJSON('["trino"]'), matrix.profile)
         run: docker-compose up -d
 
       - name: Setup latest dependencies
@@ -67,9 +72,6 @@ jobs:
             # Temporary github install before latest changes are released
             # We need this: https://github.com/starburstdata/dbt-trino/pull/179
             pip install git+https://github.com/starburstdata/dbt-trino
-            # docker run -d -p 8080:8080 \
-            #   --volume $PWD/configs/trino/catalog:/etc/trino/catalog \
-            #   trinodb/trino
           else
             if [[ -z '${{ matrix.adapter_version }}' ]]
             then

@@ -4,13 +4,15 @@ services:
   db:
     image: postgres:12
     container_name: fal_db
-    # volumes:
-    #   - ./docker:/docker-entrypoint-initdb.d
-    # To show all statements in Postgres, uncomment:
-    # command: ["postgres", "-c", "log_statement=all"]
     environment:
       POSTGRES_USER: pguser
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: test
     ports:
       - 5432:5432
+  trino:
+    image: trinodb/trino:latest
+    volumes:
+      - ./catalog:/etc/trino/catalog
+    ports:
+      - 8080:8080
