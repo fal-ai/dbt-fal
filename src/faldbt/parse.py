@@ -119,7 +119,7 @@ def get_fal_models_dirs(project_dir: str, args_vars: str) -> List[str]:
 
 def get_scripts_dir(project_dir: str, args_vars: str) -> str:
     vars = get_vars_dict(project_dir, args_vars)
-    scripts_dir = vars.get(FAL_SCRIPTS_PATH, project_dir)
+    scripts_dir = vars.get(FAL_SCRIPTS_PATH, 'fal_scripts')
 
     if not isinstance(scripts_dir, str):
         raise FalParseError(
