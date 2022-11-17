@@ -29,7 +29,7 @@ def get_fal_scripts_path(config: RuntimeConfig):
     project_path = pathlib.Path(config.project_root)
 
     # Default value
-    fal_scripts_path = 'fal_scripts'
+    fal_scripts_path = ''
 
     if hasattr(config, 'vars'):
         fal_scripts_path: str = config.vars.to_dict().get(FAL_SCRIPTS_PATH_VAR_NAME, fal_scripts_path)  # type: ignore
