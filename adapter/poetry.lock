@@ -131,7 +131,7 @@ tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900
 tests-no-zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
 
 [[package]]
-name = "Babel"
+name = "babel"
 version = "2.11.0"
 description = "Internationalization utilities"
 category = "main"
@@ -585,7 +585,7 @@ six = "*"
 
 [[package]]
 name = "isolate"
-version = "0.4.0"
+version = "0.5.0"
 description = "Managed isolated environments for Python"
 category = "main"
 optional = false
@@ -599,7 +599,7 @@ rich = ">=12.0"
 virtualenv = ">=20.4"
 
 [[package]]
-name = "Jinja2"
+name = "jinja2"
 version = "3.1.2"
 description = "A very fast and expressive template engine."
 category = "main"
@@ -651,7 +651,7 @@ python-versions = "*"
 six = ">=1.6.1"
 
 [[package]]
-name = "Logbook"
+name = "logbook"
 version = "1.5.3"
 description = "A logging replacement for Python"
 category = "main"
@@ -670,7 +670,7 @@ test = ["pytest (>4.0)", "pytest-cov (>=2.6)"]
 zmq = ["pyzmq"]
 
 [[package]]
-name = "MarkupSafe"
+name = "markupsafe"
 version = "2.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
 category = "main"
@@ -968,7 +968,7 @@ optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
-name = "Pygments"
+name = "pygments"
 version = "2.13.0"
 description = "Pygments is a syntax highlighting package written in Python."
 category = "main"
@@ -979,7 +979,7 @@ python-versions = ">=3.6"
 plugins = ["importlib-metadata"]
 
 [[package]]
-name = "PyJWT"
+name = "pyjwt"
 version = "2.6.0"
 description = "JSON Web Token implementation in Python"
 category = "main"
@@ -993,7 +993,7 @@ docs = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
 tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
 
 [[package]]
-name = "pyOpenSSL"
+name = "pyopenssl"
 version = "22.0.0"
 description = "Python wrapper module around the OpenSSL library"
 category = "main"
@@ -1091,7 +1091,7 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "PyYAML"
+name = "pyyaml"
 version = "6.0"
 description = "YAML parser and emitter for Python"
 category = "main"
@@ -1215,7 +1215,7 @@ pandas = ["pandas (>=1.0.0,<1.5.0)", "pyarrow (>=8.0.0,<8.1.0)"]
 secure-local-storage = ["keyring (!=16.1.0,<24.0.0)"]
 
 [[package]]
-name = "SQLAlchemy"
+name = "sqlalchemy"
 version = "1.4.43"
 description = "Database Abstraction Library"
 category = "main"
@@ -1323,7 +1323,7 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "Werkzeug"
+name = "werkzeug"
 version = "2.2.2"
 description = "The comprehensive WSGI web application library."
 category = "main"
@@ -1381,7 +1381,7 @@ teleport = ["s3fs"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.11"
-content-hash = "f5910c594b0cdf05e34bd3c1f65eca36842ed2db7be2ece7d760be8c8d7caf9b"
+content-hash = "1f8ef0aa75994fa360c54565166f199c171be63882496e60aea0d1418fec0a87"
 
 [metadata.files]
 agate = [
@@ -1508,7 +1508,7 @@ attrs = [
     {file = "attrs-22.1.0-py2.py3-none-any.whl", hash = "sha256:86efa402f67bf2df34f51a335487cf46b1ec130d02b8d39fd248abfd30da551c"},
     {file = "attrs-22.1.0.tar.gz", hash = "sha256:29adc2665447e5191d0e7c568fde78b21f9672d344281d0c6e1ab085429b22b6"},
 ]
-Babel = [
+babel = [
     {file = "Babel-2.11.0-py3-none-any.whl", hash = "sha256:1ad3eca1c885218f6dce2ab67291178944f810a10a9b5f3cb8382a5a232b64fe"},
     {file = "Babel-2.11.0.tar.gz", hash = "sha256:5ef4b3226b0180dedded4229651c8b0e1a3a6a2837d45a073272f313e4cf97f6"},
 ]
@@ -1973,10 +1973,10 @@ isodate = [
     {file = "isodate-0.6.1.tar.gz", hash = "sha256:48c5881de7e8b0a0d648cb024c8062dc84e7b840ed81e864c7614fd3c127bde9"},
 ]
 isolate = [
-    {file = "isolate-0.4.0-py3-none-any.whl", hash = "sha256:f44706d26f49abf0edc8ee52e836f0bb095d6c9898d60b6f3915472f76de3cb7"},
-    {file = "isolate-0.4.0.tar.gz", hash = "sha256:7d1deeee9d53bf89cc2ad718f0e181d845b2ece410cce85729ee5c94cf8a7288"},
+    {file = "isolate-0.5.0-py3-none-any.whl", hash = "sha256:e4533f43f3460c2a460a674e3fb04cad6cc6513f82c9b6a191b15522804ef31a"},
+    {file = "isolate-0.5.0.tar.gz", hash = "sha256:5ed331d8b04037e782d1fdfd951043bff517b82d39a142235a324c77939555b8"},
 ]
-Jinja2 = [
+jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
     {file = "Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},
 ]
@@ -1992,7 +1992,7 @@ leather = [
     {file = "leather-0.3.4-py2.py3-none-any.whl", hash = "sha256:5e741daee96e9f1e9e06081b8c8a10c4ac199301a0564cdd99b09df15b4603d2"},
     {file = "leather-0.3.4.tar.gz", hash = "sha256:b43e21c8fa46b2679de8449f4d953c06418666dc058ce41055ee8a8d3bb40918"},
 ]
-Logbook = [
+logbook = [
     {file = "Logbook-1.5.3-cp27-cp27m-win32.whl", hash = "sha256:56ee54c11df3377314cedcd6507638f015b4b88c0238c2e01b5eb44fd3a6ad1b"},
     {file = "Logbook-1.5.3-cp27-cp27m-win_amd64.whl", hash = "sha256:2dc85f1510533fddb481e97677bb7bca913560862734c0b3b289bfed04f78c92"},
     {file = "Logbook-1.5.3-cp35-cp35m-win32.whl", hash = "sha256:94e2e11ff3c2304b0d09a36c6208e5ae756eb948b210e5cbd63cd8d27f911542"},
@@ -2003,7 +2003,7 @@ Logbook = [
     {file = "Logbook-1.5.3-cp37-cp37m-win_amd64.whl", hash = "sha256:0cf2cdbfb65a03b5987d19109dacad13417809dcf697f66e1a7084fb21744ea9"},
     {file = "Logbook-1.5.3.tar.gz", hash = "sha256:66f454ada0f56eae43066f604a222b09893f98c1adc18df169710761b8f32fe8"},
 ]
-MarkupSafe = [
+markupsafe = [
     {file = "MarkupSafe-2.1.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:86b1f75c4e7c2ac2ccdaec2b9022845dbb81880ca318bb7a0a01fbf7813e3812"},
     {file = "MarkupSafe-2.1.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:f121a1420d4e173a5d96e47e9a0c0dcff965afdf1626d28de1460815f7c4ee7a"},
     {file = "MarkupSafe-2.1.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a49907dd8420c5685cfa064a1335b6754b74541bbb3706c259c02ed65b644b3e"},
@@ -2405,15 +2405,15 @@ pycryptodomex = [
     {file = "pycryptodomex-3.15.0-pp36-pypy36_pp73-win32.whl", hash = "sha256:35a8f7afe1867118330e2e0e0bf759c409e28557fb1fc2fbb1c6c937297dbe9a"},
     {file = "pycryptodomex-3.15.0.tar.gz", hash = "sha256:7341f1bb2dadb0d1a0047f34c3a58208a92423cdbd3244d998e4b28df5eac0ed"},
 ]
-Pygments = [
+pygments = [
     {file = "Pygments-2.13.0-py3-none-any.whl", hash = "sha256:f643f331ab57ba3c9d89212ee4a2dabc6e94f117cf4eefde99a0574720d14c42"},
     {file = "Pygments-2.13.0.tar.gz", hash = "sha256:56a8508ae95f98e2b9bdf93a6be5ae3f7d8af858b43e02c5a2ff083726be40c1"},
 ]
-PyJWT = [
+pyjwt = [
     {file = "PyJWT-2.6.0-py3-none-any.whl", hash = "sha256:d83c3d892a77bbb74d3e1a2cfa90afaadb60945205d1095d9221f04466f64c14"},
     {file = "PyJWT-2.6.0.tar.gz", hash = "sha256:69285c7e31fc44f68a1feb309e948e0df53259d579295e6cfe2b1792329f05fd"},
 ]
-pyOpenSSL = [
+pyopenssl = [
     {file = "pyOpenSSL-22.0.0-py2.py3-none-any.whl", hash = "sha256:ea252b38c87425b64116f808355e8da644ef9b07e429398bfece610f893ee2e0"},
     {file = "pyOpenSSL-22.0.0.tar.gz", hash = "sha256:660b1b1425aac4a1bea1d94168a85d99f0b3144c869dd4390d27629d0087f1bf"},
 ]
@@ -2465,7 +2465,7 @@ pytz = [
     {file = "pytz-2022.6-py2.py3-none-any.whl", hash = "sha256:222439474e9c98fced559f1709d89e6c9cbf8d79c794ff3eb9f8800064291427"},
     {file = "pytz-2022.6.tar.gz", hash = "sha256:e89512406b793ca39f5971bc999cc538ce125c0e51c27941bef4568b460095e2"},
 ]
-PyYAML = [
+pyyaml = [
     {file = "PyYAML-6.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d4db7c7aef085872ef65a8fd7d6d09a14ae91f691dec3e87ee5ee0539d516f53"},
     {file = "PyYAML-6.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:9df7ed3b3d2e0ecfe09e14741b857df43adb5a3ddadc919a2d94fbdf78fea53c"},
     {file = "PyYAML-6.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:77f396e6ef4c73fdc33a9157446466f1cff553d979bd00ecb64385760c6babdc"},
@@ -2553,7 +2553,7 @@ snowflake-connector-python = [
     {file = "snowflake_connector_python-2.7.12-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2d5071eb8bca51b2dd1b8c2dfed395f10bb0ec3509a49ebcf65a9c25b39fd351"},
     {file = "snowflake_connector_python-2.7.12-cp39-cp39-win_amd64.whl", hash = "sha256:77342d9c3fb4642949737cf78e041b858eb7811e5eb41cdedc5690e8739bf327"},
 ]
-SQLAlchemy = [
+sqlalchemy = [
     {file = "SQLAlchemy-1.4.43-cp27-cp27m-macosx_10_14_x86_64.whl", hash = "sha256:491d94879f9ec0dea7e1cb053cd9cc65a28d2467960cf99f7b3c286590406060"},
     {file = "SQLAlchemy-1.4.43-cp27-cp27m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:eeb55a555eef1a9607c1635bbdddd0b8a2bb9713bcb5bc8da1e8fae8ee46d1d8"},
     {file = "SQLAlchemy-1.4.43-cp27-cp27m-win32.whl", hash = "sha256:7d6293010aa0af8bd3b0c9993259f8979db2422d6abf85a31d70ec69cb2ee4dc"},
@@ -2624,7 +2624,7 @@ wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
     {file = "wcwidth-0.2.5.tar.gz", hash = "sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83"},
 ]
-Werkzeug = [
+werkzeug = [
     {file = "Werkzeug-2.2.2-py3-none-any.whl", hash = "sha256:f979ab81f58d7318e064e99c4506445d60135ac5cd2e177a2de0089bfd4c9bd5"},
     {file = "Werkzeug-2.2.2.tar.gz", hash = "sha256:7ea2d48322cc7c0f8b3a215ed73eabd7b5d75d0b50e31ab006286ccff9e00b8f"},
 ]

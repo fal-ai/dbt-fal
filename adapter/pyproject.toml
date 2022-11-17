@@ -18,7 +18,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.7.2, <3.11"
 dbt-core = ">=1.3.0b1, <1.4"
-isolate = { version = "^0.4", extras = ["grpc"] }
+isolate = { version = "^0.5", extras = ["grpc"] }
 posthog = "^1.4.5"
 pandas = "^1.3.4"
 "backports.functools_lru_cache" = "^1.6.4"

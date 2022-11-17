@@ -140,10 +140,14 @@ def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) 
 
     assert remote_type, f"{config['remote_type']} not recognised. Available remote types: {list(REMOTE_TYPES_DICT.keys())}"
 
+    env_definition = {
+        "kind": remote_type,
+        "configuration": parsed_config
+    }
+
     return {
         "host": config.get("host"),
-        "target_environment_kind": remote_type,
-        "target_environment_config": parsed_config
+        "target_environments": [env_definition]
     }
 
 def _get_dbt_packages(is_teleport: bool = False) -> Iterator[Tuple[str, Optional[str]]]:

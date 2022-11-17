@@ -57,10 +57,12 @@ def run_in_environment_with_adapter(
         # TODO: make a specialized function for this case?
         deps = [i for i in get_default_pip_dependencies() if i.startswith('dbt-')]
 
-        if environment.target_environment_kind == 'conda':
-            raise NotImplementedError("Remote environment with `conda` is not supported yet.")
-        else:
-            environment.target_environment_config['requirements'].extend(deps)
+        extra_config = {
+            'kind': 'virtualenv',
+            'configuration': { 'requirements': deps }
+        }
+
+        environment.target_environments.append(extra_config)
 
         key = environment.create()
 
