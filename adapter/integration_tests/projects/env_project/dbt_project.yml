@@ -10,5 +10,8 @@ snapshot-paths: ["snapshots"]
 
 target-path: "{{ env_var('temp_dir') }}/target"
 
+vars:
+  fal-scripts-path: "fal_scripts"
+
 models:
   +schema: custom

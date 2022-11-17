@@ -1,5 +1,5 @@
 def model(dbt, fal):
-    from get_bool import get_bool
+    from utils.get_bool import get_bool
 
     dbt.config(materialized="table")
     df = dbt.ref("model_b")
