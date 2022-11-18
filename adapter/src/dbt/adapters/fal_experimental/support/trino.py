@@ -1,7 +1,7 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from dbt.adapters.base import BaseAdapter, Credentials
 from trino.sqlalchemy import URL
-from dbt.adapters.trino.connections import TrinoCredentials, TrinoNoneCredentials
+from dbt.adapters.trino.connections import TrinoCredentials
 import sqlalchemy
 
 def create_engine(adapter: BaseAdapter) -> Any:
@@ -17,10 +17,7 @@ def create_engine(adapter: BaseAdapter) -> Any:
     )
     return sqlalchemy.create_engine(url, connect_args=connect_args)
 
-def _build_connect_args(credentials: TrinoCredentials) -> Optional[Dict[str, Any]]:
-    if isinstance(credentials, TrinoNoneCredentials):
-        return
-
+def _build_connect_args(credentials: TrinoCredentials) -> Dict[str, Any]:
     # See:
     # https://github.com/starburstdata/dbt-trino/blob/master/dbt/adapters/trino/connections.py
     return {
