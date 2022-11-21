@@ -38,7 +38,7 @@ vars:
 
 ## Script reference in `schema.yml`
 
-Use the `fal-scripts-path` dbt variable as a base directory when [associating to your models](../Docs/fal-cli/model-scripts.md) to python scripts .
+Use the `fal-scripts-path` dbt variable as a base directory when [associating to your models](../fal-dbt/model-scripts.md) to python scripts .
 
 Referencing a script in your `schema.yml` with the default `fal-scripts-path` value looks like:
 
@@ -76,9 +76,9 @@ models:
 
 ## Script importing during runs
 
-For larger scripts or repeated functionality, you may decide to have several Python files with functions to be imported into your [fal scripts](../Docs/fal-cli/model-scripts.md).
+For larger scripts or repeated functionality, you may decide to have several Python files with functions to be imported into your [fal scripts](../fal-dbt/model-scripts.md).
 
-The [`fal-scripts-path`](#script-path-for-in-a-dbt-project) variable refers to the base directory from which you do your imports. Changing `fal-scripts-path` also changes the base import directory.
+The `fal-scripts-path` variable refers to the base directory from which you do your imports. Changing `fal-scripts-path` also changes the base import directory.
 
 For example; importing a script with the default `fal-scripts-path` value looks like:
 

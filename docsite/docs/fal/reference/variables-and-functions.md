@@ -11,6 +11,7 @@ Inside a Python script, you get access to some useful variables and functions.
 `context` is an object with information about the current script context.
 
 ### `context.current_model`
+
 This propery holds information relevant to the model, which is associated with the running script. For the [`meta` Syntax](#meta-syntax) example, we would get the following:
 
 ```python
@@ -45,6 +46,7 @@ Another relevant property of the `current_model` is `adapter_response`. It conta
 context.current_model.adapter_response
 #= CurrentAdapterResponse(message='SELECT 10', code='SELECT', rows_affected=10)
 ```
+
 ## Read functions
 
 The familiar dbt functions `ref` and `source` are available in fal scripts to read the models and sources as a Pandas DataFrame.
@@ -89,9 +91,10 @@ my_df = execute_sql('SELECT * FROM {{ ref("my_model") }}')
 
 As you can see, the query strings support jinja.
 
-Note that the use of `ref` inside `execute_sql` does not create a node in a dbt dag. So in the case of Python models, you still need to specify dependencies in a comment at the top of the file. For more details, [see here](../Docs/fal-cli/python-models.md#dependencies-on-other-models).
+Note that the use of `ref` inside `execute_sql` does not create a node in a dbt dag. So in the case of Python models, you still need to specify dependencies in a comment at the top of the file. For more details, [see here](../fal-dbt/python-models.md#dependencies-on-other-models).
 
 ### `list_models` function
+
 You can access model information for all models in the dbt project:
 
 ```python
@@ -107,6 +110,7 @@ my_models[0].name
 `list_models` returns a list of `DbtModel` objects that contain model and related test information.
 
 ### `list_sources` function
+
 You can access source information for all sources in the dbt project:
 
 ```python
@@ -160,8 +164,8 @@ models:
             - from_zendesk_ticket_data.py
 ```
 
-
 `write_to_model` will write to the `zendesk_ticket_metrics` table:
+
 ```python
 df = faldbt.ref('stg_zendesk_ticket_data')
 df = add_zendesk_metrics_info(df)
@@ -169,6 +173,7 @@ df = add_zendesk_metrics_info(df)
 # Upload a `pandas.DataFrame` back to the data warehouse
 write_to_model(df) # writes to attached model: zendesk_ticket_metrics
 ```
+
 > NOTE: When used with `fal flow run` or `fal run` commands, `write_to_model` does not accept a model name, it only operates on the associated model.
 
 But when importing `fal` as a Python module, you have to specify the model to write to:
@@ -232,9 +237,10 @@ write_to_model(df2, 'model_name', mode='apend')
 
 ## Extract-Load pipelines
 
-`fal` provides a module `el` that lets you run EL jobs. `el` has two methods: `el.airbyte_sync` and `el.fivetran_sync`. These methods let you run sync jobs on respective [Airbyte](https://docs.airbyte.com/) and [Fivetran](https://fivetran.com/docs/getting-started) connections and connectors. API connection details as well information on connectors have to be provided in [`profiles.yml`](../Docs/credentials-profile#exctract-load-configuration).
+`fal` provides a module `el` that lets you run EL jobs. `el` has two methods: `el.airbyte_sync` and `el.fivetran_sync`. These methods let you run sync jobs on respective [Airbyte](https://docs.airbyte.com/) and [Fivetran](https://fivetran.com/docs/getting-started) connections and connectors. API connection details as well information on connectors have to be provided in [`profiles.yml`](../credentials-profile.md#extract-load-configuration).
 
 Given this bit of `profiles.yml`:
+
 ```yaml
   fal_extract_load:
     dev:
@@ -260,6 +266,7 @@ el.airbyte_sync(config_name="my_airbyte_el", connection_name="airbyte_connection
 ```
 
 `airbyte_sync` triggers and waits for a sync job on an Airbyte connections. Inputs:
+
 - `config_name` - name of the API configuration defined in `profiles.yml`
 - `connection_name` - target Airbyte connection name (Optional if `connection_id` is provided)
 - `connection_id` - target Airbyte connection id (Optional if `connection_name` is provided)
@@ -271,7 +278,9 @@ Running a Fivetran sync job is similar:
 ```python
 el.fivetran_sync(config_name="my_fivetran_el", connector_name="fivetran_connector_1")
 ```
+
 `fivetran_sync` triggers and waits for a sync job on a Fivetran connector. Inputs:
+
 - `config_name` - name of the API configuration defined in `profiles.yml`
 - `connector_name` - target Fivetran connector name (Optional if `connector_id` is provided)
 - `connection_id` - target Fivetran connector id (Optional if `connector_name` is provided)
