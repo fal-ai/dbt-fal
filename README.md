@@ -1,8 +1,8 @@
 # fal: do more with dbt
 
-fal allows you to run Python scripts directly from your [dbt](https://www.getdbt.com/) project.
+`fal` is the easiest way to run Python with your [dbt](https://www.getdbt.com/) project.
 
-- Sign up for the private beta of [fal Cloud](https://fal.ai#signup)
+**NEW:** Sign up for a private beta of [fal Cloud](https://fal.ai#signup)
 
 <p align="center">
   <a href="https://fal.ai#signup">
@@ -22,15 +22,7 @@ fal allows you to run Python scripts directly from your [dbt](https://www.getdbt
   </a>
 </p>
 
-With fal, you can:
-
-- Send Slack notifications upon dbt model success or failure.
-- Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`
-- Use Python libraries such as [`sklearn`](https://scikit-learn.org/) or [`prophet`](https://facebook.github.io/prophet/) to build more complex pipelines downstream of **[and in between (new!)](https://blog.fal.ai/python-or-sql-why-not-both/)** `dbt` models.
-
-and more...
-
-Check out our [Getting Started](#getting-started) guide to get a quickstart, head to our [documentation site](https://docs.fal.ai/) for a deeper dive or play with [in-depth examples](#examples) to see how fal can help you get more done with dbt.
+Let's discover `fal` in less than 5 minutes:
 
 <p align="center">
   <a href="https://www.loom.com/share/bb49fffaa6f74e90b91d26c77f35ecdc">
@@ -38,15 +30,37 @@ Check out our [Getting Started](#getting-started) guide to get a quickstart, hea
   </a>
 </p>
 
+# Introduction
+
+The fal ecosystem has two main components: The `fal` CLI and the `dbt-fal` adapter.
+
+With the `fal` CLI, you can:
+
+- [Send Slack notifications](https://github.com/fal-ai/fal/tree/main/examples/slack-example) upon dbt model success or failure.
+- [Load data from external data sources](https://blog.fal.ai/populate-dbt-models-with-csv-data/) before a model starts running.
+- [Download dbt models](https://docs.fal.ai/fal/python-package) into a Python context with a familiar syntax: `ref('my_dbt_model')` using `FalDbt`
+- [Programatically access rich metadata](https://docs.fal.ai/fal/reference/variables-and-functions) about your dbt project.
+
+With the `dbt-fal` Python adapter, you can:
+
+- Enable a developer-friendly Python environment for most databases, including ones without dbt Python support such as Redshift, Postgres.
+- Use Python libraries such as [`sklearn`](https://scikit-learn.org/) or [`prophet`](https://facebook.github.io/prophet/) to build more complex `dbt` models including ML models.
+- Easily manage your Python environments with [`isolate`](https://github.com/fal-ai/isolate).
+- Iterate on your Python models locally and then [scale them out in the cloud](https://fal.ai#signup).
+
+For more detailed docs on `dbt-fal`, [go here](https://docs.fal.ai/dbt-fal/quickstart)!
+
+Check out our [Getting Started](#getting-started) guide to get a quickstart, head to our [documentation site](https://docs.fal.ai/) for a deeper dive or play with [in-depth examples](#examples) to see how fal can help you get more done with dbt.
+
 # Getting Started
 
-## 1. Install fal
+## 1. Install `fal` and `dbt-fal`
 
 ```bash
-$ pip install fal
+$ pip install fal dbt-fal
 ```
 
-## 2. Go to your dbt directory
+## 2. Go to your dbt project directory
 
 ```bash
 $ cd ~/src/my_dbt_project
@@ -93,7 +107,7 @@ models:
           - send_slack_message.py
 ```
 
-## 5. (New!) Run `fal flow run`
+## 5. Run `fal flow run`
 
 ```bash
 $ fal flow run
@@ -115,16 +129,16 @@ $ fal run
 To explore what is possible with fal, take a look at the in-depth examples below. We will be adding more examples here over time:
 
 - [Example 1: Send Slack notifications](examples/slack-example/README.md)
-- [Example 2: Metric forecasting](examples/metric-forecast/README.md)
-- [Example 3: Sentiment analysis on support tickets](examples/sentiment-analysis/README.md)
-- [Example 4: Send event to Datadog](examples/datadog_event/README.md)
-- [Example 5: Incorporate fal in CI/CD workflow](examples/ci_example/README.md)
-- [Example 6: Send data to Firestore](examples/write_to_firestore/README.md)
-- [Example 7: Write dbt artifacts to GCS](examples/write_to_gcs/README.md)
-- [Example 8: Write dbt artifacts to AWS S3](examples/write_to_aws/README.md)
-- [Example 9: Use dbt from a Jupyter Notebook](examples/write_jupyter_notebook/README.md)
-- [Example 10: Read and parse dbt metadata](examples/read_dbt_metadata/README.md)
-- [Example 11: Anomaly Detection](examples/anomaly-detection/README.md)
+- [Example 2: Use dbt from a Jupyter Notebook](examples/write_jupyter_notebook/README.md)
+- [Example 3: Read and parse dbt metadata](examples/read_dbt_metadata/README.md)
+- [Example 4: Metric forecasting](examples/metric-forecast/README.md)
+- [Example 5: Sentiment analysis on support tickets](examples/sentiment-analysis/README.md)
+- [Example 6: Anomaly Detection](examples/anomaly-detection/README.md)
+- [Example 7: Incorporate fal in CI/CD workflow](examples/ci_example/README.md)
+- [Example 8: Send events to Datadog](examples/datadog_event/README.md)
+- [Example 9: Send data to Firestore](examples/write_to_firestore/README.md)
+- [Example 10: Write dbt artifacts to GCS](examples/write_to_gcs/README.md)
+- [Example 11: Write dbt artifacts to AWS S3](examples/write_to_aws/README.md)
 
 [Check out the examples directory for more](examples/README.md)
 
