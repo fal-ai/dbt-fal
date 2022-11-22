@@ -26,7 +26,7 @@ vars:
   fal-models-paths: ["fal_models"]
 ```
 
-Then, to create a Python model, create a Python (`.py`) or [Notebook (`.ipynb`)](./notebook-files.md) file in your fal models folder and make sure your file calls the [`write_to_model`](../../Reference/variables-and-functions.md#writetomodel-function) function.
+Then, to create a Python model, create a Python (`.py`) or [Notebook (`.ipynb`)](./notebook-files.md) file in your fal models folder and make sure your file calls the [`write_to_model`](../reference/variables-and-functions.md#write_to_model-function) function.
 
 ```py
 df = ref('model_a')
@@ -38,9 +38,10 @@ write_to_model(df)
 
 ## Dependencies on other models
 
-`fal` will resolve any usage of [`source`](../../Reference/variables-and-functions.md#source-function) or [`ref`](../../Reference/variables-and-functions.md#ref-function) functions and generate the appropriate dependencies for the `dbt` DAG.
+`fal` will resolve any usage of [`source`](../reference/variables-and-functions.md#source-function) or [`ref`](../reference/variables-and-functions.md#ref-function) functions and generate the appropriate dependencies for the `dbt` DAG.
 
 Certain complex expressions in the Python AST may not be picked up by `fal`. In that case you can specify dependencies in the top of the Python script as a [module docstring](https://peps.python.org/pep-0257/):
+
 ```py
 """Generates Python model with forecast data
 
@@ -63,11 +64,12 @@ write_to_model(df)
 
 ## Under the hood
 
-When running `fal flow run`, `fal` will automatically generate an [ephemeral dbt model](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/materializations/#ephemeral) for each Python model. This is done in order to let `dbt` know about the existence of the Python model. This enables some nice properties such as Python models being available in `dbt` docs, and the ability to refer to Python models from other dbt models by using [`ref`](../../Reference/variables-and-functions.md#ref-function).
+When running `fal flow run`, `fal` will automatically generate an [ephemeral dbt model](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/materializations/#ephemeral) for each Python model. This is done in order to let `dbt` know about the existence of the Python model. This enables some nice properties such as Python models being available in `dbt` docs, and the ability to refer to Python models from other dbt models by using [`ref`](../reference/variables-and-functions.md#ref-function).
 
 > ❗️ NOTE: Generated files should be committed to your repository.
 
 These generated files should not be modified directly by the user. They will similar to this:
+
 ```sql
 {{ config(materialized='ephemeral') }}
 /*
@@ -83,4 +85,5 @@ Script dependencies:
 
 SELECT * FROM {{ target.schema }}.{{ model.name }}
 ```
+
 The `FAL_GENERATED <checksum>` line is there to make sure that the file is not being directly modified.

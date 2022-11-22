@@ -4,11 +4,11 @@ sidebar_position: 5
 
 # Running scripts not associated with a dbt model
 
-Typically a [fal script is associated with a dbt model](model-scripts.md), this is how the [context variable is populated](../../Reference/variables-and-functions.md#context-variable). However you may want to invoke scripts independent of a dbt model as well. This can be achieved by adding a script configuration similar to meta for models, but in the schema.yml top level:
+Typically a [fal script is associated with a dbt model](model-scripts.md), this is how the [context variable is populated](../reference/variables-and-functions.md#context-variable). However you may want to invoke scripts independent of a dbt model as well. This can be achieved by adding a script configuration similar to meta for models, but in the schema.yml top level:
 
 ```yaml
 models:
-...
+# your model declarations...
 
 fal:
   scripts:

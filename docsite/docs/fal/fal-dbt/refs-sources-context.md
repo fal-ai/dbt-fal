@@ -20,4 +20,4 @@ context.current_model.name
 context.current_model.meta.get("owner")
 ```
 
-Review the [reference](../../Reference/variables-and-functions.md) for a more thorough view of this subject.
+Review the [reference](../reference/variables-and-functions.md) for a more thorough view of this subject.
