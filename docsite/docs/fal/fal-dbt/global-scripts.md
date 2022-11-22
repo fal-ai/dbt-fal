@@ -8,7 +8,8 @@ Typically a [fal script is associated with a dbt model](model-scripts.md), this 
 
 ```yaml
 models:
----
+# your model declarations...
+
 fal:
   scripts:
     before:
