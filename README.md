@@ -1,6 +1,6 @@
 # fal: do more with dbt
 
-`fal` is the easiest way to run Python with your [dbt](https://www.getdbt.com/) project.
+fal is the easiest way to run Python with your [dbt](https://www.getdbt.com/) project.
 
 **NEW:** Sign up for a private beta of [fal Cloud](https://fal.ai#signup)
 
