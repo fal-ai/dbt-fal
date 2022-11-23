@@ -38,6 +38,7 @@ def init_fal(line="", local_ns={}):
         "list_features": faldbt.list_features,
         "execute_sql": faldbt.execute_sql,
         "el": faldbt.el,
+        "refprint": faldbt.refprint,
     }
 
     if args.get("default_model_name"):

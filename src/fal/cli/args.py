@@ -170,6 +170,14 @@ def _build_dbt_selectors(sub: argparse.ArgumentParser):
     # fmt: on
 
 
+def _build_notebook_parser(sub: argparse.ArgumentParser):
+
+    # fmt: off
+    _build_dbt_selectors(sub)
+
+    # fmt: on
+
+
 def _build_run_parser(sub: argparse.ArgumentParser):
 
     # fmt: off
@@ -276,6 +284,12 @@ def _build_cli_parser():
         help="Execute fal and dbt commands in correct order",
     )
     _build_flow_parser(flow_parser)
+
+    notebook_parser = command_parsers.add_parser(
+        name="notebook",
+        help="Start a jupyter notebook with useful helpers",
+    )
+    _build_notebook_parser(notebook_parser)
 
     return parser
 

@@ -3,6 +3,7 @@ from typing import List
 import sys
 
 from fal.cli.flow_runner import fal_flow_run
+from fal.cli.isolate_ipython.isolate_ipython.__main__ import notebook_run
 import faldbt.lib as lib
 from .args import parse_args
 from .fal_runner import fal_run
@@ -40,6 +41,9 @@ def _cli(argv: List[str]):
 
         elif parsed.command == "run":
             fal_run(parsed)
+
+        elif parsed.command == "notebook":
+            notebook_run(parsed)
 
 
 # TODO: remove in fal 0.6.0

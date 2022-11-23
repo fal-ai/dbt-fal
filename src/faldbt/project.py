@@ -582,6 +582,13 @@ class FalDbt:
     def list_features(self) -> List[Feature]:
         return self.features
 
+    @telemetry.log_call("refprint")
+    def refprint(self, model_name) -> str:
+        models = self.models
+        model = [m for m in models if m.name == model_name]
+        print(model[0].node.raw_code)
+        return model[0].node.raw_code
+
     def _find_features(self) -> List[Feature]:
         """List features defined in schema.yml files."""
         models = self.models
