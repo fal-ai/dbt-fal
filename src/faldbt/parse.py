@@ -72,8 +72,9 @@ def get_dbt_config(
         target=profile_target,
     )
 
-    if project_dir and not os.getenv("GITHUB_ACTIONS"):
+    if project_dir and not "PYTEST_CURRENT_TEST" in os.environ:
         # HACK: initializing dbt-fal requires cwd to be project_dir
+        # TODO: this doesn't work in pytest + Github Actions
         owd = os.getcwd()
         os.chdir(project_dir)
         config = RuntimeConfig.from_args(args)
