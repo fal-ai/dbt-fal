@@ -53,7 +53,7 @@ runs:
 
         if [[ '${{ inputs.adapter }}' == 'fal' ]]
         then
-          pip install -e ./adapter
+          pip install -e ./adapter[postgres]
           pip install dbt-postgres==${version}
         else
           echo "${package}==${version}"
@@ -63,7 +63,12 @@ runs:
     - name: Install fal
       shell: sh
       run: |
-        pip install -e '.[${{ inputs.adapter }}]'
+        if [[ '${{ inputs.adapter }}' == 'fal' ]]
+        then
+          pip install -e '.[postgres]'
+        else
+          pip install -e '.[${{ inputs.adapter }}]'
+        fi
 
     - name: List requirements.txt
       shell: sh
