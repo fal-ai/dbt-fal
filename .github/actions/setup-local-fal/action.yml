@@ -51,8 +51,14 @@ runs:
           exit 2
         fi
 
-        echo "${package}==${version}"
-        pip install ${package}==${version}
+        if [[ '${{ inputs.adapter }}' == 'fal' ]]
+        then
+          pip install -e ./adapter
+          pip install dbt-postgres==${version}
+        else
+          echo "${package}==${version}"
+          pip install ${package}==${version}
+        fi
 
     - name: Install fal
       shell: sh
