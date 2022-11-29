@@ -62,6 +62,7 @@ def get_dbt_config(
     profile: Optional[str] = None,
 ) -> RuntimeConfig:
     # Construct a phony config
+    import os
     args = RuntimeArgs(
         project_dir=project_dir,
         profiles_dir=profiles_dir,
@@ -70,7 +71,17 @@ def get_dbt_config(
         profile=profile,
         target=profile_target,
     )
-    return RuntimeConfig.from_args(args)
+
+    if project_dir and not "PYTEST_CURRENT_TEST" in os.environ:
+        # HACK: initializing dbt-fal requires cwd to be project_dir
+        # TODO: this doesn't work in pytest + Github Actions
+        owd = os.getcwd()
+        os.chdir(project_dir)
+        config = RuntimeConfig.from_args(args)
+        os.chdir(owd)
+    else:
+        config = RuntimeConfig.from_args(args)
+    return config
 
 
 def get_el_configs(

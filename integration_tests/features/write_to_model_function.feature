@@ -34,6 +34,7 @@ Feature: `write_to_model` function
   @TODO-postgres
   @TODO-duckdb
   @TODO-redshift
+  @TODO-fal
   Scenario: Write a datetime to the datawarehouse
     When the following command is invoked:
       """
@@ -47,6 +48,7 @@ Feature: `write_to_model` function
   @TODO-postgres
   @TODO-duckdb
   @TODO-redshift
+  @TODO-fal
   Scenario: Write a string and int array to the datawarehouse
     When the following command is invoked:
       """

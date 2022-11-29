@@ -338,6 +338,9 @@ def _write_relation(
     *,
     dtype=None,
 ) -> AdapterResponse:
+    if adapter.type() == "fal":
+        adapter = adapter._db_adapter
+
     if adapter.type() == "bigquery":
         return _bigquery_write_relation(
             adapter,
