@@ -34,6 +34,7 @@ on:
           - redshift
           - duckdb
           - athena
+          - fal
 
       python:
         description: Python version to test with
@@ -73,6 +74,7 @@ jobs:
             'postgres',
             'bigquery',
             'snowflake',
+            'fal'
           ]
           EXTRA_OPTIONS = [
             'redshift',
@@ -222,7 +224,7 @@ jobs:
       - name: Start Docker database
         working-directory: integration_tests
         # TODO: make redshift use a real connection
-        if: contains(fromJSON('["redshift", "postgres"]'), matrix.profile)
+        if: contains(fromJSON('["redshift", "postgres", "fal"]'), matrix.profile)
         run: docker-compose up -d
 
       - name: Configure AWS Credentials
@@ -320,9 +322,9 @@ jobs:
 
           BEHAVE_TAGS="--tags=-TODO-${{ matrix.profile }}"
 
-          if [[ '${{ matrix.profile }}' != 'postgres' ]]
+          if [[ '${{ matrix.profile }}' != 'postgres' ]] && [[ '${{ matrix.profile }}' != 'fal' ]]
           then
-            # 'broken_profile' tests only works for postgres right now
+            # 'broken_profile' tests only works for postgres and postgres+fal right now
             BEHAVE_TAGS="$BEHAVE_TAGS --tags=-broken_profile"
           fi
 
