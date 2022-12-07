@@ -35,7 +35,9 @@ class LocalConnection(EnvironmentConnection):
 
 
 def fetch_environment(
-    project_root: str, environment_name: str
+        project_root: str,
+        environment_name: str,
+        credentials: Optional[Any] = None
 ) -> Tuple[BaseEnvironment, bool]:
     """Fetch the environment with the given name from the project's
     fal_project.yml file."""
@@ -45,7 +47,7 @@ def fetch_environment(
         return LocalPythonEnvironment(), True
 
     try:
-        environments = load_environments(project_root)
+        environments = load_environments(project_root, credentials)
     except Exception as exc:
         raise dbt.exceptions.RuntimeException(
             "Error loading environments from fal_project.yml"
@@ -71,7 +73,9 @@ def db_adapter_config(config: RuntimeConfig) -> RuntimeConfig:
     return new_config
 
 
-def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
+def load_environments(
+        base_dir: str,
+        credentials: Optional[Any] = None) -> Dict[str, BaseEnvironment]:
     import os
     fal_project_path = os.path.join(base_dir, "fal_project.yml")
     if not os.path.exists(fal_project_path):
@@ -90,12 +94,16 @@ def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
         if environments.get(env_name) is not None:
             raise FalParseError("Environment names must be unique.")
 
-        environments[env_name] = create_environment(env_name, env_kind, environment)
+        environments[env_name] = create_environment(env_name, env_kind, environment, credentials)
 
     return environments
 
 
-def create_environment(name: str, kind: str, config: Dict[str, Any]):
+def create_environment(
+        name: str,
+        kind: str,
+        config: Dict[str, Any],
+        credentials: Optional[Any] = None):
     from isolate.backends.virtualenv import VirtualPythonEnvironment
     from isolate.backends.conda import CondaEnvironment
     from isolate.backends.remote import IsolateServer
@@ -122,7 +130,7 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
     if kind == "remote":
         parsed_config = _parse_remote_config(config, parsed_config)
     elif kind == "cloud":
-        parsed_config = _parse_cloud_config(config, parsed_config)
+        parsed_config = _parse_cloud_config(config, parsed_config, credentials)
 
     return env_type.from_config(parsed_config)
 
@@ -163,12 +171,16 @@ def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) 
         "target_environments": [env_definition]
     }
 
-def _parse_cloud_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) -> Dict[str, Any]:
+def _parse_cloud_config(
+        config: Dict[str, Any],
+        parsed_config: Dict[str, Any],
+        credentials: Any
+) -> Dict[str, Any]:
+    from isolate_cloud.sdk import CloudKeyCredentials
     if not config.get("remote_type"):
         kind = "virtualenv"
     else:
         kind = REMOTE_TYPES_DICT.get(config["remote_type"])
-        # [{'kind': 'virtualenv', 'configuration': {'requirements': ['dill==0.3.5.1', 'pyjokes==0.5.0']}}]
 
     if 'requirements' not in parsed_config.keys():
         parsed_config['requirements'] = []
@@ -181,7 +193,8 @@ def _parse_cloud_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) -
     }
 
     return {
-        "host": config.get("host"),
+        "host": credentials.host,
+        "creds": CloudKeyCredentials(credentials.secret, credentials.secret_id),
         "machine_type": config.get("machine_type"),
         "target_environments": [env_definition]
     }

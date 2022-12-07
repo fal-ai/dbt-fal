@@ -73,7 +73,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
         )
 
         environment, is_local = fetch_environment(
-            self.config.project_root, environment_name
+            self.config.project_root, environment_name, self.credentials
         )
 
         telemetry.log_api(
