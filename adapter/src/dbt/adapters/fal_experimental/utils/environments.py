@@ -17,7 +17,11 @@ from . import cache_static
 from .yaml_helper import load_yaml
 
 
-CONFIG_KEYS_TO_IGNORE = ['host', 'remote_type', 'type', 'name']
+CONFIG_KEYS_TO_IGNORE = ['host', 'remote_type', 'type', 'name', 'machine_type']
+REMOTE_TYPES_DICT = {
+    "venv": "virtualenv",
+    "conda": "conda"
+}
 
 
 class FalParseError(Exception):
@@ -96,11 +100,13 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
     from isolate.backends.conda import CondaEnvironment
     from isolate.backends.remote import IsolateServer
 
+    FalHostedServer = _get_fal_hosted_server(kind)
 
     REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
         "conda": CondaEnvironment,
         "venv": VirtualPythonEnvironment,
-        "remote": IsolateServer
+        "remote": IsolateServer,
+        "cloud": FalHostedServer
     }
 
     env_type = REGISTERED_ENVIRONMENTS.get(kind)
@@ -115,8 +121,20 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
 
     if kind == "remote":
         parsed_config = _parse_remote_config(config, parsed_config)
+    elif kind == "cloud":
+        parsed_config = _parse_cloud_config(config, parsed_config)
 
     return env_type.from_config(parsed_config)
+
+
+def _get_fal_hosted_server(kind: str) -> Optional[Any]:
+    try:
+        from isolate_cloud.sdk import FalHostedServer
+    except ModuleNotFoundError as e:
+        if kind == "cloud":
+            raise e
+        return
+    return FalHostedServer
 
 
 def _is_local_environment(environment_name: str) -> bool:
@@ -129,11 +147,6 @@ def _get_required_key(data: Dict[str, Any], name: str) -> Any:
     return data[name]
 
 def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) -> Dict[str, Any]:
-    REMOTE_TYPES_DICT = {
-        "venv": "virtualenv",
-        "conda": "conda"
-    }
-
     assert config.get("remote_type"), "remote_type needs to be specified."
 
     remote_type = REMOTE_TYPES_DICT.get(config["remote_type"])
@@ -147,6 +160,29 @@ def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) 
 
     return {
         "host": config.get("host"),
+        "target_environments": [env_definition]
+    }
+
+def _parse_cloud_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) -> Dict[str, Any]:
+    if not config.get("remote_type"):
+        kind = "virtualenv"
+    else:
+        kind = REMOTE_TYPES_DICT.get(config["remote_type"])
+        # [{'kind': 'virtualenv', 'configuration': {'requirements': ['dill==0.3.5.1', 'pyjokes==0.5.0']}}]
+
+    if 'requirements' not in parsed_config.keys():
+        parsed_config['requirements'] = []
+
+    parsed_config['requirements'].append(f"dill=={importlib_metadata.version('dill')}")
+
+    env_definition = {
+        "kind": kind,
+        "configuration": parsed_config
+    }
+
+    return {
+        "host": config.get("host"),
+        "machine_type": config.get("machine_type"),
         "target_environments": [env_definition]
     }
 
