@@ -177,7 +177,7 @@ def _build_hosted_env(
     return FalHostedServer.from_config(
         {
             "host": credentials.host,
-            "creds": CloudKeyCredentials(credentials.key_secret, credentials.key_id),
+            "creds": CloudKeyCredentials(credentials.key_id, credentials.key_secret),
             "machine_type": machine_type,
             "target_environments": [env_definition]
         }
