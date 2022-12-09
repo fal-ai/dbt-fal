@@ -3,11 +3,7 @@ from dbt.adapters.fal_experimental.connections import FalCredentials
 
 @dataclass
 class FalEncCredentials(FalCredentials):
-
     db_profile: str = ''
-    host: str = ''
-    secret: str = ''
-    secret_id: str = ''
 
     def _connection_keys(self):
         return () + super()._connection_keys()

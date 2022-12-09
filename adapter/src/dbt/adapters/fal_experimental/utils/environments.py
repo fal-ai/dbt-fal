@@ -37,6 +37,7 @@ class LocalConnection(EnvironmentConnection):
 def fetch_environment(
         project_root: str,
         environment_name: str,
+        machine_type: str = "S",
         credentials: Optional[Any] = None
 ) -> Tuple[BaseEnvironment, bool]:
     """Fetch the environment with the given name from the project's
@@ -44,10 +45,17 @@ def fetch_environment(
     # Local is a special environment where it doesn't need to be defined
     # since it will mirror user's execution context directly.
     if environment_name == "local":
-        return LocalPythonEnvironment(), True
+        if credentials.key_secret and credentials.key_id:
+            # "local" environment in this case is fal cloud
+            return _build_hosted_env(
+                config={'name': '', 'type': 'venv'},
+                parsed_config={},
+                credentials=credentials,
+                machine_type=machine_type), False
 
+        return LocalPythonEnvironment(), True
     try:
-        environments = load_environments(project_root, credentials)
+        environments = load_environments(project_root, machine_type, credentials)
     except Exception as exc:
         raise dbt.exceptions.RuntimeException(
             "Error loading environments from fal_project.yml"
@@ -75,6 +83,7 @@ def db_adapter_config(config: RuntimeConfig) -> RuntimeConfig:
 
 def load_environments(
         base_dir: str,
+        machine_type: str = "S",
         credentials: Optional[Any] = None) -> Dict[str, BaseEnvironment]:
     import os
     fal_project_path = os.path.join(base_dir, "fal_project.yml")
@@ -94,7 +103,12 @@ def load_environments(
         if environments.get(env_name) is not None:
             raise FalParseError("Environment names must be unique.")
 
-        environments[env_name] = create_environment(env_name, env_kind, environment, credentials)
+        environments[env_name] = create_environment(
+            env_name,
+            env_kind,
+            environment,
+            machine_type,
+            credentials)
 
     return environments
 
@@ -103,18 +117,21 @@ def create_environment(
         name: str,
         kind: str,
         config: Dict[str, Any],
+        machine_type: str = "S",
         credentials: Optional[Any] = None):
     from isolate.backends.virtualenv import VirtualPythonEnvironment
     from isolate.backends.conda import CondaEnvironment
     from isolate.backends.remote import IsolateServer
 
-    FalHostedServer = _get_fal_hosted_server(kind)
+    parsed_config = { key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE}
+
+    if credentials.key_secret and credentials.key_id:
+        return _build_hosted_env(config, parsed_config, credentials, machine_type)
 
     REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
         "conda": CondaEnvironment,
         "venv": VirtualPythonEnvironment,
         "remote": IsolateServer,
-        "cloud": FalHostedServer
     }
 
     env_type = REGISTERED_ENVIRONMENTS.get(kind)
@@ -125,24 +142,46 @@ def create_environment(
             + ", ".join(REGISTERED_ENVIRONMENTS.keys())
         )
 
-    parsed_config = { key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE}
-
     if kind == "remote":
         parsed_config = _parse_remote_config(config, parsed_config)
-    elif kind == "cloud":
-        parsed_config = _parse_cloud_config(config, parsed_config, credentials)
 
     return env_type.from_config(parsed_config)
 
 
-def _get_fal_hosted_server(kind: str) -> Optional[Any]:
-    try:
-        from isolate_cloud.sdk import FalHostedServer
-    except ModuleNotFoundError as e:
-        if kind == "cloud":
-            raise e
-        return
-    return FalHostedServer
+def _build_hosted_env(
+        config: Dict[str, Any],
+        parsed_config: Dict[str, Any],
+        credentials: Any,
+        machine_type: str
+) -> BaseEnvironment:
+    from isolate_cloud.sdk import FalHostedServer
+    from isolate_cloud.sdk import CloudKeyCredentials
+    if not config.get("type"):
+        kind = "virtualenv"
+    else:
+        if config["type"] not in REMOTE_TYPES_DICT.keys():
+            raise RuntimeError(
+                f"Environment type {config['type']} is not supported. Supported types: {REMOTE_TYPES_DICT.keys()}")
+        kind = REMOTE_TYPES_DICT.get(config["type"])
+
+    if 'requirements' not in parsed_config.keys():
+        parsed_config['requirements'] = []
+
+    parsed_config['requirements'].append(f"dill=={importlib_metadata.version('dill')}")
+
+    env_definition = {
+        "kind": kind,
+        "configuration": parsed_config
+    }
+
+    return FalHostedServer.from_config(
+        {
+            "host": credentials.host,
+            "creds": CloudKeyCredentials(credentials.key_secret, credentials.key_id),
+            "machine_type": machine_type,
+            "target_environments": [env_definition]
+        }
+    )
 
 
 def _is_local_environment(environment_name: str) -> bool:
@@ -171,33 +210,6 @@ def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) 
         "target_environments": [env_definition]
     }
 
-def _parse_cloud_config(
-        config: Dict[str, Any],
-        parsed_config: Dict[str, Any],
-        credentials: Any
-) -> Dict[str, Any]:
-    from isolate_cloud.sdk import CloudKeyCredentials
-    if not config.get("remote_type"):
-        kind = "virtualenv"
-    else:
-        kind = REMOTE_TYPES_DICT.get(config["remote_type"])
-
-    if 'requirements' not in parsed_config.keys():
-        parsed_config['requirements'] = []
-
-    parsed_config['requirements'].append(f"dill=={importlib_metadata.version('dill')}")
-
-    env_definition = {
-        "kind": kind,
-        "configuration": parsed_config
-    }
-
-    return {
-        "host": credentials.host,
-        "creds": CloudKeyCredentials(credentials.secret, credentials.secret_id),
-        "machine_type": config.get("machine_type"),
-        "target_environments": [env_definition]
-    }
 
 def _get_dbt_packages(is_teleport: bool = False) -> Iterator[Tuple[str, Optional[str]]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (

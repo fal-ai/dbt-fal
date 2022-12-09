@@ -72,8 +72,16 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
             self.credentials.default_environment,
         )
 
+        machine_type = parsed_model["config"].get(
+            "fal_machine",
+            "S",
+        )
+
         environment, is_local = fetch_environment(
-            self.config.project_root, environment_name, self.credentials
+            self.config.project_root,
+            environment_name,
+            machine_type,
+            self.credentials
         )
 
         telemetry.log_api(
