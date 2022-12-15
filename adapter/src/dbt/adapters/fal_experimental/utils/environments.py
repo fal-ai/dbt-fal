@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple
+from dbt.events.adapter_endpoint import AdapterLogger
 
 import dbt.exceptions
 import importlib_metadata
@@ -23,6 +24,7 @@ REMOTE_TYPES_DICT = {
     "conda": "conda"
 }
 
+logger = AdapterLogger('fal')
 
 class FalParseError(Exception):
     pass
@@ -47,6 +49,10 @@ def fetch_environment(
     if environment_name == "local":
         if credentials.key_secret and credentials.key_id:
             # "local" environment in this case is fal cloud
+            # TODO: add docs link
+            logger.warning("`local` environments will be executed on fal cloud." + \
+                           "If you don't want to use fal cloud, you can change your " + \
+                           "profile target to one where fal doesn't have credentials")
             return _build_hosted_env(
                 config={'name': '', 'type': 'venv'},
                 parsed_config={},
