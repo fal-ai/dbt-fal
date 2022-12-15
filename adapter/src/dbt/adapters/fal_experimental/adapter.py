@@ -69,8 +69,6 @@ def run_in_environment_with_adapter(
     manifest: Manifest,
     macro_manifest: MacroManifest,
 ) -> AdapterResponse:
-    from isolate.backends.remote import IsolateServer
-
     """Run the 'main' function inside the given code on the
     specified environment.
 
@@ -78,17 +76,7 @@ def run_in_environment_with_adapter(
     in your project's root directory."""
 
     if type(environment).__name__ in ['IsolateServer', 'FalHostedServer']:
-        deps = [i for i in get_default_pip_dependencies() if i.startswith('dbt-')]
-
-        if not any('dbt-fal' in i for i in deps):
-            # HACK: hard-coding dbt-fal version to install in remote environment since local version could not be found
-            # TODO: improve dbt-fal version resolution
-            dbt_fal_dep = "dbt-fal"
-            dbt_fal_extras = _find_adapter_extras("dbt-fal")
-            if dbt_fal_extras:
-                dbt_fal_dep += f"[{' ,'.join(dbt_fal_extras)}]"
-
-            deps.append(f"{dbt_fal_dep}==1.3.7")
+        deps = [i for i in get_default_pip_dependencies(is_remote=True) if i.startswith('dbt-')]
 
         extra_config = {
             'kind': 'virtualenv',
