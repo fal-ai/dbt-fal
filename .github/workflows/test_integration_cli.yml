@@ -1,4 +1,4 @@
-name: Integration Tests
+name: fal integration tests
 
 on:
   pull_request:

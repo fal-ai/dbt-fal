@@ -20,6 +20,13 @@ class FalCredentialsWrapper:
 
     @property
     def type(self):
+        import inspect
+
+        materializer_funcs = {"to_target_dict", "db_materialization"}
+        if any(frame.function in materializer_funcs for frame in inspect.stack()):
+            # This makes sense for both SQL and Python because the target is always the db
+            return self._db_creds.type
+
         return "fal"
 
     def __getattr__(self, name: str) -> Any:
@@ -59,12 +66,13 @@ class FalEncAdapterWrapper(FalAdapterMixin):
     @telemetry.log_call(
         "encapsulate_db_materialization", log_args=["materialization"], config=True
     )
-    def db_materialization(self, context, materialization):
+    def db_materialization(self, context: dict, materialization: str):
         # NOTE: inspired by https://github.com/dbt-labs/dbt-core/blob/be4a91a0fe35a619587b7a0145e190690e3771c6/core/dbt/task/run.py#L254-L290
         materialization_macro = self.manifest.find_materialization_macro_by_name(
             self.config.project_name, materialization, self._db_adapter.type()
         )
 
+        # HACK: run the entire SQL materialization and return the resulting dict with relations created
         return MacroGenerator(
             materialization_macro, context, stack=context["context_macro_stack"]
         )()
@@ -74,8 +82,13 @@ class FalEncAdapterWrapper(FalAdapterMixin):
     def manifest(self):
         return ManifestLoader.get_full_manifest(self.config)
 
-    @classmethod
-    def type(cls):
+    def type(self):
+        import inspect
+
+        materializer_funcs = {"render", "db_materialization"}
+        if any(frame.function in materializer_funcs for frame in inspect.stack()):
+            return self._db_adapter.type()
+
         return "fal"
 
     def __getattr__(self, name):

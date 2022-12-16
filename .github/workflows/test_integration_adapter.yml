@@ -1,4 +1,4 @@
-name: Test dbt-fal encapsulate adapter
+name: dbt-fal integration tests
 
 on:
   pull_request:
