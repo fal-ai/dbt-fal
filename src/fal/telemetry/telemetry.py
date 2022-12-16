@@ -182,11 +182,12 @@ def check_stats_enabled():
     3. Otherwise use the value in stats_enabled in the config.yaml file
     """
     if "FAL_STATS_ENABLED" in os.environ:
-        return os.environ["FAL_STATS_ENABLED"].lower() == "true"
+        val = os.environ["FAL_STATS_ENABLED"].lower().strip()
+        return val != "0" and val != "false" and val != ""
 
     if "DO_NOT_TRACK" in os.environ:
-        do_not_track = os.environ["DO_NOT_TRACK"].lower()
-        return do_not_track == "0" or do_not_track == "false"
+        val = os.environ["DO_NOT_TRACK"].lower().strip()
+        return val != "1" and val != "true"
 
     # Check if local config exists
     config_path = Path(check_dir_exist(CONF_DIR), "config.yaml")
@@ -404,7 +405,7 @@ def _clean_args_list(args: List[str]) -> List[str]:
         "--vars",
         "--var",
         "--target",
-        "--globals"
+        "--globals",
     ]
     REDACTED = "[REDACTED]"
     output = []

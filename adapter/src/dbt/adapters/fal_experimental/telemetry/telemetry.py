@@ -29,6 +29,7 @@ posthog.project_api_key = "phc_Yf1tsGPPb4POvqVjelT3rPPv2c3FH91zYURyyL30Phy"
 
 invocation_id = uuid.uuid4()
 
+
 def shutdown():
     posthog.shutdown()
     # HACK: while https://github.com/PostHog/posthog-python/pull/52 happens
@@ -167,7 +168,7 @@ def check_uid():
     return conf.get("uid") or "NO_UID", None, False
 
 
-def is_telemetry_enabled():
+def check_stats_enabled():
     """
     Check if the user allows us to use telemetry. In order of precedence:
     1. If FAL_STATS_ENABLED is defined, check its value
@@ -175,11 +176,12 @@ def is_telemetry_enabled():
     3. Otherwise use the value in stats_enabled in the config.yaml file
     """
     if "FAL_STATS_ENABLED" in os.environ:
-        return os.environ["FAL_STATS_ENABLED"].lower() == "true"
+        val = os.environ["FAL_STATS_ENABLED"].lower().strip()
+        return val != "0" and val != "false" and val != ""
 
     if "DO_NOT_TRACK" in os.environ:
-        do_not_track = os.environ["DO_NOT_TRACK"].lower()
-        return do_not_track == "0" or do_not_track == "false"
+        val = os.environ["DO_NOT_TRACK"].lower().strip()
+        return val != "1" and val != "true"
 
     # Check if local config exists
     config_path = Path(check_dir_exist(CONF_DIR), "config.yaml")
@@ -233,7 +235,7 @@ def log_api(
     timestamp, event id and stats information.
     """
 
-    if not is_telemetry_enabled():
+    if not check_stats_enabled():
         return
 
     if not is_online():
@@ -250,7 +252,7 @@ def log_api(
     if "NO_UID" in uid:
         additional_props["uid_issue"] = str(uid_error) if uid_error is not None else ""
 
-    config_hash = ''
+    config_hash = ""
     if config is not None and hasattr(config, "hashed_name"):
         config_hash = str(config.hashed_name())
 
@@ -282,7 +284,6 @@ def log_api(
 
     if "argv" in all_props:
         all_props["argv"] = _clean_args_list(all_props["argv"])
-
 
     if is_install:
         posthog.capture(distinct_id=uid, event="install_success", properties=all_props)
@@ -390,7 +391,7 @@ def _clean_args_list(args: List[str]) -> List[str]:
         "source",
         "test",
         "rpc",
-        "run-operation"
+        "run-operation",
     ]
     REDACTED = "[REDACTED]"
     output = []
