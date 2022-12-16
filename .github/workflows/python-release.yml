@@ -135,7 +135,10 @@ jobs:
         run: poetry publish -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
 
       - name: Clear the repo untracked files
-        run: git clean -fxd
+        run: |
+          git clean -fxd
+          # HACK: app git submodule appearing in version bump PRs
+          git rm --cached app
 
       - name: Bump repo version
         working-directory: ${{ env.PACKAGE_DIR }}
