@@ -22,9 +22,8 @@ class FalCredentialsWrapper:
     def type(self):
         import inspect
 
-        target = filter(lambda s: s.function == "to_target_dict", inspect.stack())
-        db_mat = filter(lambda s: s.function == "db_materialization", inspect.stack())
-        if any(target) or any(db_mat):
+        materializer_funcs = {"to_target_dict", "db_materialization"}
+        if any(frame.function in materializer_funcs for frame in inspect.stack()):
             # This makes sense for both SQL and Python because the target is always the db
             return self._db_creds.type
 
@@ -86,9 +85,8 @@ class FalEncAdapterWrapper(FalAdapterMixin):
     def type(self):
         import inspect
 
-        render = filter(lambda s: s.function == "render", inspect.stack())
-        db_mat = filter(lambda s: s.function == "db_materialization", inspect.stack())
-        if any(render) or any(db_mat):
+        materializer_funcs = {"render", "db_materialization"}
+        if any(frame.function in materializer_funcs for frame in inspect.stack()):
             return self._db_adapter.type()
 
         return "fal"
