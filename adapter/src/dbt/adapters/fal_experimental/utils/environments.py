@@ -161,8 +161,8 @@ def _build_hosted_env(
         credentials: Any,
         machine_type: str
 ) -> BaseEnvironment:
-    from isolate_cloud.sdk import FalHostedServer
-    from isolate_cloud.sdk import CloudKeyCredentials
+    from isolate_cloud.api import FalHostedServer
+    from isolate_cloud.api import CloudKeyCredentials
     if not config.get("type"):
         kind = "virtualenv"
     else:
@@ -184,7 +184,7 @@ def _build_hosted_env(
     return FalHostedServer.from_config(
         {
             "host": credentials.host,
-            "creds": CloudKeyCredentials(credentials.key_secret, credentials.key_id),
+            "creds": CloudKeyCredentials(credentials.key_id, credentials.key_secret),
             "machine_type": machine_type,
             "target_environments": [env_definition]
         }

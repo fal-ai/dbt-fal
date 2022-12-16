@@ -42,7 +42,7 @@ trino = { version = "^0.319.0", extras = ["sqlalchemy"], optional = true }
 s3fs = { version = ">=2022.8.2", optional = true }
 
 # fal cloud
-isolate-cloud = { version = ">=0.6.4", optional = true }
+isolate-cloud = { version = ">=0.6.11", optional = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

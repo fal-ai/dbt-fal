@@ -131,6 +131,21 @@ tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900
 tests-no-zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
 
 [[package]]
+name = "auth0-python"
+version = "3.24.0"
+description = "Auth0 Python SDK"
+category = "main"
+optional = true
+python-versions = ">=2.7, !=3.0.*, !=3.1.*"
+
+[package.dependencies]
+pyjwt = {version = ">=1.7.1", extras = ["crypto"]}
+requests = ">=2.14.0"
+
+[package.extras]
+test = ["coverage", "mock (>=1.3.0)", "pre-commit"]
+
+[[package]]
 name = "babel"
 version = "2.11.0"
 description = "Internationalization utilities"
@@ -305,6 +320,17 @@ description = "A tool to analyze and extract information from Jinja used in dbt 
 category = "main"
 optional = false
 python-versions = ">=3.6.1"
+
+[[package]]
+name = "dill"
+version = "0.3.5.1"
+description = "serialize all of python"
+category = "main"
+optional = true
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*"
+
+[package.extras]
+graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "distlib"
@@ -598,6 +624,37 @@ protobuf = "*"
 rich = ">=12.0"
 tblib = ">=1.7.0,<2.0.0"
 virtualenv = ">=20.4"
+
+[[package]]
+name = "isolate-cloud"
+version = "0.6.11"
+description = "SDK and cli for the fal isolate Cloud service"
+category = "main"
+optional = true
+python-versions = ">=3.7,<4.0"
+
+[package.dependencies]
+auth0-python = ">=3.24.0,<4.0.0"
+dill = "0.3.5.1"
+grpcio = ">=1.50.0,<2.0.0"
+isolate = ">=0.5.0"
+isolate-proto = ">=0.0.11,<0.0.12"
+requests = ">=2.28.1,<3.0.0"
+typer = ">=0.7.0,<0.8.0"
+typing-extensions = "4.4"
+
+[[package]]
+name = "isolate-proto"
+version = "0.0.11"
+description = "(internal) gRPC definitions for Isolate Cloud"
+category = "main"
+optional = true
+python-versions = ">=3.7,<4"
+
+[package.dependencies]
+grpcio = ">=1.49"
+isolate = {version = ">=0.7,<0.8", extras = ["grpc"]}
+protobuf = "*"
 
 [[package]]
 name = "jinja2"
@@ -987,6 +1044,9 @@ category = "main"
 optional = true
 python-versions = ">=3.7"
 
+[package.dependencies]
+cryptography = {version = ">=3.4.0", optional = true, markers = "extra == \"crypto\""}
+
 [package.extras]
 crypto = ["cryptography (>=3.4.0)"]
 dev = ["coverage[toml] (==5.0.4)", "cryptography (>=3.4.0)", "pre-commit", "pytest (>=6.0.0,<7.0.0)", "sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
@@ -1305,6 +1365,23 @@ sqlalchemy = ["sqlalchemy (>=1.3,<2.0)"]
 tests = ["black", "click", "httpretty (<1.1)", "isort", "pre-commit", "pytest", "pytest-runner", "requests-kerberos", "sqlalchemy (>=1.3,<2.0)", "sqlalchemy-utils"]
 
 [[package]]
+name = "typer"
+version = "0.7.0"
+description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
+category = "main"
+optional = true
+python-versions = ">=3.6"
+
+[package.dependencies]
+click = ">=7.1.1,<9.0.0"
+
+[package.extras]
+all = ["colorama (>=0.4.3,<0.5.0)", "shellingham (>=1.3.0,<2.0.0)", "rich (>=10.11.0,<13.0.0)"]
+dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2.17.0,<3.0.0)"]
+doc = ["mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "pillow (>=9.3.0,<10.0.0)", "cairosvg (>=2.5.2,<3.0.0)"]
+test = ["shellingham (>=1.3.0,<2.0.0)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "coverage (>=6.2,<7.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "mypy (==0.910)", "black (>=22.3.0,<23.0.0)", "isort (>=5.0.6,<6.0.0)", "rich (>=10.11.0,<13.0.0)"]
+
+[[package]]
 name = "typing-extensions"
 version = "4.4.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -1401,6 +1478,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [extras]
 athena = []
 bigquery = ["google-cloud-bigquery"]
+cloud = ["isolate-cloud"]
 duckdb = []
 postgres = []
 redshift = ["sqlalchemy-redshift"]
@@ -1411,7 +1489,7 @@ trino = ["trino"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.11"
-content-hash = "5c6d35c6656e2c6e37b92b095bc86450bc7c1ff70a79aae10da9574c866a77cf"
+content-hash = "f2a75649b31471988eb89a0a9697a501cb5778896d86e533474a6f0ecad02cb3"
 
 [metadata.files]
 agate = [
@@ -1537,6 +1615,10 @@ atomicwrites = [
 attrs = [
     {file = "attrs-22.1.0-py2.py3-none-any.whl", hash = "sha256:86efa402f67bf2df34f51a335487cf46b1ec130d02b8d39fd248abfd30da551c"},
     {file = "attrs-22.1.0.tar.gz", hash = "sha256:29adc2665447e5191d0e7c568fde78b21f9672d344281d0c6e1ab085429b22b6"},
+]
+auth0-python = [
+    {file = "auth0-python-3.24.0.tar.gz", hash = "sha256:88d7bce9472342e77f2f25fd8b060819b3557000e3a43e2618cd7a0fe5212c71"},
+    {file = "auth0_python-3.24.0-py2.py3-none-any.whl", hash = "sha256:a76e308df407fad9c6c29cd9de9a89bc5c1f7236f051c824923904046aea27a1"},
 ]
 babel = [
     {file = "Babel-2.11.0-py3-none-any.whl", hash = "sha256:1ad3eca1c885218f6dce2ab67291178944f810a10a9b5f3cb8382a5a232b64fe"},
@@ -1687,6 +1769,10 @@ dbt-extractor = [
     {file = "dbt_extractor-0.4.1-cp36-abi3-win32.whl", hash = "sha256:3fe8d8e28a7bd3e0884896147269ca0202ca432d8733113386bdc84c824561bf"},
     {file = "dbt_extractor-0.4.1-cp36-abi3-win_amd64.whl", hash = "sha256:35265a0ae0a250623b0c2e3308b2738dc8212e40e0aa88407849e9ea090bb312"},
     {file = "dbt_extractor-0.4.1.tar.gz", hash = "sha256:75b1c665699ec0f1ffce1ba3d776f7dfce802156f22e70a7b9c8f0b4d7e80f42"},
+]
+dill = [
+    {file = "dill-0.3.5.1-py2.py3-none-any.whl", hash = "sha256:33501d03270bbe410c72639b350e941882a8b0fd55357580fbc873fba0c59302"},
+    {file = "dill-0.3.5.1.tar.gz", hash = "sha256:d75e41f3eff1eee599d738e76ba8f4ad98ea229db8b085318aa2b3333a208c86"},
 ]
 distlib = [
     {file = "distlib-0.3.6-py2.py3-none-any.whl", hash = "sha256:f35c4b692542ca110de7ef0bea44d73981caeb34ca0b9b6b2e6d7790dda8f80e"},
@@ -2005,6 +2091,14 @@ isodate = [
 isolate = [
     {file = "isolate-0.7.0-py3-none-any.whl", hash = "sha256:aebdd881c810367367d02b12dc23970be26a6df49a22fe06b7a0b1a90e4520a7"},
     {file = "isolate-0.7.0.tar.gz", hash = "sha256:109e87a76e83f897e15c625b5f3e4860bd778a76143daa246b740bf045f14428"},
+]
+isolate-cloud = [
+    {file = "isolate-cloud-0.6.11.tar.gz", hash = "sha256:36c4564e2f744bbfacd1712039ed05f6586b69c44e343a4a6be3bc711a5174a7"},
+    {file = "isolate_cloud-0.6.11-py3-none-any.whl", hash = "sha256:70cf2fb82c0833eb6f533c5070b8079d93a60436699f45237e6ffa8021cb50b0"},
+]
+isolate-proto = [
+    {file = "isolate_proto-0.0.11-py3-none-any.whl", hash = "sha256:780bdc3be70fcd3ba1a62612e674034c58401c540899013fcde98194b9e73983"},
+    {file = "isolate_proto-0.0.11.tar.gz", hash = "sha256:c7100e7601ad026e0d1a8677bd644acadfcaa4334d8c96fb2f915a3a176c8153"},
 ]
 jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
@@ -2648,6 +2742,10 @@ text-unidecode = [
 trino = [
     {file = "trino-0.319.0-py3-none-any.whl", hash = "sha256:44e07da121a655da9f9eb92a0670bad8b4d769f7e42537281bd101ab7b7de3ee"},
     {file = "trino-0.319.0.tar.gz", hash = "sha256:d5a01258ff48b4e6dbed9cdbb070e2bf5afdbec90c933b19f1acad6db2947f32"},
+]
+typer = [
+    {file = "typer-0.7.0-py3-none-any.whl", hash = "sha256:b5e704f4e48ec263de1c0b3a2387cd405a13767d2f907f44c1a08cbad96f606d"},
+    {file = "typer-0.7.0.tar.gz", hash = "sha256:ff797846578a9f2a201b53442aedeb543319466870fbe1c701eab66dd7681165"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.4.0-py3-none-any.whl", hash = "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"},

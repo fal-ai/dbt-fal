@@ -40,8 +40,6 @@ jobs:
           - profile: snowflake
             teleport: true
             cloud: true
-          - profile: bigquery
-            cloud: true
           - profile: redshift
             cloud: true
 
@@ -171,15 +169,21 @@ jobs:
           export DB_NAMESPACE="${{ github.run_id }}_${UUID}"
 
           BEHAVE_TAGS=""
-          if [[ '${{ matrix.teleport }}' != 'true' ]] && [[ '${{ matrix.cloud }}' != 'true' ]]
-          then
-            BEHAVE_TAGS="--tags=-teleport --tags=-cloud"
-          elif [[ '${{ matrix.teleport }}' != 'true' ]]
+          if [[ '${{ matrix.teleport }}' != 'true' ]]
           then
             BEHAVE_TAGS="--tags=-teleport"
-          elif [[ '${{ matrix.cloud }}' != 'true' ]]
+          fi
+
+          if [[ '${{ matrix.cloud }}' != 'true' ]]
           then
-            BEHAVE_TAGS="--tags=-cloud"
+            BEHAVE_TAGS="$BEHAVE_TAGS --tags=-cloud"
+          fi
+
+          if [[ -z "${GITHUB_HEAD_REF}" ]]
+          then
+            export FAL_GITHUB_BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
+          else
+            export FAL_GITHUB_BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
           fi
 
           behave $BEHAVE_TAGS -fplain -D profile=${{ matrix.profile }}
