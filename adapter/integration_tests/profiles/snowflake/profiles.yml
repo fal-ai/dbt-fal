@@ -2,14 +2,32 @@ config:
   send_anonymous_usage_stats: False
 
 fal_test:
-  target: integration_tests
+  target: staging
   outputs:
-    integration_tests:
+    staging:
       type: fal
       db_profile: db
-    integration_tests_teleport:
+    prod:
       type: fal
       db_profile: db
+      host: "{{ env_var('FAL_HOST') }}"
+      key_secret: "{{ env_var('FAL_KEY_SECRET') }}"
+      key_id: "{{ env_var('FAL_KEY_ID') }}"
+    staging_with_teleport:
+      type: fal
+      db_profile: db
+      teleport:
+        type: s3
+        s3_bucket: fal-dbt-test
+        s3_region: us-east-1
+        s3_access_key_id: "{{ env_var('AWS_ACCESS_KEY_ID') }}"
+        s3_access_key: "{{ env_var('AWS_SECRET_ACCESS_KEY') }}"
+    prod_with_teleport:
+      type: fal
+      db_profile: db
+      host: "{{ env_var('FAL_HOST') }}"
+      key_secret: "{{ env_var('FAL_KEY_SECRET') }}"
+      key_id: "{{ env_var('FAL_KEY_ID') }}"
       teleport:
         type: s3
         s3_bucket: fal-dbt-test

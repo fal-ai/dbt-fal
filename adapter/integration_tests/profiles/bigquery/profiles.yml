@@ -2,11 +2,17 @@ config:
   send_anonymous_usage_stats: False
 
 fal_test:
-  target: integration_tests
+  target: staging
   outputs:
-    integration_tests:
+    staging:
       type: fal
       db_profile: db
+    prod:
+      type: fal
+      db_profile: db
+      host: "{{ env_var('FAL_HOST') }}"
+      key_secret: "{{ env_var('FAL_KEY_SECRET') }}"
+      key_id: "{{ env_var('FAL_KEY_ID') }}"
     db:
       type: bigquery
       method: service-account

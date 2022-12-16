@@ -39,6 +39,12 @@ jobs:
             adapter_version: 1.2.2
           - profile: snowflake
             teleport: true
+            cloud: true
+          - profile: bigquery
+            cloud: true
+          - profile: redshift
+            cloud: true
+
 
     concurrency:
       group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
@@ -75,13 +81,20 @@ jobs:
           fi
 
           pushd ..
-          if [[ '${{ matrix.teleport }}' == 'true' ]]
+          if [[ '${{ matrix.teleport }}' == 'true' ]] && [[ '${{ matrix.cloud }}' == 'true' ]]
+          then
+            pip install -e ".[${{ matrix.profile }},teleport,cloud]"
+          elif [[ '${{ matrix.teleport }}' == 'true' ]]
           then
             pip install -e ".[${{ matrix.profile }},teleport]"
+          elif [[ '${{ matrix.cloud }}' == 'true' ]]
+          then
+            pip install -e ".[${{ matrix.profile }},cloud]"
           else
             pip install -e ".[${{ matrix.profile }}]"
           fi
           popd
+
 
       - name: Setup behave
         working-directory: fal/adapter/integration_tests
@@ -116,6 +129,10 @@ jobs:
           # Teleport
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # Isolate Cloud
+          FAL_HOST: ${{ secrets.FAL_HOST }}
+          FAL_KEY_SECRET: ${{ secrets.FAL_KEY_SECRET }}
+          FAL_KEY_ID: ${{ secrets.FAL_KEY_ID }}
         run: |
           source .venv/bin/activate
 
@@ -154,9 +171,15 @@ jobs:
           export DB_NAMESPACE="${{ github.run_id }}_${UUID}"
 
           BEHAVE_TAGS=""
-          if [[ '${{ matrix.teleport }}' != 'true' ]]
+          if [[ '${{ matrix.teleport }}' != 'true' ]] && [[ '${{ matrix.cloud }}' != 'true' ]]
+          then
+            BEHAVE_TAGS="--tags=-teleport --tags=-cloud"
+          elif [[ '${{ matrix.teleport }}' != 'true' ]]
           then
             BEHAVE_TAGS="--tags=-teleport"
+          elif [[ '${{ matrix.cloud }}' != 'true' ]]
+          then
+            BEHAVE_TAGS="--tags=-cloud"
           fi
 
           behave $BEHAVE_TAGS -fplain -D profile=${{ matrix.profile }}
