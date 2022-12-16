@@ -1,4 +1,4 @@
-name: Run Tests
+name: fal pytest
 
 on:
   pull_request:
