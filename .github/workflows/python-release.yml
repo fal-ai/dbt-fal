@@ -99,7 +99,7 @@ jobs:
         run: poetry build
 
       - name: Generate a changelog
-        uses: orhun/git-cliff-action@v1
+        uses: orhun/git-cliff-action@v1.1.7
         id: git-cliff
         with:
           config: ${{ env.PACKAGE_DIR }}/cliff.toml
@@ -135,10 +135,7 @@ jobs:
         run: poetry publish -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
 
       - name: Clear the repo untracked files
-        run: |
-          git clean -fxd
-          # HACK: app git submodule appearing in version bump PRs
-          git rm --cached app
+        run: git clean -fxd
 
       - name: Bump repo version
         working-directory: ${{ env.PACKAGE_DIR }}
