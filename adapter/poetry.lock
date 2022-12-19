@@ -1478,7 +1478,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [extras]
 athena = []
 bigquery = ["google-cloud-bigquery"]
-cloud = ["isolate-cloud"]
+cloud = ["isolate-cloud", "dill"]
 duckdb = []
 postgres = []
 redshift = ["sqlalchemy-redshift"]
@@ -1489,7 +1489,7 @@ trino = ["trino"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.11"
-content-hash = "f2a75649b31471988eb89a0a9697a501cb5778896d86e533474a6f0ecad02cb3"
+content-hash = "f0d135d3cb19b5e98a15f42a833f513fd5aa37ea61b197805019f8d2345021a1"
 
 [metadata.files]
 agate = [
