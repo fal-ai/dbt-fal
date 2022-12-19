@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple
+from dbt.events.adapter_endpoint import AdapterLogger
 
 import dbt.exceptions
 import importlib_metadata
@@ -17,8 +19,13 @@ from . import cache_static
 from .yaml_helper import load_yaml
 
 
-CONFIG_KEYS_TO_IGNORE = ['host', 'remote_type', 'type', 'name']
+CONFIG_KEYS_TO_IGNORE = ['host', 'remote_type', 'type', 'name', 'machine_type']
+REMOTE_TYPES_DICT = {
+    "venv": "virtualenv",
+    "conda": "conda"
+}
 
+logger = AdapterLogger('fal')
 
 class FalParseError(Exception):
     pass
@@ -31,17 +38,31 @@ class LocalConnection(EnvironmentConnection):
 
 
 def fetch_environment(
-    project_root: str, environment_name: str
+        project_root: str,
+        environment_name: str,
+        machine_type: str = "S",
+        credentials: Optional[Any] = None
 ) -> Tuple[BaseEnvironment, bool]:
     """Fetch the environment with the given name from the project's
     fal_project.yml file."""
     # Local is a special environment where it doesn't need to be defined
     # since it will mirror user's execution context directly.
     if environment_name == "local":
-        return LocalPythonEnvironment(), True
+        if credentials.key_secret and credentials.key_id:
+            # "local" environment in this case is fal cloud
+            # TODO: add docs link
+            logger.warning("`local` environments will be executed on fal cloud." + \
+                           "If you don't want to use fal cloud, you can change your " + \
+                           "profile target to one where fal doesn't have credentials")
+            return _build_hosted_env(
+                config={'name': '', 'type': 'venv'},
+                parsed_config={},
+                credentials=credentials,
+                machine_type=machine_type), False
 
+        return LocalPythonEnvironment(), True
     try:
-        environments = load_environments(project_root)
+        environments = load_environments(project_root, machine_type, credentials)
     except Exception as exc:
         raise dbt.exceptions.RuntimeException(
             "Error loading environments from fal_project.yml"
@@ -67,7 +88,10 @@ def db_adapter_config(config: RuntimeConfig) -> RuntimeConfig:
     return new_config
 
 
-def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
+def load_environments(
+        base_dir: str,
+        machine_type: str = "S",
+        credentials: Optional[Any] = None) -> Dict[str, BaseEnvironment]:
     import os
     fal_project_path = os.path.join(base_dir, "fal_project.yml")
     if not os.path.exists(fal_project_path):
@@ -86,21 +110,35 @@ def load_environments(base_dir: str) -> Dict[str, BaseEnvironment]:
         if environments.get(env_name) is not None:
             raise FalParseError("Environment names must be unique.")
 
-        environments[env_name] = create_environment(env_name, env_kind, environment)
+        environments[env_name] = create_environment(
+            env_name,
+            env_kind,
+            environment,
+            machine_type,
+            credentials)
 
     return environments
 
 
-def create_environment(name: str, kind: str, config: Dict[str, Any]):
+def create_environment(
+        name: str,
+        kind: str,
+        config: Dict[str, Any],
+        machine_type: str = "S",
+        credentials: Optional[Any] = None):
     from isolate.backends.virtualenv import VirtualPythonEnvironment
     from isolate.backends.conda import CondaEnvironment
     from isolate.backends.remote import IsolateServer
 
+    parsed_config = { key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE}
+
+    if credentials.key_secret and credentials.key_id:
+        return _build_hosted_env(config, parsed_config, credentials, machine_type)
 
     REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
         "conda": CondaEnvironment,
         "venv": VirtualPythonEnvironment,
-        "remote": IsolateServer
+        "remote": IsolateServer,
     }
 
     env_type = REGISTERED_ENVIRONMENTS.get(kind)
@@ -111,12 +149,46 @@ def create_environment(name: str, kind: str, config: Dict[str, Any]):
             + ", ".join(REGISTERED_ENVIRONMENTS.keys())
         )
 
-    parsed_config = { key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE}
-
     if kind == "remote":
         parsed_config = _parse_remote_config(config, parsed_config)
 
     return env_type.from_config(parsed_config)
+
+
+def _build_hosted_env(
+        config: Dict[str, Any],
+        parsed_config: Dict[str, Any],
+        credentials: Any,
+        machine_type: str
+) -> BaseEnvironment:
+    from isolate_cloud.api import FalHostedServer
+    from isolate_cloud.api import CloudKeyCredentials
+    if not config.get("type"):
+        kind = "virtualenv"
+    else:
+        if config["type"] not in REMOTE_TYPES_DICT.keys():
+            raise RuntimeError(
+                f"Environment type {config['type']} is not supported. Supported types: {REMOTE_TYPES_DICT.keys()}")
+        kind = REMOTE_TYPES_DICT.get(config["type"])
+
+    if 'requirements' not in parsed_config.keys():
+        parsed_config['requirements'] = []
+
+    parsed_config['requirements'].append(f"dill=={importlib_metadata.version('dill')}")
+
+    env_definition = {
+        "kind": kind,
+        "configuration": parsed_config
+    }
+
+    return FalHostedServer.from_config(
+        {
+            "host": credentials.host,
+            "creds": CloudKeyCredentials(credentials.key_id, credentials.key_secret),
+            "machine_type": machine_type,
+            "target_environments": [env_definition]
+        }
+    )
 
 
 def _is_local_environment(environment_name: str) -> bool:
@@ -129,11 +201,6 @@ def _get_required_key(data: Dict[str, Any], name: str) -> Any:
     return data[name]
 
 def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) -> Dict[str, Any]:
-    REMOTE_TYPES_DICT = {
-        "venv": "virtualenv",
-        "conda": "conda"
-    }
-
     assert config.get("remote_type"), "remote_type needs to be specified."
 
     remote_type = REMOTE_TYPES_DICT.get(config["remote_type"])
@@ -150,7 +217,11 @@ def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) 
         "target_environments": [env_definition]
     }
 
-def _get_dbt_packages(is_teleport: bool = False) -> Iterator[Tuple[str, Optional[str]]]:
+
+def _get_dbt_packages(
+    is_teleport: bool = False,
+    is_remote: bool = False
+) -> Iterator[Tuple[str, Optional[str]]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (
     # the PyPI names instead of the import names). An example distirbution info is the following, which
     # contains both the main exporter of the top-level name (dbt-core) as well as all the packages that
@@ -179,16 +250,29 @@ def _get_dbt_packages(is_teleport: bool = False) -> Iterator[Tuple[str, Optional
 
     dbt_fal_dep = "dbt-fal"
     if _is_pre_release(dbt_fal_version):
-        dbt_fal_path = _get_adapter_root_path()
-        if dbt_fal_path is not None:
-            # Can be a pre-release from PyPI
-            dbt_fal_dep = str(dbt_fal_path)
+        if is_remote:
+            # If it's a pre-release and it's remote, its likely us developing, so we try installing
+            # from Github and we can get the custom branch name from FAL_GITHUB_BRANCH environment variable
+            # TODO: Handle pre-release on PyPI. How should we approach that?
+            import os
+            branch_name = os.environ.get('FAL_GITHUB_BRANCH', 'main')
+
+            dbt_fal_dep = f"git+https://github.com/fal-ai/fal.git@{branch_name}#subdirectory=adapter"
             dbt_fal_version = None
+        else:
+            dbt_fal_path = _get_adapter_root_path()
+            if dbt_fal_path is not None:
+                # Can be a pre-release from PyPI
+                dbt_fal_dep = str(dbt_fal_path)
+                dbt_fal_version = None
 
     dbt_fal_extras = _find_adapter_extras("dbt-fal", is_teleport)
 
     if dbt_fal_extras:
-        dbt_fal_dep += f"[{' ,'.join(dbt_fal_extras)}]"
+        if is_remote:
+            dbt_fal_dep = f"dbt-fal[{' ,'.join(dbt_fal_extras)}] @ {dbt_fal_dep}"
+        else:
+            dbt_fal_dep += f"[{' ,'.join(dbt_fal_extras)}]"
 
     yield dbt_fal_dep, dbt_fal_version
 
@@ -245,14 +329,20 @@ def _get_adapter_root_path() -> Optional[Path]:
     return base_dir if (base_dir.parent / ".git").exists() else None
 
 
-def get_default_requirements(is_teleport: bool = False) -> Iterator[Tuple[str, Optional[str]]]:
-    yield from _get_dbt_packages(is_teleport)
+def get_default_requirements(
+    is_teleport: bool = False,
+    is_remote: bool = False
+) -> Iterator[Tuple[str, Optional[str]]]:
+    yield from _get_dbt_packages(is_teleport, is_remote)
     yield "isolate", importlib_metadata.version("isolate")
 
 
 @cache_static
-def get_default_pip_dependencies(is_teleport: bool = False) -> List[str]:
+def get_default_pip_dependencies(
+    is_teleport: bool = False,
+    is_remote: bool = False
+) -> List[str]:
     return [
         f"{package}=={version}" if version else package
-        for package, version in get_default_requirements(is_teleport)
+        for package, version in get_default_requirements(is_teleport, is_remote)
     ]

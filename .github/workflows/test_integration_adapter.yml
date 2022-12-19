@@ -39,6 +39,10 @@ jobs:
             adapter_version: 1.2.2
           - profile: snowflake
             teleport: true
+            cloud: true
+          - profile: redshift
+            cloud: true
+
 
     concurrency:
       group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
@@ -75,13 +79,20 @@ jobs:
           fi
 
           pushd ..
-          if [[ '${{ matrix.teleport }}' == 'true' ]]
+          if [[ '${{ matrix.teleport }}' == 'true' ]] && [[ '${{ matrix.cloud }}' == 'true' ]]
+          then
+            pip install -e ".[${{ matrix.profile }},teleport,cloud]"
+          elif [[ '${{ matrix.teleport }}' == 'true' ]]
           then
             pip install -e ".[${{ matrix.profile }},teleport]"
+          elif [[ '${{ matrix.cloud }}' == 'true' ]]
+          then
+            pip install -e ".[${{ matrix.profile }},cloud]"
           else
             pip install -e ".[${{ matrix.profile }}]"
           fi
           popd
+
 
       - name: Setup behave
         working-directory: fal/adapter/integration_tests
@@ -116,6 +127,10 @@ jobs:
           # Teleport
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # Isolate Cloud
+          FAL_HOST: ${{ secrets.FAL_HOST }}
+          FAL_KEY_SECRET: ${{ secrets.FAL_KEY_SECRET }}
+          FAL_KEY_ID: ${{ secrets.FAL_KEY_ID }}
         run: |
           source .venv/bin/activate
 
@@ -157,6 +172,18 @@ jobs:
           if [[ '${{ matrix.teleport }}' != 'true' ]]
           then
             BEHAVE_TAGS="--tags=-teleport"
+          fi
+
+          if [[ '${{ matrix.cloud }}' != 'true' ]]
+          then
+            BEHAVE_TAGS="$BEHAVE_TAGS --tags=-cloud"
+          fi
+
+          if [[ -z "${GITHUB_HEAD_REF}" ]]
+          then
+            export FAL_GITHUB_BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
+          else
+            export FAL_GITHUB_BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
           fi
 
           behave $BEHAVE_TAGS -fplain -D profile=${{ matrix.profile }}
