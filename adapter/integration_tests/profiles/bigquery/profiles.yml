@@ -15,11 +15,17 @@ fal_test:
       key_id: "{{ env_var('FAL_KEY_ID') }}"
     db:
       type: bigquery
-      method: service-account
-      keyfile: "{{ env_var('KEYFILE_DIR') }}/keyfile.json"
+      method: service-account-json
       project: "{{ env_var('GCLOUD_PROJECT') }}"
       dataset: "{{ env_var('BQ_DATASET') }}"
-      threads: 4
-      timeout_seconds: 300
-      location: US
-      priority: interactive
+      keyfile_json:
+        type: service_account
+        project_id: "{{ env_var('GCLOUD_PROJECT') }}"
+        private_key_id: "{{ env_var('GCLOUD_PRIVATE_KEY_ID') }}"
+        private_key: "{{ env_var('GCLOUD_PRIVATE_KEY') }}"
+        client_email: "{{ env_var('GCLOUD_CLIENT_EMAIL') }}"
+        client_id: "{{ env_var('GCLOUD_CLIENT_ID') }}"
+        auth_uri: https://accounts.google.com/o/oauth2/auth
+        token_uri: https://oauth2.googleapis.com/token
+        auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+        client_x509_cert_url: "{{ env_var('GCLOUD_X509_CERT_URL') }}"
