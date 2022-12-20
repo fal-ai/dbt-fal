@@ -159,12 +159,12 @@ jobs:
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
           then
-            export GCLOUD_PRIVATE_KEY_ID=$(echo $KEYFILE | jq '.private_key_id')
-            export GCLOUD_PRIVATE_KEY=$(echo $KEYFILE | jq '.private_key')
-            export GCLOUD_CLIENT_EMAIL=$(echo $KEYFILE | jq '.client_email')
-            export GCLOUD_CLIENT_ID=$(echo $KEYFILE | jq '.client_id')
-            export GCLOUD_X509_CERT_URL=$(echo $KEYFILE | jq '.client_x509_cert_url')
-            echo $GCLOUD_X509_CERT_URL
+            export GCLOUD_PRIVATE_KEY_ID=$(echo $KEYFILE | jq '.private_key_id' | tr -d '"')
+            export RAW_PRIVATE_KEY=$(echo $KEYFILE | jq '.private_key' | tr -d '"')
+            export GCLOUD_PRIVATE_KEY="${RAW_PRIVATE_KEY//'\n'/$'\n'}"
+            export GCLOUD_CLIENT_EMAIL=$(echo $KEYFILE | jq '.client_email' | tr -d '"')
+            export GCLOUD_CLIENT_ID=$(echo $KEYFILE | jq '.client_id' | tr -d '"')
+            export GCLOUD_X509_CERT_URL=$(echo $KEYFILE | jq '.client_x509_cert_url' | tr -d '"')
           fi
 
           # Could not get the real job_id easily from context
