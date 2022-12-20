@@ -42,6 +42,8 @@ jobs:
             cloud: true
           - profile: redshift
             cloud: true
+          - profile: bigquery
+            cloud: true
 
 
     concurrency:
@@ -157,11 +159,12 @@ jobs:
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
           then
-            # Save the credentials to a keyfile
-            echo $KEYFILE > $HOME/keyfile.json
-            ls -la $HOME/keyfile.json
-            export KEYFILE_DIR=$HOME
-            echo 'keyfile is ready'
+            export GCLOUD_PRIVATE_KEY_ID=$(echo $KEYFILE | jq '.private_key_id')
+            export GCLOUD_PRIVATE_KEY=$(echo $KEYFILE | jq '.private_key')
+            export GCLOUD_CLIENT_EMAIL=$(echo $KEYFILE | jq '.client_email')
+            export GCLOUD_CLIENT_ID=$(echo $KEYFILE | jq '.client_id')
+            export GCLOUD_X509_CERT_URL=$(echo $KEYFILE | jq '.client_x509_cert_url')
+            echo $GCLOUD_X509_CERT_URL
           fi
 
           # Could not get the real job_id easily from context
