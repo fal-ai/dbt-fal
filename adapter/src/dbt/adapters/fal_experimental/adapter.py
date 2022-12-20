@@ -75,8 +75,11 @@ def run_in_environment_with_adapter(
 
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
-
     if type(environment).__name__ in ['IsolateServer', 'FalHostedServer']:
+        if type(config.credentials).__name__ == 'BigQueryCredentials' and str(config.credentials.method) == 'service-account':
+            raise RuntimeError(
+                "BigQuery credential method `service-account` is not supported." + \
+                " Please use `service-account-json` instead")
         deps = [i for i in get_default_pip_dependencies(is_remote=True) if i.startswith('dbt-')]
 
         extra_config = {
