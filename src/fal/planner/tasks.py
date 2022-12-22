@@ -67,15 +67,16 @@ def _mark_dbt_nodes_status_and_response(
     fal_dbt: FalDbt,
     status: NodeStatus,
     dbt_node: Optional[str] = None,
-    adapter_response: Optional[dict] = None,
+    run_result: Optional[dict] = None,
 ):
     for model in fal_dbt.models:
         if dbt_node is not None:
             if model.unique_id == dbt_node:
                 model.status = status
+                model.run_result = run_result
 
-                if adapter_response is not None:
-                    model.adapter_response = adapter_response
+                if run_result is not None:
+                    model.adapter_response = run_result.get('adapter_response')
         else:
             model.status = status
 
@@ -90,9 +91,7 @@ def _map_cli_output_model_results(
         if not result.get("unique_id") or not result.get("status"):
             continue
 
-        yield result["unique_id"], NodeStatus(result["status"]), result.get(
-            "adapter_response"
-        )
+        yield result["unique_id"], NodeStatus(result["status"]), result
 
 
 def _run_script(script: FalScript) -> Dict[str, Any]:
@@ -169,10 +168,10 @@ class DBTTask(Task):
             args, model_names, fal_dbt.target_path, self.run_index
         )
 
-        for node, status, adapter_response in _map_cli_output_model_results(
+        for node, status, result in _map_cli_output_model_results(
             output.run_results
         ):
-            _mark_dbt_nodes_status_and_response(fal_dbt, status, node, adapter_response)
+            _mark_dbt_nodes_status_and_response(fal_dbt, status, node, result)
 
         return output.return_code
 

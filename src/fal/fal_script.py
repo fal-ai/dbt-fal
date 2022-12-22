@@ -74,6 +74,7 @@ class CurrentModel:
     columns: Dict[str, ColumnInfo]
     tests: List[Any]
     meta: Dict[Any, Any]
+    run_result: Optional[Any]
     adapter_response: Optional[CurrentAdapterResponse]
 
 
@@ -272,6 +273,7 @@ class FalScript:
             columns=model.columns,
             tests=tests,
             meta=meta,
+            run_result=model.run_result,
             adapter_response=current_adapter_response,
         )
 
