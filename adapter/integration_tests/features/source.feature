@@ -1,3 +1,5 @@
+@TODO-duckdb
+@TODO-bigquery
 Feature: dbt-fal can query sources
   Background: Project Setup
     Given the project source_freshness
