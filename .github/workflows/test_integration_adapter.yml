@@ -71,7 +71,7 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
-          pip install build wheel
+          pip install build wheel 'fal[${{ matrix.profile }}]'
 
           if [[ -z '${{ matrix.adapter_version }}' ]]
           then
@@ -171,10 +171,11 @@ jobs:
           UUID=$(uuidgen | head -c8)
           export DB_NAMESPACE="${{ github.run_id }}_${UUID}"
 
-          BEHAVE_TAGS=""
+          BEHAVE_TAGS="--tags=-TODO-${{ matrix.profile }}"
+
           if [[ '${{ matrix.teleport }}' != 'true' ]]
           then
-            BEHAVE_TAGS="--tags=-teleport"
+            BEHAVE_TAGS="$BEHAVE_TAGS --tags=-teleport"
           fi
 
           if [[ '${{ matrix.cloud }}' != 'true' ]]
