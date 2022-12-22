@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: freshness_test
     database: "{{ env_var('DBT_DATABASE', 'test') }}"
-    schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
+    schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal_custom') }}"
     freshness:
       warn_after: { "count": 5, "period": minute }
       error_after: { "count": 30, "period": minute }
