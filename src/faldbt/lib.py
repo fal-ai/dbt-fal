@@ -611,6 +611,7 @@ def _bigquery_write_relation(
     import google.cloud.bigquery as bigquery
     from google.cloud.bigquery.job import WriteDisposition
     from dbt.adapters.bigquery import BigQueryAdapter, BigQueryConnectionManager
+    from dbt.semver import VersionSpecifier
 
     assert adapter.type() == "bigquery"
 
