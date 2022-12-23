@@ -269,7 +269,7 @@ def _get_dbt_packages(
     dbt_fal_extras = _find_adapter_extras("dbt-fal", is_teleport)
 
     if dbt_fal_extras:
-        if is_remote:
+        if is_remote and _is_pre_release(dbt_fal_version):
             dbt_fal_dep = f"dbt-fal[{' ,'.join(dbt_fal_extras)}] @ {dbt_fal_dep}"
         else:
             dbt_fal_dep += f"[{' ,'.join(dbt_fal_extras)}]"
