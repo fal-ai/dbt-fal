@@ -31,7 +31,8 @@ jobs:
           - duckdb
           - snowflake
           - redshift
-          - trino
+          # enable with next release of dbt-trino
+          # - trino
         python: ["3.7", "3.8"]
         include:
           - profile: duckdb
