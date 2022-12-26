@@ -248,7 +248,10 @@ def _get_dbt_packages(
         # It might not be installed.
         return None
 
-    dbt_fal_dep = "dbt-fal"
+    dbt_fal_dep = f"dbt-fal"
+    dbt_fal_extras = _find_adapter_extras("dbt-fal", is_teleport)
+    dbt_fal_suffix = ""
+
     if _is_pre_release(dbt_fal_version):
         if is_remote:
             # If it's a pre-release and it's remote, its likely us developing, so we try installing
@@ -257,7 +260,7 @@ def _get_dbt_packages(
             import os
             branch_name = os.environ.get('FAL_GITHUB_BRANCH', 'main')
 
-            dbt_fal_dep = f"git+https://github.com/fal-ai/fal.git@{branch_name}#subdirectory=adapter"
+            dbt_fal_suffix = f" @ git+https://github.com/fal-ai/fal.git@{branch_name}#subdirectory=adapter"
             dbt_fal_version = None
         else:
             dbt_fal_path = _get_adapter_root_path()
@@ -266,18 +269,11 @@ def _get_dbt_packages(
                 dbt_fal_dep = str(dbt_fal_path)
                 dbt_fal_version = None
 
-    dbt_fal_extras = _find_adapter_extras("dbt-fal", is_teleport)
-
-    if dbt_fal_extras:
-        if is_remote:
-            dbt_fal_dep = f"dbt-fal[{' ,'.join(dbt_fal_extras)}] @ {dbt_fal_dep}"
-        else:
-            dbt_fal_dep += f"[{' ,'.join(dbt_fal_extras)}]"
-
-    yield dbt_fal_dep, dbt_fal_version
+    dbt_fal = f"{dbt_fal_dep}[{' ,'.join(dbt_fal_extras)}]{dbt_fal_suffix}"
+    yield dbt_fal, dbt_fal_version
 
 
-def _find_adapter_extras(package: str, is_teleport: bool = False) -> Iterator[str]:
+def _find_adapter_extras(package: str, is_teleport: bool = False) -> set[str]:
     # Return a possible set of extras that might be required when installing
     # adapter in the new environment. The original form which the user has installed
     # is not present to us (it is not saved anywhere during the package installation
@@ -318,7 +314,7 @@ def _find_adapter_extras(package: str, is_teleport: bool = False) -> Iterator[st
 def _is_pre_release(raw_version: str) -> bool:
     from dbt.semver import VersionSpecifier
     adapter_version = VersionSpecifier.from_version_string(raw_version)
-    return adapter_version.prerelease
+    return bool(adapter_version.prerelease)
 
 
 def _get_adapter_root_path() -> Optional[Path]:
