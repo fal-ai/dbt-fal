@@ -41,6 +41,17 @@ def _cli(argv: List[str]):
         elif parsed.command == "run":
             fal_run(parsed)
 
+        elif parsed.command == "cloud":
+            import isolate_cloud.cli as cloud_cli
+            if parsed.cloud_command == "login":
+                cloud_cli.login()
+
+            elif parsed.cloud_command == "logout":
+                cloud_cli.login(revoke=True)
+
+            elif parsed.cloud_command == "generate-keys":
+                cloud_cli.generate_key(host=parsed.host, port=parsed.port)
+
 
 # TODO: remove in fal 0.6.0
 def _warn_deprecated_flags(parsed: argparse.Namespace):
