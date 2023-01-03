@@ -219,26 +219,12 @@ def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) 
 
 
 def _get_dbt_packages(
+    adapter_type: str,
     is_teleport: bool = False,
     is_remote: bool = False
 ) -> Iterator[Tuple[str, Optional[str]]]:
-    # package_distributions will return a mapping of top-level package names to a list of distribution names (
-    # the PyPI names instead of the import names). An example distirbution info is the following, which
-    # contains both the main exporter of the top-level name (dbt-core) as well as all the packages that
-    # export anything to that namespace:
-    #   {"dbt": ["dbt-core", "dbt-postgres", "dbt-athena-adapter"]}
-    #
-    # This won't only include dbt.adapters.xxx, but anything that might export anything to the dbt namespace
-    # (e.g. a hypothetical plugin that only exports stuff to dbt.includes.xxx) which in theory would allow us
-    # to replicate the exact environment.
-    package_distributions = importlib_metadata.packages_distributions()
-    for dbt_plugin_name in package_distributions.get("dbt", []):
+    for dbt_plugin_name in ['dbt-core', f'dbt-{adapter_type}']:
         distribution = importlib_metadata.distribution(dbt_plugin_name)
-
-        # Handle dbt-fal separately (since it needs to be installed
-        # with its extras).
-        if dbt_plugin_name == "dbt-fal":
-            continue
 
         yield dbt_plugin_name, distribution.version
 
@@ -326,19 +312,21 @@ def _get_adapter_root_path() -> Optional[Path]:
 
 
 def get_default_requirements(
+    adapter_type: str,
     is_teleport: bool = False,
     is_remote: bool = False
 ) -> Iterator[Tuple[str, Optional[str]]]:
-    yield from _get_dbt_packages(is_teleport, is_remote)
+    yield from _get_dbt_packages(adapter_type, is_teleport, is_remote)
     yield "isolate", importlib_metadata.version("isolate")
 
 
 @cache_static
 def get_default_pip_dependencies(
+    adapter_type: str,
     is_teleport: bool = False,
-    is_remote: bool = False
+    is_remote: bool = False,
 ) -> List[str]:
     return [
         f"{package}=={version}" if version else package
-        for package, version in get_default_requirements(is_teleport, is_remote)
+        for package, version in get_default_requirements(adapter_type, is_teleport, is_remote)
     ]

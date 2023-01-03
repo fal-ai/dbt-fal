@@ -110,7 +110,8 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
                     compiled_code,
                     teleport_info=teleport_info,
                     locations=self._relation_data_location_cache,
-                    config=db_adapter_config(self.config)
+                    config=db_adapter_config(self.config),
+                    adapter_type=self._db_adapter.type()
                 )
 
             relation = self._db_adapter.Relation.create(
@@ -130,7 +131,8 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
                     compiled_code,
                     db_adapter_config(self.config),
                     self.manifest,
-                    self.macro_manifest
+                    self.macro_manifest,
+                    self._db_adapter.type()
                 )
 
     @contextmanager
