@@ -16,17 +16,25 @@ Starting with dbt v1.3, you can now build your dbt models in Python. dbt-fal pro
 `pip install dbt-fal[bigquery, snowflake]` *Add your current warehouse here*
 
 ## 2. Update your `profiles.yml` and add the fal adapter
+Add another entry to `outputs` in your desired profile (below we've added `dev_with_fal`)
 
 ```yaml
 jaffle_shop:
-  target: dev_with_fal
+  target: dev_with_fal # target points at the new output
   outputs:
-    dev_with_fal:
-      type: fal
-      db_profile: dev_bigquery # This points to your main adapter
     dev_bigquery:
       type: bigquery
-      ...
+      method: service-account
+      keyfile: /path/to/keyfile.json
+      project: my_gcp_project
+      dataset: my_dbt_dataset
+      threads: 4
+      timeout_seconds: 300
+      location: US
+      priority: interactive
+    dev_with_fal: # Name of your new output
+      type: fal
+      db_profile: dev_bigquery # This points to your main adapter
 ```
 
 Don't forget to point to your main adapter with the `db_profile` attribute. This is how the fal adapter knows how to connect to your data warehouse.
