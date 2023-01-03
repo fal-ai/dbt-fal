@@ -223,7 +223,8 @@ def _get_dbt_packages(
     is_teleport: bool = False,
     is_remote: bool = False
 ) -> Iterator[Tuple[str, Optional[str]]]:
-    for dbt_plugin_name in ['dbt-core', f'dbt-{adapter_type}']:
+    dbt_adapter = f"dbt-{adapter_type}"
+    for dbt_plugin_name in ['dbt-core', dbt_adapter]:
         distribution = importlib_metadata.distribution(dbt_plugin_name)
 
         yield dbt_plugin_name, distribution.version
@@ -234,8 +235,10 @@ def _get_dbt_packages(
         # It might not be installed.
         return None
 
-    dbt_fal_dep = f"dbt-fal"
-    dbt_fal_extras = _find_adapter_extras("dbt-fal", is_teleport)
+    dbt_fal_dep = "dbt-fal"
+    dbt_fal_extras = _find_adapter_extras(dbt_fal_dep, dbt_adapter)
+    if is_teleport:
+        dbt_fal_extras.add("teleport")
     dbt_fal_suffix = ""
 
     if _is_pre_release(dbt_fal_version):
@@ -259,42 +262,22 @@ def _get_dbt_packages(
     yield dbt_fal, dbt_fal_version
 
 
-def _find_adapter_extras(package: str, is_teleport: bool = False) -> set[str]:
-    # Return a possible set of extras that might be required when installing
-    # adapter in the new environment. The original form which the user has installed
-    # is not present to us (it is not saved anywhere during the package installation
-    # process, so there is no way for us to know how a user initially installed fal adapter).
-    # We'll therefore be as generous as possible and install all the extras for all
-    # the dbt.adapters that the user currently has (so this will still be a subset
-    # of dependencies, e.g. if there is no dbt.adapter.duckdb then we won't include
-    # duckdb as an extra).
-
+def _find_adapter_extras(package: str, plugin_package: str) -> set[str]:
     import pkgutil
-
     import dbt.adapters
-
-    dist = importlib_metadata.distribution(package)
-    all_extras = dist.metadata.get_all("Provides-Extra", [])
-
-    # This list is different from the one we obtain in _get_dbt_packages
-    # since the names here are the actual import names, not the PyPI names
-    # (e.g. this one will say athena, and the other one will say dbt-athena-adapter).
+    all_extras = _get_extras(package)
     available_plugins = {
         module_info.name
         for module_info in pkgutil.iter_modules(dbt.adapters.__path__)
-        if module_info.ispkg
+        if module_info.ispkg and module_info.name in plugin_package
     }
-
-    if is_teleport:
-        available_plugins.add('teleport')
-
-    # There will be adapters which we won't have an extra for (e.g. oraceledb)
-    # and there will be extras which the user did not install the adapter for
-    # (e.g. dbt-redshift). We want to take the intersection of all the adapters
-    # that the user has installed and all the extras that fal provides and find
-    # the smallest possible subset of extras that we can install.
     return available_plugins.intersection(all_extras)
 
+
+def _get_extras(package: str) -> list[str]:
+    import importlib_metadata
+    dist = importlib_metadata.distribution(package)
+    return dist.metadata.get_all("Provides-Extra", [])
 
 
 def _is_pre_release(raw_version: str) -> bool:

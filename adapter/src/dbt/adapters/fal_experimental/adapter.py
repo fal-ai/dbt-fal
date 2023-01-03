@@ -12,7 +12,7 @@ from dbt.contracts.connection import AdapterResponse
 
 from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
 from dbt.adapters.fal_experimental.utils.environments import (
-    get_default_pip_dependencies, _find_adapter_extras
+    get_default_pip_dependencies
 )
 
 from dbt.parser.manifest import MacroManifest, Manifest
