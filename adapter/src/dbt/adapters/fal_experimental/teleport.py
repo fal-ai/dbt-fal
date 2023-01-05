@@ -78,7 +78,8 @@ def run_in_environment_with_teleport(
     code: str,
     teleport_info: TeleportInfo,
     locations: DataLocation,
-    config: RuntimeConfig
+    config: RuntimeConfig,
+    adapter_type: str,
 ) -> AdapterResponse:
     from isolate.backends.remote import IsolateServer
     """Run the 'main' function inside the given code on the
@@ -87,7 +88,14 @@ def run_in_environment_with_teleport(
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
     if type(environment) == IsolateServer:
-        deps = [i for i in get_default_pip_dependencies(is_teleport=True) if i.startswith('dbt-')]
+        deps = [
+            i
+            for i in get_default_pip_dependencies(
+                    adapter_type,
+                    is_teleport=True,
+                    is_remote=True
+            )
+        ]
 
         if environment.target_environment_kind == 'conda':
             raise NotImplementedError("Remote environment with `conda` is not supported yet.")
@@ -103,7 +111,7 @@ def run_in_environment_with_teleport(
             return result
 
     else:
-        deps = get_default_pip_dependencies(is_teleport=True)
+        deps = get_default_pip_dependencies(adapter_type, is_teleport=True)
         stage = VirtualPythonEnvironment(deps)
 
         # run_with_teleport already handles fal_scripts_path, so we don't need to pass it here

@@ -12,7 +12,7 @@ from dbt.contracts.connection import AdapterResponse
 
 from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
 from dbt.adapters.fal_experimental.utils.environments import (
-    get_default_pip_dependencies, _find_adapter_extras
+    get_default_pip_dependencies
 )
 
 from dbt.parser.manifest import MacroManifest, Manifest
@@ -69,6 +69,7 @@ def run_in_environment_with_adapter(
     config: RuntimeConfig,
     manifest: Manifest,
     macro_manifest: MacroManifest,
+    adapter_type: str
 ) -> AdapterResponse:
     """Run the 'main' function inside the given code on the
     specified environment.
@@ -80,7 +81,10 @@ def run_in_environment_with_adapter(
             raise RuntimeError(
                 "BigQuery credential method `service-account` is not supported." + \
                 " Please use `service-account-json` instead")
-        deps = [i for i in get_default_pip_dependencies(is_remote=True) if i.startswith('dbt-')]
+        deps = [
+            i
+            for i in get_default_pip_dependencies(is_remote=True, adapter_type=adapter_type)
+        ]
 
         extra_config = {
             'kind': 'virtualenv',
@@ -118,7 +122,7 @@ def run_in_environment_with_adapter(
             return result
 
     else:
-        deps = get_default_pip_dependencies()
+        deps = get_default_pip_dependencies(adapter_type)
         stage = VirtualPythonEnvironment(deps)
         fal_scripts_path = get_fal_scripts_path(config)
 
