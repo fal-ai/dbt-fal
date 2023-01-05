@@ -300,7 +300,9 @@ def get_default_requirements(
     is_remote: bool = False
 ) -> Iterator[Tuple[str, Optional[str]]]:
     yield from _get_dbt_packages(adapter_type, is_teleport, is_remote)
-    yield "isolate", importlib_metadata.version("isolate")
+    if not is_remote:
+        # We don't override remote isolate
+        yield "isolate", importlib_metadata.version("isolate")
 
 
 @cache_static

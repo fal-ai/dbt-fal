@@ -90,8 +90,11 @@ def run_in_environment_with_teleport(
     if type(environment) == IsolateServer:
         deps = [
             i
-            for i in get_default_pip_dependencies(adapter_type, is_teleport=True)
-            if i.startswith('dbt-')
+            for i in get_default_pip_dependencies(
+                    adapter_type,
+                    is_teleport=True,
+                    is_remote=True
+            )
         ]
 
         if environment.target_environment_kind == 'conda':

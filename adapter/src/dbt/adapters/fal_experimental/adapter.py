@@ -84,7 +84,6 @@ def run_in_environment_with_adapter(
         deps = [
             i
             for i in get_default_pip_dependencies(is_remote=True, adapter_type=adapter_type)
-            if i.startswith('dbt-')
         ]
 
         extra_config = {
