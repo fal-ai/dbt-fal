@@ -252,14 +252,14 @@ def _build_cloud_parser(sub: argparse.ArgumentParser):
     )
 
     generator_parser = cloud_command_parsers.add_parser(
-        name="generate-keys",
-        help="Generate secret keys for fal cloud"
+        name="key-generate",
+        help="Generate a secret key for fal cloud"
     )
 
     generator_parser.add_argument(
         "--host",
         type=str,
-        default="https://rooster.fal.ai",
+        default="34.67.151.45",
         help="Specify fal cloud host instance URL"
     )
 

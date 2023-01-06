@@ -2,6 +2,8 @@ import argparse
 from typing import List
 import sys
 
+from click.exceptions import ClickException
+
 from fal.cli.flow_runner import fal_flow_run
 import faldbt.lib as lib
 from .args import parse_args
@@ -44,13 +46,18 @@ def _cli(argv: List[str]):
         elif parsed.command == "cloud":
             import isolate_cloud.cli as cloud_cli
             if parsed.cloud_command == "login":
-                cloud_cli.login()
+                cloud_cli.auth_login()
 
             elif parsed.cloud_command == "logout":
-                cloud_cli.login(revoke=True)
+                cloud_cli.auth_logout()
 
-            elif parsed.cloud_command == "generate-keys":
-                cloud_cli.generate_key(host=parsed.host, port=parsed.port)
+            elif parsed.cloud_command == "key-generate":
+                try:
+                    cloud_cli.key_generate(host=parsed.host, port=parsed.port)
+                except ClickException as e:
+                    if e.message == "Use `isolate-cloud login` flow":
+                        raise RuntimeError("Login by running `fal cloud login`.")
+                    raise e
 
 
 # TODO: remove in fal 0.6.0
