@@ -233,6 +233,43 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _add_full_refresh_option(flow_run_parser)
 
 
+def _build_cloud_parser(sub: argparse.ArgumentParser):
+    cloud_command_parsers = sub.add_subparsers(
+        title="cloud commands",
+        dest="cloud_command",
+        metavar="COMMAND",
+        required=True,
+    )
+
+    cloud_command_parsers.add_parser(
+        name="login",
+        help="Login to fal cloud"
+    )
+
+    cloud_command_parsers.add_parser(
+        name="logout",
+        help="Logout of fal cloud"
+    )
+
+    generator_parser = cloud_command_parsers.add_parser(
+        name="key-generate",
+        help="Generate a secret key for fal cloud"
+    )
+
+    generator_parser.add_argument(
+        "--host",
+        type=str,
+        default="34.67.151.45",
+        help="Specify fal cloud host instance URL"
+    )
+
+    generator_parser.add_argument(
+        "--port",
+        type=str,
+        default="6005",
+        help="Specify fal cloud host instance PORT"
+    )
+
 def _build_cli_parser():
     parser = argparse.ArgumentParser(
         prog="fal",
@@ -275,7 +312,15 @@ def _build_cli_parser():
         name="flow",
         help="Execute fal and dbt commands in correct order",
     )
+
     _build_flow_parser(flow_parser)
+
+    cloud_parser = command_parsers.add_parser(
+        name="cloud",
+        help="Interact with fal cloud",
+    )
+
+    _build_cloud_parser(cloud_parser)
 
     return parser
 
