@@ -1488,8 +1488,8 @@ trino = ["trino"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.7.2, <3.11"
-content-hash = "f0d135d3cb19b5e98a15f42a833f513fd5aa37ea61b197805019f8d2345021a1"
+python-versions = ">=3.7.2, <3.12"
+content-hash = "6ee7dd1f8a86bbcd083e518a55dfbc1bc32f29a320417f498e6d74ff32a6650c"
 
 [metadata.files]
 agate = [

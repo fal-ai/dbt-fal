@@ -33,7 +33,7 @@ jobs:
           - redshift
           # enable with next release of dbt-trino
           # - trino
-        python: ["3.7", "3.8"]
+        python: ["3.7", "3.8", "3.11"]
         include:
           - profile: duckdb
             adapter_version: 1.2.2
