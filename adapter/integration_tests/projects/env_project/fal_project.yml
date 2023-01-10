@@ -10,4 +10,4 @@ environments:
   - name: funny-conda
     type: conda
     packages:
-      - pyjokes==0.6.0
+      - pyjokes=0.6.0

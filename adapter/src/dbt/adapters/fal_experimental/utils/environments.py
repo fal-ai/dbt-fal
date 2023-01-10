@@ -171,17 +171,18 @@ def _build_hosted_env(
                 f"Environment type {config['type']} is not supported. Supported types: {REMOTE_TYPES_DICT.keys()}")
         kind = REMOTE_TYPES_DICT[config["type"]]
 
-    ENV_KEYS = {
-        "virtualenv": "requirements",
-        "conda": "packages"
-    }
+    if kind == "virtualenv":
 
-    key = ENV_KEYS[kind]
+        if "requirements" not in parsed_config.keys():
+            parsed_config["requirements"] = []
 
-    if kind not in parsed_config.keys():
-        parsed_config[key] = []
+        parsed_config["requirements"].append(f"dill=={importlib_metadata.version('dill')}")
 
-    parsed_config[key].append(f"dill=={importlib_metadata.version('dill')}")
+    elif kind == "conda":
+        if "packages" not in parsed_config.keys():
+            parsed_config["packages"] = []
+
+        parsed_config["packages"].append(f"dill={importlib_metadata.version('dill')}")
 
     env_definition = {
         "kind": kind,
