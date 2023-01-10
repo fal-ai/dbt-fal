@@ -12,3 +12,8 @@ target-path: "{{ env_var('temp_dir') }}/target"
 
 models:
   +schema: custom
+  simple_test:
+    python:
+      +materialized: table
+    base:
+      +materialized: table
