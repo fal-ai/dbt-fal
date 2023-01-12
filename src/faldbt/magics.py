@@ -31,7 +31,6 @@ def init_fal(line="", local_ns={}):
         "ref": faldbt.ref,
         "source": faldbt.source,
         "write_to_source": faldbt.write_to_source,
-        "write_to_firestore": faldbt.write_to_firestore,
         "list_models": faldbt.list_models,
         "list_models_ids": faldbt.list_models_ids,
         "list_sources": faldbt.list_sources,
