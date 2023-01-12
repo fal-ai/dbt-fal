@@ -76,7 +76,7 @@ def check_compiled_model(context, model_type: str, model_name: str, msg: str):
     assert model_type in ["sql", "python", "py"], "model type should be SQL or Python"
     if model_type == "python":
         model_type = "py"
-    compiled = _load_target_run_model(context, f"{model_name}.{model_type}")
+    compiled = _load_target_run_model(context, model_name, model_type)
     assert msg in compiled, f'Expected "{msg}" not present in compiled model {compiled}'
 
 
@@ -104,18 +104,18 @@ def _load_dbt_project_file(context):
         return yaml.full_load(stream)
 
 
-def _load_target_run_model(context, model_with_ext: str):
-    with open(
-        os.path.join(
-            context.temp_dir.name,
-            "target",
-            "run",
-            context.project_name,
-            "models",
-            model_with_ext,
-        )
-    ) as stream:
-        return stream.read()
+def _load_target_run_model(context, model_name: str, file_ext: str):
+
+    # TODO: we should use fal to find these files from fal reading the dbt_project.yml and making it easily available
+    models_dir: Path = (
+        Path(context.temp_dir.name) / "target" / "run" / context.project_name / "models"
+    )
+
+    found_model_files = list(models_dir.rglob(f"{model_name}.{file_ext}"))
+
+    assert len(found_model_files) == 1, "Model must be unique in models directory"
+
+    return found_model_files[0].read_text()
 
 
 def _replace_vars(context, msg):
