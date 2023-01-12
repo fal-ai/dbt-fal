@@ -1,6 +1,5 @@
 from collections import defaultdict
 import os.path
-import re
 from dataclasses import dataclass, field
 from functools import partialmethod
 from typing import (
@@ -11,7 +10,6 @@ from typing import (
     Optional,
     Tuple,
     Sequence,
-    Union,
     TYPE_CHECKING,
 )
 from pathlib import Path
@@ -38,7 +36,6 @@ from dbt.contracts.results import (
     FreshnessExecutionResultArtifact,
     FreshnessNodeOutput,
 )
-from faldbt.logger import LOGGER
 from dbt.task.compile import CompileTask
 import dbt.tracking
 
@@ -49,12 +46,6 @@ from .el_client import FalElClient
 
 from fal.feature_store.feature import Feature
 
-import firebase_admin
-from firebase_admin import firestore
-
-import uuid
-
-from decimal import Decimal
 import pandas as pd
 
 from fal.telemetry import telemetry
@@ -441,7 +432,6 @@ class FalDbt:
 
         self.project_dir = os.path.realpath(os.path.expanduser(project_dir))
         self.profiles_dir = os.path.realpath(os.path.expanduser(profiles_dir))
-        self._firestore_client = None
         self._state = None
         if state is not None:
             self._state = Path(os.path.realpath(os.path.expanduser(state)))
@@ -776,78 +766,6 @@ class FalDbt:
         else:
             raise Exception(f"write_to_model mode `{mode}` not supported")
 
-    @telemetry.log_call("write_to_firestore")
-    def write_to_firestore(self, df: pd.DataFrame, collection: str, key_column: str):
-        """
-        Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
-        """
-
-        # Lazily setup Firestore
-        self._lazy_setup_firestore()
-
-        if self._firestore_client is None:
-            raise FalGeneralException(
-                "GCP credentials not setup correctly. Check warnings during initialization."
-            )
-
-        df_arr = df.to_dict("records")
-        for item in df_arr:
-            key = item[key_column]
-            data = _firestore_dict_to_document(data=item, key_column=key_column)
-            self._firestore_client.collection(collection).document(str(key)).set(data)
-
-    def _lazy_setup_firestore(self):
-        if self._firestore_client is not None:
-            return
-
-        try:
-            from dbt.adapters.bigquery.connections import BigQueryConnectionManager
-        except ModuleNotFoundError as not_found:
-            raise FalGeneralException(
-                "To use firestore, please `pip install dbt-bigquery`"
-            ) from not_found
-
-        app_name = f"fal-{uuid.uuid4()}"
-        profile_cred = self._config.credentials
-
-        # Setting projectId from the profiles.yml
-        options = {"projectId": profile_cred.database}
-        app = None
-
-        try:
-            # Try with the profiles.yml credentials
-            if profile_cred.type != "bigquery":
-                raise Exception("To be caught")
-
-            # HACK: using internal method of Bigquery adapter to mock a Firebase credential
-            cred = firebase_admin.credentials.ApplicationDefault()
-            cred._g_credential = BigQueryConnectionManager.get_bigquery_credentials(
-                profile_cred
-            )
-
-            app = firebase_admin.initialize_app(cred, options, name=app_name)
-
-            self._firestore_client = firestore.client(app=app)
-
-        except Exception:
-            LOGGER.warn(
-                "Could not find acceptable GCP credentials in profiles.yml, trying default GCP Application"
-            )
-
-            if app:
-                firebase_admin.delete_app(app)
-
-            try:
-                # Use the application default credentials
-                cred = firebase_admin.credentials.ApplicationDefault()
-
-                app = firebase_admin.initialize_app(cred, options, name=app_name)
-
-                self._firestore_client = firestore.client(app=app)
-            except Exception:
-                LOGGER.warn(
-                    "Could not find acceptable Default GCP Application credentials"
-                )
 
     @telemetry.log_call("execute_sql")
     def execute_sql(self, sql: str) -> pd.DataFrame:
@@ -891,19 +809,6 @@ class FalDbt:
         if self._environments is None:
             self._environments = parse.load_environments(self.project_dir)
         return self._environments[name]
-
-
-def _firestore_dict_to_document(data: Dict, key_column: str):
-    output = {}
-    for (k, v) in data.items():
-        if k == key_column:
-            continue
-        # TODO: Add more type conversions here
-        if isinstance(v, Decimal):
-            output[k] = str(v)
-        else:
-            output[k] = v
-    return output
 
 
 def _get_custom_target(run_results: DbtRunResult):

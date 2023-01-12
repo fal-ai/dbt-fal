@@ -184,7 +184,6 @@ class FalScript:
                 "context": self._build_script_context(),
                 "ref": self.faldbt.ref,
                 "source": self.faldbt.source,
-                "write_to_firestore": self.faldbt.write_to_firestore,
                 "list_models": self.faldbt.list_models,
                 "list_models_ids": self.faldbt.list_models_ids,
                 "list_sources": self.faldbt.list_sources,

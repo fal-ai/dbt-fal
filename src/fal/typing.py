@@ -75,13 +75,6 @@ if TYPE_CHECKING:
             """
             ...
 
-    class _Write_To_Firestore(Protocol):
-        def __call__(self, df: pd.DataFrame, collection: str, key_column: str):
-            """
-            Write a pandas.DataFrame to a GCP Firestore collection. You must specify the column to use as key.
-            """
-            ...
-
     class _Execute_Sql(Protocol):
         def __call__(self, sql: str) -> pd.DataFrame:
             """Execute a sql query."""
@@ -115,5 +108,4 @@ list_features: _List_Features
 ref: _Ref
 source: _Source
 write_to_source: _Write_To_Source
-write_to_firestore: _Write_To_Firestore
 execute_sql: _Execute_Sql
