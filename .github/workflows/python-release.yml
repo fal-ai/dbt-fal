@@ -153,8 +153,9 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
+          branch: bump-${{ inputs.package }}-${{ env.publishing_version }}
           delete-branch: true
-          title: Bump the pyproject.toml version
+          title: Bump the pyproject.toml ${{ inputs.package }} version
           base: main
           token: ${{ secrets.RELEASER_GITHUB_PAT }}
           body: ${{ steps.release.outputs.RELEASE_BODY }}
