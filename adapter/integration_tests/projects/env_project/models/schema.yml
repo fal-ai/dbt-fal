@@ -5,3 +5,4 @@ models:
   - name: model_b # broken Python model
   - name: model_c # Python model
   - name: model_d
+  - name: model_e
