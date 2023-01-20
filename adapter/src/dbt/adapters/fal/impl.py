@@ -1,6 +1,8 @@
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
+from collections import defaultdict
 from contextlib import contextmanager
+from dbt.config.profile import Profile
 from dbt.adapters.base.impl import BaseAdapter, BaseRelation
 from dbt.adapters.factory import FACTORY
 
@@ -20,18 +22,19 @@ def _release_plugin_lock():
         FACTORY.lock.acquire()
 
 
-def load_db_profile():
+def load_profiles_info() -> Tuple[Profile, Dict[str, bool], Dict[str, bool]]:
     import os
 
-    from dbt.config.profile import Profile, read_profile
+    from dbt.config.profile import read_profile
     from dbt.config.project import Project
     from dbt.config.renderer import ProfileRenderer
     from dbt.config.utils import parse_cli_vars
-    from dbt.main import _build_base_subparser
+    from dbt.main import _build_base_subparser, _add_common_arguments
     from dbt import flags
 
     # includes vars, profile, target
     parser = _build_base_subparser()
+    _add_common_arguments(parser)
     args, _unknown = parser.parse_known_args()
 
     # dbt-core does os.chdir(project_dir) before reaching this location
@@ -67,26 +70,42 @@ def load_db_profile():
     assert db_profile, "fal credentials must have a `db_profile` property set"
 
     try:
-        return Profile.from_raw_profiles(
+        db_profile = Profile.from_raw_profiles(
             raw_profiles,
             profile_name,
-            renderer=ProfileRenderer(cli_vars),
+            renderer=profile_renderer,
             target_override=db_profile,
+        )
+
+        return (
+            db_profile,
+            {"threads": "threads" in fal_dict},
+            {"threads": args.threads is not None},
         )
     except AttributeError as error:
         if "circular import" in str(error):
             raise AttributeError(
                 "Do not wrap a type 'fal' profile with another type 'fal' profile"
             ) from error
+        else:
+            raise
 
 
 DB_PROFILE = None
 DB_RELATION = BaseRelation
+INHERIT_PROPERTIES = defaultdict(lambda: True)
 
 # NOTE: Should this file run on isolate agents? Could we skip it entirely and build a FalEncAdapterWrapper directly?
 if not is_agent():
-    DB_PROFILE = load_db_profile()
+    DB_PROFILE, PROFILE_PROPERTIES, ARGS_PROPERTIES = load_profiles_info()
     DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
+
+    for key, val in PROFILE_PROPERTIES.items():
+        if val:
+            INHERIT_PROPERTIES[key] = False
+    for key, val in ARGS_PROPERTIES.items():
+        if val:
+            INHERIT_PROPERTIES[key] = False
 
 
 class FalEncAdapter(BaseAdapter):
@@ -122,7 +141,8 @@ class FalEncAdapter(BaseAdapter):
 
         config.python_adapter_credentials = fal_credentials
         config.sql_adapter_credentials = db_credentials
-        config.threads = DB_PROFILE.threads
+        if INHERIT_PROPERTIES["threads"]:
+            config.threads = DB_PROFILE.threads
 
         with _release_plugin_lock():
             # Temporary credentials for register

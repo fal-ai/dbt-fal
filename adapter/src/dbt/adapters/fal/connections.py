@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from dbt.adapters.fal_experimental.connections import FalCredentials
 
+
 @dataclass
 class FalEncCredentials(FalCredentials):
-    db_profile: str = ''
+    db_profile: str = ""
 
     def _connection_keys(self):
         return () + super()._connection_keys()
