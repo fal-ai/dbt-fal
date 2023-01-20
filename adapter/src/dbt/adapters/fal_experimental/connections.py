@@ -12,6 +12,7 @@ class TeleportTypeEnum(StrEnum):
     LOCAL = "local"
     REMOTE_S3 = "s3"
 
+
 @dataclass
 class TeleportCredentials(ExtensibleDbtClassMixin):
     type: TeleportTypeEnum
@@ -44,15 +45,14 @@ class FalConnectionManager(PythonConnectionManager):
 class FalCredentials(Credentials):
     default_environment: str = "local"
     teleport: Optional[TeleportCredentials] = None
-    host: str = ''
-    key_secret: str = ''
-    key_id: str = ''
-
+    host: str = ""
+    key_secret: str = ""
+    key_id: str = ""
 
     # NOTE: So we are allowed to not set them in profiles.yml
     # they are ignored for now
-    database: str = ''
-    schema: str = ''
+    database: str = ""
+    schema: str = ""
 
     @property
     def type(self):
