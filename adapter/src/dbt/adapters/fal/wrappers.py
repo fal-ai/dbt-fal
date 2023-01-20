@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type
+from typing import Any, Optional, Type, Set
 
 from dbt.adapters.factory import get_adapter_by_type
 from dbt.adapters.base.meta import available
@@ -20,10 +20,7 @@ class FalCredentialsWrapper:
 
     @property
     def type(self):
-        import inspect
-
-        materializer_funcs = {"to_target_dict", "db_materialization"}
-        if any(frame.function in materializer_funcs for frame in inspect.stack()):
+        if find_funcs_in_stack({"to_target_dict", "db_materialization"}):
             # This makes sense for both SQL and Python because the target is always the db
             return self._db_creds.type
 
@@ -83,10 +80,7 @@ class FalEncAdapterWrapper(FalAdapterMixin):
         return ManifestLoader.get_full_manifest(self.config)
 
     def type(self):
-        import inspect
-
-        materializer_funcs = {"render", "db_materialization"}
-        if any(frame.function in materializer_funcs for frame in inspect.stack()):
+        if find_funcs_in_stack({"render", "db_materialization"}):
             return self._db_adapter.type()
 
         return "fal"
@@ -99,3 +93,16 @@ class FalEncAdapterWrapper(FalAdapterMixin):
             return getattr(self._db_adapter, name)
         else:
             getattr(super(), name)
+
+
+def find_funcs_in_stack(funcs: Set[str]) -> bool:
+    import inspect
+
+    # NOTE: from https://stackoverflow.com/a/42636264/1276441
+    frame = inspect.currentframe()
+    while frame:
+        if frame.f_code.co_name in funcs:
+            return True
+        frame = frame.f_back
+
+    return False
