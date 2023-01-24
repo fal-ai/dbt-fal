@@ -226,30 +226,37 @@ def write_conf_file(conf_path, to_write, error=None):
         if error:
             return e
 
+
 @cache_static
 def get_dbt_config():
-    from dbt.flags import PROFILES_DIR
-    from fal.cli.args import parse_args
-    from faldbt.parse import get_dbt_config
+    try:
+        from dbt.flags import PROFILES_DIR
+        from fal.cli.args import parse_args
+        from faldbt.parse import get_dbt_config
 
-    args = parse_args(sys.argv[1:])
+        args = parse_args(sys.argv[1:])
 
-    profiles_dir: str = PROFILES_DIR # type: ignore
-    if args.profiles_dir is not None:
-        profiles_dir = args.profiles_dir
+        profiles_dir: str = PROFILES_DIR  # type: ignore
+        if args.profiles_dir is not None:
+            profiles_dir = args.profiles_dir
 
-    project_dir = os.path.realpath(os.path.expanduser(args.project_dir))
-    profiles_dir = os.path.realpath(os.path.expanduser(profiles_dir))
-    return get_dbt_config(
-        project_dir=project_dir,
-        profiles_dir=profiles_dir,
-    )
+        project_dir = os.path.realpath(os.path.expanduser(args.project_dir))
+        profiles_dir = os.path.realpath(os.path.expanduser(profiles_dir))
+        return get_dbt_config(
+            project_dir=project_dir,
+            profiles_dir=profiles_dir,
+        )
+    except:
+        # Hide the error to not break the app for telemetry
+        pass
 
 
 def log_api(
     action: str,
     total_runtime=None,
     additional_props: Optional[dict] = None,
+    *,
+    dbt_config=None,
 ):
     """
     This function logs through an API call, assigns parameters if missing like
@@ -274,7 +281,8 @@ def log_api(
         additional_props["uid_issue"] = str(uid_error) if uid_error is not None else ""
 
     config_hash = ""
-    dbt_config = get_dbt_config()
+    if dbt_config is None:
+        dbt_config = get_dbt_config()
     if dbt_config is not None and hasattr(dbt_config, "hashed_name"):
         config_hash = str(dbt_config.hashed_name())
 
@@ -316,10 +324,11 @@ def log_api(
 
 
 @contextmanager
-def log_time(action: str, additional_props: Optional[dict] = None):
+def log_time(action: str, additional_props: Optional[dict] = None, *, dbt_config=None):
     log_api(
         action=f"{action}_started",
         additional_props=additional_props,
+        dbt_config=dbt_config,
     )
 
     start = datetime.datetime.now()
@@ -334,6 +343,7 @@ def log_time(action: str, additional_props: Optional[dict] = None):
                 **(additional_props or {}),
                 "exception": str(type(e)),
             },
+            dbt_config=dbt_config,
         )
         raise
     else:
@@ -341,12 +351,13 @@ def log_time(action: str, additional_props: Optional[dict] = None):
             action=f"{action}_success",
             total_runtime=str(datetime.datetime.now() - start),
             additional_props=additional_props,
+            dbt_config=dbt_config,
         )
 
 
 # NOTE: should we log differently depending on the error type?
 # NOTE: how should we handle chained exceptions?
-def log_call(action, args: List[str] = []):
+def log_call(action, args: List[str] = [], *, dbt_config=None):
     """Runs a function and logs it"""
 
     def _log_call(func):
@@ -355,7 +366,9 @@ def log_call(action, args: List[str] = []):
             sig = inspect.signature(func).bind(*func_args, **func_kwargs)
             sig.apply_defaults()
             log_args = dict(map(lambda arg: (arg, sig.arguments.get(arg)), args))
-            with log_time(action, additional_props={"args": log_args}):
+            with log_time(
+                action, additional_props={"args": log_args}, dbt_config=dbt_config
+            ):
                 return func(*func_args, **func_kwargs)
 
         return wrapper
