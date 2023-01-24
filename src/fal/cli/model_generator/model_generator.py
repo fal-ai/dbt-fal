@@ -34,8 +34,8 @@ GENERATED_DIR = Path("fal")
 CHECKSUM_REGEX = re.compile(r"FAL_GENERATED ([_\d\w]+)")
 
 
-def generate_python_dbt_models(project_dir: str, args_vars: str, *, config=None):
-    fal_models_paths = _get_fal_models_paths(project_dir, args_vars, config=config)
+def generate_python_dbt_models(project_dir: str, args_vars: str):
+    fal_models_paths = _get_fal_models_paths(project_dir, args_vars)
     dbt_models_paths = list(
         map(Path, load_dbt_project_contract(project_dir).model_paths or [])
     )
@@ -72,14 +72,13 @@ def generate_python_dbt_models(project_dir: str, args_vars: str, *, config=None)
         telemetry.log_api(
             action="python_models_generated",
             additional_props={"models": len(python_paths)},
-            config=config,
         )
 
     return {path.stem: path for path in python_paths}
 
 
-def _get_fal_models_paths(project_dir: str, args_vars: str, *, config=None):
-    models_paths = get_fal_models_dirs(project_dir, args_vars, config=config)
+def _get_fal_models_paths(project_dir: str, args_vars: str):
+    models_paths = get_fal_models_dirs(project_dir, args_vars)
     project_path = Path(project_dir)
     return list(map(project_path.joinpath, models_paths))
 

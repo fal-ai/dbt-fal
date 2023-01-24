@@ -505,11 +505,9 @@ class FalDbt:
 
         self.features = self._find_features()
         self._environments = None
-
         telemetry.log_api(
             action="faldbt_initialized",
             additional_props={"config_hash": self._config.hashed_name()},
-            config=self._config,
         )
 
     @property
@@ -538,41 +536,41 @@ class FalDbt:
     def project_name(self):
         return self._config.project_name
 
+    @telemetry.log_call("list_sources")
     def list_sources(self) -> List[DbtSource]:
         """
         List tables available for `source` usage
         """
-        with telemetry.log_time("list_sources", config=self._config):
-            return self.sources
+        return self.sources
 
+    @telemetry.log_call("list_models_ids")
     def list_models_ids(self) -> Dict[str, str]:
         """
         List model ids available for `ref` usage, formatting like `[ref_name, ...]`
         """
-        with telemetry.log_time("list_models_ids", config=self._config):
-            res = {}
-            for model in self.models:
-                res[model.unique_id] = model.status
+        res = {}
+        for model in self.models:
+            res[model.unique_id] = model.status
 
-            return res
+        return res
 
+    @telemetry.log_call("list_models")
     def list_models(self) -> List[DbtModel]:
         """
         List models
         """
-        with telemetry.log_time("list_models", config=self._config):
-            return self.models
+        return self.models
 
+    @telemetry.log_call("list_tests")
     def list_tests(self) -> List[DbtTest]:
         """
         List tests
         """
-        with telemetry.log_time("list_tests", config=self._config):
-            return self.tests
+        return self.tests
 
+    @telemetry.log_call("list_features")
     def list_features(self) -> List[Feature]:
-        with telemetry.log_time("list_features", config=self._config):
-            return self.features
+        return self.features
 
     def _find_features(self) -> List[Feature]:
         """List features defined in schema.yml files."""
@@ -623,26 +621,26 @@ class FalDbt:
 
         return target_model
 
+    @telemetry.log_call("ref")
     def ref(self, target_1: str, target_2: Optional[str] = None) -> pd.DataFrame:
         """
         Download a dbt model as a pandas.DataFrame automagically.
         """
-        with telemetry.log_time("ref", config=self._config):
-            target_model_name = target_1
-            target_package_name = None
-            if target_2 is not None:
-                target_package_name = target_1
-                target_model_name = target_2
+        target_model_name = target_1
+        target_package_name = None
+        if target_2 is not None:
+            target_package_name = target_1
+            target_model_name = target_2
 
-            target_model = self._model(target_model_name, target_package_name)
+        target_model = self._model(target_model_name, target_package_name)
 
-            return lib.fetch_target(
-                self.project_dir,
-                self.profiles_dir,
-                target_model,
-                self._profile_target,
-                config=self._config,
-            )
+        return lib.fetch_target(
+            self.project_dir,
+            self.profiles_dir,
+            target_model,
+            self._profile_target,
+            config=self._config,
+        )
 
     def _source(
         self, target_source_name: str, target_table_name: str
@@ -663,21 +661,23 @@ class FalDbt:
 
         return target_source
 
+    @telemetry.log_call("source")
     def source(self, target_source_name: str, target_table_name: str) -> pd.DataFrame:
         """
         Download a dbt source as a pandas.DataFrame automagically.
         """
-        with telemetry.log_time("source", config=self._config):
-            target_source = self._source(target_source_name, target_table_name)
 
-            return lib.fetch_target(
-                self.project_dir,
-                self.profiles_dir,
-                target_source,
-                self._profile_target,
-                config=self._config,
-            )
+        target_source = self._source(target_source_name, target_table_name)
 
+        return lib.fetch_target(
+            self.project_dir,
+            self.profiles_dir,
+            target_source,
+            self._profile_target,
+            config=self._config,
+        )
+
+    @telemetry.log_call("write_to_source", ["mode"])
     def write_to_source(
         self,
         data: pd.DataFrame,
@@ -691,35 +691,35 @@ class FalDbt:
         Write a pandas.DataFrame to a dbt source automagically.
         """
 
-        with telemetry.log_time("write_to_source", config=self._config, additional_props={'mode': mode}):
-            target_source = self._source(target_source_name, target_table_name)
+        target_source = self._source(target_source_name, target_table_name)
 
-            write_mode = lib.WriteModeEnum(mode.lower().strip())
-            if write_mode == lib.WriteModeEnum.APPEND:
-                lib.write_target(
-                    data,
-                    self.project_dir,
-                    self.profiles_dir,
-                    self._profile_target,
-                    target_source,
-                    dtype=dtype,
-                    config=self._config,
-                )
+        write_mode = lib.WriteModeEnum(mode.lower().strip())
+        if write_mode == lib.WriteModeEnum.APPEND:
+            lib.write_target(
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                self._profile_target,
+                target_source,
+                dtype=dtype,
+                config=self._config,
+            )
 
-            elif write_mode == lib.WriteModeEnum.OVERWRITE:
-                lib.overwrite_target(
-                    data,
-                    self.project_dir,
-                    self.profiles_dir,
-                    self._profile_target,
-                    target_source,
-                    dtype=dtype,
-                    config=self._config,
-                )
+        elif write_mode == lib.WriteModeEnum.OVERWRITE:
+            lib.overwrite_target(
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                self._profile_target,
+                target_source,
+                dtype=dtype,
+                config=self._config,
+            )
 
-            else:
-                raise Exception(f"write_to_source mode `{mode}` not supported")
+        else:
+            raise Exception(f"write_to_source mode `{mode}` not supported")
 
+    @telemetry.log_call("write_to_model", ["mode"])
     def write_to_model(
         self,
         data: pd.DataFrame,
@@ -732,77 +732,74 @@ class FalDbt:
         """
         Write a pandas.DataFrame to a dbt model automagically.
         """
+        target_model_name = target_1
+        target_package_name = None
+        if target_2 is not None:
+            target_package_name = target_1
+            target_model_name = target_2
 
-        with telemetry.log_time("write_to_model", config=self._config, additional_props={'mode': mode}):
-            target_model_name = target_1
-            target_package_name = None
-            if target_2 is not None:
-                target_package_name = target_1
-                target_model_name = target_2
+        target_model = self._model(target_model_name, target_package_name)
 
-            target_model = self._model(target_model_name, target_package_name)
+        write_mode = lib.WriteModeEnum(mode.lower().strip())
+        if write_mode == lib.WriteModeEnum.APPEND:
+            lib.write_target(
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                self._profile_target,
+                target_model,
+                dtype=dtype,
+                config=self._config,
+            )
 
-            write_mode = lib.WriteModeEnum(mode.lower().strip())
-            if write_mode == lib.WriteModeEnum.APPEND:
-                lib.write_target(
-                    data,
-                    self.project_dir,
-                    self.profiles_dir,
-                    self._profile_target,
-                    target_model,
-                    dtype=dtype,
-                    config=self._config,
-                )
+        elif write_mode == lib.WriteModeEnum.OVERWRITE:
+            lib.overwrite_target(
+                data,
+                self.project_dir,
+                self.profiles_dir,
+                self._profile_target,
+                target_model,
+                dtype=dtype,
+                config=self._config,
+            )
 
-            elif write_mode == lib.WriteModeEnum.OVERWRITE:
-                lib.overwrite_target(
-                    data,
-                    self.project_dir,
-                    self.profiles_dir,
-                    self._profile_target,
-                    target_model,
-                    dtype=dtype,
-                    config=self._config,
-                )
-
-            else:
-                raise Exception(f"write_to_model mode `{mode}` not supported")
+        else:
+            raise Exception(f"write_to_model mode `{mode}` not supported")
 
 
+    @telemetry.log_call("execute_sql")
     def execute_sql(self, sql: str) -> pd.DataFrame:
         """Execute a sql query."""
 
-        with telemetry.log_time("execute_sql", config=self._config):
+        # HACK: we need to pass config in because of weird behavior of execute_sql when
+        # ran from GitHub Actions. For some reason, it can not find the right profile.
+        # Haven't been able to reproduce this behavior locally and therefore developed
+        # this workaround.
+        compiled_result = lib.compile_sql(
+            self.project_dir,
+            self.profiles_dir,
+            self._profile_target,
+            sql,
+            config=self._config,
+        )
 
-            # HACK: we need to pass config in because of weird behavior of execute_sql when
-            # ran from GitHub Actions. For some reason, it can not find the right profile.
-            # Haven't been able to reproduce this behavior locally and therefore developed
-            # this workaround.
-            compiled_result = lib.compile_sql(
-                self.project_dir,
-                self.profiles_dir,
-                self._profile_target,
-                sql,
-                config=self._config,
-            )
+        # HACK: we need to pass config in because of weird behavior of execute_sql when
+        # ran from GitHub Actions. For some reason, it can not find the right profile.
+        # Haven't been able to reproduce this behavior locally and therefore developed
+        # this workaround.
 
-            # HACK: we need to pass config in because of weird behavior of execute_sql when
-            # ran from GitHub Actions. For some reason, it can not find the right profile.
-            # Haven't been able to reproduce this behavior locally and therefore developed
-            # this workaround.
-
-            # NOTE: changed in version 1.3.0 to `compiled_code`
-            if hasattr(compiled_result, "compiled_code"):
-                sql = compiled_result.compiled_code
-            else:
-                sql = compiled_result.compiled_sql
-            return lib.execute_sql(
-                self.project_dir,
-                self.profiles_dir,
-                self._profile_target,
-                sql,
-                config=self._config,
-            )
+        # NOTE: changed in version 1.3.0 to `compiled_code`
+        if hasattr(compiled_result, "compiled_code"):
+            sql = compiled_result.compiled_code
+        else:
+            sql = compiled_result.compiled_sql
+        return lib.execute_sql(
+            self.project_dir,
+            self.profiles_dir,
+            self._profile_target,
+            sql,
+            config=self._config,
+        )
 
     def _load_environment(self, name: str) -> "BaseEnvironment":
         """

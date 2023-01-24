@@ -108,7 +108,7 @@ def get_vars_dict(project_dir: str, args_vars: str) -> Dict[str, Any]:
 
 
 @cache_static
-def get_fal_models_dirs(project_dir: str, args_vars: str, *, config=None) -> List[str]:
+def get_fal_models_dirs(project_dir: str, args_vars: str) -> List[str]:
     vars = get_vars_dict(project_dir, args_vars)
     model_paths = vars.get(FAL_MODELS_PATHS) or []
     if not model_paths:
@@ -119,7 +119,7 @@ def get_fal_models_dirs(project_dir: str, args_vars: str, *, config=None) -> Lis
             "e.g. {FAL_MODELS_PATHS}: ['fal_models']"
         )
 
-        telemetry.log_api(action="fal_models_paths_not_set", config=config)
+        telemetry.log_api(action="fal_models_paths_not_set")
 
     if not isinstance(model_paths, list):
         raise FalParseError(
