@@ -1,4 +1,5 @@
-# Example 2: Run forecasts on metrics and send visualizations to Slack
+# Example 4: Run forecasts on metrics and send visualizations to Slack
+
 In this example we use [prophet](https://facebook.github.io/prophet/) and [slack_sdk](https://slack.dev/python-slack-sdk/) in order to make predictions on our models and send the resulting plots to slack.
 
 See [slack example](slack-example.md), for instructions on how to set up a minimal Slack bot.
@@ -6,16 +7,20 @@ See [slack example](slack-example.md), for instructions on how to set up a minim
 This example is built for a model that has two columns: `y` and `ds`, where `y` is a metric measure and `ds` is a timestamp. The metric that we look at is Agent Wait Time in minutes.
 
 ## Meta tag
+
 In a `schema.yml` file, within a target model, a meta tag should be added in order to connect the model to fal:
+
 ```yaml
-    meta:
-      fal:
-        scripts:
-          - path_to_fal_script.py
+meta:
+  fal:
+    scripts:
+      - path_to_fal_script.py
 ```
 
 ## Make a forecast
+
 First, we write a function that will fit a given DataFrame and make a prediction based on that fit. Assuming we already have a DataFrame with histotic data, fitting this data using prophet is done like this:
+
 ```python
 from fbprophet import Prophet
 
@@ -43,17 +48,20 @@ forecast = m.predict(df_future)
 ```
 
 This `forecast` object can be used to make a plot and save it as a picture:
+
 ```python
 from fbprophet.plot import plot_plotly
 
 fig = plot_plotly(m, forecast, xlabel="Date", ylabel="Agent Wait Time")
 fig.write_image("some_file_name.png")
 ```
+
 This results in a plot like this:
 
 ![Forecast plot](fal_forecast_1636707573.278499.png)
 
 Putting it all together into a function:
+
 ```python
 def make_forecast(dataframe: pd.DataFrame, filename: str):
     """Make forecast on metric data."""
@@ -74,6 +82,7 @@ def make_forecast(dataframe: pd.DataFrame, filename: str):
 ```
 
 ## Send forecast to Slack
+
 Having setup Slack bot as outlined in our [slack example](slack_example.md), we can use `slack_sdk` to send a file to our slack channel:
 
 ```python
@@ -95,6 +104,7 @@ def send_slack_file(
 ```
 
 ## Running the script on a dbt model
+
 We use the `ref` function to get a DataFrame of our associated dbt model (the model that has the fal meta tag):
 
 ```python
@@ -102,6 +112,7 @@ model_df = ref(context.current_model.name)
 ```
 
 Then we run the forecast and send the result to slack:
+
 ```python
 FORECAST_PREFIX = "fal_forecast_"
 CHANNEL_ID = os.getenv("SLACK_BOT_CHANNEL")
@@ -119,4 +130,5 @@ send_slack_file(
 ```
 
 ## Full example
+
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/forecast_slack.py).

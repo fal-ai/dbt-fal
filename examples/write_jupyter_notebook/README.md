@@ -1,4 +1,4 @@
-# Example 9: Use dbt from a Jupyter Notebook
+# Example 2: Use dbt from a Jupyter Notebook
 
 We also offer fal as an importable package to load in a Python environment to reference and use your dbt models and sources.
 You may want to do this to run some ad-hoc analysis on the data.
@@ -19,9 +19,9 @@ faldbt.list_sources()
 
 faldbt.list_models()
 # {
-#   'zendesk_ticket_metrics': <RunStatus.Success: 'success'>, 
-#   'stg_o3values': <RunStatus.Success: 'success'>, 
-#   'stg_zendesk_ticket_data': <RunStatus.Success: 'success'>, 
+#   'zendesk_ticket_metrics': <RunStatus.Success: 'success'>,
+#   'stg_o3values': <RunStatus.Success: 'success'>,
+#   'stg_zendesk_ticket_data': <RunStatus.Success: 'success'>,
 #   'stg_counties': <RunStatus.Success: 'success'>
 # }
 ```
@@ -56,4 +56,5 @@ plt.show()
 ![GCS bucket creation](jupyter_notebook_weighted_label.png)
 
 ## Full example
+
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/analyze_sentiment.ipynb).

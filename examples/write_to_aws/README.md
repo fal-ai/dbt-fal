@@ -1,4 +1,4 @@
-# Example 8: Write dbt artifacts to AWS S3
+# Example 10: Write dbt artifacts to AWS S3
 
 Dbt artifacts are files created by the dbt compiler after a run is completed. They contain information about the project, help with documentation, calculate test coverage and much more. In this example we are going to focus on two of these artifacts `manifest.json` and `run_results.json`.
 
@@ -52,4 +52,5 @@ fal:
 ```
 
 ## Full example
+
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts).

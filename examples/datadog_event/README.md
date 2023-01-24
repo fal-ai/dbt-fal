@@ -1,4 +1,4 @@
-# Example 5: Send Datadog event
+# Example 8: Send Datadog event
 
 ## Setting up Datadog WebAPI
 
@@ -16,6 +16,7 @@ pip install datadog_api_client
 ```
 
 ## Meta tag
+
 In a `schema.yml` file, within a target model, a meta tag should be added in order to connect the model to fal:
 
 ```yaml
@@ -26,6 +27,7 @@ meta:
 ```
 
 ## Fal script
+
 Import necessary libraries and setup the Datadog application configurations:
 
 ```python
@@ -80,4 +82,5 @@ with ApiClient(configuration) as api_client:
 ```
 
 ## Full example
+
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/send_datadog_event.py).

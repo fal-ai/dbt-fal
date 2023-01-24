@@ -1,4 +1,5 @@
-# Example 11: Run anomaly detection on metrics and send to Slack if there are any issues
+# Example 6: Run anomaly detection on metrics and send to Slack if there are any issues
+
 In this example we will use [sklearn](https://scikit-learn.org/stable/index.html) and [slack_sdk](https://slack.dev/python-slack-sdk/) to find anomalies on a time-series numerical dataset.
 
 See [slack example](slack-example.md), for instructions on how to set up a minimal Slack bot.
@@ -6,18 +7,22 @@ See [slack example](slack-example.md), for instructions on how to set up a minim
 The model we use for this example has two columns: `y` and `ds`, where `y` is a metric measure and `ds` is a timestamp.
 
 ## Meta tag
+
 In a `schema.yml` file, within a target model, a meta tag should be added in order to connect the model to fal:
+
 ```yaml
-    meta:
-      fal:
-        scripts:
-          - path_to_fal_script.py
+meta:
+  fal:
+    scripts:
+      - path_to_fal_script.py
 ```
 
 ## Finding anomalies on a model using DBSCAN
+
 Our model for this example is from [a dataset of Covid-19 cases in Italy](https://www.kaggle.com/sudalairajkumar/covid19-in-italy?select=covid19_italy_region.csv). This kind of dataset is great for anomaly detection, as the Covid-19 cases shot up in forms resembling waves. Having a system that notices such abnormal trends in data is crucial for any use case, including our current fight against Covid-19.
 
 TestsPerformed column in our dataset has 19% of its rows empty, so we get rid of it with a quick Python script using Pandas:
+
 ```python
 import pandas as pd
 
@@ -27,6 +32,7 @@ df.to_csv('covid19_italy_region.csv')
 ```
 
 Now, for us to find anomalies we need to write our Python script that will:
+
 1. Take our model
 2. Tune the hyperparameters for `DBSCAN` with a little help from our side
 3. Feed it to `DBSCAN`
@@ -65,11 +71,11 @@ def anomaly_detection(X: np.array, eps: float, min_samples: int, window_size: in
                     anomalies.append(location[i] + window)
         else:
             continue
-    
+
     # We find the unique values in the anomalies list and convert them to a numpy array, as the window slides by
     # 1 index, the indices of the anomalies have been repeated in the list many times.
     anomalies = np.unique(np.array(anomalies))
-    
+
     # And finally, we return the numpy array of indices of the anomalous data points.
     return anomalies
 ```
@@ -97,7 +103,7 @@ def find_ideal_min_samples(X: np.array, range_min_samples: list):
             cluster_labels = clustering.fit_predict(X_windowed[window][0][:].reshape(-1,1))
             silhouette_avg = silhouette_score(X_windowed[window][0][:].reshape(-1,1), cluster_labels)
             min_sample_scores[0][i] = min_sample_scores[0][i]+silhouette_avg
-    
+
     # Here, we divide the total scores for all min_samples values to find and average for each. From those, we
     # select the min_samples value with the highest score, which is our ideal min sample, and we return it.
     min_sample_scores = min_sample_scores / size_0
@@ -111,7 +117,7 @@ Next is `eps`. To find the ideal `eps` value, we have two stages; first we find 
 ```python
 def find_eps_range(X: np.array, range_const: int):
     # The first thing we need to do is to calculate the distances between each consecutive sample, store them
-    # in a numpy array and sort them. 
+    # in a numpy array and sort them.
     dists = np.zeros_like(X)
     for i in range(X.size-1):
         dist = np.linalg.norm(X[i]-X[i+1])
@@ -185,7 +191,7 @@ def find_ideal_eps(X: np.array, min_samples: int, window_size: int, range_eps: l
             if np.unique(labels).size > 1:
                 silhouette_avg = silhouette_score(X_windowed[window][0][:].reshape(-1,1), labels)
                 eps_scores[0][i] = eps_scores[0][i]+silhouette_avg
-    
+
     # We calculate the average and return the ideal eps value.
     eps_scores = eps_scores / size_0
 
@@ -197,6 +203,7 @@ def find_ideal_eps(X: np.array, min_samples: int, window_size: int, range_eps: l
 In this section, we first created the `anomaly_detection` function which takes the model, `min_samples` and `eps` hyperparameters, then returns the indices of the anomalous points. Then we created the `find_ideal_min_samples` function which finds the ideal `min_samples` value for `anomaly_detection`. After that, we created the two functions `find_eps_range` and `find_ideal_eps`, which are used to first find the range which has the ideal `eps` value, then find it based on the `min_samples` value we have found before. This is what is needed to find anomalies on a given model. However, we want our script to also plot the anomalies and send them to us via Slack. So, we need to set up two more functions to get a Slack bot to message us some information and a plot of the anomalies in our model.
 
 ## Sending results via Slack
+
 The two functions we need are `plot_anomalies` and `send_slack_file`. The `send_slack_file` function is present in both the [metric forecast](metric-forecast.md) and [slack bot](slack-example.md) examples.
 
 ```python
@@ -237,6 +244,7 @@ def send_slack_file(file_path: str, message_text: str, channel_id: str, slack_to
 ```
 
 ## Finding anomalies on a dbt model with fal
+
 At last, we have all the functions needed for anomaly detection. However, there is a very important thing missing: Our model. Using fal we can load our model in the form of a DataFrame with ease using the extremely handy `ref()` function and the `context` object.
 
 ```python
@@ -295,7 +303,8 @@ And, that's it. We have our Slack bot notifying us about the anomalous data poin
 
 As we can see, the system finds 3 anomalies in the first wave and 1 while the wave flattens. This behaviour is unexpected, however it is insignificant enough that only the extreme outliers are reported as anomalous. In this second wave, we can observe a much, much more sharp upwards trend that the system classifies most of the wave as anomalous.
 
-In this example, we can see the power of fal, as we can have an extremely vital and time sensitive system directly from your dbt project. 
+In this example, we can see the power of fal, as we can have an extremely vital and time sensitive system directly from your dbt project.
 
 ## Moving further
+
 The next step for this example would be to get the system production ready by implementing it into your existing dbt based pipeline. But, for the example to be a pipeline ready system, the main bottleneck is finding the range for the ideal `eps`. A system can be implemented to detect the elbow curve using [mathematical analysis](https://en.wikipedia.org/wiki/Mathematical_analysis) to solve this issue. Other than that, the system is a modular block so, the connections of your pipeline can be configured for your specific needs. I.e. our example with the Covid-19 data can be used to trigger a PSA or manage social distancing rules.
