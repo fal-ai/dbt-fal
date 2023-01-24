@@ -159,16 +159,16 @@ def check_uid():
     conf = read_conf_file(uid_path)  # file already exist due to version check
     if "uid" not in conf.keys():
         uid = str(uuid.uuid4())
-        res = write_conf_file(uid_path, {"uid": uid}, error=True)
-        if res:
-            return "NO_UID", res, True
+        err = write_conf_file(uid_path, {"uid": uid}, error=True)
+        if err:
+            return "NO_UID", err, True
         else:
             return uid, None, True
 
     return conf.get("uid") or "NO_UID", None, False
 
 
-def check_stats_enabled():
+def check_stats_enabled() -> bool:
     """
     Check if the user allows us to use telemetry. In order of precedence:
     1. If FAL_STATS_ENABLED is defined, check its value

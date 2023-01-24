@@ -138,7 +138,7 @@ def test_os_type(monkeypatch, os_param):
 
 
 def test_uid_file():
-    uid = telemetry.check_uid()
+    uid, uid_error, is_install = telemetry.check_uid()
     assert isinstance(uid, str)
 
 

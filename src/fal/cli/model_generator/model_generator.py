@@ -1,7 +1,7 @@
 import ast
 from functools import partial
 import re
-from typing import Callable, Iterable, List, Tuple, TypeVar
+from typing import Callable, Iterable, List, TypeVar
 from pathlib import Path
 from fal.fal_script import python_from_file
 
@@ -34,8 +34,8 @@ GENERATED_DIR = Path("fal")
 CHECKSUM_REGEX = re.compile(r"FAL_GENERATED ([_\d\w]+)")
 
 
-def generate_python_dbt_models(project_dir: str, args_vars: str):
-    fal_models_paths = _get_fal_models_paths(project_dir, args_vars)
+def generate_python_dbt_models(project_dir: str, args_vars: str, *, config=None):
+    fal_models_paths = _get_fal_models_paths(project_dir, args_vars, config=config)
     dbt_models_paths = list(
         map(Path, load_dbt_project_contract(project_dir).model_paths or [])
     )
@@ -53,10 +53,10 @@ def generate_python_dbt_models(project_dir: str, args_vars: str):
         )
     )
 
-    python_paths: Tuple[Path] = ()
-    fal_target_sqls: Tuple[Path] = ()
+    python_paths: List[Path] = []
+    fal_target_sqls: List[Path] = []
     if fal_python_models_and_sqls:
-        python_paths, fal_target_sqls, _ = zip(*fal_python_models_and_sqls)  # type: ignore
+        python_paths, fal_target_sqls, _ = map(list, zip(*fal_python_models_and_sqls))
 
     _delete_old_generated_sqls(old_generated_sqls, fal_target_sqls)
 
@@ -72,13 +72,14 @@ def generate_python_dbt_models(project_dir: str, args_vars: str):
         telemetry.log_api(
             action="python_models_generated",
             additional_props={"models": len(python_paths)},
+            config=config,
         )
 
     return {path.stem: path for path in python_paths}
 
 
-def _get_fal_models_paths(project_dir: str, args_vars: str):
-    models_paths = get_fal_models_dirs(project_dir, args_vars)
+def _get_fal_models_paths(project_dir: str, args_vars: str, *, config=None):
+    models_paths = get_fal_models_dirs(project_dir, args_vars, config=config)
     project_path = Path(project_dir)
     return list(map(project_path.joinpath, models_paths))
 
