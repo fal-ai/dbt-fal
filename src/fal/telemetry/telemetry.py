@@ -246,7 +246,7 @@ def get_dbt_config():
             project_dir=project_dir,
             profiles_dir=profiles_dir,
         )
-    except:
+    except BaseException:
         # Hide the error to not break the app for telemetry
         pass
 

@@ -32,27 +32,27 @@ def ignore_env_var_and_set_tmp_default_home_dir(
 
 # Validations tests
 def test_str_validation():
-    res = telemetry.str_param("Test", "")
+    res = telemetry.str_param("Test")
     assert isinstance(res, str)
-    res = telemetry.str_param("TEST", "test_param")
+    res = telemetry.str_param("TEST")
     assert "TEST" == res
     with pytest.raises(TypeError) as exc_info:
-        telemetry.str_param(3, "Test_number")
+        telemetry.str_param(3)
 
     exception_raised = exc_info.value
     assert type(exception_raised) == TypeError
 
 
 def test_opt_str_validation():
-    res = telemetry.opt_str_param("", "Test")
+    res = telemetry.opt_str_param("")
     assert isinstance(res, str)
-    res = telemetry.opt_str_param("TEST", "Test")
+    res = telemetry.opt_str_param("TEST")
     assert "TEST" == res
-    res = telemetry.opt_str_param(None, "Test")
+    res = telemetry.opt_str_param(None)
     assert not res
 
     with pytest.raises(TypeError) as exc_info:
-        telemetry.opt_str_param(3, "Test")
+        telemetry.opt_str_param(3)
 
     exception_raised = exc_info.value
     assert type(exception_raised) == TypeError
@@ -142,13 +142,6 @@ def test_uid_file():
     assert isinstance(uid, str)
 
 
-def test_full_telemetry_info(ignore_env_var_and_set_tmp_default_home_dir):
-    (stats_enabled, uid, is_install) = telemetry._get_telemetry_info()
-    assert stats_enabled is True
-    assert isinstance(uid, str)
-    assert is_install is True
-
-
 def test_basedir_creation():
     base_dir = telemetry.check_dir_exist()
     assert base_dir.exists()
@@ -162,7 +155,7 @@ def test_python_version():
 def test_stats_off(monkeypatch):
     mock = Mock()
     posthog_mock = Mock()
-    mock.patch(telemetry, "_get_telemetry_info", (False, "TestUID"))
+    mock.patch(telemetry, "check_stats_enabled", False)
     telemetry.log_api("test_action")
 
     assert posthog_mock.call_count == 0
@@ -197,16 +190,6 @@ def test_is_not_online(monkeypatch):
     assert not telemetry.is_online()
 
 
-def test_validate_entries(monkeypatch):
-    event_id = "event_id"
-    uid = "uid"
-    action = "action"
-    client_time = "client_time"
-    elapsed_time = "elapsed_time"
-    res = telemetry.validate_entries(event_id, uid, action, client_time, elapsed_time)
-    assert res == (event_id, uid, action, client_time, elapsed_time)
-
-
 def write_to_conf_file(tmp_directory, monkeypatch, last_check):
     stats = Path("stats")
     stats.mkdir()
@@ -228,6 +211,7 @@ def test_creates_config_directory(
 ):
     monkeypatch.setattr(telemetry, "DEFAULT_HOME_DIR", ".")
 
+    # TODO: enable passing `config` object for FalDbt() object creation cases
     @telemetry.log_call("some_action")
     def my_function():
         pass
@@ -261,17 +245,17 @@ def test_log_call_success(mock_telemetry):
             call(
                 action="some_action_started",
                 additional_props={
-                    "argv": sys.argv,
                     "args": {"a": 1, "c": 0, "d": 1, "e": 3},
                 },
+                dbt_config=None,
             ),
             call(
                 action="some_action_success",
                 total_runtime="1",
                 additional_props={
-                    "argv": sys.argv,
                     "args": {"a": 1, "c": 0, "d": 1, "e": 3},
                 },
+                dbt_config=None,
             ),
         ]
     )
@@ -290,18 +274,18 @@ def test_log_call_exception(mock_telemetry):
             call(
                 action="some_action_started",
                 additional_props={
-                    "argv": sys.argv,
                     "args": {"a": 1, "c": 0, "d": 1, "e": 3},
                 },
+                dbt_config=None,
             ),
             call(
                 action="some_action_error",
                 total_runtime="1",
                 additional_props={
                     "exception": str(type(ValueError())),
-                    "argv": sys.argv,
                     "args": {"a": 1, "c": 0, "d": 1, "e": 3},
                 },
+                dbt_config=None,
             ),
         ]
     )
@@ -310,15 +294,15 @@ def test_log_call_exception(mock_telemetry):
 def test_redaction():
     with patch("posthog.capture") as mock_capture:
 
-        def my_func():
-            return True, "test", True
-
-        telemetry._get_telemetry_info = my_func
+        # TODO: seems wrong to replace the function in the module _for real_. should be mocked
+        telemetry.check_uid = lambda: ("test_uid", None, True)
+        telemetry.check_stats_enabled = lambda: True
+        telemetry.is_online = lambda: True
         telemetry.log_api(
             "some_action",
             additional_props={
                 "argv": [
-                    "fal",
+                    "/Users/user/.pyenv/shims/fal",
                     "flow",
                     "run",
                     "--disable-logging",
@@ -347,19 +331,20 @@ def test_redaction():
                     "--debug",
                     "--vars",
                     "{env: 'some'}",
-                    "--globals"
+                    "--globals",
                 ]
             },
         )
 
         mock_capture.assert_called_with(
-            distinct_id="test",
+            distinct_id="test_uid",
             event="some_action",
             properties={
                 "tool": "fal-cli",
+                "config_hash": "",
                 "event_id": ANY,
                 "invocation_id": ANY,
-                "user_id": "test",
+                "user_id": "test_uid",
                 "action": "some_action",
                 "client_time": ANY,
                 "total_runtime": ANY,
@@ -367,6 +352,7 @@ def test_redaction():
                 "fal_version": ANY,
                 "dbt_version": ANY,
                 "docker_container": ANY,
+                "airflow": ANY,
                 "github_action": ANY,
                 "gitlab_ci": ANY,
                 "os": ANY,
@@ -374,7 +360,7 @@ def test_redaction():
                 "$geoip_disable": True,
                 "$ip": None,
                 "argv": [
-                    "fal",
+                    "[REDACTED]",
                     "flow",
                     "run",
                     "--disable-logging",
@@ -403,7 +389,7 @@ def test_redaction():
                     "--debug",
                     "--vars",
                     "[REDACTED]",
-                    "--globals"
+                    "--globals",
                 ],
             },
         )
