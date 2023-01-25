@@ -1,4 +1,4 @@
-## Example 10: Read Dbt Model Metadata
+## Example 3: Read Dbt Model Metadata
 
 Dbt supports a special `meta` tag in configuration definitions to allow engineers to to add arbitrary information to their schema.yml and sources.yml files.
 

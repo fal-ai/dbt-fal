@@ -136,9 +136,8 @@ To explore what is possible with fal, take a look at the in-depth examples below
 - [Example 6: Anomaly Detection](examples/anomaly-detection/README.md)
 - [Example 7: Incorporate fal in CI/CD workflow](examples/ci_example/README.md)
 - [Example 8: Send events to Datadog](examples/datadog_event/README.md)
-- [Example 9: Send data to Firestore](examples/write_to_firestore/README.md)
-- [Example 10: Write dbt artifacts to GCS](examples/write_to_gcs/README.md)
-- [Example 11: Write dbt artifacts to AWS S3](examples/write_to_aws/README.md)
+- [Example 9: Write dbt artifacts to GCS](examples/write_to_gcs/README.md)
+- [Example 10: Write dbt artifacts to AWS S3](examples/write_to_aws/README.md)
 
 [Check out the examples directory for more](examples/README.md)
 
