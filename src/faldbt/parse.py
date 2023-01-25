@@ -63,6 +63,7 @@ def get_dbt_config(
 ) -> RuntimeConfig:
     # Construct a phony config
     import os
+
     args = RuntimeArgs(
         project_dir=project_dir,
         profiles_dir=profiles_dir,
@@ -246,6 +247,7 @@ def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
         return environments
     except FalParseError as e:
         raise RuntimeError("Error loading environments from fal_project.yml") from e
+
 
 def normalize_path(base: str, path: Union[Path, str]):
     real_base = os.path.realpath(os.path.normpath(base))

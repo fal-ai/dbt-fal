@@ -19,6 +19,9 @@ import uuid
 from functools import wraps
 from typing import Any, List, Optional
 import inspect
+from contextlib import contextmanager
+
+from fal.utils import cache_static
 
 import platform
 
@@ -32,15 +35,6 @@ posthog.project_api_key = "phc_Yf1tsGPPb4POvqVjelT3rPPv2c3FH91zYURyyL30Phy"
 
 invocation_id = uuid.uuid4()
 
-# Validate the input of type string
-def str_param(item: Any, name: str) -> str:
-    if not isinstance(item, str):
-        raise TypeError(
-            f"TypeError: Variable not supported/wrong type: "
-            f"{item}, {name}, should be a str"
-        )
-    return item
-
 
 def shutdown():
     posthog.shutdown()
@@ -50,14 +44,16 @@ def shutdown():
     posthog_session.close()
 
 
-def opt_str_param(item: Any, name: str) -> Optional[str]:
-    # Can leverage regular string function
-    if item is not None and not isinstance(item, str):
-        raise TypeError(
-            f"TypeError: Variable not supported/wrong type: "
-            f"{item}, {name}, should be a str"
-        )
+def str_param(item: Any) -> str:
+    if not isinstance(item, str):
+        raise TypeError(f"Variable not supported/wrong type: {item} should be a str")
     return item
+
+
+def opt_str_param(item: Any) -> Optional[str]:
+    if item is None:
+        return item
+    return str_param(item)
 
 
 def python_version():
@@ -166,15 +162,16 @@ def check_uid():
     conf = read_conf_file(uid_path)  # file already exist due to version check
     if "uid" not in conf.keys():
         uid = str(uuid.uuid4())
-        res = write_conf_file(uid_path, {"uid": uid}, error=True)
-        if res:
-            return f"NO_UID {res}"
+        err = write_conf_file(uid_path, {"uid": uid}, error=True)
+        if err:
+            return f"NO_UID", err, True
         else:
-            return uid
-    return conf.get("uid", "NO_UID")
+            return uid, None, True
+
+    return conf.get("uid") or "NO_UID", None, False
 
 
-def check_stats_enabled():
+def check_stats_enabled() -> bool:
     """
     Check if the user allows us to use telemetry. In order of precedence:
     1. If FAL_STATS_ENABLED is defined, check its value
@@ -230,145 +227,149 @@ def write_conf_file(conf_path, to_write, error=None):
             return e
 
 
-def _get_telemetry_info():
-    """
-    The function checks for the local config and uid files, returns the right
-    values according to the config file (True/False). In addition it checks
-    for first time installation.
-    """
-    # Check if telemetry is enabled, if not skip, else check for uid
-    telemetry_enabled = check_stats_enabled()
+@cache_static
+def get_dbt_config():
+    try:
+        from dbt.flags import PROFILES_DIR
+        from fal.cli.args import parse_args
+        from faldbt.parse import get_dbt_config
 
-    if telemetry_enabled:
+        args = parse_args(sys.argv[1:])
 
-        # Check first time install
-        is_install = check_first_time_usage()
+        profiles_dir: str = PROFILES_DIR  # type: ignore
+        if args.profiles_dir is not None:
+            profiles_dir = args.profiles_dir
 
-        # if not uid, create
-        uid = check_uid()
-        return telemetry_enabled, uid, is_install
-    else:
-        return False, "", False
-
-
-def validate_entries(event_id, uid, action, client_time, total_runtime):
-    event_id = str_param(str(event_id), "event_id")
-    uid = str_param(uid, "uid")
-    action = str_param(action, "action")
-    client_time = str_param(str(client_time), "client_time")
-    total_runtime = opt_str_param(str(total_runtime), "total_runtime")
-    return event_id, uid, action, client_time, total_runtime
+        project_dir = os.path.realpath(os.path.expanduser(args.project_dir))
+        profiles_dir = os.path.realpath(os.path.expanduser(profiles_dir))
+        return get_dbt_config(
+            project_dir=project_dir,
+            profiles_dir=profiles_dir,
+        )
+    except BaseException:
+        # Hide the error to not break the app for telemetry
+        pass
 
 
-def log_api(action, client_time=None, total_runtime=None, additional_props=None):
+def log_api(
+    action: str,
+    total_runtime=None,
+    additional_props: Optional[dict] = None,
+    *,
+    dbt_config=None,
+):
     """
     This function logs through an API call, assigns parameters if missing like
     timestamp, event id and stats information.
     """
+
+    if not check_stats_enabled():
+        return
+
+    if not is_online():
+        return
+
     additional_props = additional_props or {}
 
     event_id = uuid.uuid4()
-    if client_time is None:
-        client_time = datetime.datetime.now()
 
-    (telemetry_enabled, uid, is_install) = _get_telemetry_info()
+    client_time = datetime.datetime.now()
+
+    uid, uid_error, is_install = check_uid()
+
     if "NO_UID" in uid:
-        additional_props["uid_issue"] = uid
-        uid = None
+        additional_props["uid_issue"] = str(uid_error) if uid_error is not None else ""
 
-    py_version = python_version()
-    docker_container = is_docker()
-    gitlab = is_gitlab()
-    github = is_github()
-    os = get_os()
-    online = is_online()
+    config_hash = ""
+    if dbt_config is None:
+        dbt_config = get_dbt_config()
+    if dbt_config is not None and hasattr(dbt_config, "hashed_name"):
+        config_hash = str(dbt_config.hashed_name())
 
-    if telemetry_enabled and online:
-        (event_id, uid, action, client_time, total_runtime) = validate_entries(
-            event_id, uid, action, client_time, total_runtime
+    opt_str_param(uid)
+    str_param(action)
+
+    props = {
+        "tool": "fal-cli",
+        "config_hash": config_hash,
+        "event_id": str(event_id),
+        "invocation_id": str(invocation_id),
+        "user_id": uid,
+        "action": action,
+        "client_time": str(client_time),
+        "total_runtime": str(total_runtime),
+        "python_version": python_version(),
+        "fal_version": fal_installed_version(),
+        "dbt_version": dbt_installed_version(),
+        "docker_container": is_docker(),
+        "airflow": is_airflow(),
+        "github_action": is_github(),
+        "gitlab_ci": is_gitlab(),
+        "argv": sys.argv,
+        "os": get_os(),
+        "telemetry_version": TELEMETRY_VERSION,
+        "$geoip_disable": True,  # This disables GeoIp despite the backend setting
+        "$ip": None,  # This disables IP tracking
+    }
+
+    all_props = {**props, **additional_props}
+
+    if "argv" in all_props:
+        all_props["argv"] = _clean_args_list(all_props["argv"])
+
+    if is_install:
+        posthog.capture(distinct_id=uid, event="install_success", properties=all_props)
+
+    posthog.capture(distinct_id=uid, event=action, properties=all_props)
+
+
+@contextmanager
+def log_time(action: str, additional_props: Optional[dict] = None, *, dbt_config=None):
+    log_api(
+        action=f"{action}_started",
+        additional_props=additional_props,
+        dbt_config=dbt_config,
+    )
+
+    start = datetime.datetime.now()
+
+    try:
+        yield
+    except Exception as e:
+        log_api(
+            action=f"{action}_error",
+            total_runtime=str(datetime.datetime.now() - start),
+            additional_props={
+                **(additional_props or {}),
+                "exception": str(type(e)),
+            },
+            dbt_config=dbt_config,
         )
-        props = {
-            "tool": "fal-cli",
-            "event_id": event_id,
-            "invocation_id": str(invocation_id),
-            "user_id": uid,
-            "action": action,
-            "client_time": str(client_time),
-            "total_runtime": total_runtime,
-            "python_version": py_version,
-            "fal_version": fal_installed_version(),
-            "dbt_version": dbt_installed_version(),
-            "docker_container": docker_container,
-            "github_action": github,
-            "gitlab_ci": gitlab,
-            "os": os,
-            "telemetry_version": TELEMETRY_VERSION,
-            "$geoip_disable": True,  # This disables GeoIp despite the backend setting
-            "$ip": None,  # This disables IP tracking
-        }
-
-        if is_airflow():
-            props["airflow"] = True
-
-        all_props = {**props, **additional_props}
-
-        if "argv" in all_props:
-            all_props["argv"] = _clean_args_list(all_props["argv"])
-
-        if is_install:
-            posthog.capture(
-                distinct_id=uid, event="install_success", properties=all_props
-            )
-
-        posthog.capture(distinct_id=uid, event=action, properties=all_props)
+        raise
+    else:
+        log_api(
+            action=f"{action}_success",
+            total_runtime=str(datetime.datetime.now() - start),
+            additional_props=additional_props,
+            dbt_config=dbt_config,
+        )
 
 
 # NOTE: should we log differently depending on the error type?
 # NOTE: how should we handle chained exceptions?
-def log_call(action, args: List[str] = []):
+def log_call(action, args: List[str] = [], *, dbt_config=None):
     """Runs a function and logs it"""
 
     def _log_call(func):
         @wraps(func)
         def wrapper(*func_args, **func_kwargs):
-
             sig = inspect.signature(func).bind(*func_args, **func_kwargs)
             sig.apply_defaults()
             log_args = dict(map(lambda arg: (arg, sig.arguments.get(arg)), args))
-            log_api(
-                action=f"{action}_started",
-                additional_props={
-                    "argv": sys.argv,
-                    "args": log_args,
-                },
-            )
-
-            start = datetime.datetime.now()
-
-            try:
-                result = func(*func_args, **func_kwargs)
-            except Exception as e:
-                log_api(
-                    action=f"{action}_error",
-                    total_runtime=str(datetime.datetime.now() - start),
-                    additional_props={
-                        "exception": str(type(e)),
-                        "argv": sys.argv,
-                        "args": log_args,
-                    },
-                )
-                raise
-            else:
-                log_api(
-                    action=f"{action}_success",
-                    total_runtime=str(datetime.datetime.now() - start),
-                    additional_props={
-                        "argv": sys.argv,
-                        "args": log_args,
-                    },
-                )
-
-            return result
+            with log_time(
+                action, additional_props={"args": log_args}, dbt_config=dbt_config
+            ):
+                return func(*func_args, **func_kwargs)
 
         return wrapper
 

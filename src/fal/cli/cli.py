@@ -5,7 +5,6 @@ import sys
 from click.exceptions import ClickException
 
 from fal.cli.flow_runner import fal_flow_run
-import faldbt.lib as lib
 from .args import parse_args
 from .fal_runner import fal_run
 from fal.telemetry import telemetry
