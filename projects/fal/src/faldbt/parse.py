@@ -11,7 +11,14 @@ from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultArtifact
 from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
-from dbt.exceptions import IncompatibleSchemaException, RuntimeException
+
+import faldbt.version as version
+
+if version.is_version_plus("1.4.0"):
+    from dbt.exceptions import IncompatibleSchemaError, DbtRuntimeError
+else:
+    from dbt.exceptions import IncompatibleSchemaException as IncompatibleSchemaError, RuntimeException as DbtRuntimeError
+
 from fal.utils import cache_static
 
 from faldbt.logger import LOGGER
@@ -158,11 +165,11 @@ def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
         else:
             return FreshnessExecutionResultArtifact.read(sources_path)
 
-    except IncompatibleSchemaException as exc:
+    except IncompatibleSchemaError as exc:
         # TODO: add test for this case
         exc.add_filename(sources_path)
         raise
-    except RuntimeException as exc:
+    except DbtRuntimeError as exc:
         LOGGER.warn("Could not read dbt sources artifact")
         return None
 
@@ -178,11 +185,11 @@ def get_dbt_results(
         else:
             return RunResultsArtifact.read(results_path)
 
-    except IncompatibleSchemaException as exc:
+    except IncompatibleSchemaError as exc:
         # TODO: add test for this case
         exc.add_filename(results_path)
         raise
-    except RuntimeException as exc:
+    except DbtRuntimeError as exc:
         LOGGER.warn("Could not read dbt run_results artifact")
         return None
 

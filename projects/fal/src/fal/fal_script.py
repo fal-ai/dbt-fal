@@ -13,7 +13,12 @@ from dbt.contracts.results import RunStatus
 from dbt.config.runtime import RuntimeConfig
 from faldbt.logger import LOGGER
 
-from dbt.contracts.graph.parsed import ColumnInfo
+import faldbt.version as version
+
+if version.is_version_plus("1.4.0"):
+    from dbt.contracts.graph.nodes import ColumnInfo
+else:
+    from dbt.contracts.graph.parsed import ColumnInfo
 
 
 class Hook:
@@ -99,6 +104,7 @@ class ContextConfig:
             os.path.realpath(os.path.join(config.project_root, config.target_path))
         )
 
+
 @dataclass
 class ContextTarget:
     def __init__(self, config: RuntimeConfig):
@@ -108,6 +114,7 @@ class ContextTarget:
         self.type = config.credentials.type
         self.database = config.credentials.database
         self.schema = config.credentials.schema
+
 
 @dataclass
 class Context:
