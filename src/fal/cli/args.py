@@ -259,14 +259,14 @@ def _build_cloud_parser(sub: argparse.ArgumentParser):
     generator_parser.add_argument(
         "--host",
         type=str,
-        default="34.67.151.45",
+        default="api.alpha.fal.ai",
         help="Specify fal cloud host instance URL"
     )
 
     generator_parser.add_argument(
         "--port",
         type=str,
-        default="6005",
+        default="443",
         help="Specify fal cloud host instance PORT"
     )
 
