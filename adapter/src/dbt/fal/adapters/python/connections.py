@@ -2,8 +2,6 @@ import abc
 import os
 from time import sleep
 import sys
-
-# multiprocessing.RLock is a function returning this type
 from multiprocessing.synchronize import RLock
 from threading import get_ident
 from typing import (
@@ -19,7 +17,13 @@ from typing import (
     Callable,
 )
 
-import dbt.exceptions
+from dbt.exceptions import (
+    NotImplementedError,
+    InvalidConnectionError,
+    DbtInternalError,
+    CompilationError,
+    FailedToConnectError,
+)
 from dbt.contracts.connection import (
     Connection,
     Identifier,
@@ -34,9 +38,7 @@ from dbt.events.types import (
     NewConnection,
     ConnectionReused,
     ConnectionLeftOpen,
-    ConnectionLeftOpen2,
     ConnectionClosed,
-    ConnectionClosed2,
 )
 from dbt import flags
 
@@ -75,15 +77,13 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
         key = self.get_thread_identifier()
         with self.lock:
             if key not in self.thread_connections:
-                raise dbt.exceptions.InvalidConnectionException(
-                    key, list(self.thread_connections)
-                )
+                raise InvalidConnectionError(key, list(self.thread_connections))
             return self.thread_connections[key]
 
     def set_thread_connection(self, conn: Connection) -> None:
         key = self.get_thread_identifier()
         if key in self.thread_connections:
-            raise dbt.exceptions.InternalException(
+            raise DbtInternalError(
                 "In set_thread_connection, existing connection exists for {}"
             )
         self.thread_connections[key] = conn
@@ -107,7 +107,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
             conn_name = "master"
         else:
             if not isinstance(name, str):
-                raise dbt.exceptions.CompilerException(
+                raise CompilationError(
                     f"For connection name, got {name} - not a string!"
                 )
             assert isinstance(name, str)
@@ -167,7 +167,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
             connect should trigger a retry.
         :type retryable_exceptions: Iterable[Type[Exception]]
         :param int retry_limit: How many times to retry the call to connect. If this limit
-            is exceeded before a successful call, a FailedToConnectException will be raised.
+            is exceeded before a successful call, a FailedToConnectError will be raised.
             Must be non-negative.
         :param retry_timeout: Time to wait between attempts to connect. Can also take a
             Callable that takes the number of attempts so far, beginning at 0, and returns an int
@@ -176,14 +176,14 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
         :param int _attempts: Parameter used to keep track of the number of attempts in calling the
             connect function across recursive calls. Passed as an argument to retry_timeout if it
             is a Callable. This parameter should not be set by the initial caller.
-        :raises dbt.exceptions.FailedToConnectException: Upon exhausting all retry attempts without
+        :raises dbt.exceptions.FailedToConnectError: Upon exhausting all retry attempts without
             successfully acquiring a handle.
         :return: The given connection with its appropriate state and handle attributes set
             depending on whether we successfully acquired a handle or not.
         """
         timeout = retry_timeout(_attempts) if callable(retry_timeout) else retry_timeout
         if timeout < 0:
-            raise dbt.exceptions.FailedToConnectException(
+            raise FailedToConnectError(
                 "retry_timeout cannot be negative or return a negative time."
             )
 
@@ -191,9 +191,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
             # This guard is not perfect others may add to the recursion limit (e.g. built-ins).
             connection.handle = None
             connection.state = ConnectionState.FAIL
-            raise dbt.exceptions.FailedToConnectException(
-                "retry_limit cannot be negative"
-            )
+            raise FailedToConnectError("retry_limit cannot be negative")
 
         try:
             connection.handle = connect()
@@ -204,7 +202,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
             if retry_limit <= 0:
                 connection.handle = None
                 connection.state = ConnectionState.FAIL
-                raise dbt.exceptions.FailedToConnectException(str(e))
+                raise FailedToConnectError(str(e))
 
             logger.debug(
                 f"Got a retryable error when attempting to open a {cls.TYPE} connection.\n"
@@ -226,14 +224,12 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
         except Exception as e:
             connection.handle = None
             connection.state = ConnectionState.FAIL
-            raise dbt.exceptions.FailedToConnectException(str(e))
+            raise FailedToConnectError(str(e))
 
     @abc.abstractmethod
     def cancel(self, connection: Connection):
         """Cancel the given connection."""
-        raise dbt.exceptions.NotImplementedException(
-            "`cancel` is not implemented for this adapter!"
-        )
+        raise NotImplementedError("`cancel` is not implemented for this adapter!")
 
     def cancel_open(self) -> List[str]:
         names = []
@@ -265,9 +261,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
         This should be thread-safe, or hold the lock if necessary. The given
         connection should not be in either in_use or available.
         """
-        raise dbt.exceptions.NotImplementedException(
-            "`open` is not implemented for this adapter!"
-        )
+        raise NotImplementedError("`open` is not implemented for this adapter!")
 
     def release(self) -> None:
         with self.lock:
@@ -300,10 +294,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
         """Perform the actual close operation."""
         # On windows, sometimes connection handles don't have a close() attr.
         if hasattr(connection.handle, "close"):
-            fire_event(ConnectionClosed2(conn_name=connection.name))
             connection.handle.close()
-        else:
-            fire_event(ConnectionLeftOpen2(conn_name=connection.name))
 
     @classmethod
     def close(cls, connection: Connection) -> Connection:
@@ -325,6 +316,4 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
                 (type is left to be decided by the Adapter implementation for now).
         :rtype: Tuple[AdapterResponse, Any]
         """
-        raise dbt.exceptions.NotImplementedException(
-            "`execute` is not implemented for this adapter!"
-        )
+        raise NotImplementedError("`execute` is not implemented for this adapter!")

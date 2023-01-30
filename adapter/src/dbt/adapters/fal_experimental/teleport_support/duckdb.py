@@ -1,12 +1,17 @@
 from contextlib import contextmanager
 from typing import Optional
+
+from dbt.exceptions import DbtRuntimeError
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.base.impl import BaseAdapter
-from dbt.adapters.fal_experimental.connections import TeleportCredentials, TeleportTypeEnum
+
+from dbt.adapters.fal_experimental.connections import (
+    TeleportCredentials,
+    TeleportTypeEnum,
+)
 
 from dbt.fal.adapters.teleport.impl import TeleportAdapter
 from dbt.fal.adapters.teleport.info import TeleportInfo
-from dbt.exceptions import RuntimeException
 
 
 class DuckDBAdapterTeleport(TeleportAdapter):
@@ -87,7 +92,7 @@ class DuckDBAdapterTeleport(TeleportAdapter):
                 f"SELECT current_setting('{name}')", fetch=True
             )
             return table.rows[0][0]
-        except RuntimeException:
+        except DbtRuntimeError:
             return None
 
     def _set_setting(self, name: str, value: Optional[str]):
