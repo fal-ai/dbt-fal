@@ -75,7 +75,7 @@ tests-no-zope = ["cloudpickle", "cloudpickle", "hypothesis", "hypothesis", "mypy
 
 [[package]]
 name = "auth0-python"
-version = "3.24.0"
+version = "3.24.1"
 description = "Auth0 Python SDK"
 category = "main"
 optional = true
@@ -208,17 +208,6 @@ description = "Cross-platform colored terminal text."
 category = "main"
 optional = true
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
-
-[[package]]
-name = "commonmark"
-version = "0.9.1"
-description = "Python parser for the CommonMark Markdown spec"
-category = "main"
-optional = true
-python-versions = "*"
-
-[package.extras]
-test = ["flake8 (==3.7.8)", "hypothesis (==3.55.3)"]
 
 [[package]]
 name = "cryptography"
@@ -395,7 +384,7 @@ six = "*"
 
 [[package]]
 name = "isolate"
-version = "0.7.2"
+version = "0.9.1"
 description = "Managed isolated environments for Python"
 category = "main"
 optional = true
@@ -411,26 +400,8 @@ tblib = ">=1.7.0,<2.0.0"
 virtualenv = ">=20.4"
 
 [[package]]
-name = "isolate-cloud"
-version = "0.6.14"
-description = "SDK and cli for the fal isolate Cloud service"
-category = "main"
-optional = true
-python-versions = ">=3.7,<4.0"
-
-[package.dependencies]
-auth0-python = ">=3.24.0,<4.0.0"
-dill = "0.3.5.1"
-grpcio = ">=1.50.0,<2.0.0"
-isolate = ">=0.5.0"
-isolate-proto = ">=0.0.12,<0.0.13"
-requests = ">=2.28.1,<3.0.0"
-typer = ">=0.7.0,<0.8.0"
-typing-extensions = "4.4"
-
-[[package]]
 name = "isolate-proto"
-version = "0.0.12"
+version = "0.0.15"
 description = "(internal) gRPC definitions for Isolate Cloud"
 category = "main"
 optional = true
@@ -438,7 +409,7 @@ python-versions = ">=3.7,<4"
 
 [package.dependencies]
 grpcio = ">=1.49"
-isolate = {version = ">=0.7,<0.8", extras = ["grpc"]}
+isolate = "0.9.1"
 protobuf = "*"
 
 [[package]]
@@ -453,6 +424,24 @@ python-versions = ">=3.7"
 typing-extensions = {version = "*", markers = "python_version < \"3.8\""}
 
 [[package]]
+name = "koldstart"
+version = "0.6.16"
+description = "koldstart is an easy-to-use Serverless Python Framework"
+category = "main"
+optional = true
+python-versions = ">=3.7,<4.0"
+
+[package.dependencies]
+auth0-python = ">=3.24.0,<4.0.0"
+click = ">=8.1.3,<9.0.0"
+dill = "0.3.5.1"
+grpcio = ">=1.50.0,<2.0.0"
+isolate = "0.9.1"
+isolate-proto = ">=0.0.15,<0.0.16"
+requests = ">=2.28.1,<3.0.0"
+typing-extensions = "4.4"
+
+[[package]]
 name = "leather"
 version = "0.3.4"
 description = "Python charting for 80% of humans."
@@ -462,6 +451,28 @@ python-versions = "*"
 
 [package.dependencies]
 six = ">=1.6.1"
+
+[[package]]
+name = "markdown-it-py"
+version = "2.1.0"
+description = "Python port of markdown-it. Markdown parsing, done right!"
+category = "main"
+optional = true
+python-versions = ">=3.7"
+
+[package.dependencies]
+mdurl = ">=0.1,<1.0"
+typing_extensions = {version = ">=3.7.4", markers = "python_version < \"3.8\""}
+
+[package.extras]
+benchmarking = ["psutil", "pytest", "pytest-benchmark (>=3.2,<4.0)"]
+code-style = ["pre-commit (==2.6)"]
+compare = ["commonmark (>=0.9.1,<0.10.0)", "markdown (>=3.3.6,<3.4.0)", "mistletoe (>=0.8.1,<0.9.0)", "mistune (>=2.0.2,<2.1.0)", "panflute (>=2.1.3,<2.2.0)"]
+linkify = ["linkify-it-py (>=1.0,<2.0)"]
+plugins = ["mdit-py-plugins"]
+profiling = ["gprof2dot"]
+rtd = ["attrs", "myst-parser", "pyyaml", "sphinx", "sphinx-copybutton", "sphinx-design", "sphinx_book_theme"]
+testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
 
 [[package]]
 name = "matplotlib"
@@ -481,6 +492,14 @@ pillow = ">=6.2.0"
 pyparsing = ">=2.2.1"
 python-dateutil = ">=2.7"
 setuptools_scm = ">=4,<7"
+
+[[package]]
+name = "mdurl"
+version = "0.1.2"
+description = "Markdown URL utilities"
+category = "main"
+optional = true
+python-versions = ">=3.7"
 
 [[package]]
 name = "mock"
@@ -871,19 +890,19 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "rich"
-version = "13.0.1"
+version = "13.3.1"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 category = "main"
 optional = true
 python-versions = ">=3.7.0"
 
 [package.dependencies]
-commonmark = ">=0.9.0,<0.10.0"
-pygments = ">=2.6.0,<3.0.0"
+markdown-it-py = ">=2.1.0,<3.0.0"
+pygments = ">=2.14.0,<3.0.0"
 typing-extensions = {version = ">=4.0.0,<5.0", markers = "python_version < \"3.9\""}
 
 [package.extras]
-jupyter = ["ipywidgets (>=7.5.1,<8.0.0)"]
+jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "setuptools"
@@ -1029,23 +1048,6 @@ optional = true
 python-versions = ">=3.6"
 
 [[package]]
-name = "typer"
-version = "0.7.0"
-description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
-category = "main"
-optional = true
-python-versions = ">=3.6"
-
-[package.dependencies]
-click = ">=7.1.1,<9.0.0"
-
-[package.extras]
-all = ["colorama (>=0.4.3,<0.5.0)", "rich (>=10.11.0,<13.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
-dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2.17.0,<3.0.0)"]
-doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "pillow (>=9.3.0,<10.0.0)"]
-test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.910)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<13.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
-
-[[package]]
 name = "typing-extensions"
 version = "4.4.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -1107,7 +1109,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [extras]
 athena = []
 bigquery = []
-cloud = ["isolate-cloud"]
+cloud = ["koldstart"]
 dev = ["matplotlib"]
 duckdb = ["duckdb-engine"]
 postgres = []
@@ -1118,7 +1120,7 @@ test = ["pytest", "black", "behave", "mock", "pytest-mock"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <4.0"
-content-hash = "2258568092f00992d1c767ea521118610124964691e6faf1b680657ba5286432"
+content-hash = "620109030b739ae2e17b43855ac051bb4e759f0df07a695b4d59345f70610c9e"
 
 [metadata.files]
 agate = [
@@ -1145,8 +1147,8 @@ attrs = [
     {file = "attrs-22.2.0.tar.gz", hash = "sha256:c9227bfc2f01993c03f68db37d1d15c9690188323c067c641f1a35ca58185f99"},
 ]
 auth0-python = [
-    {file = "auth0-python-3.24.0.tar.gz", hash = "sha256:88d7bce9472342e77f2f25fd8b060819b3557000e3a43e2618cd7a0fe5212c71"},
-    {file = "auth0_python-3.24.0-py2.py3-none-any.whl", hash = "sha256:a76e308df407fad9c6c29cd9de9a89bc5c1f7236f051c824923904046aea27a1"},
+    {file = "auth0-python-3.24.1.tar.gz", hash = "sha256:62c2e177b9517879bd8632da9eb7668aedd5775fddea87b0e0e1e9a89b9dd096"},
+    {file = "auth0_python-3.24.1-py2.py3-none-any.whl", hash = "sha256:87dbf603c89fcebfd35f5ba29bc8a820af72a7d5a772f53752ae04d30f191712"},
 ]
 babel = [
     {file = "Babel-2.11.0-py3-none-any.whl", hash = "sha256:1ad3eca1c885218f6dce2ab67291178944f810a10a9b5f3cb8382a5a232b64fe"},
@@ -1259,10 +1261,6 @@ click = [
 colorama = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
-]
-commonmark = [
-    {file = "commonmark-0.9.1-py2.py3-none-any.whl", hash = "sha256:da2f38c92590f83de410ba1a3cbceafbc74fee9def35f9251ba9a971d6d66fd9"},
-    {file = "commonmark-0.9.1.tar.gz", hash = "sha256:452f9dc859be7f06631ddcb328b6919c67984aca654e5fefb3914d54691aed60"},
 ]
 cryptography = [
     {file = "cryptography-36.0.2-cp36-abi3-macosx_10_10_universal2.whl", hash = "sha256:4e2dddd38a5ba733be6a025a1475a9f45e4e41139d1321f412c6b360b19070b6"},
@@ -1485,16 +1483,12 @@ isodate = [
     {file = "isodate-0.6.1.tar.gz", hash = "sha256:48c5881de7e8b0a0d648cb024c8062dc84e7b840ed81e864c7614fd3c127bde9"},
 ]
 isolate = [
-    {file = "isolate-0.7.2-py3-none-any.whl", hash = "sha256:97467369697eb06a33182382d790a03f4ce0ddadad70b5fff48fe245ffbdb699"},
-    {file = "isolate-0.7.2.tar.gz", hash = "sha256:c4dc80e2cfa4f6dbc445ad71d7ca3446477af730a775381581128becb303e088"},
-]
-isolate-cloud = [
-    {file = "isolate-cloud-0.6.14.tar.gz", hash = "sha256:0381043cee6872bc0b6582c244c101ffe03ccc408cdb91ea4fc3d17eaeba23f7"},
-    {file = "isolate_cloud-0.6.14-py3-none-any.whl", hash = "sha256:5d053d7665ac632fdc3d88c3f20568b484bbd80e63c6944f66f3478115279fca"},
+    {file = "isolate-0.9.1-py3-none-any.whl", hash = "sha256:847a24acebbd21b609bc1e47bb9d353f06e1f02cdab339c93347c3e90053d437"},
+    {file = "isolate-0.9.1.tar.gz", hash = "sha256:fece8b7a0ad871ebc46dd1f7b24f3dfd363c8f3f8b9bda8e99ee792f97e2e183"},
 ]
 isolate-proto = [
-    {file = "isolate_proto-0.0.12-py3-none-any.whl", hash = "sha256:48ffbed62d15ceb7dbb143459a7f2dad810f35ba9ab2c0016c4abd5fa6d1f0ce"},
-    {file = "isolate_proto-0.0.12.tar.gz", hash = "sha256:4fa4e9c120da882a131753ae784f47e3b716540c2ab2735d27845d5fc74cb9c1"},
+    {file = "isolate_proto-0.0.15-py3-none-any.whl", hash = "sha256:07e9d57f6a6c80456f3785489e4045d0ca34c1930250a3c12615d742fcadc824"},
+    {file = "isolate_proto-0.0.15.tar.gz", hash = "sha256:1c2603fe211518757b270d0b3b34da23bd9c2eef511192da30e7416b7bc9a2bd"},
 ]
 kiwisolver = [
     {file = "kiwisolver-1.4.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:2f5e60fabb7343a836360c4f0919b8cd0d6dbf08ad2ca6b9cf90bf0c76a3c4f6"},
@@ -1566,9 +1560,17 @@ kiwisolver = [
     {file = "kiwisolver-1.4.4-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:36dafec3d6d6088d34e2de6b85f9d8e2324eb734162fba59d2ba9ed7a2043d5b"},
     {file = "kiwisolver-1.4.4.tar.gz", hash = "sha256:d41997519fcba4a1e46eb4a2fe31bc12f0ff957b2b81bac28db24744f333e955"},
 ]
+koldstart = [
+    {file = "koldstart-0.6.16-py3-none-any.whl", hash = "sha256:a6a5d23de597157308bdf341346b39ed4e8b96ae5938f7a98029eaf897c0093b"},
+    {file = "koldstart-0.6.16.tar.gz", hash = "sha256:7ea19317ad561e7ce817c4c70e286e1091319a0b60aded780b78e6946b9408eb"},
+]
 leather = [
     {file = "leather-0.3.4-py2.py3-none-any.whl", hash = "sha256:5e741daee96e9f1e9e06081b8c8a10c4ac199301a0564cdd99b09df15b4603d2"},
     {file = "leather-0.3.4.tar.gz", hash = "sha256:b43e21c8fa46b2679de8449f4d953c06418666dc058ce41055ee8a8d3bb40918"},
+]
+markdown-it-py = [
+    {file = "markdown-it-py-2.1.0.tar.gz", hash = "sha256:cf7e59fed14b5ae17c0006eff14a2d9a00ed5f3a846148153899a0224e2c07da"},
+    {file = "markdown_it_py-2.1.0-py3-none-any.whl", hash = "sha256:93de681e5c021a432c63147656fe21790bc01231e0cd2da73626f1aa3ac0fe27"},
 ]
 matplotlib = [
     {file = "matplotlib-3.5.3-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:a206a1b762b39398efea838f528b3a6d60cdb26fe9d58b48265787e29cd1d693"},
@@ -1606,6 +1608,10 @@ matplotlib = [
     {file = "matplotlib-3.5.3-pp37-pypy37_pp73-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:57f1b4e69f438a99bb64d7f2c340db1b096b41ebaa515cf61ea72624279220ce"},
     {file = "matplotlib-3.5.3-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:d2484b350bf3d32cae43f85dcfc89b3ed7bd2bcd781ef351f93eb6fb2cc483f9"},
     {file = "matplotlib-3.5.3.tar.gz", hash = "sha256:339cac48b80ddbc8bfd05daae0a3a73414651a8596904c2a881cfd1edb65f26c"},
+]
+mdurl = [
+    {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
+    {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
 ]
 mock = [
     {file = "mock-4.0.3-py3-none-any.whl", hash = "sha256:122fcb64ee37cfad5b3f48d7a7d51875d7031aaf3d8be7c42e2bee25044eee62"},
@@ -1971,8 +1977,8 @@ requests = [
     {file = "requests-2.28.1.tar.gz", hash = "sha256:7c5599b102feddaa661c826c56ab4fee28bfd17f5abca1ebbe3e7f19d7c97983"},
 ]
 rich = [
-    {file = "rich-13.0.1-py3-none-any.whl", hash = "sha256:41fe1d05f433b0f4724cda8345219213d2bfa472ef56b2f64f415b5b94d51b04"},
-    {file = "rich-13.0.1.tar.gz", hash = "sha256:25f83363f636995627a99f6e4abc52ed0970ebbd544960cc63cbb43aaac3d6f0"},
+    {file = "rich-13.3.1-py3-none-any.whl", hash = "sha256:8aa57747f3fc3e977684f0176a88e789be314a99f99b43b75d1e9cb5dc6db9e9"},
+    {file = "rich-13.3.1.tar.gz", hash = "sha256:125d96d20c92b946b983d0d392b84ff945461e5a06d3867e9f9e575f8697b67f"},
 ]
 setuptools = [
     {file = "setuptools-65.7.0-py3-none-any.whl", hash = "sha256:8ab4f1dbf2b4a65f7eec5ad0c620e84c34111a68d3349833494b9088212214dd"},
@@ -2088,10 +2094,6 @@ typed-ast = [
     {file = "typed_ast-1.5.4-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:98f80dee3c03455e92796b58b98ff6ca0b2a6f652120c263efdba4d6c5e58f72"},
     {file = "typed_ast-1.5.4-cp39-cp39-win_amd64.whl", hash = "sha256:0fdbcf2fef0ca421a3f5912555804296f0b0960f0418c440f5d6d3abb549f3e1"},
     {file = "typed_ast-1.5.4.tar.gz", hash = "sha256:39e21ceb7388e4bb37f4c679d72707ed46c2fbf2a5609b8b8ebc4b067d977df2"},
-]
-typer = [
-    {file = "typer-0.7.0-py3-none-any.whl", hash = "sha256:b5e704f4e48ec263de1c0b3a2387cd405a13767d2f907f44c1a08cbad96f606d"},
-    {file = "typer-0.7.0.tar.gz", hash = "sha256:ff797846578a9f2a201b53442aedeb543319466870fbe1c701eab66dd7681165"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.4.0-py3-none-any.whl", hash = "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"},
