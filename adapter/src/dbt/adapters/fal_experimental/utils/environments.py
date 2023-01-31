@@ -262,7 +262,7 @@ def _get_dbt_packages(
         dbt_fal_extras.add("teleport")
     dbt_fal_suffix = ""
 
-    if _is_pre_release(dbt_fal_version):
+    if _version_is_prerelease(dbt_fal_version):
         if is_remote:
             # If it's a pre-release and it's remote, its likely us developing, so we try installing
             # from Github and we can get the custom branch name from FAL_GITHUB_BRANCH environment variable
@@ -304,11 +304,11 @@ def _get_extras(package: str) -> list[str]:
     return dist.metadata.get_all("Provides-Extra", [])
 
 
-def _is_pre_release(raw_version: str) -> bool:
-    from dbt.semver import VersionSpecifier
+def _version_is_prerelease(raw_version: str) -> bool:
+    from packaging.version import Version
 
-    adapter_version = VersionSpecifier.from_version_string(raw_version)
-    return bool(adapter_version.prerelease)
+    package_version = Version(raw_version)
+    return package_version.is_prerelease
 
 
 def _get_adapter_root_path() -> Optional[Path]:

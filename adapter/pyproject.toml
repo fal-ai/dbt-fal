@@ -44,6 +44,7 @@ s3fs = { version = ">=2022.8.2", optional = true }
 # fal cloud
 isolate-cloud = { version = "^0.6.15", optional = true }
 dill = { version = ">=0.3.5.1", optional = true}
+packaging = "<22"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
