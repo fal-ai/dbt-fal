@@ -314,9 +314,12 @@ def _version_is_prerelease(raw_version: str) -> bool:
 def _get_adapter_root_path() -> Optional[Path]:
     import dbt.adapters.fal as adapter
 
-    base_dir = Path(adapter.__file__).parent.parent.parent.parent.parent
-    # TODO: this can happen with REAL pre-releases
-    return base_dir if (base_dir.parent / ".git").exists() else None
+    path = Path(adapter.__file__)
+    while path is not None:
+        if (path.parent / ".git").exists():
+            break
+        path = path.parent
+    return path
 
 
 def get_default_requirements(
