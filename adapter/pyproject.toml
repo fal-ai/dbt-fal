@@ -26,11 +26,11 @@ sqlalchemy = "^1.4.41"
 
 # adapters
 ## snowflake
-snowflake-connector-python = { version = "~2.7.10", extras = ["pandas"], optional = true }
+snowflake-connector-python = { version = ">=2.8.0, <2.8.2", extras = ["pandas"], optional = true }
 
 ## bigquery
 ### version defined by dbt-bigquery, installs pyarrow<8
-google-cloud-bigquery = { version = ">=2,<3", extras = ["pandas"], optional = true }
+google-cloud-bigquery = { version = "~3.5.0", extras = ["pandas"], optional = true }
 
 ## redshift
 sqlalchemy-redshift = { version = "^0.8.9", optional = true }
@@ -51,7 +51,7 @@ pytest = "^5.2"
 
 [tool.poetry.extras]
 postgres = []
-snowflake = ["snowflake-connector-python", "pyarrow"]
+snowflake = ["snowflake-connector-python"]
 bigquery = ["google-cloud-bigquery"]
 redshift = ["sqlalchemy-redshift"]
 duckdb = []
