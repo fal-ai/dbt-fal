@@ -1,11 +1,12 @@
 import abc
 from typing import List, Union
 
-from dbt.exceptions import NotImplementedException
+from dbt.exceptions import NotImplementedError
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.base.impl import BaseAdapter
 
 from dbt.fal.adapters.teleport.info import TeleportInfo
+
 
 class TeleportAdapter:
     """The TeleportAdapter provides an abstract class for adapters usable with Teleport.
@@ -41,7 +42,7 @@ class TeleportAdapter:
         """
         List of formats this adapter handles. e.g. `['csv', 'parquet']`
         """
-        raise NotImplementedException(
+        raise NotImplementedError(
             "`storage_formats` is not implemented for this adapter!"
         )
 
@@ -53,32 +54,40 @@ class TeleportAdapter:
         Localize data found in `data_path` into the a local table with the name given by `relation`.
         Handle each possible format defined in `storage_formats` method.
         """
-        raise NotImplementedException(
+        raise NotImplementedError(
             "`teleport_from_external_storage` is not implemented for this adapter!"
         )
 
     @abc.abstractmethod
-    def teleport_to_external_storage(self, relation: BaseRelation, teleport_info: TeleportInfo) -> str:
+    def teleport_to_external_storage(
+        self, relation: BaseRelation, teleport_info: TeleportInfo
+    ) -> str:
         """
         Take local table `relation` and upload the data with Teleport. Return the `data_path` the data is uploaded to.
         Handle each possible format defined in `storage_formats` method.
         """
-        raise NotImplementedException(
+        raise NotImplementedError(
             "`teleport_to_external_storage` is not implemented for this adapter!"
         )
 
     @classmethod
-    def is_teleport_adapter(cls, adapter: Union[BaseAdapter, "TeleportAdapter"]) -> bool:
+    def is_teleport_adapter(
+        cls, adapter: Union[BaseAdapter, "TeleportAdapter"]
+    ) -> bool:
         methods = [
             "storage_formats",
             # "teleport_backends",
             "teleport_from_external_storage",
             "teleport_to_external_storage",
         ]
-        return isinstance(adapter, TeleportAdapter) or all(map(lambda m: hasattr(adapter, m), methods))
+        return isinstance(adapter, TeleportAdapter) or all(
+            map(lambda m: hasattr(adapter, m), methods)
+        )
 
     @classmethod
-    def find_format(cls, target_adapter: "TeleportAdapter", ref_adapter: "TeleportAdapter"):
+    def find_format(
+        cls, target_adapter: "TeleportAdapter", ref_adapter: "TeleportAdapter"
+    ):
         """
         Find common format between target and ref adapter, giving priority to target list ordering.
         """

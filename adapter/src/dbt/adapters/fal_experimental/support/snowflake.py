@@ -1,7 +1,9 @@
+import pandas as pd
+
 from dbt.adapters.base import BaseRelation
 from dbt.adapters.base.connections import AdapterResponse
+
 from dbt.adapters.fal_experimental.adapter_support import new_connection
-import pandas as pd
 
 # [snowflake] extras dependencies
 import snowflake.connector as snowflake
@@ -66,9 +68,9 @@ def write_df_to_relation(
             if not success:
                 # In case the failure does not raise by itself
                 # I have not been able to reproduce such a case
-                from dbt.exceptions import DatabaseException
+                from dbt.exceptions import DbtDatabaseError
 
-                raise DatabaseException(output)
+                raise DbtDatabaseError(output)
 
             # TODO: better AdapterResponse
             return AdapterResponse(str(output[0][1]), rows_affected=num_rows)

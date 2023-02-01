@@ -177,6 +177,21 @@ docs = ["jaraco.packaging (>=8.2)", "rst.linker (>=1.9)", "sphinx"]
 testing = ["pytest (>=4.6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.0.1)", "pytest-flake8", "pytest-mypy"]
 
 [[package]]
+name = "betterproto"
+version = "1.2.5"
+description = "A better Protobuf / gRPC generator & library"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+grpclib = "*"
+stringcase = "*"
+
+[package.extras]
+compiler = ["black", "jinja2", "protobuf"]
+
+[[package]]
 name = "botocore"
 version = "1.27.59"
 description = "Low-level, data-driven core of boto 3."
@@ -282,31 +297,32 @@ test = ["hypothesis (>=1.11.4,!=3.79.2)", "iso8601", "pretend", "pytest (>=6.2.0
 
 [[package]]
 name = "dbt-core"
-version = "1.3.0"
+version = "1.4.1"
 description = "With dbt, data analysts and engineers can build analytics the way engineers build applications."
 category = "main"
 optional = false
 python-versions = ">=3.7.2"
 
 [package.dependencies]
-agate = ">=1.6,<1.6.4"
+agate = ">=1.6,<1.7.1"
+betterproto = "1.2.5"
 cffi = ">=1.9,<2.0.0"
 click = ">=7.0,<9"
-colorama = ">=0.3.9,<0.4.6"
+colorama = ">=0.3.9,<0.4.7"
 dbt-extractor = ">=0.4.1,<0.5.0"
 hologram = ">=0.0.14,<=0.0.15"
 idna = ">=2.5,<4"
 isodate = ">=0.6,<0.7"
 Jinja2 = "3.1.2"
 logbook = ">=1.5,<1.6"
-mashumaro = {version = "3.0.4", extras = ["msgpack"]}
+mashumaro = {version = "3.3.1", extras = ["msgpack"]}
 minimal-snowplow-tracker = "0.0.2"
 networkx = [
     {version = ">=2.3,<2.8.1", markers = "python_version < \"3.8\""},
     {version = ">=2.3,<3", markers = "python_version >= \"3.8\""},
 ]
 packaging = ">=20.9,<22.0"
-pathspec = ">=0.9.0,<0.10.0"
+pathspec = ">=0.9,<0.11"
 pyyaml = ">=6.0"
 requests = "<3.0.0"
 sqlparse = ">=0.2.3,<0.5"
@@ -559,6 +575,33 @@ grpcio = ">=1.48.2"
 protobuf = ">=3.12.0"
 
 [[package]]
+name = "grpclib"
+version = "0.4.3"
+description = "Pure-Python gRPC implementation for asyncio"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+h2 = ">=3.1.0,<5"
+multidict = "*"
+
+[package.extras]
+protobuf = ["protobuf (>=3.15.0)"]
+
+[[package]]
+name = "h2"
+version = "4.1.0"
+description = "HTTP/2 State-Machine based protocol implementation"
+category = "main"
+optional = false
+python-versions = ">=3.6.1"
+
+[package.dependencies]
+hpack = ">=4.0,<5"
+hyperframe = ">=6.0,<7"
+
+[[package]]
 name = "hologram"
 version = "0.0.15"
 description = "JSON schema generation from dataclasses"
@@ -569,6 +612,22 @@ python-versions = "*"
 [package.dependencies]
 jsonschema = ">=3.0,<4.0"
 python-dateutil = ">=2.8,<2.9"
+
+[[package]]
+name = "hpack"
+version = "4.0.0"
+description = "Pure-Python HPACK header compression"
+category = "main"
+optional = false
+python-versions = ">=3.6.1"
+
+[[package]]
+name = "hyperframe"
+version = "6.0.1"
+description = "HTTP/2 framing layer for Python"
+category = "main"
+optional = false
+python-versions = ">=3.6.1"
 
 [[package]]
 name = "idna"
@@ -735,18 +794,20 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "mashumaro"
-version = "3.0.4"
+version = "3.3.1"
 description = "Fast serialization framework on top of dataclasses"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 msgpack = {version = ">=0.5.6", optional = true, markers = "extra == \"msgpack\""}
-typing-extensions = "*"
+typing-extensions = ">=4.1.0"
 
 [package.extras]
 msgpack = ["msgpack (>=0.5.6)"]
+orjson = ["orjson"]
+toml = ["tomli (>=1.1.0)", "tomli-w (>=1.0)"]
 yaml = ["pyyaml (>=3.13)"]
 
 [[package]]
@@ -790,7 +851,7 @@ name = "multidict"
 version = "6.0.2"
 description = "multidict implementation"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [[package]]
@@ -1327,6 +1388,14 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "stringcase"
+version = "1.2.0"
+description = "String case converter."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "tblib"
 version = "1.7.0"
 description = "Traceback serialization library."
@@ -1470,7 +1539,7 @@ trino = ["trino"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.12"
-content-hash = "e79f0c62d4818c2742433d6c294f099c03a56454e2e1cce264d9c15397cf878b"
+content-hash = "b4134b3648b4edc443dfbf4ba6408478db22fa4e36c212f49afbc81e5a9b0136"
 
 [metadata.files]
 agate = [
@@ -1613,6 +1682,9 @@ backoff = [
     {file = "backports.functools_lru_cache-1.6.4-py2.py3-none-any.whl", hash = "sha256:dbead04b9daa817909ec64e8d2855fb78feafe0b901d4568758e3a60559d8978"},
     {file = "backports.functools_lru_cache-1.6.4.tar.gz", hash = "sha256:d5ed2169378b67d3c545e5600d363a923b09c456dab1593914935a68ad478271"},
 ]
+betterproto = [
+    {file = "betterproto-1.2.5.tar.gz", hash = "sha256:74a3ab34646054f674d236d1229ba8182dc2eae86feb249b8590ef496ce9803d"},
+]
 botocore = [
     {file = "botocore-1.27.59-py3-none-any.whl", hash = "sha256:69d756791fc024bda54f6c53f71ae34e695ee41bbbc1743d9179c4837a4929da"},
     {file = "botocore-1.27.59.tar.gz", hash = "sha256:eda4aed6ee719a745d1288eaf1beb12f6f6448ad1fa12f159405db14ba9c92cf"},
@@ -1730,8 +1802,8 @@ cryptography = [
     {file = "cryptography-36.0.2.tar.gz", hash = "sha256:70f8f4f7bb2ac9f340655cbac89d68c527af5bb4387522a8413e841e3e6628c9"},
 ]
 dbt-core = [
-    {file = "dbt-core-1.3.0.tar.gz", hash = "sha256:20d23cf7c20ed16f6d82804d6cf67dafca8ac3c9f2557e5aeaa8c6af9d39c384"},
-    {file = "dbt_core-1.3.0-py3-none-any.whl", hash = "sha256:63f2f691af87790a4315e15267b863ecdd67828da5c76367c2c2f1cad08c6822"},
+    {file = "dbt-core-1.4.1.tar.gz", hash = "sha256:ef67fd94260cb6a9d293ef8923fb39965687844d0b6937e5eabd9378d7611cf3"},
+    {file = "dbt_core-1.4.1-py3-none-any.whl", hash = "sha256:40fbc42484accb75bb59dd8cabb018da4f3a022f08cfa4f490a0c8759b25a9d9"},
 ]
 dbt-extractor = [
     {file = "dbt_extractor-0.4.1-cp36-abi3-macosx_10_7_x86_64.whl", hash = "sha256:4dc715bd740e418d8dc1dd418fea508e79208a24cf5ab110b0092a3cbe96bf71"},
@@ -2053,9 +2125,24 @@ grpcio-status = [
     {file = "grpcio-status-1.48.2.tar.gz", hash = "sha256:53695f45da07437b7c344ee4ef60d370fd2850179f5a28bb26d8e2aa1102ec11"},
     {file = "grpcio_status-1.48.2-py3-none-any.whl", hash = "sha256:2c33bbdbe20188b2953f46f31af669263b6ee2a9b2d38fa0d36ee091532e21bf"},
 ]
+grpclib = [
+    {file = "grpclib-0.4.3.tar.gz", hash = "sha256:eadf2002fc5a25158b707c0338a6c0b96dd7fbdc6df66f7e515e7f041d56a940"},
+]
+h2 = [
+    {file = "h2-4.1.0-py3-none-any.whl", hash = "sha256:03a46bcf682256c95b5fd9e9a99c1323584c3eec6440d379b9903d709476bc6d"},
+    {file = "h2-4.1.0.tar.gz", hash = "sha256:a83aca08fbe7aacb79fec788c9c0bac936343560ed9ec18b82a13a12c28d2abb"},
+]
 hologram = [
     {file = "hologram-0.0.15-py3-none-any.whl", hash = "sha256:48ca81ed47da1c604b2d3b951424b600eb8a5785b00513e3b8e3ae8101f90145"},
     {file = "hologram-0.0.15.tar.gz", hash = "sha256:79b3d04df84d5a9d09c2e669ec5bcc50b1713ec79f4683cfdea85583b41e46f0"},
+]
+hpack = [
+    {file = "hpack-4.0.0-py3-none-any.whl", hash = "sha256:84a076fad3dc9a9f8063ccb8041ef100867b1878b25ef0ee63847a5d53818a6c"},
+    {file = "hpack-4.0.0.tar.gz", hash = "sha256:fc41de0c63e687ebffde81187a948221294896f6bdc0ae2312708df339430095"},
+]
+hyperframe = [
+    {file = "hyperframe-6.0.1-py3-none-any.whl", hash = "sha256:0ec6bafd80d8ad2195c4f03aacba3a8265e57bc4cff261e802bf39970ed02a15"},
+    {file = "hyperframe-6.0.1.tar.gz", hash = "sha256:ae510046231dc8e9ecb1a6586f63d2347bf4c8905914aa84ba585ae85f28a914"},
 ]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
@@ -2151,8 +2238,8 @@ markupsafe = [
     {file = "MarkupSafe-2.1.1.tar.gz", hash = "sha256:7f91197cc9e48f989d12e4e6fbc46495c446636dfc81b9ccf50bb0ec74b91d4b"},
 ]
 mashumaro = [
-    {file = "mashumaro-3.0.4-py3-none-any.whl", hash = "sha256:72b97b7660b7a4de1df2466a52543e6439f968cd081ce55aae899bc375b1f53d"},
-    {file = "mashumaro-3.0.4.tar.gz", hash = "sha256:6d221e09df2d884afda19325d5412dc9b1274be9ba1c3e57c12a8977320c7e07"},
+    {file = "mashumaro-3.3.1-py3-none-any.whl", hash = "sha256:74ae7704e4ac8813ff701909aa8d96a405156dc2e1e3fd34ac07db7f0823a54a"},
+    {file = "mashumaro-3.3.1.tar.gz", hash = "sha256:997ed0a4ce64967b96ff65f5ca76b8e5e459a4ec7a6a0f73625a067004a801c9"},
 ]
 minimal-snowplow-tracker = [
     {file = "minimal-snowplow-tracker-0.0.2.tar.gz", hash = "sha256:acabf7572db0e7f5cbf6983d495eef54081f71be392330eb3aadb9ccb39daaa4"},
@@ -2711,6 +2798,9 @@ sqlalchemy-redshift = [
 sqlparse = [
     {file = "sqlparse-0.4.3-py3-none-any.whl", hash = "sha256:0323c0ec29cd52bceabc1b4d9d579e311f3e4961b98d174201d5622a23b85e34"},
     {file = "sqlparse-0.4.3.tar.gz", hash = "sha256:69ca804846bb114d2ec380e4360a8a340db83f0ccf3afceeb1404df028f57268"},
+]
+stringcase = [
+    {file = "stringcase-1.2.0.tar.gz", hash = "sha256:48a06980661908efe8d9d34eab2b6c13aefa2163b3ced26972902e3bdfd87008"},
 ]
 tblib = [
     {file = "tblib-1.7.0-py2.py3-none-any.whl", hash = "sha256:289fa7359e580950e7d9743eab36b0691f0310fce64dee7d9c31065b8f723e23"},

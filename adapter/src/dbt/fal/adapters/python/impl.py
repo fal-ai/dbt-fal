@@ -8,30 +8,22 @@ from typing import (
     Any,
     Mapping,
     Iterator,
-    Union,
 )
+
 from dbt.adapters.factory import get_adapter
-
-
 from dbt.exceptions import (
-    NotImplementedException,
-    RuntimeException,
+    NotImplementedError,
+    DbtRuntimeError,
 )
-
+from dbt.contracts.graph.nodes import ResultNode
 from dbt.adapters.protocol import AdapterConfig, ConnectionManagerProtocol
-from dbt.contracts.graph.compiled import CompileResultNode, CompiledSeedNode
-from dbt.contracts.graph.parsed import ParsedSeedNode
 from dbt.events.functions import fire_event
 from dbt.events.types import (
     CodeExecution,
     CodeExecutionStatus,
 )
-
 from dbt.adapters.base.meta import AdapterMeta, available
 from dbt.contracts.connection import Credentials, Connection, AdapterResponse
-
-
-SeedModel = Union[ParsedSeedNode, CompiledSeedNode]
 
 
 def log_code_execution(code_execution_function):
@@ -152,7 +144,7 @@ class PythonAdapter(metaclass=AdapterMeta):
 
     @contextmanager
     def connection_named(
-        self, name: str, node: Optional[CompileResultNode] = None
+        self, name: str, node: Optional[ResultNode] = None
     ) -> Iterator[None]:
         try:
             self.acquire_connection(name)
@@ -161,14 +153,14 @@ class PythonAdapter(metaclass=AdapterMeta):
             self.release_connection()
 
     @contextmanager
-    def connection_for(self, node: CompileResultNode) -> Iterator[None]:
+    def connection_for(self, node: ResultNode) -> Iterator[None]:
         with self.connection_named(node.unique_id, node):
             yield
 
     @classmethod
     @abc.abstractmethod
     def is_cancelable(cls) -> bool:
-        raise NotImplementedException(
+        raise NotImplementedError(
             "`is_cancelable` is not implemented for this adapter!"
         )
 
@@ -257,7 +249,7 @@ class PythonAdapter(metaclass=AdapterMeta):
     def generate_python_submission_response(
         self, submission_result: Any
     ) -> AdapterResponse:
-        raise NotImplementedException(
+        raise NotImplementedError(
             "Your adapter need to implement generate_python_submission_response"
         )
 
@@ -281,7 +273,7 @@ class PythonAdapter(metaclass=AdapterMeta):
         valid_strategies.append("default")
         builtin_strategies = self.builtin_incremental_strategies()
         if strategy in builtin_strategies and strategy not in valid_strategies:
-            raise RuntimeException(
+            raise DbtRuntimeError(
                 f"The incremental strategy '{strategy}' is not valid for this adapter"
             )
 
@@ -289,7 +281,7 @@ class PythonAdapter(metaclass=AdapterMeta):
         macro_name = f"get_incremental_{strategy}_sql"
         # The model_context should have MacroGenerator callable objects for all macros
         if macro_name not in model_context:
-            raise RuntimeException(
+            raise DbtRuntimeError(
                 'dbt could not find an incremental strategy macro with the name "{}" in {}'.format(
                     macro_name, self.config.project_name
                 )
