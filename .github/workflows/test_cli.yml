@@ -45,7 +45,8 @@ jobs:
         run: pip install pytest pytest-mock mock black
 
       - name: Run dbt
-        run: dbt run --profiles-dir projects/fal/tests/mock/mockProfile/ --project-dir projects/fal/tests/mock
+        working-directory: projects/fal
+        run: dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
 
       - name: Run tests
         working-directory: projects/fal
