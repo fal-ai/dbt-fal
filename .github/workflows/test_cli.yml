@@ -48,6 +48,7 @@ jobs:
         run: dbt run --profiles-dir projects/fal/tests/mock/mockProfile/ --project-dir projects/fal/tests/mock
 
       - name: Run tests
+        working-directory: projects/fal
         env:
           FAL_STATS_ENABLED: false
         run: pytest tests -s
