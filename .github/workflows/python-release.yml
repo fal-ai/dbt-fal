@@ -145,7 +145,7 @@ jobs:
           # set __version__.py files in src directory
           VERSION=$(poetry version -s)
           VERSION_FILE_CONTENT="version = '$VERSION'"
-          VERSION_FILES=$(find projects/fal/src -name __version__.py)
+          VERSION_FILES=$(find src -name __version__.py)
           for FILE_PATH in $VERSION_FILES; do
             echo $VERSION_FILE_CONTENT > $FILE_PATH
           done
