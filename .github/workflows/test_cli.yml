@@ -3,14 +3,10 @@ name: fal pytest
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
-    paths-ignore:
-      - "examples/**"
-      - "docsite/**"
-      - "README.md"
-      - "LICENSE"
-      - "docker/**"
-      - "projects/adapter/**"
-      - ".github/workflows/*adapter*"
+    paths:
+      - "projects/fal/**"
+      - ".github/**"
+      - "!.github/workflows/*adapter*"
   workflow_dispatch:
 
 jobs:
@@ -49,7 +45,7 @@ jobs:
         run: pip install pytest pytest-mock mock black
 
       - name: Run dbt
-        run: dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
+        run: dbt run --profiles-dir projects/fal/tests/mock/mockProfile/ --project-dir projects/fal/tests/mock
 
       - name: Run tests
         env:

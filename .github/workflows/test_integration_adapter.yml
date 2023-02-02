@@ -60,17 +60,17 @@ jobs:
           path: "fal"
 
       - name: Start Docker database
-        working-directory: fal/integration_tests
+        working-directory: fal/projects/fal/integration_tests
         if: contains(fromJSON('["postgres"]'), matrix.profile)
         run: docker-compose up -d
 
       - name: Start trino
-        working-directory: fal/adapter/integration_tests/configs/trino
+        working-directory: fal/projects/adapter/integration_tests/configs/trino
         if: contains(fromJSON('["trino"]'), matrix.profile)
         run: docker-compose up -d
 
       - name: Setup latest dependencies
-        working-directory: fal/adapter/integration_tests
+        working-directory: fal/projects/adapter/integration_tests
         run: |
           python -m venv .venv
           source .venv/bin/activate
@@ -103,12 +103,12 @@ jobs:
           popd
 
       - name: Setup behave
-        working-directory: fal/adapter/integration_tests
+        working-directory: fal/projects/adapter/integration_tests
         run: pip install behave
 
       - name: Run tests
         id: test_run
-        working-directory: fal/adapter/integration_tests
+        working-directory: fal/projects/adapter/integration_tests
         env:
           FAL_STATS_ENABLED: false
           # BigQuery

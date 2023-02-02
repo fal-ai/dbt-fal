@@ -46,8 +46,8 @@ write_to_model: _Write_To_Model
 {annotations}
 """
 
-TYPING_CONTEXT_FILE = "src/fal/typing.py"
-FAL_DBT_FILE = "src/faldbt/project.py"
+TYPING_CONTEXT_FILE = "projects/fal/src/fal/typing.py"
+FAL_DBT_FILE = "projects/fal/src/faldbt/project.py"
 FAL_DBT_CLS = "FalDbt"
 MANUAL_ANNOTATIONS = ["write_to_model"]
 
