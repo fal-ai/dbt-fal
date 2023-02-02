@@ -67,7 +67,7 @@ runs:
         then
           pip install -e './projects/fal[postgres]'
         else
-          pip install -e '.[${{ inputs.adapter }}]'
+          pip install -e './projects/fal[${{ inputs.adapter }}]'
         fi
 
     - name: List requirements.txt
