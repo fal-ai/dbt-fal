@@ -30,7 +30,7 @@ def _get_fal_root_path() -> Path:
 
 def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (
-    # the PyPI names instead of the import names). An example distirbution info is the following, which
+    # the PyPI names instead of the import names). An example distribution info is the following, which
     # contains both the main exporter of the top-level name (dbt-core) as well as all the packages that
     # export anything to that namespace:
     #   {"dbt": ["dbt-core", "dbt-postgres", "dbt-athena-adapter"]}
@@ -56,7 +56,7 @@ def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
         return None
 
     if _is_fal_pre_release():
-        dbt_fal_dep = str(_get_fal_root_path() / "adapter")
+        dbt_fal_dep = str(_get_fal_root_path() / "projects" / "adapter")
         # We are going to install it from the local path.
         dbt_fal_version = None
     else:

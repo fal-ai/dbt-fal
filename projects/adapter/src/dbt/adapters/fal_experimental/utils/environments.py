@@ -271,7 +271,7 @@ def _get_dbt_packages(
 
             branch_name = os.environ.get("FAL_GITHUB_BRANCH", "main")
 
-            dbt_fal_suffix = f" @ git+https://github.com/fal-ai/fal.git@{branch_name}#subdirectory=adapter"
+            dbt_fal_suffix = f" @ git+https://github.com/fal-ai/fal.git@{branch_name}#subdirectory=projects/adapter"
             dbt_fal_version = None
         else:
             dbt_fal_path = _get_adapter_root_path()
