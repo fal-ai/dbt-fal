@@ -350,6 +350,7 @@ def test_redaction():
                 "total_runtime": ANY,
                 "python_version": ANY,
                 "fal_version": ANY,
+                "dbt_adapter": ANY,
                 "dbt_version": ANY,
                 "docker_container": ANY,
                 "airflow": ANY,
