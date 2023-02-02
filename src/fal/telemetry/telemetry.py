@@ -6,6 +6,8 @@ https://github.com/ploomber/ploomber
 Modifications are made to ensure that the code works with fal.
 """
 
+from __future__ import annotations
+
 import datetime
 import http.client as httplib
 import warnings
@@ -112,6 +114,13 @@ def dbt_installed_version():
     except ImportError:
         return
 
+def get_dbt_adapter_type() -> str | None:
+    """Returns: the configured DBT adapter or None if it's not in a runner context"""
+    config = get_dbt_config()
+    if config is not None:
+        target = config.to_target_dict()
+        return target["type"]
+    return None
 
 def fal_installed_version():
     """Returns: fal version"""
@@ -301,6 +310,7 @@ def log_api(
         "python_version": python_version(),
         "fal_version": fal_installed_version(),
         "dbt_version": dbt_installed_version(),
+        "dbt_adapter": get_dbt_adapter_type(),
         "docker_container": is_docker(),
         "airflow": is_airflow(),
         "github_action": is_github(),
