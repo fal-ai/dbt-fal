@@ -38,7 +38,7 @@ jobs:
           adapter: postgres
 
       - name: Start Docker database
-        working-directory: tests
+        working-directory: projects/fal/tests
         run: docker-compose up -d
 
       - name: Setup pytest
