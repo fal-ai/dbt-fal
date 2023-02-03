@@ -28,7 +28,7 @@ def _get_fal_root_path() -> Path:
         if (path.parent / ".git").exists():
             break
         path = path.parent
-    return path
+    return (path / "fal")
 
 
 def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:

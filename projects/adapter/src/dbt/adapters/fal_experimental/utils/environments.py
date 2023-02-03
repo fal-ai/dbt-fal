@@ -319,7 +319,7 @@ def _get_adapter_root_path() -> Optional[Path]:
         if (path.parent / ".git").exists():
             break
         path = path.parent
-    return path
+    return (path / "adapter")
 
 
 def get_default_requirements(
