@@ -45,7 +45,7 @@ def set_project_folder(context, project: str):
 
             if match:
                 project_number = match.group(1)
-                projects_dir = Path(__file__).parent.parent.parent / "projects"
+                projects_dir = _find_projects_directory()
                 found = [r.name for r in projects_dir.glob(project_number + "_*")]
                 if found:
                     extra = "Is it " + " or ".join(found) + " ?"
@@ -229,6 +229,11 @@ def check_model_results(context):
     unittest.TestCase().assertCountEqual(models, expected_models)
     _verify_node_order(context)
 
+def _find_projects_directory():
+    path = Path(__file__)
+    while path is not None and not (path / "projects").exists():
+        path = path.parent
+    return (path / "projects")
 
 def _verify_node_order(context):
     import networkx as nx
