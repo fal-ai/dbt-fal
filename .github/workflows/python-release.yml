@@ -51,11 +51,11 @@ jobs:
         run: |
           if [[ ${{ inputs.package }} == fal ]]
           then
-            echo "PACKAGE_DIR=." >> $GITHUB_ENV
+            echo "PACKAGE_DIR=projects/fal" >> $GITHUB_ENV
             echo "TAG_PREFIX=v" >> $GITHUB_ENV
           elif [[ ${{ inputs.package }} == dbt-fal ]]
           then
-            echo "PACKAGE_DIR=adapter" >> $GITHUB_ENV
+            echo "PACKAGE_DIR=projects/adapter" >> $GITHUB_ENV
             echo "TAG_PREFIX=adapter-v" >> $GITHUB_ENV
           fi
 

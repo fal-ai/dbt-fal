@@ -3,14 +3,10 @@ name: fal integration tests
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
-    paths-ignore:
-      - "examples/**"
-      - "docsite/**"
-      - "README.md"
-      - "LICENSE"
-      - "docker/**"
-      - "adapter/**"
-      - ".github/workflows/*adapter*"
+    paths:
+      - "projects/fal/**"
+      - ".github/**"
+      - "!.github/workflows/*adapter*"
 
   push:
     branches: [main]
@@ -236,7 +232,7 @@ jobs:
           adapter: ${{ matrix.profile }}
 
       - name: Start Docker database
-        working-directory: integration_tests
+        working-directory: projects/fal/integration_tests
         # TODO: make redshift use a real connection
         if: contains(fromJSON('["redshift", "postgres", "fal"]'), matrix.profile)
         run: docker-compose up -d
@@ -259,12 +255,12 @@ jobs:
           conda-channels: anaconda, conda-forge
 
       - name: Setup behave
-        working-directory: integration_tests
+        working-directory: projects/fal/integration_tests
         run: pip install behave
 
       - name: Run tests
         id: test_run
-        working-directory: integration_tests
+        working-directory: projects/fal/integration_tests
         env:
           FAL_STATS_ENABLED: false
           # BigQuery
