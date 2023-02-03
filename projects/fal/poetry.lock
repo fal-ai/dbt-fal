@@ -1486,10 +1486,7 @@ isolate = [
     {file = "isolate-0.9.1-py3-none-any.whl", hash = "sha256:847a24acebbd21b609bc1e47bb9d353f06e1f02cdab339c93347c3e90053d437"},
     {file = "isolate-0.9.1.tar.gz", hash = "sha256:fece8b7a0ad871ebc46dd1f7b24f3dfd363c8f3f8b9bda8e99ee792f97e2e183"},
 ]
-isolate-proto = [
-    {file = "isolate_proto-0.0.15-py3-none-any.whl", hash = "sha256:07e9d57f6a6c80456f3785489e4045d0ca34c1930250a3c12615d742fcadc824"},
-    {file = "isolate_proto-0.0.15.tar.gz", hash = "sha256:1c2603fe211518757b270d0b3b34da23bd9c2eef511192da30e7416b7bc9a2bd"},
-]
+isolate-proto = []
 kiwisolver = [
     {file = "kiwisolver-1.4.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:2f5e60fabb7343a836360c4f0919b8cd0d6dbf08ad2ca6b9cf90bf0c76a3c4f6"},
     {file = "kiwisolver-1.4.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:10ee06759482c78bdb864f4109886dff7b8a56529bc1609d4f1112b93fe6423c"},
