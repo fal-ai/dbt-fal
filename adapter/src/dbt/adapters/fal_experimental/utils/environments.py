@@ -233,6 +233,10 @@ def _get_dbt_packages(
 ) -> Iterator[Tuple[str, Optional[str]]]:
     dbt_adapter = f"dbt-{adapter_type}"
     for dbt_plugin_name in ['dbt-core', dbt_adapter]:
+        if dbt_plugin_name == "dbt-athena":
+            # dbt-athena from PyPI doesn't support dbt 1.3, but dbt-athena-community does:
+            # https://github.com/dbt-athena/dbt-athena
+            dbt_plugin_name = "dbt-athena-community"
         distribution = importlib_metadata.distribution(dbt_plugin_name)
 
         yield dbt_plugin_name, distribution.version

@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Iterator
 
-from dbt.adapters.base.impl import BaseAdapter
+from dbt.adapters.base.impl import BaseAdapter, Optional
 from dbt.adapters.base.meta import AdapterMeta, available
 from dbt.adapters.base.relation import BaseRelation
 from dbt.contracts.connection import AdapterResponse
@@ -61,6 +61,12 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
     def macro_manifest(self) -> MacroManifest:
         return self._db_adapter.load_macro_manifest()
 
+    def get_relation(self, database: str, schema: str, identifier: str) -> Optional[BaseRelation]:
+        # HACK: When compiling Python models, dbt-athena-community adapter loses quoting policy
+        # So we reset it manually for AthenaAdapter
+        if type(self._db_adapter).__name__ == "AthenaAdapter":
+            self.config.quoting = {'database': True, 'schema': True, 'identifier': True}
+        return BaseAdapter.get_relation(self, database, schema, identifier)
 
     @telemetry.log_call("experimental_submit_python_job", config=True)
     def submit_python_job(

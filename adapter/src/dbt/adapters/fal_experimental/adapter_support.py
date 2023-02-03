@@ -1,5 +1,5 @@
 import functools
-from time import sleep
+import six
 from typing import Any
 
 import pandas as pd
@@ -26,9 +26,14 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
 
     sqlalchemy_kwargs = {}
     format_url = lambda url: url
-    if adapter_type == 'trino':
+
+    if adapter_type == "trino":
         import dbt.adapters.fal_experimental.support.trino as support_trino
         return support_trino.create_engine(adapter)
+
+    if adapter_type == "athena":
+        import dbt.adapters.fal_experimental.support.athena as support_athena
+        return support_athena.create_engine(adapter)
 
     if adapter_type in ("postgres", "redshift"):
         # If the given adapter supports the DBAPI (PEP 249), we can
@@ -84,10 +89,22 @@ def write_df_to_relation(
 
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
+
             # TODO: this should probably live in the materialization macro.
-            temp_relation = relation.replace_path(
-                identifier=f"__dbt_fal_temp_{relation.identifier}"
-            )
+            if adapter.type() == "athena":
+                # This is a quirk of dbt-athena-community, where they set
+                # relation.schema = relation.identifier
+                temp_relation = relation.replace_path(
+                    schema=relation.database,
+                    database=adapter.config.credentials._db_creds.database,
+                    # athena complanes when table location has x.__y
+                    identifier=f"dbt_fal_temp_{relation.schema}"
+                )
+                relation = temp_relation.replace_path(identifier=relation.schema)
+            else:
+                temp_relation = relation.replace_path(
+                    identifier=f"__dbt_fal_temp_{relation.identifier}"
+                )
             drop_relation_if_it_exists(adapter, temp_relation)
 
             alchemy_engine = _get_alchemy_engine(adapter, connection)
@@ -103,7 +120,15 @@ def write_df_to_relation(
             )
             adapter.cache.add(temp_relation)
             drop_relation_if_it_exists(adapter, relation)
-            adapter.rename_relation(temp_relation, relation)
+
+            if adapter.type() == "athena":
+                # athena doesn't let us rename relations, so we do it by hand
+                stmt = f"create table {relation} as select * from {temp_relation} with data"
+                adapter.execute(six.text_type(stmt).strip())
+                adapter.cache.add(relation)
+                adapter.drop_relation(temp_relation)
+            else:
+                adapter.rename_relation(temp_relation, relation)
             adapter.commit_if_has_connection()
 
             return AdapterResponse("OK", rows_affected=rows_affected)
@@ -130,6 +155,14 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
     else:
         with new_connection(adapter, "fal:read_relation_as_df") as connection:
             alchemy_engine = _get_alchemy_engine(adapter, connection)
+            if adapter.type() == "athena":
+                # This is dbt-athena-community quirk, table_name=relation.schema
+                return pd.read_sql_table(
+                    con=alchemy_engine,
+                    table_name=relation.schema,
+                    schema=relation.database,
+                )
+
             return pd.read_sql_table(
                 con=alchemy_engine,
                 table_name=relation.identifier,
