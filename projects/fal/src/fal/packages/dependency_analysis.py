@@ -23,9 +23,12 @@ def _get_fal_root_path() -> Path:
 
     # If this is a development version, we'll install
     # the current fal itself.
-    base_dir = Path(fal.__file__).parent.parent.parent
-    assert (base_dir / ".git").exists()
-    return base_dir
+    path = Path(adapter.__file__) 
+    while path is not None: 
+        if (path.parent / ".git").exists(): 
+            break 
+        path = path.parent 
+    return path 
 
 
 def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
