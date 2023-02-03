@@ -1,46 +1,37 @@
+from __future__ import annotations
+
 import abc
 import os
-from time import sleep
 import sys
 from multiprocessing.synchronize import RLock
 from threading import get_ident
-from typing import (
-    Any,
-    Dict,
-    Tuple,
-    Hashable,
-    Optional,
-    List,
-    Type,
-    Union,
-    Iterable,
-    Callable,
-)
+from time import sleep
+from typing import Any, Callable, Hashable, Iterable, Union
 
-from dbt.exceptions import (
-    NotImplementedError,
-    InvalidConnectionError,
-    DbtInternalError,
-    CompilationError,
-    FailedToConnectError,
-)
+from dbt import flags
 from dbt.contracts.connection import (
-    Connection,
-    Identifier,
-    ConnectionState,
     AdapterRequiredConfig,
-    LazyHandle,
     AdapterResponse,
+    Connection,
+    ConnectionState,
+    Identifier,
+    LazyHandle,
 )
 from dbt.events import AdapterLogger
 from dbt.events.functions import fire_event
 from dbt.events.types import (
-    NewConnection,
-    ConnectionReused,
-    ConnectionLeftOpen,
     ConnectionClosed,
+    ConnectionLeftOpen,
+    ConnectionReused,
+    NewConnection,
 )
-from dbt import flags
+from dbt.exceptions import (
+    CompilationError,
+    DbtInternalError,
+    FailedToConnectError,
+    InvalidConnectionError,
+    NotImplementedError,
+)
 
 SleepTime = Union[int, float]  # As taken by time.sleep.
 AdapterHandle = Any  # Adapter connection handle objects can be any class.
@@ -64,7 +55,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
         else:
             self.credentials = profile.python_adapter_credentials
 
-        self.thread_connections: Dict[Hashable, Connection] = {}
+        self.thread_connections: dict[Hashable, Connection] = {}
         self.lock: RLock = flags.MP_CONTEXT.RLock()
 
     @staticmethod
@@ -88,7 +79,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
             )
         self.thread_connections[key] = conn
 
-    def get_if_exists(self) -> Optional[Connection]:
+    def get_if_exists(self) -> Connection | None:
         key = self.get_thread_identifier()
         with self.lock:
             return self.thread_connections.get(key)
@@ -99,7 +90,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
             if key in self.thread_connections:
                 del self.thread_connections[key]
 
-    def set_connection_name(self, name: Optional[str] = None) -> Connection:
+    def set_connection_name(self, name: str | None = None) -> Connection:
         conn_name: str
         if name is None:
             # if a name isn't specified, we'll re-use a single handle
@@ -144,9 +135,9 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
         connection: Connection,
         connect: Callable[[], AdapterHandle],
         logger: AdapterLogger,
-        retryable_exceptions: Iterable[Type[Exception]],
+        retryable_exceptions: Iterable[type[Exception]],
         retry_limit: int = 1,
-        retry_timeout: Union[Callable[[int], SleepTime], SleepTime] = 1,
+        retry_timeout: Callable[[int], SleepTime] | SleepTime = 1,
         _attempts: int = 0,
     ) -> Connection:
         """Given a Connection, set its handle by calling connect.
@@ -231,7 +222,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
         """Cancel the given connection."""
         raise NotImplementedError("`cancel` is not implemented for this adapter!")
 
-    def cancel_open(self) -> List[str]:
+    def cancel_open(self) -> list[str]:
         names = []
         this_connection = self.get_if_exists()
         with self.lock:
@@ -308,7 +299,7 @@ class PythonConnectionManager(metaclass=abc.ABCMeta):
         return connection
 
     @abc.abstractmethod
-    def execute(self, compiled_code: str) -> Tuple[AdapterResponse, Any]:
+    def execute(self, compiled_code: str) -> tuple[AdapterResponse, Any]:
         """Execute the given Python code.
 
         :param str compiled_code: The Python code to execute.

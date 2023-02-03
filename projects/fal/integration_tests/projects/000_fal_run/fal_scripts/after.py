@@ -1,7 +1,10 @@
-import pandas as pd
+from __future__ import annotations
+
 import io
 import os
 from functools import reduce
+
+import pandas as pd
 
 model_name = context.current_model.name
 model_alias = context.current_model.alias
@@ -16,7 +19,7 @@ info = buf.getvalue()
 
 output = output + f"\nModel dataframe information:\n{info}"
 output = output + f"\nModel alias is {model_alias}"
-alias_no_namespace = model_alias.split('__ns__')[1]
+alias_no_namespace = model_alias.split("__ns__")[1]
 output = output + f"\nModel alias without namespace is {alias_no_namespace}"
 temp_dir = os.environ["temp_dir"]
 write_dir = open(reduce(os.path.join, [temp_dir, model_name + ".after.txt"]), "w")

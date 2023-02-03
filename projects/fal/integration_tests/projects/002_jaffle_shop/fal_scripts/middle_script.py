@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import os
 from functools import reduce
+
 from main_check_2 import main_check
 
 model_name = context.current_model.name

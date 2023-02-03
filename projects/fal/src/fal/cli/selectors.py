@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import itertools
 import re
 from dataclasses import dataclass
-from typing import List, Optional, Union, Iterator
-from fal.node_graph import NodeGraph
-from faldbt.project import CompileArgs, FalDbt
-from dbt.task.compile import CompileTask
 from enum import Enum
 from functools import reduce
+from typing import Iterator
+
 import networkx as nx
+from dbt.task.compile import CompileTask
+from faldbt.project import CompileArgs, FalDbt
+
+from fal.node_graph import NodeGraph
 
 
 class ExecutionPlan:
@@ -15,12 +19,12 @@ class ExecutionPlan:
     Represents a fal flow excution
     """
 
-    before_scripts: List[str]
-    dbt_models: List[str]
-    after_scripts: List[str]
+    before_scripts: list[str]
+    dbt_models: list[str]
+    after_scripts: list[str]
     project_name: str
 
-    def __init__(self, unique_ids: List[str], project_name):
+    def __init__(self, unique_ids: list[str], project_name):
         self.before_scripts = []
         self.dbt_models = []
         self.after_scripts = []
@@ -34,7 +38,7 @@ class ExecutionPlan:
                 self.dbt_models.append(id)
 
     @property
-    def nodes(self) -> List[str]:
+    def nodes(self) -> list[str]:
         return self.before_scripts + self.after_scripts + self.dbt_models
 
     @classmethod
@@ -65,16 +69,16 @@ class ExecutionPlan:
 
 @dataclass
 class SelectionUnion:
-    components: List[str]
+    components: list[str]
 
 
 @dataclass
 class SelectionIntersection:
-    components: List[str]
+    components: list[str]
 
 
 def parse_union(
-    components: List[str],
+    components: list[str],
 ) -> SelectionUnion:
     # Based on the original implemention at dbt-core.
 
@@ -95,11 +99,11 @@ def parse_union(
 
 
 def _filter_node_ids(
-    unique_ids: List[str],
+    unique_ids: list[str],
     fal_dbt: FalDbt,
-    selectors: List[str],
+    selectors: list[str],
     nodeGraph: NodeGraph,
-) -> List[str]:
+) -> list[str]:
     """Filter list of unique_ids according to a selector."""
     output = set()
 
@@ -122,7 +126,7 @@ def _filter_node_ids(
     return list(output)
 
 
-def _get_children_with_parents(node_id: str, nodeGraph: NodeGraph) -> List[str]:
+def _get_children_with_parents(node_id: str, nodeGraph: NodeGraph) -> list[str]:
     children = nodeGraph.get_descendants(node_id)
     output = reduce(lambda l, ch: l + nodeGraph.get_ancestors(ch), children, children)
 
@@ -131,7 +135,7 @@ def _get_children_with_parents(node_id: str, nodeGraph: NodeGraph) -> List[str]:
     return output
 
 
-def _expand_script(script_name: str, unique_ids: List[str]) -> List[str]:
+def _expand_script(script_name: str, unique_ids: list[str]) -> list[str]:
     """
     Expands the selected script name to unique id format.
     for example [scripta.py] to [script.modelB.AFTER.scripta.py, script.modelA.BEFORE.scripta.py]
@@ -159,16 +163,16 @@ class SelectorPlan:
     script.py+ is the SelectorPlan with needs_children attribute set to true
     """
 
-    unique_ids: List[str]
+    unique_ids: list[str]
     children: bool
-    children_levels: Optional[int]
+    children_levels: int | None
     children_with_parents: bool
     parents: bool
-    parents_levels: Optional[int]
+    parents_levels: int | None
     type: SelectType
     raw: str
 
-    def __init__(self, selector: str, unique_ids: List[str], fal_dbt: FalDbt):
+    def __init__(self, selector: str, unique_ids: list[str], fal_dbt: FalDbt):
         self.raw = selector
         self.children_with_parents = OP_CHILDREN_WITH_PARENTS.match(selector)
         selector = OP_CHILDREN_WITH_PARENTS.rest(selector)
@@ -219,7 +223,7 @@ class SelectorPlan:
                 yield from ids
 
 
-def unique_ids_from_complex_selector(select, fal_dbt: FalDbt) -> List[str]:
+def unique_ids_from_complex_selector(select, fal_dbt: FalDbt) -> list[str]:
     args = CompileArgs(None, [select], [select], tuple(), fal_dbt._state, None)
     compile_task = CompileTask(args, fal_dbt._config)
     compile_task._runtime_initialize()
@@ -251,7 +255,7 @@ class SelectorGraphOp:
             "rest" in regex.groupindex
         ), 'rest must be in regex. Use `re.compile("something(?P<rest>.*)")`'
 
-    def _select(self, selector: str, group: Union[str, int]) -> Optional[str]:
+    def _select(self, selector: str, group: str | int) -> str | None:
         match = self._regex.match(selector)
         if match:
             return match.group(group)
@@ -267,7 +271,7 @@ class SelectorGraphOp:
 
 
 class SelectorGraphOpDepth(SelectorGraphOp):
-    def depth(self, selector: str) -> Optional[int]:
+    def depth(self, selector: str) -> int | None:
         depth = self._select(selector, "depth")
         if depth:
             return int(depth)

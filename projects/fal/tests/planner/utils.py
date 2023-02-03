@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 import networkx as nx
 
 from fal.cli.selectors import ExecutionPlan
+from fal.fal_script import LocalHook
 from fal.node_graph import DbtModelNode, NodeGraph
 from fal.planner.plan import (
     FilteredGraph,
@@ -15,7 +16,6 @@ from fal.planner.plan import (
     ScriptConnectedGraph,
 )
 from fal.planner.schedule import schedule_graph
-from fal.fal_script import LocalHook
 
 
 class ModelDict(defaultdict):

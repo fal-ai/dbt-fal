@@ -1,7 +1,11 @@
+from __future__ import annotations
+
+import os
+
+from tests.graph.utils import assert_contains_only
+
 from fal.cli.args import parse_args
 from fal.cli.dbt_runner import get_dbt_command_list
-from tests.graph.utils import assert_contains_only
-import os
 
 
 def test_get_dbt_command_list_with_select():

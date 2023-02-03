@@ -1,25 +1,24 @@
 from __future__ import annotations
 
 import argparse
-import threading
 import json
-from pathlib import Path
 import sys
+import threading
 import traceback
 import uuid
-from functools import partial
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum, auto
-from typing import Iterator, List, Any, Optional, Dict, Tuple, Union
+from functools import partial
+from pathlib import Path
+from typing import Any, Iterator
 
 from faldbt.logger import LOGGER
-
-from fal.node_graph import FalScript
-from fal.utils import print_run_info, DynamicIndexProvider
 from faldbt.project import DbtModel, FalDbt, NodeStatus
 
-from datetime import datetime, timezone
+from fal.node_graph import FalScript
+from fal.utils import DynamicIndexProvider, print_run_info
 
 SUCCESS = 0
 FAILURE = 1
@@ -59,15 +58,15 @@ def _unique_id_to_model_name(unique_id: str) -> str:
     return split_list[len(split_list) - 1]
 
 
-def _unique_ids_to_model_names(id_list: List[str]) -> List[str]:
+def _unique_ids_to_model_names(id_list: list[str]) -> list[str]:
     return list(map(_unique_id_to_model_name, id_list))
 
 
 def _mark_dbt_nodes_status_and_response(
     fal_dbt: FalDbt,
     status: NodeStatus,
-    dbt_node: Optional[str] = None,
-    adapter_response: Optional[dict] = None,
+    dbt_node: str | None = None,
+    adapter_response: dict | None = None,
 ):
     for model in fal_dbt.models:
         if dbt_node is not None:
@@ -81,8 +80,8 @@ def _mark_dbt_nodes_status_and_response(
 
 
 def _map_cli_output_model_results(
-    run_results: Dict[Any, Any]
-) -> Iterator[Tuple[str, NodeStatus, Optional[dict]]]:
+    run_results: dict[Any, Any]
+) -> Iterator[tuple[str, NodeStatus, dict | None]]:
     if not isinstance(run_results.get("results"), list):
         raise Exception("Could not read dbt run results")
 
@@ -95,7 +94,7 @@ def _map_cli_output_model_results(
         )
 
 
-def _run_script(script: FalScript) -> Dict[str, Any]:
+def _run_script(script: FalScript) -> dict[str, Any]:
     print_run_info([script])
 
     # DBT seems to be dealing with only UTC times
@@ -159,7 +158,7 @@ def _modify_path(fal_dbt: FalDbt):
 
 @dataclass
 class DBTTask(Task):
-    model_ids: List[str]
+    model_ids: list[str]
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
         from fal.cli.dbt_runner import dbt_run_through_python
@@ -179,7 +178,7 @@ class DBTTask(Task):
 
 @dataclass
 class FalModelTask(DBTTask):
-    script: Union[FalLocalHookTask, FalIsolatedHookTask]
+    script: FalLocalHookTask | FalIsolatedHookTask
 
     def set_run_index(self, index_provider: DynamicIndexProvider) -> None:
         super().set_run_index(index_provider)
@@ -204,8 +203,8 @@ class FalModelTask(DBTTask):
 @dataclass
 class FalLocalHookTask(Task):
     hook_path: Path
-    bound_model: Optional[DbtModel] = None
-    arguments: Optional[Dict[str, Any]] = None
+    bound_model: DbtModel | None = None
+    arguments: dict[str, Any] | None = None
     hook_type: HookType = HookType.HOOK
 
     @classmethod
@@ -257,7 +256,12 @@ class FalIsolatedHookTask(Task):
             environment = fal_dbt._load_environment(self.environment_name)
         except:
             import traceback
-            LOGGER.error("Could not find environment: {}\n{}", self.environment_name, traceback.format_exc())
+
+            LOGGER.error(
+                "Could not find environment: {}\n{}",
+                self.environment_name,
+                traceback.format_exc(),
+            )
             return FAILURE
 
         with environment.connect() as connection:
@@ -276,9 +280,9 @@ class FalIsolatedHookTask(Task):
 @dataclass
 class TaskGroup:
     task: Task
-    pre_hooks: List[Task] = field(default_factory=list)
-    post_hooks: List[Task] = field(default_factory=list)
-    dependencies: List[TaskGroup] = field(default_factory=list)
+    pre_hooks: list[Task] = field(default_factory=list)
+    post_hooks: list[Task] = field(default_factory=list)
+    dependencies: list[TaskGroup] = field(default_factory=list)
     status: Status = Status.PENDING
 
     def __post_init__(self):

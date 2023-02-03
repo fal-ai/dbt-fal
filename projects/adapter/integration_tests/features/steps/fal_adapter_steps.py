@@ -1,13 +1,15 @@
-from functools import reduce
-import os
-from behave import *
+from __future__ import annotations
 
-import tempfile
 import json
-import yaml
-from pathlib import Path
-from datetime import datetime
+import os
 import re
+import tempfile
+from datetime import datetime
+from functools import reduce
+from pathlib import Path
+
+import yaml
+from behave import *
 
 
 @when("the following shell command is invoked")

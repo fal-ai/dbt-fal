@@ -1,11 +1,14 @@
-import multiprocessing
-from multiprocessing.connection import Connection
-from typing import Any, Dict, Optional, List
-import warnings
-import json
-from faldbt.logger import LOGGER
-import os
+from __future__ import annotations
+
 import argparse
+import json
+import multiprocessing
+import os
+import warnings
+from multiprocessing.connection import Connection
+from typing import Any
+
+from faldbt.logger import LOGGER
 
 
 class DbtCliOutput:
@@ -13,9 +16,9 @@ class DbtCliOutput:
         self,
         command: str,
         return_code: int,
-        raw_output: Optional[str],
-        logs: Optional[List[Dict[str, Any]]],
-        run_results: Dict[str, Any],
+        raw_output: str | None,
+        logs: list[dict[str, Any]] | None,
+        run_results: dict[str, Any],
     ):
         self._command = command
         self._return_code = return_code
@@ -24,7 +27,7 @@ class DbtCliOutput:
         self._run_results = run_results
 
     @property
-    def docs_url(self) -> Optional[str]:
+    def docs_url(self) -> str | None:
         return None
 
     @property
@@ -36,19 +39,19 @@ class DbtCliOutput:
         return self._return_code
 
     @property
-    def raw_output(self) -> Optional[str]:
+    def raw_output(self) -> str | None:
         return self._raw_output
 
     @property
-    def logs(self) -> Optional[List[Dict[str, Any]]]:
+    def logs(self) -> list[dict[str, Any]] | None:
         return self._logs
 
     @property
-    def run_results(self) -> Dict[str, Any]:
+    def run_results(self) -> dict[str, Any]:
         return self._run_results
 
 
-def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> List[str]:
+def get_dbt_command_list(args: argparse.Namespace, models_list: list[str]) -> list[str]:
     command_list = []
 
     if args.debug:
@@ -93,7 +96,7 @@ def get_dbt_command_list(args: argparse.Namespace, models_list: List[str]) -> Li
 
 
 def _dbt_run_through_python(
-    args: List[str], target_path: str, run_index: int, connection: Connection
+    args: list[str], target_path: str, run_index: int, connection: Connection
 ):
     # logbook is currently using deprecated APIs internally, which is causing
     # a crash. We'll mirror the solution from DBT, until it is fixed on
@@ -129,7 +132,7 @@ def _dbt_run_through_python(
 
 
 def dbt_run_through_python(
-    args: argparse.Namespace, models_list: List[str], target_path: str, run_index: int
+    args: argparse.Namespace, models_list: list[str], target_path: str, run_index: int
 ) -> DbtCliOutput:
     """Run DBT from the Python entry point in a subprocess."""
     # dbt-core is currently using the spawn as its mulitprocessing context
@@ -167,7 +170,7 @@ def dbt_run_through_python(
     )
 
 
-def _get_index_run_results(target_path: str, run_index: int) -> Dict[Any, Any]:
+def _get_index_run_results(target_path: str, run_index: int) -> dict[Any, Any]:
     """Get run results for a given run index."""
     with open(
         os.path.join(target_path, f"fal_results_{run_index}.json")

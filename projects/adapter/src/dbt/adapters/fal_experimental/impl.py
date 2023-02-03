@@ -7,27 +7,22 @@ from dbt.adapters.base.impl import BaseAdapter
 from dbt.adapters.base.meta import AdapterMeta, available
 from dbt.adapters.base.relation import BaseRelation
 from dbt.contracts.connection import AdapterResponse
-
-from dbt.fal.adapters.teleport.info import (
-    TeleportInfo,
-    S3TeleportInfo,
-    LocalTeleportInfo,
-)
-from dbt.fal.adapters.teleport.impl import TeleportAdapter
 from dbt.fal.adapters.python.impl import PythonAdapter
+from dbt.fal.adapters.teleport.impl import TeleportAdapter
+from dbt.fal.adapters.teleport.info import (
+    LocalTeleportInfo,
+    S3TeleportInfo,
+    TeleportInfo,
+)
 from dbt.parser.manifest import MacroManifest, Manifest, ManifestLoader
 
 from . import telemetry
-
-from .connections import FalConnectionManager, FalCredentials, TeleportTypeEnum
-
-from .teleport_adapter_support import wrap_db_adapter
-from .teleport import DataLocation, run_in_environment_with_teleport, run_with_teleport
-
-from .adapter_support import reload_adapter_cache
 from .adapter import run_in_environment_with_adapter, run_with_adapter
-
-from .utils.environments import fetch_environment, db_adapter_config
+from .adapter_support import reload_adapter_cache
+from .connections import FalConnectionManager, FalCredentials, TeleportTypeEnum
+from .teleport import DataLocation, run_in_environment_with_teleport, run_with_teleport
+from .teleport_adapter_support import wrap_db_adapter
+from .utils.environments import db_adapter_config, fetch_environment
 
 
 class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
@@ -61,7 +56,6 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
     def macro_manifest(self) -> MacroManifest:
         return self._db_adapter.load_macro_manifest()
 
-
     @telemetry.log_call("experimental_submit_python_job", config=True)
     def submit_python_job(
         self, parsed_model: dict, compiled_code: str
@@ -78,10 +72,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
         )
 
         environment, is_local = fetch_environment(
-            self.config.project_root,
-            environment_name,
-            machine_type,
-            self.credentials
+            self.config.project_root, environment_name, machine_type, self.credentials
         )
 
         telemetry.log_api(
@@ -102,7 +93,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
                     compiled_code,
                     teleport_info=teleport_info,
                     locations=self._relation_data_location_cache,
-                    config=db_adapter_config(self.config)
+                    config=db_adapter_config(self.config),
                 )
             else:
                 result_table_path = run_in_environment_with_teleport(
@@ -111,7 +102,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
                     teleport_info=teleport_info,
                     locations=self._relation_data_location_cache,
                     config=db_adapter_config(self.config),
-                    adapter_type=self._db_adapter.type()
+                    adapter_type=self._db_adapter.type(),
                 )
 
             relation = self._db_adapter.Relation.create(
@@ -132,7 +123,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
                     db_adapter_config(self.config),
                     self.manifest,
                     self.macro_manifest,
-                    self._db_adapter.type()
+                    self._db_adapter.type(),
                 )
 
     @contextmanager

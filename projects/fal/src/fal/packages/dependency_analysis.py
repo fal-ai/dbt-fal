@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterator
 
 import importlib_metadata
 
 from fal.utils import cache_static
-
-import importlib_metadata
 
 
 def _is_fal_pre_release() -> bool:
@@ -28,7 +26,7 @@ def _get_fal_root_path() -> Path:
     return base_dir
 
 
-def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
+def _get_dbt_packages() -> Iterator[tuple[str, str | None]]:
     # package_distributions will return a mapping of top-level package names to a list of distribution names (
     # the PyPI names instead of the import names). An example distribution info is the following, which
     # contains both the main exporter of the top-level name (dbt-core) as well as all the packages that
@@ -102,7 +100,7 @@ def _find_fal_extras(package: str) -> Iterator[str]:
     return available_dbt_adapters.intersection(all_extras)
 
 
-def _get_fal_package_name() -> Tuple[str, Optional[str]]:
+def _get_fal_package_name() -> tuple[str, str | None]:
     if _is_fal_pre_release():
         fal_dep, fal_version = str(_get_fal_root_path()), None
     else:
@@ -115,13 +113,13 @@ def _get_fal_package_name() -> Tuple[str, Optional[str]]:
     return fal_package_name, fal_version
 
 
-def get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
+def get_default_requirements() -> Iterator[tuple[str, str | None]]:
     yield _get_fal_package_name()
     yield from _get_dbt_packages()
 
 
 @cache_static
-def get_default_pip_dependencies() -> List[str]:
+def get_default_pip_dependencies() -> list[str]:
     return [
         f"{package}=={version}" if version else package
         for package, version in get_default_requirements()

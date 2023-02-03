@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import ast
+from inspect import cleandoc
+
 from fal.cli.model_generator.module_check import (
     generate_dbt_dependencies,
     write_to_model_check,
 )
-from inspect import cleandoc
 
 
 def test_finding_functions_with_literals():

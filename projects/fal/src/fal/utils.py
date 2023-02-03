@@ -1,8 +1,10 @@
 """Fal utilities."""
-import copy
-from faldbt.logger import LOGGER
-from typing import List, TYPE_CHECKING
+from __future__ import annotations
 
+import copy
+from typing import TYPE_CHECKING
+
+from faldbt.logger import LOGGER
 
 try:
     from functools import lru_cache
@@ -13,7 +15,7 @@ if TYPE_CHECKING:
     from fal.fal_script import FalScript
 
 
-def print_run_info(scripts: List["FalScript"]):
+def print_run_info(scripts: list[FalScript]):
     """Print information on the current fal run."""
     models_str = "\n".join(map(lambda script: script.id, scripts))
     LOGGER.info(f"Starting fal run for following models and scripts: \n{models_str}\n")

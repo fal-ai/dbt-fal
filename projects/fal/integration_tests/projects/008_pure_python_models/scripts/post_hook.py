@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import time
-from fal.typing import *
+
 from _fal_testing import create_dynamic_artifact
+
+from fal.typing import *
 
 # Delay just a little bit in order to make sure the file is created
 # just after the model file.

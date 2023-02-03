@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import inspect
 import os
 import re
 import shutil
 import tempfile
-import pytest
 from pathlib import Path
 
+import pytest
 from dbt.exceptions import DbtProjectError
+
 from fal.cli import cli
 
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
@@ -367,6 +370,7 @@ def test_broken_schemas(broken_schema, monkeypatch):
                 ],
             )
 
+
 @pytest.mark.parametrize(
     "schema",
     [
@@ -414,6 +418,7 @@ def test_schemas(schema, monkeypatch):
                 "--exclude=model_with_scripts",
             ],
         )
+
 
 def _run_fal(args, capfd):
     # Given fal arguments, runs fal and returns capfd output

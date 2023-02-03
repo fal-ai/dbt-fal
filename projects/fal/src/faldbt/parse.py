@@ -1,22 +1,24 @@
+from __future__ import annotations
+
+import glob
 import os
 from dataclasses import dataclass
-import glob
 from pathlib import Path
-from typing import Any, List, Dict, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from dbt.contracts.project import Project as ProjectContract
-from dbt.config import RuntimeConfig, Project
+from dbt.config import Project, RuntimeConfig
+from dbt.config.profile import read_user_config
 from dbt.config.utils import parse_cli_vars
 from dbt.contracts.graph.manifest import Manifest
-from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultArtifact
+from dbt.contracts.project import Project as ProjectContract
 from dbt.contracts.project import UserConfig
-from dbt.config.profile import read_user_config
+from dbt.contracts.results import FreshnessExecutionResultArtifact, RunResultsArtifact
 from dbt.exceptions import IncompatibleSchemaException, RuntimeException
-from fal.utils import cache_static
-
 from faldbt.logger import LOGGER
 from faldbt.utils.yaml_helper import load_yaml
+
 from fal.telemetry import telemetry
+from fal.utils import cache_static
 
 if TYPE_CHECKING:
     from fal.packages.environments import BaseEnvironment
@@ -37,10 +39,10 @@ def get_dbt_user_config(profiles_dir: str) -> UserConfig:
 class RuntimeArgs:
     project_dir: str
     profiles_dir: str
-    threads: Optional[int]
+    threads: int | None
     single_threaded: bool
-    profile: Optional[str]
-    target: Optional[str]
+    profile: str | None
+    target: str | None
 
 
 def load_dbt_project_contract(project_dir: str) -> ProjectContract:
@@ -57,9 +59,9 @@ def get_dbt_config(
     *,
     project_dir: str,
     profiles_dir: str,
-    profile_target: Optional[str] = None,
-    threads: Optional[int] = None,
-    profile: Optional[str] = None,
+    profile_target: str | None = None,
+    threads: int | None = None,
+    profile: str | None = None,
 ) -> RuntimeConfig:
     # Construct a phony config
     import os
@@ -87,7 +89,7 @@ def get_dbt_config(
 
 def get_el_configs(
     profiles_dir: str, profile_name: str, target_name: str
-) -> Dict[str, Dict]:
+) -> dict[str, dict]:
     path = os.path.join(profiles_dir, "profiles.yml")
     yml = load_yaml(path)
     sync_configs = (
@@ -96,7 +98,7 @@ def get_el_configs(
     return sync_configs
 
 
-def get_vars_dict(project_dir: str, args_vars: str) -> Dict[str, Any]:
+def get_vars_dict(project_dir: str, args_vars: str) -> dict[str, Any]:
     project_contract = load_dbt_project_contract(project_dir)
 
     # NOTE: This happens usually inside unit tests
@@ -108,7 +110,7 @@ def get_vars_dict(project_dir: str, args_vars: str) -> Dict[str, Any]:
 
 
 @cache_static
-def get_fal_models_dirs(project_dir: str, args_vars: str) -> List[str]:
+def get_fal_models_dirs(project_dir: str, args_vars: str) -> list[str]:
     vars = get_vars_dict(project_dir, args_vars)
     model_paths = vars.get(FAL_MODELS_PATHS) or []
     if not model_paths:
@@ -169,7 +171,7 @@ def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
 
 def get_dbt_results(
     project_dir: str, config: RuntimeConfig
-) -> Optional[RunResultsArtifact]:
+) -> RunResultsArtifact | None:
     results_path = os.path.join(project_dir, config.target_path, "run_results.json")
     try:
         # BACKWARDS: Change intorduced in 1.0.0
@@ -187,12 +189,12 @@ def get_dbt_results(
         return None
 
 
-def get_scripts_list(scripts_dir: str) -> List[str]:
+def get_scripts_list(scripts_dir: str) -> list[str]:
     scripts_path = Path(scripts_dir)
     return list(map(str, [*scripts_path.rglob("*.py"), *scripts_path.rglob("*.ipynb")]))
 
 
-def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:
+def get_global_script_configs(source_dirs: list[Path]) -> dict[str, list[str]]:
     global_scripts = {"before": [], "after": []}
     for source_dir in source_dirs:
         # Scan directories for .yml files
@@ -217,15 +219,15 @@ def get_global_script_configs(source_dirs: List[Path]) -> Dict[str, List[str]]:
     return global_scripts
 
 
-def _get_required_key(data: Dict[str, Any], name: str) -> Any:
+def _get_required_key(data: dict[str, Any], name: str) -> Any:
     if name not in data:
         raise FalParseError("Missing required key: " + name)
     return data[name]
 
 
-def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
-    from fal.packages.environments import create_environment
+def load_environments(base_dir: str) -> dict[str, BaseEnvironment]:
     from fal.fal_script import _is_local_environment
+    from fal.packages.environments import create_environment
 
     try:
         fal_project_path = os.path.join(base_dir, "fal_project.yml")
@@ -249,12 +251,10 @@ def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
         raise RuntimeError("Error loading environments from fal_project.yml") from e
 
 
-def normalize_path(base: str, path: Union[Path, str]):
+def normalize_path(base: str, path: Path | str):
     real_base = os.path.realpath(os.path.normpath(base))
     return Path(os.path.realpath(os.path.join(real_base, path)))
 
 
-def normalize_paths(
-    base: str, paths: Union[List[Path], List[str], List[Union[Path, str]]]
-):
+def normalize_paths(base: str, paths: list[Path] | list[str] | list[Path | str]):
     return list(map(lambda path: normalize_path(base, path), paths))

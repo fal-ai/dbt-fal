@@ -1,55 +1,44 @@
-from collections import defaultdict
+from __future__ import annotations
+
 import os.path
+from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import partialmethod
-from typing import (
-    Dict,
-    Iterable,
-    List,
-    Any,
-    Optional,
-    Tuple,
-    Sequence,
-    TYPE_CHECKING,
-)
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
-from dbt.node_types import NodeType
-from dbt.contracts.graph.parsed import (
-    ParsedSourceDefinition,
-    TestMetadata,
-    ParsedGenericTestNode,
-    ParsedSingularTestNode,
-)
+import dbt.tracking
+import pandas as pd
+from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.graph.compiled import ManifestNode
 from dbt.contracts.graph.manifest import (
+    Disabled,
     Manifest,
     MaybeNonSource,
     MaybeParsedSource,
-    Disabled,
 )
-from dbt.contracts.connection import AdapterResponse
+from dbt.contracts.graph.parsed import (
+    ParsedGenericTestNode,
+    ParsedSingularTestNode,
+    ParsedSourceDefinition,
+    TestMetadata,
+)
 from dbt.contracts.results import (
-    RunResultsArtifact,
-    RunResultOutput,
-    NodeStatus,
     FreshnessExecutionResultArtifact,
     FreshnessNodeOutput,
+    NodeStatus,
+    RunResultOutput,
+    RunResultsArtifact,
 )
+from dbt.node_types import NodeType
 from dbt.task.compile import CompileTask
-import dbt.tracking
-
-from . import parse
-from . import lib
-from . import version
-from .el_client import FalElClient
 
 from fal.feature_store.feature import Feature
-
-import pandas as pd
-
 from fal.telemetry import telemetry
 from fal.utils import has_side_effects
+
+from . import lib, parse, version
+from .el_client import FalElClient
 
 if TYPE_CHECKING:
     from fal.fal_script import Hook
@@ -87,8 +76,8 @@ class _DbtNode:
 
 @dataclass
 class DbtTest(_DbtNode):
-    model_ids: List[str] = field(init=False, default_factory=list)
-    source_ids: List[str] = field(init=False, default_factory=list)
+    model_ids: list[str] = field(init=False, default_factory=list)
+    source_ids: list[str] = field(init=False, default_factory=list)
 
     @classmethod
     def init(cls, node):
@@ -115,7 +104,7 @@ class DbtTest(_DbtNode):
 
 @dataclass
 class DbtGenericTest(DbtTest):
-    column: Optional[str] = field(init=False)
+    column: str | None = field(init=False)
 
     def __post_init__(self):
         assert isinstance(self.node, ParsedGenericTestNode)
@@ -161,7 +150,7 @@ class DbtSingularTest(DbtTest):
 @dataclass
 class _DbtTestableNode(_DbtNode):
     # TODO: should this include singular tests that ref to this node?
-    tests: List[DbtGenericTest] = field(default_factory=list)
+    tests: list[DbtGenericTest] = field(default_factory=list)
 
     def _get_status(self):
         if self._status == NodeStatus.Skipped and any(
@@ -176,7 +165,7 @@ class _DbtTestableNode(_DbtNode):
 
 @dataclass
 class DbtSource(_DbtTestableNode):
-    freshness: Optional[FreshnessNodeOutput] = field(default=None)
+    freshness: FreshnessNodeOutput | None = field(default=None)
 
     def __repr__(self):
         attrs = ["name", "tests", "status"]
@@ -198,9 +187,9 @@ class DbtSource(_DbtTestableNode):
 
 @dataclass
 class DbtModel(_DbtTestableNode):
-    python_model: Optional[Path] = field(default=None)
+    python_model: Path | None = field(default=None)
 
-    _adapter_response: Optional[AdapterResponse] = field(default=None)
+    _adapter_response: AdapterResponse | None = field(default=None)
 
     def __repr__(self):
         attrs = ["name", "alias", "unique_id", "columns", "tests", "status"]
@@ -222,7 +211,7 @@ class DbtModel(_DbtTestableNode):
     def _get_adapter_response(self):
         return self._adapter_response
 
-    def _set_adapter_response(self, adapter_response: Optional[dict]):
+    def _set_adapter_response(self, adapter_response: dict | None):
         self._adapter_response = (
             AdapterResponse.from_dict(adapter_response) if adapter_response else None
         )
@@ -232,13 +221,13 @@ class DbtModel(_DbtTestableNode):
     def __hash__(self) -> int:
         return self.unique_id.__hash__()
 
-    def get_depends_on_nodes(self) -> List[str]:
+    def get_depends_on_nodes(self) -> list[str]:
         return self.node.depends_on_nodes
 
     def _get_hooks(
         self,
         hook_type: str,
-    ) -> List["Hook"]:
+    ) -> list[Hook]:
         from fal.fal_script import create_hook
 
         meta = self.meta or {}
@@ -259,7 +248,7 @@ class DbtModel(_DbtTestableNode):
     get_pre_hook_paths = partialmethod(_get_hooks, hook_type="pre-hook")
     get_post_hook_paths = partialmethod(_get_hooks, hook_type="post-hook")
 
-    def get_scripts(self, *, before: bool) -> List[str]:
+    def get_scripts(self, *, before: bool) -> list[str]:
         # sometimes properties can *be* there and still be None
         meta = self.meta or {}
 
@@ -286,7 +275,7 @@ class DbtModel(_DbtTestableNode):
             return scripts_node.get("after") or []
 
     @property
-    def environment_name(self) -> Optional[str]:
+    def environment_name(self) -> str | None:
         meta = self.meta or {}
         fal = meta.get("fal") or {}
         return fal.get("environment")
@@ -294,7 +283,7 @@ class DbtModel(_DbtTestableNode):
 
 @dataclass
 class DbtRunResult:
-    nativeRunResult: Optional[RunResultsArtifact]
+    nativeRunResult: RunResultsArtifact | None
 
     @property
     def results(self) -> Sequence[RunResultOutput]:
@@ -306,7 +295,7 @@ class DbtRunResult:
 
 @dataclass
 class DbtFreshnessExecutionResult:
-    _artifact: Optional[FreshnessExecutionResultArtifact]
+    _artifact: FreshnessExecutionResultArtifact | None
 
     @property
     def results(self) -> Sequence[FreshnessNodeOutput]:
@@ -341,13 +330,13 @@ class DbtManifest:
         self,
         run_results: DbtRunResult,
         freshness_results: DbtFreshnessExecutionResult,
-        generated_models: Dict[str, Path],
-    ) -> Tuple[List[DbtModel], List[DbtSource], List[DbtTest]]:
+        generated_models: dict[str, Path],
+    ) -> tuple[list[DbtModel], list[DbtSource], list[DbtTest]]:
         results_map = {r.unique_id: r for r in run_results.results}
 
-        tests: List[DbtTest] = []
+        tests: list[DbtTest] = []
 
-        tests_dict: Dict[str, List[DbtGenericTest]] = defaultdict(list)
+        tests_dict: dict[str, list[DbtGenericTest]] = defaultdict(list)
         for node in self.get_test_nodes():
             test: DbtTest = DbtTest.init(node=node)
 
@@ -363,7 +352,7 @@ class DbtManifest:
                 if test.source_id:
                     tests_dict[test.source_id].append(test)
 
-        models: List[DbtModel] = []
+        models: list[DbtModel] = []
         for node in self.get_model_nodes():
             model = DbtModel(
                 node=node,
@@ -380,7 +369,7 @@ class DbtManifest:
 
         source_freshness_map = {r.unique_id: r for r in freshness_results.results}
 
-        sources: List[DbtSource] = []
+        sources: list[DbtSource] = []
         for node in self.get_source_nodes():
             source = DbtSource(
                 node=node,
@@ -399,12 +388,12 @@ class DbtManifest:
 
 @dataclass
 class CompileArgs:
-    selector_name: Optional[str]
-    select: List[str]
-    models: List[str]
-    exclude: Tuple[str]
-    state: Optional[Path]
-    single_threaded: Optional[bool]
+    selector_name: str | None
+    select: list[str]
+    models: list[str]
+    exclude: tuple[str]
+    state: Path | None
+    single_threaded: bool | None
 
 
 @has_side_effects
@@ -416,14 +405,14 @@ class FalDbt:
         self,
         project_dir: str,
         profiles_dir: str,
-        select: List[str] = [],
-        exclude: Tuple[str] = tuple(),
-        selector_name: Optional[str] = None,
-        threads: Optional[int] = None,
-        state: Optional[str] = None,
-        profile_target: Optional[str] = None,
+        select: list[str] = [],
+        exclude: tuple[str] = tuple(),
+        selector_name: str | None = None,
+        threads: int | None = None,
+        state: str | None = None,
+        profile_target: str | None = None,
         args_vars: str = "{}",
-        generated_models: Dict[str, Path] = {},
+        generated_models: dict[str, Path] = {},
     ):
         if not version.IS_DBT_V1PLUS:
             raise NotImplementedError(
@@ -513,7 +502,7 @@ class FalDbt:
         )
 
     @property
-    def source_paths(self) -> List[str]:
+    def source_paths(self) -> list[str]:
         # BACKWARDS: Change intorduced in 1.0.0
         if hasattr(self._config, "model_paths"):
             return self._config.model_paths
@@ -538,14 +527,14 @@ class FalDbt:
     def project_name(self):
         return self._config.project_name
 
-    def list_sources(self) -> List[DbtSource]:
+    def list_sources(self) -> list[DbtSource]:
         """
         List tables available for `source` usage
         """
         with telemetry.log_time("list_sources", dbt_config=self._config):
             return self.sources
 
-    def list_models_ids(self) -> Dict[str, str]:
+    def list_models_ids(self) -> dict[str, str]:
         """
         List model ids available for `ref` usage, formatting like `[ref_name, ...]`
         """
@@ -556,25 +545,25 @@ class FalDbt:
 
             return res
 
-    def list_models(self) -> List[DbtModel]:
+    def list_models(self) -> list[DbtModel]:
         """
         List models
         """
         with telemetry.log_time("list_models", dbt_config=self._config):
             return self.models
 
-    def list_tests(self) -> List[DbtTest]:
+    def list_tests(self) -> list[DbtTest]:
         """
         List tests
         """
         with telemetry.log_time("list_tests", dbt_config=self._config):
             return self.tests
 
-    def list_features(self) -> List[Feature]:
+    def list_features(self) -> list[Feature]:
         with telemetry.log_time("list_features", dbt_config=self._config):
             return self.features
 
-    def _find_features(self) -> List[Feature]:
+    def _find_features(self) -> list[Feature]:
         """List features defined in schema.yml files."""
         models = self.models
         models = list(
@@ -608,7 +597,7 @@ class FalDbt:
         return features
 
     def _model(
-        self, target_model_name: str, target_package_name: Optional[str]
+        self, target_model_name: str, target_package_name: str | None
     ) -> ManifestNode:
         target_model: MaybeNonSource = self._manifest.nativeManifest.resolve_ref(
             target_model_name, target_package_name, self.project_dir, self.project_dir
@@ -623,7 +612,7 @@ class FalDbt:
 
         return target_model
 
-    def ref(self, target_1: str, target_2: Optional[str] = None) -> pd.DataFrame:
+    def ref(self, target_1: str, target_2: str | None = None) -> pd.DataFrame:
         """
         Download a dbt model as a pandas.DataFrame automagically.
         """
@@ -728,7 +717,7 @@ class FalDbt:
         self,
         data: pd.DataFrame,
         target_1: str,
-        target_2: Optional[str] = None,
+        target_2: str | None = None,
         *,
         dtype: Any = None,
         mode: str = "overwrite",
@@ -811,7 +800,7 @@ class FalDbt:
                 config=self._config,
             )
 
-    def _load_environment(self, name: str) -> "BaseEnvironment":
+    def _load_environment(self, name: str) -> BaseEnvironment:
         """
         Return the environment for the given ``name``.
         If the environment does not exist, it raises an exception.

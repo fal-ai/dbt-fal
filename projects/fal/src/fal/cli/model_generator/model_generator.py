@@ -1,18 +1,19 @@
-import ast
-from functools import partial
-import re
-from typing import Callable, Iterable, List, TypeVar
-from pathlib import Path
-from fal.fal_script import python_from_file
+from __future__ import annotations
 
+import ast
+import re
+from functools import partial
+from pathlib import Path
+from typing import Callable, Iterable, TypeVar
+
+from faldbt.logger import LOGGER
 from faldbt.parse import get_fal_models_dirs, load_dbt_project_contract
+
 from fal.cli.model_generator.module_check import (
     generate_dbt_dependencies,
     write_to_model_check,
 )
-
-from faldbt.logger import LOGGER
-
+from fal.fal_script import python_from_file
 from fal.telemetry import telemetry
 
 SQL_MODEL_TEMPLATE = """
@@ -53,8 +54,8 @@ def generate_python_dbt_models(project_dir: str, args_vars: str):
         )
     )
 
-    python_paths: List[Path] = []
-    fal_target_sqls: List[Path] = []
+    python_paths: list[Path] = []
+    fal_target_sqls: list[Path] = []
     if fal_python_models_and_sqls:
         python_paths, fal_target_sqls, _ = map(list, zip(*fal_python_models_and_sqls))
 
@@ -106,7 +107,7 @@ def _generate_sql_for_fal_python_model(py_path: Path, sql_path: Path):
 # TODO: unit tests
 def _check_path_safe_to_write(sql_path: Path, py_path: Path):
     if sql_path.exists():
-        with open(sql_path, "r") as file:
+        with open(sql_path) as file:
             contents = file.read()
             checksum, found = _checksum(contents)
             if not found or checksum != found:
@@ -170,7 +171,7 @@ def _checksum(contents: str):
     )
 
 
-def _find_python_files(models_path: Path) -> List[Path]:
+def _find_python_files(models_path: Path) -> list[Path]:
     files = []
     files.extend(models_path.rglob("*.py"))
     files.extend(models_path.rglob("*.ipynb"))

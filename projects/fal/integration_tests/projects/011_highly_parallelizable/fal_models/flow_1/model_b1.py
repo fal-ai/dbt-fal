@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from _fal_testing import create_model_artifact
 
 # weird way to call, but added in the docstring

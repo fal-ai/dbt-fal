@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import ast
-from typing import Iterator, List
-import astor
 import re
+from typing import Iterator
+
+import astor
 
 
 def generate_dbt_dependencies(module: ast.Module) -> str:
@@ -20,7 +23,7 @@ def generate_dbt_dependencies(module: ast.Module) -> str:
     dbt_function_calls = list(map(astor.to_source, dbt_ast_calls))
     docstring_dbt_functions = _find_docstring_dbt_functions(module)
 
-    lines: List[str] = docstring_dbt_functions + dbt_function_calls
+    lines: list[str] = docstring_dbt_functions + dbt_function_calls
 
     # Jinja-fy the calls
     return "\n".join(map(lambda s: "{{ " + s.strip() + " }}", lines))
@@ -39,11 +42,11 @@ def write_to_model_check(module: ast.Module):
     ), "There must be at least one write_to_model call in the Python Model"
 
 
-def _find_function_calls(nodes: Iterator[ast.AST]) -> List[ast.Call]:
+def _find_function_calls(nodes: Iterator[ast.AST]) -> list[ast.Call]:
     return [node for node in nodes if isinstance(node, ast.Call)]
 
 
-def _filter_function_calls_by_name(calls: List[ast.Call], func_name: str):
+def _filter_function_calls_by_name(calls: list[ast.Call], func_name: str):
     """
     Analyze all function calls passed to find the ones that call `func_name`.
     """
@@ -54,7 +57,7 @@ def _filter_function_calls_by_name(calls: List[ast.Call], func_name: str):
     ]
 
 
-def _filter_constant_calls(calls: List[ast.Call]) -> List[ast.Call]:
+def _filter_constant_calls(calls: list[ast.Call]) -> list[ast.Call]:
     """
     Analyze all function calls passed to find the ones with all literal arguments.
     We ignore a `_func(var)` but accept a `_func('model_name')`
@@ -86,7 +89,7 @@ REF_RE = re.compile("ref\\([^)]*\\)")
 SOURCE_RE = re.compile("source\\([^)]*\\)")
 
 
-def _find_docstring_dbt_functions(module: ast.Module) -> List[str]:
+def _find_docstring_dbt_functions(module: ast.Module) -> list[str]:
     '''
     Simple regex analysis for docstring in top of the file. User can list dependencies one per line, but not multiline.
     Example:

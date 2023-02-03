@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 import abc
-from typing import List, Union
 
-from dbt.exceptions import NotImplementedError
-from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.base.impl import BaseAdapter
-
+from dbt.adapters.base.relation import BaseRelation
+from dbt.exceptions import NotImplementedError
 from dbt.fal.adapters.teleport.info import TeleportInfo
 
 
@@ -38,7 +38,7 @@ class TeleportAdapter:
 
     @classmethod
     @abc.abstractmethod
-    def storage_formats(cls) -> List[str]:
+    def storage_formats(cls) -> list[str]:
         """
         List of formats this adapter handles. e.g. `['csv', 'parquet']`
         """
@@ -71,9 +71,7 @@ class TeleportAdapter:
         )
 
     @classmethod
-    def is_teleport_adapter(
-        cls, adapter: Union[BaseAdapter, "TeleportAdapter"]
-    ) -> bool:
+    def is_teleport_adapter(cls, adapter: BaseAdapter | TeleportAdapter) -> bool:
         methods = [
             "storage_formats",
             # "teleport_backends",
@@ -85,9 +83,7 @@ class TeleportAdapter:
         )
 
     @classmethod
-    def find_format(
-        cls, target_adapter: "TeleportAdapter", ref_adapter: "TeleportAdapter"
-    ):
+    def find_format(cls, target_adapter: TeleportAdapter, ref_adapter: TeleportAdapter):
         """
         Find common format between target and ref adapter, giving priority to target list ordering.
         """

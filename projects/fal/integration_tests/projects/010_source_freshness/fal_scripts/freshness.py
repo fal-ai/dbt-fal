@@ -1,10 +1,12 @@
-from typing import List
+from __future__ import annotations
+
 import os
+
 from fal import DbtSource
 
 output = ""
 # TODO add real test for freshness
-sources: List[DbtSource] = list_sources()
+sources: list[DbtSource] = list_sources()
 for node in sources:
     if node.freshness:
         # NOTE: removing the namespace prefix

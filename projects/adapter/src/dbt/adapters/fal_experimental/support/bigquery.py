@@ -1,13 +1,14 @@
-from dbt.adapters.base import BaseAdapter, BaseRelation
-from dbt.adapters.base.connections import AdapterResponse
-from dbt.adapters.fal_experimental.adapter_support import new_connection
-import pandas as pd
+from __future__ import annotations
 
 # [bigquery] extras dependencies
 import google.cloud.bigquery as bigquery
+import pandas as pd
+from dbt.adapters.base import BaseAdapter, BaseRelation
+from dbt.adapters.base.connections import AdapterResponse
+from dbt.adapters.bigquery import BigQueryAdapter, BigQueryConnectionManager
+from dbt.adapters.fal_experimental.adapter_support import new_connection
 from google.cloud.bigquery.job import WriteDisposition
 
-from dbt.adapters.bigquery import BigQueryAdapter, BigQueryConnectionManager
 
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
     sql = f"SELECT * FROM {relation}"

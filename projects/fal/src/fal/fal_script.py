@@ -1,44 +1,44 @@
-import os
+from __future__ import annotations
+
 import json
-from typing import Dict, Any, List, Optional, Union, Callable
-from pathlib import Path
-from functools import partial
+import os
 from dataclasses import dataclass, field
-from deprecation import deprecated
+from functools import partial
+from pathlib import Path
+from typing import Any, Callable
 
-from faldbt.parse import normalize_path
-from faldbt.project import DbtModel, FalDbt, FAL
-
-from dbt.contracts.results import RunStatus
 from dbt.config.runtime import RuntimeConfig
-from faldbt.logger import LOGGER
-
 from dbt.contracts.graph.parsed import ColumnInfo
+from dbt.contracts.results import RunStatus
+from deprecation import deprecated
+from faldbt.logger import LOGGER
+from faldbt.parse import normalize_path
+from faldbt.project import FAL, DbtModel, FalDbt
 
 
 class Hook:
     path: str
-    arguments: Dict[str, Any]
+    arguments: dict[str, Any]
 
 
 @dataclass
 class LocalHook(Hook):
     path: str
-    arguments: Dict[str, Any] = field(default_factory=dict)
+    arguments: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class IsolatedHook(Hook):
     path: str
     environment_name: str
-    arguments: Dict[str, Any] = field(default_factory=dict)
+    arguments: dict[str, Any] = field(default_factory=dict)
 
 
 def _is_local_environment(environment_name: str) -> None:
     return environment_name == "local"
 
 
-def create_hook(raw_hook: Any, default_environment_name: Optional[str] = None) -> Hook:
+def create_hook(raw_hook: Any, default_environment_name: str | None = None) -> Hook:
     if isinstance(raw_hook, str):
         raw_hook = {"path": raw_hook}
 
@@ -62,8 +62,8 @@ def create_hook(raw_hook: Any, default_environment_name: Optional[str] = None) -
 @dataclass
 class CurrentAdapterResponse:
     message: str
-    code: Optional[str]
-    rows_affected: Optional[int]
+    code: str | None
+    rows_affected: int | None
 
 
 @dataclass
@@ -71,10 +71,10 @@ class CurrentModel:
     name: str
     alias: str
     status: RunStatus
-    columns: Dict[str, ColumnInfo]
-    tests: List[Any]
-    meta: Dict[Any, Any]
-    adapter_response: Optional[CurrentAdapterResponse]
+    columns: dict[str, ColumnInfo]
+    tests: list[Any]
+    meta: dict[Any, Any]
+    adapter_response: CurrentAdapterResponse | None
 
 
 @dataclass
@@ -99,6 +99,7 @@ class ContextConfig:
             os.path.realpath(os.path.join(config.project_root, config.target_path))
         )
 
+
 @dataclass
 class ContextTarget:
     def __init__(self, config: RuntimeConfig):
@@ -109,15 +110,16 @@ class ContextTarget:
         self.database = config.credentials.database
         self.schema = config.credentials.schema
 
+
 @dataclass
 class Context:
-    current_model: Union[CurrentModel, None]
+    current_model: CurrentModel | None
     config: ContextConfig
     target: ContextTarget
-    _arguments: Optional[Dict[str, Any]] = field(repr=False, default=None)
+    _arguments: dict[str, Any] | None = field(repr=False, default=None)
 
     @property
-    def arguments(self) -> Dict[str, Any]:
+    def arguments(self) -> dict[str, Any]:
         if self._arguments is None:
             raise ValueError(
                 "'context.arguments' is only accessible from hooks, "
@@ -128,18 +130,18 @@ class Context:
 
 @dataclass(frozen=True, init=False)
 class FalScript:
-    model: Optional[DbtModel]
+    model: DbtModel | None
     path: Path
     faldbt: FalDbt
-    hook_arguments: Optional[Dict[str, Any]]
+    hook_arguments: dict[str, Any] | None
     is_hook: bool
 
     def __init__(
         self,
         faldbt: FalDbt,
-        model: Optional[DbtModel],
+        model: DbtModel | None,
         path: str,
-        hook_arguments: Optional[Dict[str, Any]] = None,
+        hook_arguments: dict[str, Any] | None = None,
         is_hook: bool = False,
     ):
         # Necessary because of frozen=True
@@ -282,14 +284,14 @@ class FalScript:
         )
 
 
-def _del_key(dict: Dict[str, Any], key: str):
+def _del_key(dict: dict[str, Any], key: str):
     try:
         del dict[key]
     except KeyError:
         pass
 
 
-def _process_tests(tests: List[Any]):
+def _process_tests(tests: list[Any]):
     return list(
         map(
             lambda test: CurrentTest(
@@ -312,7 +314,7 @@ def python_from_file(path: Path) -> str:
 
 
 def _process_ipynb(raw_source_code: str) -> str:
-    def strip_magic(source: List[str]) -> List[str]:
+    def strip_magic(source: list[str]) -> list[str]:
         NOTEBOOK_LIB = "faldbt.magics"
         return [item for item in source if item[0] != "%" and NOTEBOOK_LIB not in item]
 
@@ -334,10 +336,8 @@ def _process_ipynb(raw_source_code: str) -> str:
 def _not_allowed_function_maker(function_name: str) -> Callable[[Any], None]:
     def not_allowed_function(*args, **kwargs):
         raise Exception(
-            (
-                f"{function_name} is not allowed in hooks."
-                " Consider using a Python model."
-            )
+            f"{function_name} is not allowed in hooks."
+            " Consider using a Python model."
         )
 
     return not_allowed_function

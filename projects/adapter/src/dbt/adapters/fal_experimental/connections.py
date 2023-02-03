@@ -1,10 +1,10 @@
-from dataclasses import dataclass
-from typing import Optional
+from __future__ import annotations
+
 import os
+from dataclasses import dataclass
 
 from dbt.adapters.base import Credentials
-from dbt.dataclass_schema import StrEnum, ExtensibleDbtClassMixin
-
+from dbt.dataclass_schema import ExtensibleDbtClassMixin, StrEnum
 from dbt.fal.adapters.python import PythonConnectionManager
 
 
@@ -18,13 +18,13 @@ class TeleportCredentials(ExtensibleDbtClassMixin):
     type: TeleportTypeEnum
 
     # local
-    local_path: Optional[str] = os.getcwd()
+    local_path: str | None = os.getcwd()
 
     # s3
-    s3_bucket: Optional[str] = None
-    s3_region: Optional[str] = None
-    s3_access_key_id: Optional[str] = None
-    s3_access_key: Optional[str] = None
+    s3_bucket: str | None = None
+    s3_region: str | None = None
+    s3_access_key_id: str | None = None
+    s3_access_key: str | None = None
 
 
 class FalConnectionManager(PythonConnectionManager):
@@ -44,7 +44,7 @@ class FalConnectionManager(PythonConnectionManager):
 @dataclass
 class FalCredentials(Credentials):
     default_environment: str = "local"
-    teleport: Optional[TeleportCredentials] = None
+    teleport: TeleportCredentials | None = None
     host: str = ""
     key_secret: str = ""
     key_id: str = ""

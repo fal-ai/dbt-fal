@@ -1,26 +1,26 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator, List
+from typing import Iterator
 
 import networkx as nx
-
 from faldbt.project import DbtModel
+
+from fal.fal_script import Hook, IsolatedHook, create_hook
 from fal.node_graph import DbtModelNode, NodeGraph, NodeKind, ScriptNode
 from fal.planner.tasks import (
     SUCCESS,
-    Task,
     DBTTask,
     FalIsolatedHookTask,
     FalLocalHookTask,
     FalModelTask,
-    TaskGroup,
-    Status,
     HookType,
+    Status,
+    Task,
+    TaskGroup,
 )
 from fal.utils import DynamicIndexProvider
-from fal.fal_script import Hook, LocalHook, IsolatedHook, create_hook
 
 
 def create_hook_task(
@@ -103,7 +103,7 @@ def create_group(
 
 @dataclass
 class Scheduler:
-    groups: List[TaskGroup]
+    groups: list[TaskGroup]
 
     def __post_init__(self) -> None:
         index_provider = DynamicIndexProvider()
@@ -111,11 +111,11 @@ class Scheduler:
             for task in group.iter_tasks():
                 task.set_run_index(index_provider)
 
-    def filter_groups(self, status: Status) -> List[TaskGroup]:
+    def filter_groups(self, status: Status) -> list[TaskGroup]:
         return [group for group in self.groups if group.status is status]
 
     @property
-    def pending_groups(self) -> List[TaskGroup]:
+    def pending_groups(self) -> list[TaskGroup]:
         return self.filter_groups(Status.PENDING)
 
     def __bool__(self) -> bool:

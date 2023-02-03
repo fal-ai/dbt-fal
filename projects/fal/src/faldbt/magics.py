@@ -1,5 +1,9 @@
-from IPython.core.magic import register_line_magic, needs_local_scope
+from __future__ import annotations
+
 from functools import partial
+
+from IPython.core.magic import needs_local_scope, register_line_magic
+
 from fal import FalDbt
 
 

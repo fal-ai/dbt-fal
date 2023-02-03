@@ -1,18 +1,20 @@
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from dbt.flags import PROFILES_DIR
+from faldbt.project import FAL, DbtModel, FalDbt, FalGeneralException
+
+from fal.fal_script import FalScript
 from fal.planner.executor import parallel_executor
 from fal.planner.schedule import Scheduler
 from fal.planner.tasks import FalLocalHookTask, Status, TaskGroup
 
-from fal.fal_script import FalScript
-from faldbt.project import FAL, DbtModel, FalDbt, FalGeneralException
-
 
 def create_fal_dbt(
-    args: argparse.Namespace, generated_models: Dict[str, Path] = {}
+    args: argparse.Namespace, generated_models: dict[str, Path] = {}
 ) -> FalDbt:
     profiles_dir = PROFILES_DIR
     if args.profiles_dir is not None:
@@ -68,10 +70,12 @@ def fal_run(args: argparse.Namespace):
         _handle_global_scripts(args, global_scripts, faldbt, selector_flags)
 
 
-def _handle_global_scripts(args: argparse.Namespace,
-                           global_scripts: List[FalScript],
-                           faldbt: FalDbt,
-                           selector_flags: Any) -> None:
+def _handle_global_scripts(
+    args: argparse.Namespace,
+    global_scripts: list[FalScript],
+    faldbt: FalDbt,
+    selector_flags: Any,
+) -> None:
     scripts_flag = _scripts_flag(args)
     if not scripts_flag and not selector_flags:
         # run globals when no --script is passed and no selector is passed
@@ -80,13 +84,13 @@ def _handle_global_scripts(args: argparse.Namespace,
         _run_scripts(args, global_scripts, faldbt)
 
 
-def _run_scripts(args: argparse.Namespace, scripts: List[FalScript], faldbt: FalDbt):
+def _run_scripts(args: argparse.Namespace, scripts: list[FalScript], faldbt: FalDbt):
     scheduler = Scheduler(
         [TaskGroup(FalLocalHookTask.from_fal_script(script)) for script in scripts]
     )
     parallel_executor(args, faldbt, scheduler)
 
-    failed_tasks: List[FalLocalHookTask] = [
+    failed_tasks: list[FalLocalHookTask] = [
         group.task for group in scheduler.filter_groups(Status.FAILURE)
     ]  # type: ignore
     failed_script_ids = [task.build_fal_script(faldbt).id for task in failed_tasks]
@@ -99,8 +103,8 @@ def _scripts_flag(args: argparse.Namespace) -> bool:
 
 
 def _get_hooks_for_model(
-    models: List[DbtModel], faldbt: FalDbt, hook_type: str
-) -> List[FalScript]:
+    models: list[DbtModel], faldbt: FalDbt, hook_type: str
+) -> list[FalScript]:
     return [
         FalScript.from_hook(faldbt, model, hook)
         for model in models
@@ -109,8 +113,8 @@ def _get_hooks_for_model(
 
 
 def _select_scripts(
-    args: argparse.Namespace, models: List[DbtModel], faldbt: FalDbt
-) -> List[FalScript]:
+    args: argparse.Namespace, models: list[DbtModel], faldbt: FalDbt
+) -> list[FalScript]:
     scripts = []
     scripts_flag = _scripts_flag(args)
 
@@ -136,15 +140,13 @@ def _get_global_scripts(faldbt: FalDbt, args: argparse.Namespace):
     ]
 
 
-def _get_models_with_keyword(faldbt: FalDbt) -> List[DbtModel]:
-    return list(
-        filter(lambda model: FAL in model.meta, faldbt.list_models())
-    )
+def _get_models_with_keyword(faldbt: FalDbt) -> list[DbtModel]:
+    return list(filter(lambda model: FAL in model.meta, faldbt.list_models()))
 
 
-def _get_filtered_models(faldbt: FalDbt, all, selected, before) -> List[DbtModel]:
+def _get_filtered_models(faldbt: FalDbt, all, selected, before) -> list[DbtModel]:
     selected_ids = _models_ids(faldbt._compile_task._flattened_nodes)
-    filtered_models: List[DbtModel] = []
+    filtered_models: list[DbtModel] = []
 
     if (
         not all

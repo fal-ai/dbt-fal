@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import Callable, Iterator, List, Set
+from dataclasses import dataclass
+from typing import Callable, Iterator
 
 import networkx as nx
-from fal.node_graph import NodeKind
-from fal.cli.selectors import ExecutionPlan, _is_before_script, _is_after_script
 from faldbt.logger import LOGGER
-from dataclasses import dataclass
+
+from fal.cli.selectors import ExecutionPlan, _is_after_script, _is_before_script
+from fal.node_graph import NodeKind
 
 
 @dataclass
@@ -24,7 +25,6 @@ class OriginGraph:
             graph = self.graph
 
         import matplotlib.pyplot as plt
-
         import networkx.drawing.layout as layout
 
         nx.draw_networkx(
@@ -81,7 +81,7 @@ class ScriptConnectedGraph(OriginGraph):
         return shuffled_graph
 
     def _shuffle(self):
-        def _pattern_matching(node_check: Callable[[str], bool], nodes: Set[str]):
+        def _pattern_matching(node_check: Callable[[str], bool], nodes: set[str]):
             matched = {
                 maybe_script for maybe_script in nodes if node_check(maybe_script)
             }
@@ -93,7 +93,7 @@ class ScriptConnectedGraph(OriginGraph):
         def get_after_scripts(graph: nx.DiGraph, node: str):
             return _pattern_matching(_is_after_script, set(graph.successors(node)))
 
-        def _add_edges_from_to(from_nodes: Set[str], to_nodes: Set[str]):
+        def _add_edges_from_to(from_nodes: set[str], to_nodes: set[str]):
             self.graph.add_edges_from(
                 (from_n, to_n) for from_n in from_nodes for to_n in to_nodes
             )
@@ -136,7 +136,7 @@ class PlannedGraph(OriginGraph):
             planned_graph.plan()
         return planned_graph
 
-    def _find_subgraphs(self) -> Iterator[List[str]]:
+    def _find_subgraphs(self) -> Iterator[list[str]]:
         # Initially topologically sort the graph and find nodes
         # that can be grouped together to be run as a single node
         # by using the critical node approach. All nodes within a
@@ -146,7 +146,7 @@ class PlannedGraph(OriginGraph):
         current_stack = []
         allowed_ancestors = set()
 
-        def split() -> Iterator[List[str]]:
+        def split() -> Iterator[list[str]]:
             if len(current_stack) > 1:
                 yield current_stack.copy()
             current_stack.clear()
@@ -178,7 +178,7 @@ class PlannedGraph(OriginGraph):
 
     def _reduce_subgraph(
         self,
-        nodes: List[str],
+        nodes: list[str],
     ) -> None:
         subgraph = self.graph.subgraph(nodes).copy()
 

@@ -1,5 +1,8 @@
-from fal.node_graph import NodeKind
+from __future__ import annotations
+
 from tests.planner.utils import to_graph
+
+from fal.node_graph import NodeKind
 
 GRAPH_1 = [
     ("A", {"kind": NodeKind.DBT_MODEL, "post_hook": ["S1", "S2"], "to": ["B"]}),

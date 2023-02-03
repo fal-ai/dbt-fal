@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
 from typing import Any
 
@@ -9,7 +11,7 @@ except ImportError:
     from backports.functools_lru_cache import lru_cache
 
 
-FAL_SCRIPTS_PATH_VAR_NAME = 'fal-scripts-path'
+FAL_SCRIPTS_PATH_VAR_NAME = "fal-scripts-path"
 
 
 def cache_static(func):
@@ -26,16 +28,19 @@ def retrieve_symbol(source_code: str, symbol_name: str) -> Any:
 
 def get_fal_scripts_path(config: RuntimeConfig):
     import pathlib
+
     project_path = pathlib.Path(config.project_root)
 
     # Default value
-    fal_scripts_path = ''
+    fal_scripts_path = ""
 
-    if hasattr(config, 'vars'):
+    if hasattr(config, "vars"):
         fal_scripts_path: str = config.vars.to_dict().get(FAL_SCRIPTS_PATH_VAR_NAME, fal_scripts_path)  # type: ignore
 
-    if hasattr(config, 'cli_vars'):
-        fal_scripts_path = config.cli_vars.get(FAL_SCRIPTS_PATH_VAR_NAME, fal_scripts_path)
+    if hasattr(config, "cli_vars"):
+        fal_scripts_path = config.cli_vars.get(
+            FAL_SCRIPTS_PATH_VAR_NAME, fal_scripts_path
+        )
 
     return project_path / fal_scripts_path
 
@@ -43,6 +48,7 @@ def get_fal_scripts_path(config: RuntimeConfig):
 @contextmanager
 def extra_path(path: str):
     import sys
+
     sys.path.append(path)
     try:
         yield

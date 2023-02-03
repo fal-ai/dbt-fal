@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-import sys
 import hashlib
 import os
 import shutil
 import subprocess
+import sys
 import sysconfig
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 from fal.packages.environments.base import (
     BASE_CACHE_DIR,
@@ -31,11 +31,11 @@ _FAL_CONDA_HOME = os.getenv("FAL_CONDA_HOME")
 
 @dataclass
 class CondaEnvironment(BaseEnvironment[Path], make_thread_safe=True):
-    packages: List[str]
+    packages: list[str]
     inherit_from_local: bool = False
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> CondaEnvironment:
+    def from_config(cls, config: dict[str, Any]) -> CondaEnvironment:
         user_provided_packages = config.get("packages", [])
         # TODO: remove this once cross-Python-version serialization is
         # working.

@@ -1,34 +1,30 @@
 # NOTE: INSPIRED IN https://github.com/dbt-labs/dbt-core/blob/43edc887f97e359b02b6317a9f91898d3d66652b/core/dbt/lib.py
-from contextlib import contextmanager
-import six
-from enum import Enum
-from dataclasses import dataclass
-from uuid import uuid4
-from typing import Iterator, List, Optional, Tuple
-from urllib.parse import quote_plus
+from __future__ import annotations
+
 import threading
-
-import dbt.flags as flags
-import dbt.adapters.factory as adapters_factory
-
-from dbt.contracts.connection import AdapterResponse
-from dbt.adapters.sql import SQLAdapter
-from dbt.adapters.base import BaseRelation, BaseAdapter, BaseConnectionManager
-from dbt.contracts.graph.compiled import CompileResultNode
-from dbt.config import RuntimeConfig
-
-import pandas as pd
-from pandas.io import sql as pdsql
+from contextlib import contextmanager
+from dataclasses import dataclass
+from enum import Enum
+from typing import Iterator
+from urllib.parse import quote_plus
+from uuid import uuid4
 
 import agate
+import dbt.adapters.factory as adapters_factory
+import dbt.flags as flags
+import pandas as pd
 import sqlalchemy
-from sqlalchemy.sql.ddl import CreateTable
-from sqlalchemy.sql import Insert
-
+from dbt.adapters.base import BaseAdapter, BaseConnectionManager, BaseRelation
+from dbt.adapters.sql import SQLAdapter
+from dbt.config import RuntimeConfig
+from dbt.contracts.connection import AdapterResponse
+from dbt.contracts.graph.compiled import CompileResultNode
 from dbt.contracts.sql import RemoteRunResult
-
 from faldbt import parse
 from faldbt.logger import LOGGER
+from pandas.io import sql as pdsql
+from sqlalchemy.sql import Insert
+from sqlalchemy.sql.ddl import CreateTable
 
 
 class WriteModeEnum(Enum):
@@ -39,7 +35,7 @@ class WriteModeEnum(Enum):
 @dataclass
 class FlagsArgs:
     profiles_dir: str
-    use_colors: Optional[bool]
+    use_colors: bool | None
 
 
 def initialize_dbt_flags(profiles_dir: str):
@@ -69,7 +65,7 @@ def _get_adapter(
     profiles_dir: str,
     profile_target: str,
     *,
-    config: Optional[RuntimeConfig] = None,
+    config: RuntimeConfig | None = None,
 ) -> SQLAdapter:
     if config is None:
         config = parse.get_dbt_config(
@@ -115,7 +111,7 @@ def _execute_sql(
     sql: str,
     *,
     new_conn=True,
-) -> Tuple[AdapterResponse, pd.DataFrame]:
+) -> tuple[AdapterResponse, pd.DataFrame]:
 
     if adapter.type() == "bigquery":
         return _bigquery_execute_sql(adapter, sql, new_conn)
@@ -126,7 +122,7 @@ def _execute_sql(
     with _existing_or_new_connection(
         adapter, _connection_name("execute_sql", sql), new_conn
     ) as is_new:
-        exec_response: Tuple[AdapterResponse, agate.Table] = adapter.execute(
+        exec_response: tuple[AdapterResponse, agate.Table] = adapter.execute(
             sql, auto_begin=is_new, fetch=True
         )
         response, agate_table = exec_response
@@ -146,7 +142,7 @@ def _clear_relations_cache(adapter: BaseAdapter):
 
 def _get_target_relation(
     adapter: SQLAdapter, target: CompileResultNode
-) -> Optional[BaseRelation]:
+) -> BaseRelation | None:
     with adapter.connection_named(_connection_name("relation", target)):
         with _cache_lock("_get_target_relation"):
             _clear_relations_cache(adapter)
@@ -163,12 +159,12 @@ def compile_sql(
     profile_target: str,
     sql: str,
     *,
-    config: Optional[RuntimeConfig] = None,
-    adapter: Optional[SQLAdapter] = None,
+    config: RuntimeConfig | None = None,
+    adapter: SQLAdapter | None = None,
 ):
     from dbt.parser.manifest import process_node
-    from dbt.task.sql import SqlCompileRunner
     from dbt.parser.sql import SqlBlockParser
+    from dbt.task.sql import SqlCompileRunner
 
     if config is None:
         config = parse.get_dbt_config(
@@ -201,8 +197,8 @@ def execute_sql(
     profile_target: str,
     sql: str,
     *,
-    config: Optional[RuntimeConfig] = None,
-    adapter: Optional[SQLAdapter] = None,
+    config: RuntimeConfig | None = None,
+    adapter: SQLAdapter | None = None,
 ) -> pd.DataFrame:
     if adapter is None:
         adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
@@ -224,8 +220,8 @@ def fetch_target(
     target: CompileResultNode,
     profile_target: str,
     *,
-    config: Optional[RuntimeConfig] = None,
-    adapter: Optional[SQLAdapter] = None,
+    config: RuntimeConfig | None = None,
+    adapter: SQLAdapter | None = None,
 ) -> pd.DataFrame:
     if adapter is None:
         adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
@@ -248,9 +244,9 @@ def _fetch_relation(adapter: SQLAdapter, relation: BaseRelation) -> pd.DataFrame
 
 def _build_table_from_parts(
     adapter: SQLAdapter,
-    database: Optional[str],
-    schema: Optional[str],
-    identifier: Optional[str],
+    database: str | None,
+    schema: str | None,
+    identifier: str | None,
 ) -> BaseRelation:
     from dbt.contracts.relation import Path, RelationType
 
@@ -274,8 +270,8 @@ def overwrite_target(
     target: CompileResultNode,
     *,
     dtype=None,
-    config: Optional[RuntimeConfig] = None,
-    adapter: Optional[SQLAdapter] = None,
+    config: RuntimeConfig | None = None,
+    adapter: SQLAdapter | None = None,
 ) -> AdapterResponse:
     if not adapter:
         adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
@@ -320,8 +316,8 @@ def write_target(
     target: CompileResultNode,
     *,
     dtype=None,
-    config: Optional[RuntimeConfig] = None,
-    adapter: Optional[SQLAdapter] = None,
+    config: RuntimeConfig | None = None,
+    adapter: SQLAdapter | None = None,
 ) -> AdapterResponse:
     if adapter is None:
         adapter = _get_adapter(project_dir, profiles_dir, profile_target, config=config)
@@ -387,7 +383,7 @@ def _write_relation(
             "cluster": None,
         }
 
-    column_names: List[str] = list(data.columns)
+    column_names: list[str] = list(data.columns)
 
     rows = data.to_records(index=False)
     row_dicts = list(map(lambda row: dict(zip(column_names, row)), rows))
@@ -395,12 +391,12 @@ def _write_relation(
     create_stmt = CreateTable(alchemy_table, if_not_exists=True).compile(
         bind=engine, compile_kwargs={"literal_binds": True}
     )
-    _execute_sql(adapter, six.text_type(create_stmt).strip())
+    _execute_sql(adapter, str(create_stmt).strip())
 
     insert_stmt = Insert(alchemy_table, values=row_dicts).compile(
         bind=engine, compile_kwargs={"literal_binds": True}
     )
-    response, _ = _execute_sql(adapter, six.text_type(insert_stmt).strip())
+    response, _ = _execute_sql(adapter, str(insert_stmt).strip())
     return response
 
 
@@ -426,7 +422,7 @@ def _replace_relation(
                 create_stmt = f"create table {original_relation} as select * from {new_relation} with data"
                 _execute_sql(
                     adapter,
-                    six.text_type(create_stmt).strip(),
+                    str(create_stmt).strip(),
                     new_conn=False,
                 )
                 adapter.drop_relation(new_relation)
@@ -434,7 +430,7 @@ def _replace_relation(
                 create_stmt = f"create or replace table {original_relation} as select * from {new_relation}"
                 _bigquery_execute_sql(
                     adapter,
-                    six.text_type(create_stmt).strip(),
+                    str(create_stmt).strip(),
                     new_conn=False,
                 )
                 adapter.drop_relation(new_relation)
@@ -444,7 +440,7 @@ def _replace_relation(
                 )
                 _snowflake_execute_sql(
                     adapter=adapter,
-                    sql=six.text_type(create_stmt).strip(),
+                    sql=str(create_stmt).strip(),
                     new_conn=False,
                     fetch=False,  # Avoid trying to fetch as pandas
                 )
@@ -577,7 +573,7 @@ def _sqlalchemy_engine_write_relation(
 # Adapter: BigQuery
 def _bigquery_execute_sql(
     adapter: BaseAdapter, sql: str, new_conn: bool
-) -> Tuple[AdapterResponse, pd.DataFrame]:
+) -> tuple[AdapterResponse, pd.DataFrame]:
     assert adapter.type() == "bigquery"
 
     import google.cloud.bigquery as bigquery
@@ -606,12 +602,12 @@ def _bigquery_write_relation(
     relation: BaseRelation,
     *,
     mode: WriteModeEnum,
-    fields_schema: Optional[List[dict]] = None,
+    fields_schema: list[dict] | None = None,
 ) -> AdapterResponse:
     import google.cloud.bigquery as bigquery
-    from google.cloud.bigquery.job import WriteDisposition
     from dbt.adapters.bigquery import BigQueryAdapter, BigQueryConnectionManager
     from dbt.semver import VersionSpecifier
+    from google.cloud.bigquery.job import WriteDisposition
 
     assert adapter.type() == "bigquery"
 
@@ -681,7 +677,7 @@ def _snowflake_execute_sql(
     new_conn: bool,
     *,
     fetch: bool = True,
-) -> Tuple[AdapterResponse, pd.DataFrame]:
+) -> tuple[AdapterResponse, pd.DataFrame]:
     assert adapter.type() == "snowflake"
 
     import snowflake.connector as snowflake
@@ -722,9 +718,9 @@ def _snowflake_write_relation(
     data: pd.DataFrame,
     relation: BaseRelation,
 ) -> AdapterResponse:
-    from dbt.adapters.snowflake import SnowflakeAdapter, SnowflakeConnectionManager
     import snowflake.connector as snowflake
     import snowflake.connector.pandas_tools as snowflake_pandas
+    from dbt.adapters.snowflake import SnowflakeAdapter, SnowflakeConnectionManager
 
     assert adapter.type() == "snowflake"
 

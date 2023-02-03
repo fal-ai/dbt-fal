@@ -1,9 +1,14 @@
-from pathlib import Path
+# mypy: ignore-errors
+
+from __future__ import annotations
+
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Union
 
 from dbt.adapters.base.relation import BaseRelation
 from dbt.contracts.relation import ComponentName
+
 
 @dataclass
 class TeleportInfo:
@@ -11,7 +16,7 @@ class TeleportInfo:
     credentials: Any
 
     @classmethod
-    def relation_name(cls, relation: Union[str, BaseRelation]):
+    def relation_name(cls, relation: str | BaseRelation):
         if isinstance(relation, str):
             # TODO: should we check for quoting?
             return relation
@@ -22,18 +27,19 @@ class TeleportInfo:
             tb = path.get_lowered_part(ComponentName.Identifier)
             return f"{db}.{sc}.{tb}"
 
-    def build_relation_path(self, relation: Union[str, BaseRelation]):
+    def build_relation_path(self, relation: str | BaseRelation):
         rel_name = TeleportInfo.relation_name(relation)
         return rel_name + "." + self.format
 
     def build_url(self, path: str) -> str:
         raise NotImplemented
 
+
 @dataclass
 class LocalTeleportInfo(TeleportInfo):
     base_dir: Path
 
-    def __init__(self, format: str, credentials: Any, base_dir: Union[str, Path]):
+    def __init__(self, format: str, credentials: Any, base_dir: str | Path):
         super().__init__(format, credentials)
 
         self.base_dir = Path(base_dir)
@@ -42,6 +48,7 @@ class LocalTeleportInfo(TeleportInfo):
 
     def build_url(self, path: str):
         return self.base_dir / path
+
 
 # TODO: How to do Teleport Configuration
 # Will each adapter have to implement a specific case for each teleport backend.
@@ -70,4 +77,4 @@ class S3TeleportInfo(TeleportInfo):
     inner_path: str
 
     def build_url(self, path: str):
-        return f's3://{self.bucket}/{self.inner_path}/{path}'
+        return f"s3://{self.bucket}/{self.inner_path}/{path}"

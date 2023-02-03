@@ -6,25 +6,26 @@ https://github.com/ploomber/ploomber
 Modifications are made to ensure that the code works with fal.
 """
 
+from __future__ import annotations
+
 import datetime
 import http.client as httplib
-import warnings
-import posthog
-import pkg_resources
-import yaml
+import inspect
 import os
-from pathlib import Path
+import platform
 import sys
 import uuid
-from functools import wraps
-from typing import Any, List, Optional
-import inspect
+import warnings
 from contextlib import contextmanager
+from functools import wraps
+from pathlib import Path
+from typing import Any
+
+import pkg_resources
+import posthog
+import yaml
 
 from fal.utils import cache_static
-
-import platform
-
 
 TELEMETRY_VERSION = "0.0.2"
 DEFAULT_HOME_DIR = "~/.fal"
@@ -50,7 +51,7 @@ def str_param(item: Any) -> str:
     return item
 
 
-def opt_str_param(item: Any) -> Optional[str]:
+def opt_str_param(item: Any) -> str | None:
     if item is None:
         return item
     return str_param(item)
@@ -231,8 +232,9 @@ def write_conf_file(conf_path, to_write, error=None):
 def get_dbt_config():
     try:
         from dbt.flags import PROFILES_DIR
-        from fal.cli.args import parse_args
         from faldbt.parse import get_dbt_config
+
+        from fal.cli.args import parse_args
 
         args = parse_args(sys.argv[1:])
 
@@ -254,7 +256,7 @@ def get_dbt_config():
 def log_api(
     action: str,
     total_runtime=None,
-    additional_props: Optional[dict] = None,
+    additional_props: dict | None = None,
     *,
     dbt_config=None,
 ):
@@ -324,7 +326,7 @@ def log_api(
 
 
 @contextmanager
-def log_time(action: str, additional_props: Optional[dict] = None, *, dbt_config=None):
+def log_time(action: str, additional_props: dict | None = None, *, dbt_config=None):
     log_api(
         action=f"{action}_started",
         additional_props=additional_props,
@@ -357,7 +359,7 @@ def log_time(action: str, additional_props: Optional[dict] = None, *, dbt_config
 
 # NOTE: should we log differently depending on the error type?
 # NOTE: how should we handle chained exceptions?
-def log_call(action, args: List[str] = [], *, dbt_config=None):
+def log_call(action, args: list[str] = [], *, dbt_config=None):
     """Runs a function and logs it"""
 
     def _log_call(func):
@@ -376,7 +378,7 @@ def log_call(action, args: List[str] = [], *, dbt_config=None):
     return _log_call
 
 
-def _clean_args_list(args: List[str]) -> List[str]:
+def _clean_args_list(args: list[str]) -> list[str]:
     ALLOWLIST = [
         "--disable-logging",
         "--project-dir",

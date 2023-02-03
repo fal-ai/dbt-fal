@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def model(dbt, fal):
     dbt.config(materialized="table")
     dbt.config(fal_environment="funny-conda")

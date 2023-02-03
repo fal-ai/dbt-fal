@@ -2,23 +2,24 @@
 dbt-fal telemetry code uses source code from: https://github.com/ploomber/ploomber
 """
 
-import datetime
-import http.client as httplib
-import warnings
-import posthog
-import pkg_resources
-import yaml
-import os
-from pathlib import Path
-import sys
-import uuid
-from functools import wraps
-from typing import Any, List, Optional
-import inspect
-
-import platform
+from __future__ import annotations
 
 import atexit
+import datetime
+import http.client as httplib
+import inspect
+import os
+import platform
+import sys
+import uuid
+import warnings
+from functools import wraps
+from pathlib import Path
+from typing import Any
+
+import pkg_resources
+import posthog
+import yaml
 
 TELEMETRY_VERSION = "0.0.1"
 DEFAULT_HOME_DIR = "~/.fal"
@@ -47,7 +48,7 @@ def str_param(item: Any) -> str:
     return item
 
 
-def opt_str_param(item: Any) -> Optional[str]:
+def opt_str_param(item: Any) -> str | None:
     if item is None:
         return item
     return str_param(item)
@@ -228,7 +229,7 @@ def log_api(
     action: str,
     total_runtime=None,
     config=None,
-    additional_props: Optional[dict] = None,
+    additional_props: dict | None = None,
 ):
     """
     This function logs through an API call, assigns parameters if missing like
@@ -291,7 +292,7 @@ def log_api(
     posthog.capture(distinct_id=uid, event=action, properties=all_props)
 
 
-def log_call(action, log_args: List[str] = [], config: bool = False):
+def log_call(action, log_args: list[str] = [], config: bool = False):
     """Runs a function and logs it"""
 
     def _log_call(func):
@@ -351,7 +352,7 @@ def log_call(action, log_args: List[str] = [], config: bool = False):
     return _log_call
 
 
-def _clean_args_list(args: List[str]) -> List[str]:
+def _clean_args_list(args: list[str]) -> list[str]:
     ALLOWLIST = [
         "--disable-logging",
         "--project-dir",

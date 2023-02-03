@@ -1,10 +1,13 @@
 """Synchronize with Airbyte."""
-from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
-import requests
+from __future__ import annotations
+
 import time
-from requests.exceptions import RequestException
+from dataclasses import dataclass, field
+from typing import Any
+
+import requests
 from faldbt.logger import LOGGER
+from requests.exceptions import RequestException
 
 from fal.telemetry import telemetry
 
@@ -34,7 +37,7 @@ class AirbyteClient:
         """Set variables."""
         self._base_url = self.host + "/api/v1"
 
-    def request(self, endpoint: str, data: Optional[Dict[str, Any]]):
+    def request(self, endpoint: str, data: dict[str, Any] | None):
         """Make a request to Airbyte REST API endpoint."""
         headers = {"accept": "application/json"}
 

@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import dbt.version
 from dbt.semver import VersionSpecifier
 
+
 def version_compare(version_string: str):
     return DBT_VCURRENT.compare(VersionSpecifier.from_version_string(version_string))
+
 
 DBT_VCURRENT = dbt.version.installed
 IS_DBT_V1PLUS = version_compare("1.0.0") >= 0

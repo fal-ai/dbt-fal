@@ -1,10 +1,11 @@
-from typing import Dict, List
-import networkx as nx
+from __future__ import annotations
 
-from unittest.mock import MagicMock, PropertyMock
-from unittest.mock import patch
-from fal.node_graph import NodeGraph, _add_after_scripts, _add_before_scripts
+from unittest.mock import MagicMock, patch
+
+import networkx as nx
 from utils import assert_contains_only, create_mock_model
+
+from fal.node_graph import NodeGraph, _add_after_scripts, _add_before_scripts
 
 
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")

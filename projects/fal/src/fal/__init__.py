@@ -1,11 +1,13 @@
-from dbt.contracts.results import NodeStatus
+from __future__ import annotations
 
+from dbt.contracts.results import NodeStatus
 from faldbt.project import (
-    FalDbt,
+    DbtGenericTest,
     DbtModel,
+    DbtSingularTest,
     DbtSource,
     DbtTest,
-    DbtGenericTest,
-    DbtSingularTest,
+    FalDbt,
 )
+
 from fal.fal_script import Context, CurrentModel

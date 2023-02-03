@@ -1,18 +1,20 @@
-from functools import reduce, partial
-import os
-import shlex
-from typing import List, Optional
-from behave import *
+from __future__ import annotations
+
 import glob
-from fal.cli import cli
-import tempfile
 import json
+import os
+import re
+import shlex
+import tempfile
 import unittest
+from datetime import datetime, timezone
+from functools import partial, reduce
 from os.path import exists
 from pathlib import Path
-from datetime import datetime, timezone
-import re
 
+from behave import *
+
+from fal.cli import cli
 
 # The main distinction we can use on an artifact file to determine
 # whether it was created by a Python script or a Python model is the number
@@ -232,6 +234,7 @@ def check_model_results(context):
 
 def _verify_node_order(context):
     import networkx as nx
+
     from fal import FalDbt
     from fal.node_graph import NodeGraph
 
@@ -325,7 +328,7 @@ def _as_name(node):
         return node.split(".")[-1]
 
 
-def _script_filename(script: str, model_name: Optional[str] = None):
+def _script_filename(script: str, model_name: str | None = None):
     script_name = script.replace(".ipynb", ".txt").replace(".py", ".txt")
     if model_name:
         script_name = model_name + "." + script_name
@@ -336,7 +339,7 @@ def _temp_dir_path(context, file):
     return os.path.join(context.temp_dir.name, file)
 
 
-def _get_all_models(context) -> List[str]:
+def _get_all_models(context) -> list[str]:
     """Retrieve all models (both DBT and Python)."""
     all_models = _get_dated_dbt_models(context) + _get_dated_fal_artifacts(
         context, FAL_MODEL
@@ -344,11 +347,11 @@ def _get_all_models(context) -> List[str]:
     return _unpack_dated_result(all_models)
 
 
-def _get_fal_scripts(context) -> List[str]:
+def _get_fal_scripts(context) -> list[str]:
     return _unpack_dated_result(_get_dated_fal_artifacts(context, FAL_SCRIPT))
 
 
-def _unpack_dated_result(dated_result) -> List[str]:
+def _unpack_dated_result(dated_result) -> list[str]:
     if not dated_result:
         return []
 
@@ -407,7 +410,7 @@ def _set_profiles_dir(context) -> Path:
         "snowflake",
         "duckdb",
         "athena",
-        "fal"
+        "fal",
     ]
     if "profile" in context.config.userdata:
         profile = context.config.userdata["profile"]

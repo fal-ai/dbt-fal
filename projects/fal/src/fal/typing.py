@@ -2,50 +2,51 @@
 # don't manually alter the contents.
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Any, Protocol
+
     import pandas as pd
-    from typing import Optional, Dict, List, Protocol, Any
-    from faldbt.project import DbtModel, DbtTest, DbtSource, Feature
-    from fal.fal_script import Context, CurrentModel
+    from faldbt.project import DbtModel, DbtSource, DbtTest, Feature
+
+    from fal.fal_script import Context
 
     class _List_Sources(Protocol):
-        def __call__(self) -> List[DbtSource]:
+        def __call__(self) -> list[DbtSource]:
             """
             List tables available for `source` usage
             """
             ...
 
     class _List_Models_Ids(Protocol):
-        def __call__(self) -> Dict[str, str]:
+        def __call__(self) -> dict[str, str]:
             """
             List model ids available for `ref` usage, formatting like `[ref_name, ...]`
             """
             ...
 
     class _List_Models(Protocol):
-        def __call__(self) -> List[DbtModel]:
+        def __call__(self) -> list[DbtModel]:
             """
             List models
             """
             ...
 
     class _List_Tests(Protocol):
-        def __call__(self) -> List[DbtTest]:
+        def __call__(self) -> list[DbtTest]:
             """
             List tests
             """
             ...
 
     class _List_Features(Protocol):
-        def __call__(self) -> List[Feature]:
+        def __call__(self) -> list[Feature]:
             ...
 
     class _Ref(Protocol):
-        def __call__(
-            self, target_1: str, target_2: Optional[str] = None
-        ) -> pd.DataFrame:
+        def __call__(self, target_1: str, target_2: str | None = None) -> pd.DataFrame:
             """
             Download a dbt model as a pandas.DataFrame automagically.
             """
@@ -89,7 +90,7 @@ if TYPE_CHECKING:
             dtype: Any = None,
             mode: str = "overwrite",
             target_1: str = ...,
-            target_2: Optional[str] = ...,
+            target_2: str | None = ...,
         ):
             """
             Write a pandas.DataFrame to a dbt model automagically.

@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import argparse
-from enum import Enum, auto
 from concurrent.futures import (
     FIRST_COMPLETED,
     Executor,
@@ -8,20 +9,21 @@ from concurrent.futures import (
     wait,
 )
 from dataclasses import dataclass, field
-from typing import Iterator, List, Optional
+from enum import Enum, auto
+from typing import Iterator
+
+from faldbt.logger import LOGGER
+from faldbt.project import FalDbt
 
 from fal.planner.schedule import SUCCESS, Scheduler
 from fal.planner.tasks import (
-    TaskGroup,
-    Task,
-    Status,
     DBTTask,
     FalLocalHookTask,
     HookType,
+    Status,
+    Task,
+    TaskGroup,
 )
-from faldbt.project import FalDbt
-
-from faldbt.logger import LOGGER
 
 
 class State(Enum):
@@ -30,7 +32,7 @@ class State(Enum):
     POST_HOOKS = auto()
 
 
-def _collect_nodes(groups: List[TaskGroup], fal_dbt: FalDbt) -> Iterator[str]:
+def _collect_nodes(groups: list[TaskGroup], fal_dbt: FalDbt) -> Iterator[str]:
     for group in groups:
         if isinstance(group.task, DBTTask):
             yield from group.task.model_ids
@@ -64,9 +66,9 @@ class FutureGroup:
     fal_dbt: FalDbt
     task_group: TaskGroup
     executor: Executor
-    futures: List[Future] = field(default_factory=list)
+    futures: list[Future] = field(default_factory=list)
     status: int = SUCCESS
-    state: Optional[State] = None
+    state: State | None = None
 
     def __post_init__(self) -> None:
         if self.task_group.pre_hooks:
@@ -140,7 +142,7 @@ def parallel_executor(
             for future in future_group.futures
         }
 
-    def create_futures(executor: ThreadPoolExecutor) -> List[FutureGroup]:
+    def create_futures(executor: ThreadPoolExecutor) -> list[FutureGroup]:
         return [
             # FutureGroup's are the secondary layer of the executor,
             # managing the parallelization of tasks.

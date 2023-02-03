@@ -1,17 +1,18 @@
-from typing import List
+from __future__ import annotations
+
 import sys
 
 from click.exceptions import ClickException
-
-from fal.cli.flow_runner import fal_flow_run
-from .args import parse_args
-from .fal_runner import fal_run
-from fal.telemetry import telemetry
-
 from faldbt.logger import log_manager
 
+from fal.cli.flow_runner import fal_flow_run
+from fal.telemetry import telemetry
 
-def cli(argv: List[str] = sys.argv):
+from .args import parse_args
+from .fal_runner import fal_run
+
+
+def cli(argv: list[str] = sys.argv):
     # Wrapper to be able to shutdown telemetry afterwards
     try:
         _cli(argv)
@@ -20,7 +21,7 @@ def cli(argv: List[str] = sys.argv):
 
 
 @telemetry.log_call("cli")
-def _cli(argv: List[str]):
+def _cli(argv: list[str]):
     parsed = parse_args(argv[1:])
 
     # TODO: do we still need this?
@@ -39,6 +40,7 @@ def _cli(argv: List[str]):
 
         elif parsed.command == "cloud":
             import koldstart.auth as auth
+
             if parsed.cloud_command == "login":
                 auth.login()
 
@@ -47,6 +49,7 @@ def _cli(argv: List[str]):
 
             elif parsed.cloud_command == "key-generate":
                 from koldstart.sdk import KoldstartClient
+
                 client = KoldstartClient(f"{parsed.host}:{parsed.port}")
                 try:
                     with client.connect() as connection:

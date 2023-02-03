@@ -1,6 +1,9 @@
-from fal import DbtModel
+from __future__ import annotations
+
 from copy import deepcopy
 from unittest.mock import MagicMock
+
+from fal import DbtModel
 
 
 def assert_contains_only(thisList, otherList):

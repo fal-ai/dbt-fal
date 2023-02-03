@@ -1,7 +1,11 @@
-from fal import FalDbt
-from pathlib import Path
+from __future__ import annotations
+
 import os
+from pathlib import Path
+
 import pandas as pd
+
+from fal import FalDbt
 
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 project_dir = os.path.join(Path.cwd(), "tests/mock")

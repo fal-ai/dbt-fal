@@ -1,15 +1,18 @@
 """Synchronize with Fivetran."""
-import time
-import requests
+from __future__ import annotations
+
 import datetime
 import json
+import time
 from enum import Enum
-from requests.auth import HTTPBasicAuth
-from requests.exceptions import RequestException
-from typing import Any, Dict, Optional
+from typing import Any
 from urllib.parse import urljoin
+
+import requests
 from dateutil import parser
 from faldbt.logger import LOGGER
+from requests.auth import HTTPBasicAuth
+from requests.exceptions import RequestException
 
 BASE_URL = "https://api.fivetran.com/v1/connectors/"
 
@@ -49,8 +52,8 @@ class FivetranClient:
         self,
         *,
         method: MethodsEnum,
-        endpoint: Optional[str] = None,
-        data: Optional[str] = None,
+        endpoint: str | None = None,
+        data: str | None = None,
     ):
         """Make a request to Airbyte REST API endpoint."""
         headers = {"Content-Type": "application/json;version=2"}
@@ -102,8 +105,8 @@ class FivetranClient:
         )
 
     def update_connector(
-        self, connector_id: str, properties: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+        self, connector_id: str, properties: dict[str, Any] = None
+    ) -> dict[str, Any]:
         """Update connector details."""
         return self._request(
             method=MethodsEnum.PATCH, endpoint=connector_id, data=json.dumps(properties)
@@ -111,7 +114,7 @@ class FivetranClient:
 
     def _update_schedule_type(
         self, connector_id: str, schedule_type: ScheduleType = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Update connector schedule type to "auto" or "manual"."""
         if type(schedule_type) != ScheduleType:
             raise Exception("schedule_type must be either 'auto' or 'manual'.")
@@ -119,11 +122,11 @@ class FivetranClient:
             connector_id, properties={"schedule_type": schedule_type.name.lower()}
         )
 
-    def _get_connector_schema(self, connector_id: str) -> Dict[str, Any]:
+    def _get_connector_schema(self, connector_id: str) -> dict[str, Any]:
         """Get schema config for a connector."""
         return self._request(method=MethodsEnum.GET, endpoint=f"{connector_id}/schemas")
 
-    def start_sync(self, connector_id: str) -> Dict[str, Any]:
+    def start_sync(self, connector_id: str) -> dict[str, Any]:
         """Start a Fivetran connector sync."""
         if self.disable_schedule_on_trigger:
             LOGGER.info("Disabling Fivetran sync schedule.")
@@ -140,7 +143,7 @@ class FivetranClient:
         prev_sync_completion: datetime.datetime,
         poll_interval: float = 10,
         poll_timeout: float = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Poll Fivetran until the next sync completes."""
         # The previous sync completion time is necessary because the only way to tell when a sync
         # completes is when this value changes.

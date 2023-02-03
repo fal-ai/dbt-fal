@@ -1,4 +1,7 @@
-from mock import patch, Mock, ANY
+from __future__ import annotations
+
+from unittest.mock import ANY, Mock, patch
+
 import requests
 
 from fal.el.fivetran import FivetranClient, ScheduleType

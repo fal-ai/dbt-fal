@@ -1,7 +1,10 @@
-import pandas as pd
+from __future__ import annotations
+
 import io
 import os
 from functools import reduce
+
+import pandas as pd
 
 df: pd.DataFrame = execute_sql('SELECT * FROM {{ ref("execute_sql_model_one")}}')
 

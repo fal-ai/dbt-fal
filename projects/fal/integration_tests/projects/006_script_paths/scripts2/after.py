@@ -1,7 +1,10 @@
+from __future__ import annotations
+
+import io
 import os
 from functools import reduce
+
 import pandas as pd
-import io
 
 
 def write_data(data, model_name):

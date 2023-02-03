@@ -9,11 +9,11 @@ from collections import defaultdict
 from contextlib import ExitStack, contextmanager, nullcontext
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, ContextManager, Generic, Iterator, TypeVar, Dict, Any
-
-from platformdirs import user_cache_dir
+from typing import Any, Callable, ContextManager, Generic, Iterator, TypeVar
 
 from faldbt.logger import LOGGER
+from platformdirs import user_cache_dir
+
 from fal.packages import bridge, isolated_runner
 
 BASE_CACHE_DIR = Path(user_cache_dir("fal", "fal"))
@@ -51,7 +51,7 @@ class BaseEnvironment(Generic[T]):
         return cls
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> BaseEnvironment:
+    def from_config(cls, config: dict[str, Any]) -> BaseEnvironment:
         """Create a new environment from the given configuration."""
         raise NotImplementedError
 
@@ -169,7 +169,11 @@ class IsolatedProcessConnection(EnvironmentConnection[K]):
             try:
                 result, exception = connection.recv()
             except EOFError:
-                log_env(self.env, "The isolated process has unexpectedly exited.", kind="error")
+                log_env(
+                    self.env,
+                    "The isolated process has unexpectedly exited.",
+                    kind="error",
+                )
                 raise RuntimeError("The isolated process has unexpectedly exited.")
 
             if exception is None:

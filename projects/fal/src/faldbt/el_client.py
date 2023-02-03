@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
+
 from fal.el.airbyte import AirbyteClient
 from fal.el.fivetran import FivetranClient
-from typing import Dict
 
 
 class ELConfigTypes(Enum):
@@ -15,7 +17,7 @@ CONNECTION_KEYS = {"AIRBYTE": "connections", "FIVETRAN": "connectors"}
 
 @dataclass
 class FalElClient:
-    configs: Dict[str, Dict]
+    configs: dict[str, dict]
 
     def airbyte_sync(
         self,
@@ -25,7 +27,7 @@ class FalElClient:
         poll_interval: float = 10,
         poll_timeout: float = None,
         max_retries: int = 10,
-    ) -> Dict[str, Dict]:
+    ) -> dict[str, dict]:
         return self._run_el_sync(
             config_name=config_name,
             connection_id=connection_id,
@@ -41,7 +43,7 @@ class FalElClient:
         connector_name: str = None,
         poll_interval: float = 10,
         poll_timeout: float = None,
-    ) -> Dict[str, Dict]:
+    ) -> dict[str, dict]:
         return self._run_el_sync(
             config_name=config_name,
             connection_id=connector_id,
@@ -57,7 +59,7 @@ class FalElClient:
         connection_name: str,
         poll_interval: float = 10,
         poll_timeout: float = None,
-    ) -> Dict[str, Dict]:
+    ) -> dict[str, dict]:
 
         el_config = self.configs.get(config_name, None)
 

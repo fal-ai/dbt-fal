@@ -1,22 +1,31 @@
-from typing import Any, Callable, Dict, NewType
-from functools import partial
+from __future__ import annotations
+
 import functools
+from functools import partial
+from typing import Any, Callable, Dict, NewType
+
+import pandas as pd
 from dbt.adapters.fal_experimental.connections import TeleportTypeEnum
-from dbt.adapters.fal_experimental.utils.environments import get_default_pip_dependencies
-from dbt.adapters.fal_experimental.utils import extra_path, get_fal_scripts_path, retrieve_symbol
+from dbt.adapters.fal_experimental.utils import (
+    extra_path,
+    get_fal_scripts_path,
+    retrieve_symbol,
+)
+from dbt.adapters.fal_experimental.utils.environments import (
+    get_default_pip_dependencies,
+)
 from dbt.config.runtime import RuntimeConfig
+from dbt.contracts.connection import AdapterResponse
+from dbt.fal.adapters.teleport.info import TeleportInfo
 from isolate.backends import BaseEnvironment
 from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
-import pandas as pd
 
-from dbt.contracts.connection import AdapterResponse
-
-from dbt.fal.adapters.teleport.info import TeleportInfo
+DataLocation = NewType("DataLocation", Dict[str, str])
 
 
-DataLocation = NewType('DataLocation', Dict[str, str])
-
-def _prepare_for_teleport(function: Callable, teleport: TeleportInfo, locations: DataLocation) -> Callable:
+def _prepare_for_teleport(
+    function: Callable, teleport: TeleportInfo, locations: DataLocation
+) -> Callable:
     @functools.wraps(function)
     def wrapped(relation: str, *args, **kwargs) -> Any:
         relation = relation.lower()
@@ -24,11 +33,14 @@ def _prepare_for_teleport(function: Callable, teleport: TeleportInfo, locations:
 
     return wrapped
 
-def _teleport_df_from_external_storage(teleport_info: TeleportInfo, locations: DataLocation, relation: str) -> pd.DataFrame:
+
+def _teleport_df_from_external_storage(
+    teleport_info: TeleportInfo, locations: DataLocation, relation: str
+) -> pd.DataFrame:
     if relation not in locations:
         raise RuntimeError(f"Could not find url for '{relation}' in {locations}")
 
-    if teleport_info.format == 'parquet':
+    if teleport_info.format == "parquet":
         relation_path = locations[relation]
         url = teleport_info.build_url(relation_path)
         storage_options = _build_teleport_storage_options(teleport_info)
@@ -37,8 +49,14 @@ def _teleport_df_from_external_storage(teleport_info: TeleportInfo, locations: D
         # TODO: support more
         raise RuntimeError(f"Format {teleport_info.format} not supported")
 
-def _teleport_df_to_external_storage(teleport_info: TeleportInfo, locations: DataLocation, relation: str, data: pd.DataFrame):
-    if teleport_info.format == 'parquet':
+
+def _teleport_df_to_external_storage(
+    teleport_info: TeleportInfo,
+    locations: DataLocation,
+    relation: str,
+    data: pd.DataFrame,
+):
+    if teleport_info.format == "parquet":
         relation_path = teleport_info.build_relation_path(relation)
         url = teleport_info.build_url(relation_path)
         storage_options = _build_teleport_storage_options(teleport_info)
@@ -49,29 +67,43 @@ def _teleport_df_to_external_storage(teleport_info: TeleportInfo, locations: Dat
     else:
         raise RuntimeError(f"Format {teleport_info.format} not supported")
 
-def _build_teleport_storage_options(teleport_info: TeleportInfo) -> Dict[str, str]:
+
+def _build_teleport_storage_options(teleport_info: TeleportInfo) -> dict[str, str]:
     storage_options = {}
     if teleport_info.credentials.type == TeleportTypeEnum.REMOTE_S3:
         storage_options = {
             "key": teleport_info.credentials.s3_access_key_id,
-            "secret": teleport_info.credentials.s3_access_key
+            "secret": teleport_info.credentials.s3_access_key,
         }
     elif teleport_info.credentials.type == TeleportTypeEnum.LOCAL:
         pass
     else:
-        raise RuntimeError(f"Teleport storage type {teleport_info.credentials.type} not supported")
+        raise RuntimeError(
+            f"Teleport storage type {teleport_info.credentials.type} not supported"
+        )
     return storage_options
 
-def run_with_teleport(code: str, teleport_info: TeleportInfo, locations: DataLocation, config: RuntimeConfig) -> str:
+
+def run_with_teleport(
+    code: str,
+    teleport_info: TeleportInfo,
+    locations: DataLocation,
+    config: RuntimeConfig,
+) -> str:
     # main symbol is defined during dbt-fal's compilation
     # and acts as an entrypoint for us to run the model.
     fal_scripts_path = str(get_fal_scripts_path(config))
     with extra_path(fal_scripts_path):
         main = retrieve_symbol(code, "main")
         return main(
-            read_df=_prepare_for_teleport(_teleport_df_from_external_storage, teleport_info, locations),
-            write_df=_prepare_for_teleport(_teleport_df_to_external_storage, teleport_info, locations)
+            read_df=_prepare_for_teleport(
+                _teleport_df_from_external_storage, teleport_info, locations
+            ),
+            write_df=_prepare_for_teleport(
+                _teleport_df_to_external_storage, teleport_info, locations
+            ),
         )
+
 
 def run_in_environment_with_teleport(
     environment: BaseEnvironment,
@@ -82,6 +114,7 @@ def run_in_environment_with_teleport(
     adapter_type: str,
 ) -> AdapterResponse:
     from isolate.backends.remote import IsolateServer
+
     """Run the 'main' function inside the given code on the
     specified environment.
 
@@ -91,22 +124,24 @@ def run_in_environment_with_teleport(
         deps = [
             i
             for i in get_default_pip_dependencies(
-                    adapter_type,
-                    is_teleport=True,
-                    is_remote=True
+                adapter_type, is_teleport=True, is_remote=True
             )
         ]
 
-        if environment.target_environment_kind == 'conda':
-            raise NotImplementedError("Remote environment with `conda` is not supported yet.")
+        if environment.target_environment_kind == "conda":
+            raise NotImplementedError(
+                "Remote environment with `conda` is not supported yet."
+            )
         else:
-            environment.target_environment_config['requirements'].extend(deps)
+            environment.target_environment_config["requirements"].extend(deps)
 
         key = environment.create()
 
         # TODO: make it work with multiple environments and test fal_scripts_path
         with environment.open_connection(key) as connection:
-            execute_model = partial(run_with_teleport, code, teleport_info, locations, config)
+            execute_model = partial(
+                run_with_teleport, code, teleport_info, locations, config
+            )
             result = connection.run(execute_model)
             return result
 
@@ -115,7 +150,11 @@ def run_in_environment_with_teleport(
         stage = VirtualPythonEnvironment(deps)
 
         # run_with_teleport already handles fal_scripts_path, so we don't need to pass it here
-        with PythonIPC(environment, environment.create(), extra_inheritance_paths=[stage.create()]) as connection:
-            execute_model = partial(run_with_teleport, code, teleport_info, locations, config)
+        with PythonIPC(
+            environment, environment.create(), extra_inheritance_paths=[stage.create()]
+        ) as connection:
+            execute_model = partial(
+                run_with_teleport, code, teleport_info, locations, config
+            )
             result = connection.run(execute_model)
             return result

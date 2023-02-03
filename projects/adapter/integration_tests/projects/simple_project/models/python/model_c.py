@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def model(dbt, fal):
     from utils.get_bool import get_bool
 

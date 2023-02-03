@@ -1,16 +1,18 @@
-from typing import Dict, Any, Tuple
+from __future__ import annotations
 
 from collections import defaultdict
 from contextlib import contextmanager
-from dbt.config.profile import Profile
+from typing import Any
+
 from dbt.adapters.base.impl import BaseAdapter, BaseRelation
 from dbt.adapters.factory import FACTORY
+from dbt.config.profile import Profile
 
 # TODO: offer in `from isolate import is_agent`
 from isolate.connections.common import is_agent
 
 from .connections import FalEncCredentials
-from .wrappers import FalEncAdapterWrapper, FalCredentialsWrapper
+from .wrappers import FalCredentialsWrapper, FalEncAdapterWrapper
 
 
 @contextmanager
@@ -22,15 +24,15 @@ def _release_plugin_lock():
         FACTORY.lock.acquire()
 
 
-def load_profiles_info() -> Tuple[Profile, Dict[str, bool], Dict[str, bool]]:
+def load_profiles_info() -> tuple[Profile, dict[str, bool], dict[str, bool]]:
     import os
 
+    from dbt import flags
     from dbt.config.profile import read_profile
     from dbt.config.project import Project
     from dbt.config.renderer import ProfileRenderer
     from dbt.config.utils import parse_cli_vars
-    from dbt.main import _build_base_subparser, _add_common_arguments
-    from dbt import flags
+    from dbt.main import _add_common_arguments, _build_base_subparser
 
     # includes vars, profile, target
     parser = _build_base_subparser()
@@ -45,7 +47,7 @@ def load_profiles_info() -> Tuple[Profile, Dict[str, bool], Dict[str, bool]]:
     version_check = bool(flags.VERSION_CHECK)
     partial = Project.partial_load(project_root, verify_version=version_check)
 
-    cli_vars: Dict[str, Any] = parse_cli_vars(getattr(args, "vars", "{}"))
+    cli_vars: dict[str, Any] = parse_cli_vars(getattr(args, "vars", "{}"))
     profile_renderer = ProfileRenderer(cli_vars)
     project_profile_name = partial.render_profile_name(profile_renderer)
 

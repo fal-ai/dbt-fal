@@ -1,7 +1,9 @@
-import pandas as pd
-import io
+from __future__ import annotations
+
 import os
 from functools import reduce
+
+import pandas as pd
 
 model_name = context.current_model.name
 df: pd.DataFrame = ref(model_name)

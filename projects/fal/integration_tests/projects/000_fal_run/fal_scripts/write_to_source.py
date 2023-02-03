@@ -1,5 +1,8 @@
-from pandas import DataFrame
+from __future__ import annotations
+
 import os
+
+from pandas import DataFrame
 
 table_prefix = f"ns__{ os.environ.get('DB_NAMESPACE', '') }__ns__"
 

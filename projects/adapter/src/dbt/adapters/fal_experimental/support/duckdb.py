@@ -1,9 +1,10 @@
+from __future__ import annotations
+
+import duckdb
+import pandas as pd
 from dbt.adapters.base import BaseAdapter, BaseRelation
 from dbt.adapters.base.connections import AdapterResponse
-from dbt.adapters.fal_experimental.adapter_support import new_connection
-import pandas as pd
 from dbt.adapters.sql import SQLAdapter
-import duckdb
 
 
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
@@ -20,7 +21,7 @@ def write_df_to_relation(
     relation: BaseRelation,
 ) -> AdapterResponse:
 
-    db_path = adapter.config.credentials.path    
+    db_path = adapter.config.credentials.path
     con = duckdb.connect(database=db_path)
     rows_affected = con.execute(
         f"CREATE OR REPLACE TABLE {relation.schema}.{relation.identifier} AS SELECT * FROM data;"

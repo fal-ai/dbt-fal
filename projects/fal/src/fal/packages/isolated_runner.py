@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import os
+import site
 import sys
 import time
-import site
 from argparse import ArgumentParser
 
 # Isolated processes are really tricky to debug properly
@@ -37,6 +39,7 @@ DEBUG_TIMEOUT = 60 * 15
 
 def run_client(address: str, *, with_pdb: bool = False) -> int:
     from faldbt.logger import LOGGER
+
     from fal.packages import bridge
 
     if with_pdb:
@@ -65,6 +68,7 @@ def run_client(address: str, *, with_pdb: bool = False) -> int:
                     # still try to dump it to the stdout as the last
                     # resort.
                     import traceback
+
                     traceback.print_exc(exception)
                 raise
         return result
@@ -89,6 +93,7 @@ def _get_shell_bootstrap() -> str:
 
 def _fal_main() -> None:
     from faldbt.logger import LOGGER
+
     from fal.packages import bridge
 
     LOGGER.debug("Starting the isolated process at PID {}", os.getpid())

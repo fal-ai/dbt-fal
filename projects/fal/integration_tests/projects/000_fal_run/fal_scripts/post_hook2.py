@@ -1,7 +1,10 @@
-import pandas as pd
+from __future__ import annotations
+
 import io
 import os
 from functools import reduce
+
+import pandas as pd
 
 model_name = context.current_model.name
 model_alias = context.current_model.alias

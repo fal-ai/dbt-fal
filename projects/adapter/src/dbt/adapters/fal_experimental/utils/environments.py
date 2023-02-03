@@ -2,19 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
-import importlib_metadata
+from typing import Any, Iterator
 
+import importlib_metadata
+from dbt.config.runtime import RuntimeConfig
 from dbt.events.adapter_endpoint import AdapterLogger
 from dbt.exceptions import DbtRuntimeError
-from dbt.config.runtime import RuntimeConfig
-
 from isolate.backends import BaseEnvironment, BasicCallable, EnvironmentConnection
 from isolate.backends.local import LocalPythonEnvironment
 
 from . import cache_static
 from .yaml_helper import load_yaml
-
 
 CONFIG_KEYS_TO_IGNORE = ["host", "remote_type", "type", "name", "machine_type"]
 REMOTE_TYPES_DICT = {
@@ -39,8 +37,8 @@ def fetch_environment(
     project_root: str,
     environment_name: str,
     machine_type: str = "S",
-    credentials: Optional[Any] = None,
-) -> Tuple[BaseEnvironment, bool]:
+    credentials: Any | None = None,
+) -> tuple[BaseEnvironment, bool]:
     """Fetch the environment with the given name from the project's
     fal_project.yml file."""
     # Local is a special environment where it doesn't need to be defined
@@ -93,8 +91,8 @@ def db_adapter_config(config: RuntimeConfig) -> RuntimeConfig:
 
 
 def load_environments(
-    base_dir: str, machine_type: str = "S", credentials: Optional[Any] = None
-) -> Dict[str, BaseEnvironment]:
+    base_dir: str, machine_type: str = "S", credentials: Any | None = None
+) -> dict[str, BaseEnvironment]:
     import os
 
     fal_project_path = os.path.join(base_dir, "fal_project.yml")
@@ -124,13 +122,13 @@ def load_environments(
 def create_environment(
     name: str,
     kind: str,
-    config: Dict[str, Any],
+    config: dict[str, Any],
     machine_type: str = "S",
-    credentials: Optional[Any] = None,
+    credentials: Any | None = None,
 ):
-    from isolate.backends.virtualenv import VirtualPythonEnvironment
     from isolate.backends.conda import CondaEnvironment
     from isolate.backends.remote import IsolateServer
+    from isolate.backends.virtualenv import VirtualPythonEnvironment
 
     parsed_config = {
         key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE
@@ -139,7 +137,7 @@ def create_environment(
     if credentials.key_secret and credentials.key_id:
         return _build_hosted_env(config, parsed_config, credentials, machine_type)
 
-    REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
+    REGISTERED_ENVIRONMENTS: dict[str, BaseEnvironment] = {
         "conda": CondaEnvironment,
         "venv": VirtualPythonEnvironment,
         "remote": IsolateServer,
@@ -160,13 +158,12 @@ def create_environment(
 
 
 def _build_hosted_env(
-    config: Dict[str, Any],
-    parsed_config: Dict[str, Any],
+    config: dict[str, Any],
+    parsed_config: dict[str, Any],
     credentials: Any,
     machine_type: str,
 ) -> BaseEnvironment:
-    from isolate_cloud.api import FalHostedServer
-    from isolate_cloud.api import CloudKeyCredentials
+    from isolate_cloud.api import CloudKeyCredentials, FalHostedServer
 
     if not config.get("type"):
         kind = "virtualenv"
@@ -211,15 +208,15 @@ def _is_local_environment(environment_name: str) -> bool:
     return environment_name == "local"
 
 
-def _get_required_key(data: Dict[str, Any], name: str) -> Any:
+def _get_required_key(data: dict[str, Any], name: str) -> Any:
     if name not in data:
         raise FalParseError("Missing required key: " + name)
     return data[name]
 
 
 def _parse_remote_config(
-    config: Dict[str, Any], parsed_config: Dict[str, Any]
-) -> Dict[str, Any]:
+    config: dict[str, Any], parsed_config: dict[str, Any]
+) -> dict[str, Any]:
     assert config.get("remote_type"), "remote_type needs to be specified."
 
     remote_type = REMOTE_TYPES_DICT.get(config["remote_type"])
@@ -243,7 +240,7 @@ def _get_dbt_packages(
     adapter_type: str,
     is_teleport: bool = False,
     is_remote: bool = False,
-) -> Iterator[Tuple[str, Optional[str]]]:
+) -> Iterator[tuple[str, str | None]]:
     dbt_adapter = f"dbt-{adapter_type}"
     for dbt_plugin_name in ["dbt-core", dbt_adapter]:
         distribution = importlib_metadata.distribution(dbt_plugin_name)
@@ -286,6 +283,7 @@ def _get_dbt_packages(
 
 def _find_adapter_extras(package: str, plugin_package: str) -> set[str]:
     import pkgutil
+
     import dbt.adapters
 
     all_extras = _get_extras(package)
@@ -311,7 +309,7 @@ def _version_is_prerelease(raw_version: str) -> bool:
     return package_version.is_prerelease
 
 
-def _get_adapter_root_path() -> Optional[Path]:
+def _get_adapter_root_path() -> Path | None:
     import dbt.adapters.fal as adapter
 
     path = Path(adapter.__file__)
@@ -326,7 +324,7 @@ def get_default_requirements(
     adapter_type: str,
     is_teleport: bool = False,
     is_remote: bool = False,
-) -> Iterator[Tuple[str, Optional[str]]]:
+) -> Iterator[tuple[str, str | None]]:
     yield from _get_dbt_packages(adapter_type, is_teleport, is_remote)
     if not is_remote:
         # We don't override remote isolate
@@ -338,7 +336,7 @@ def get_default_pip_dependencies(
     adapter_type: str,
     is_teleport: bool = False,
     is_remote: bool = False,
-) -> List[str]:
+) -> list[str]:
     return [
         f"{package}=={version}" if version else package
         for package, version in get_default_requirements(

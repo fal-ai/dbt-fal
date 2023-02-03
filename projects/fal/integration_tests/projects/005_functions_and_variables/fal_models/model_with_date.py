@@ -1,9 +1,11 @@
-from fal.typing import *
-from _fal_testing.utils import create_model_artifact
+from __future__ import annotations
 
-import pandas as pd
 import datetime as dt
 
+import pandas as pd
+from _fal_testing.utils import create_model_artifact
+
+from fal.typing import *
 
 arr = [dt.datetime(2022, 1, 1, 14, 50, 59), dt.datetime.now()]
 df = pd.DataFrame(

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import sys
 import hashlib
 import subprocess
-from dataclasses import dataclass, field
+import sys
+from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 from fal.packages.dependency_analysis import get_default_pip_dependencies
 from fal.packages.environments.base import (
@@ -25,11 +25,11 @@ _BASE_VENV_DIR.mkdir(exist_ok=True)
 
 @dataclass
 class VirtualPythonEnvironment(BaseEnvironment[Path], make_thread_safe=True):
-    requirements: List[str]
+    requirements: list[str]
     inherit_from_local: bool = False
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> VirtualPythonEnvironment:
+    def from_config(cls, config: dict[str, Any]) -> VirtualPythonEnvironment:
         requirements = config.get("requirements", [])
         inherit_from_local = config.get("_inherit_from_local", False)
         return cls(requirements, inherit_from_local=inherit_from_local)

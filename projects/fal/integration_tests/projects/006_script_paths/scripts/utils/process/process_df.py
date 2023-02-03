@@ -1,8 +1,10 @@
-import pandas as pd
+from __future__ import annotations
+
 import io
 
+import pandas as pd
+
 print("relative import in inner directories")
-from ..my_utils import write_data
 
 print("use 'utils' as base even in inner directories")
 from utils.my_utils import write_data

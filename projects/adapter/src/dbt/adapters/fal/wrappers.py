@@ -1,19 +1,21 @@
-from typing import Any, Optional, Type, Set
+from __future__ import annotations
 
-from dbt.adapters.factory import get_adapter_by_type
-from dbt.adapters.base.meta import available
+from typing import Any
+
 from dbt.adapters.base.impl import BaseAdapter
+from dbt.adapters.base.meta import available
+from dbt.adapters.factory import get_adapter_by_type
+from dbt.clients.jinja import MacroGenerator
 from dbt.contracts.connection import Credentials
 from dbt.parser.manifest import ManifestLoader
-from dbt.clients.jinja import MacroGenerator
 
-from ..fal_experimental.utils import cache_static
-from ..fal_experimental.impl import FalAdapterMixin
 from ..fal_experimental import telemetry
+from ..fal_experimental.impl import FalAdapterMixin
+from ..fal_experimental.utils import cache_static
 
 
 class FalCredentialsWrapper:
-    _db_creds: Optional[Credentials] = None
+    _db_creds: Credentials | None = None
 
     def __init__(self, db_creds: Credentials):
         self._db_creds = db_creds
@@ -34,7 +36,7 @@ class FalCredentialsWrapper:
 
 
 class FalEncAdapterWrapper(FalAdapterMixin):
-    def __init__(self, db_adapter_type: Type[BaseAdapter], config):
+    def __init__(self, db_adapter_type: type[BaseAdapter], config):
         # Use the db_adapter_type connection manager
         self.ConnectionManager = db_adapter_type.ConnectionManager
 
@@ -95,7 +97,7 @@ class FalEncAdapterWrapper(FalAdapterMixin):
             getattr(super(), name)
 
 
-def find_funcs_in_stack(funcs: Set[str]) -> bool:
+def find_funcs_in_stack(funcs: set[str]) -> bool:
     import inspect
 
     # NOTE: from https://stackoverflow.com/a/42636264/1276441

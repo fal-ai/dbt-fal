@@ -1,5 +1,8 @@
-from fal.typing import *
+from __future__ import annotations
+
 from _fal_testing.utils import create_dynamic_artifact
+
+from fal.typing import *
 
 assert context.current_model
 

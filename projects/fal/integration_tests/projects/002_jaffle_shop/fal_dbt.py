@@ -1,8 +1,11 @@
-import sys
-from fal import FalDbt
-from _fal_testing import create_file
+from __future__ import annotations
 
+import sys
+
+from _fal_testing import create_file
 from faldbt.project import DbtGenericTest, DbtSingularTest
+
+from fal import FalDbt
 
 project_dir = "."
 if len(sys.argv) >= 2:
@@ -22,7 +25,11 @@ for test in faldbt.tests:
 
 for source in faldbt.sources:
     # NOTE: removing the namespace prefix
-    print(source.name, source.table_name.split('__ns__')[1], [(t.name, t.status) for t in source.tests])
+    print(
+        source.name,
+        source.table_name.split("__ns__")[1],
+        [(t.name, t.status) for t in source.tests],
+    )
 
 for model in faldbt.models:
     print(model.name, [(t.name, t.status) for t in model.tests])

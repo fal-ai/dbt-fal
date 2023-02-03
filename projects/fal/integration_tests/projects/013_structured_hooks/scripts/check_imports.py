@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import importlib
-from fal.typing import *
+
 from _fal_testing import create_dynamic_artifact
+
+from fal.typing import *
 
 create_dynamic_artifact(context)
 
@@ -21,4 +25,6 @@ assert (
 if "version" in context.arguments:
     expected_version = context.arguments["version"]
     actual_version = module.__version__
-    assert expected_version == actual_version, f"Expected version {expected_version} of {module_name}, but got {actual_version}."
+    assert (
+        expected_version == actual_version
+    ), f"Expected version {expected_version} of {module_name}, but got {actual_version}."

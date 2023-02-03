@@ -1,5 +1,8 @@
-from behave.configuration import Configuration
+from __future__ import annotations
+
 import os
+
+from behave.configuration import Configuration
 
 
 def before_all(context):

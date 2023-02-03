@@ -1,4 +1,7 @@
-from mock import patch
+from __future__ import annotations
+
+from unittest.mock import patch
+
 import requests
 
 from fal.el.airbyte import AirbyteClient, airbyte_sync

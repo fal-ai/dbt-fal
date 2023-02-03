@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from mock import Mock, patch, ANY
-import requests
+from unittest.mock import patch
 
 from fal import FalDbt
 

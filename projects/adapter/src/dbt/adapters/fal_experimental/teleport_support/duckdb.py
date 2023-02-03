@@ -1,15 +1,14 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
-from typing import Optional
 
-from dbt.exceptions import DbtRuntimeError
-from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.base.impl import BaseAdapter
-
+from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.fal_experimental.connections import (
     TeleportCredentials,
     TeleportTypeEnum,
 )
-
+from dbt.exceptions import DbtRuntimeError
 from dbt.fal.adapters.teleport.impl import TeleportAdapter
 from dbt.fal.adapters.teleport.info import TeleportInfo
 
@@ -95,7 +94,7 @@ class DuckDBAdapterTeleport(TeleportAdapter):
         except DbtRuntimeError:
             return None
 
-    def _set_setting(self, name: str, value: Optional[str]):
+    def _set_setting(self, name: str, value: str | None):
         if value:
             self._db_adapter.execute(f"SET {name} = '{value}'")
         else:

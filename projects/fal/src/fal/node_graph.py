@@ -1,14 +1,15 @@
 from __future__ import annotations
+
+import os as os
 from dataclasses import dataclass
-from typing import List, Tuple, Dict
+from enum import Enum
+from functools import reduce
+from pathlib import Path
+
+import networkx as nx
+from faldbt.project import DbtModel, FalDbt
 
 from fal.fal_script import FalScript
-from faldbt.project import DbtModel, FalDbt
-from pathlib import Path
-import networkx as nx
-import os as os
-from functools import reduce
-from enum import Enum
 
 
 class NodeKind(str, Enum):
@@ -40,8 +41,8 @@ def _add_after_scripts(
     upstream_fal_node_unique_id: str,
     faldbt: FalDbt,
     graph: nx.DiGraph,
-    nodeLookup: Dict[str, FalFlowNode],
-) -> Tuple[nx.DiGraph, Dict[str, FalFlowNode]]:
+    nodeLookup: dict[str, FalFlowNode],
+) -> tuple[nx.DiGraph, dict[str, FalFlowNode]]:
     "Add dbt node to after scripts edges to the graph"
     after_scripts = model.get_scripts(before=False)
     after_fal_scripts = map(
@@ -69,8 +70,8 @@ def _add_before_scripts(
     downstream_fal_node_unique_id: str,
     faldbt: FalDbt,
     graph: nx.DiGraph,
-    nodeLookup: Dict[str, FalFlowNode],
-) -> Tuple[nx.DiGraph, Dict[str, FalFlowNode]]:
+    nodeLookup: dict[str, FalFlowNode],
+) -> tuple[nx.DiGraph, dict[str, FalFlowNode]]:
     "Add before scripts to dbt node edges to the graph"
     before_scripts = model.get_scripts(before=True)
     before_fal_scripts = map(
@@ -104,7 +105,7 @@ class NodeGraph:
     @classmethod
     def from_fal_dbt(cls, fal_dbt: FalDbt):
         graph = nx.DiGraph()
-        node_lookup: Dict[str, FalFlowNode] = {}
+        node_lookup: dict[str, FalFlowNode] = {}
         for model in fal_dbt.list_models():
             model_fal_node = DbtModelNode(model.unique_id, model)
             node_lookup[model_fal_node.unique_id] = model_fal_node
@@ -140,38 +141,38 @@ class NodeGraph:
 
         return cls(graph, node_lookup)
 
-    def __init__(self, graph: nx.DiGraph, node_lookup: Dict[str, FalFlowNode]):
+    def __init__(self, graph: nx.DiGraph, node_lookup: dict[str, FalFlowNode]):
         self.graph = graph
         self.node_lookup = node_lookup
 
-    def get_successors(self, id: str, levels: int) -> List[str]:
+    def get_successors(self, id: str, levels: int) -> list[str]:
         assert levels >= 0
         if levels == 0:
             return []
         else:
-            current: List[str] = list(self.graph.successors(id))
+            current: list[str] = list(self.graph.successors(id))
             return reduce(
                 lambda acc, id: acc + self.get_successors(id, levels - 1),
                 current,
                 current,
             )
 
-    def get_descendants(self, id: str) -> List[str]:
+    def get_descendants(self, id: str) -> list[str]:
         return list(nx.descendants(self.graph, id))
 
-    def get_predecessors(self, id: str, levels: int) -> List[str]:
+    def get_predecessors(self, id: str, levels: int) -> list[str]:
         assert levels >= 0
         if levels == 0:
             return []
         else:
-            current: List[str] = list(self.graph.predecessors(id))
+            current: list[str] = list(self.graph.predecessors(id))
             return reduce(
                 lambda acc, id: acc + self.get_predecessors(id, levels - 1),
                 current,
                 current,
             )
 
-    def get_ancestors(self, id: str) -> List[str]:
+    def get_ancestors(self, id: str) -> list[str]:
         return list(nx.ancestors(self.graph, id))
 
     def get_node(self, id: str) -> FalFlowNode | None:
@@ -210,7 +211,7 @@ class NodeGraph:
     def sort_nodes(self):
         return nx.topological_sort(self.graph)
 
-    def _group_nodes(self) -> List[List[str]]:
+    def _group_nodes(self) -> list[list[str]]:
         nodes = list(self.sort_nodes())
         buckets = []
         local_bucket = []
@@ -233,7 +234,7 @@ class NodeGraph:
         buckets.append(local_bucket)
         return buckets
 
-    def generate_sub_graphs(self) -> List[NodeGraph]:
+    def generate_sub_graphs(self) -> list[NodeGraph]:
         "Generates subgraphs that are seperated by `critical nodes`"
         sub_graphs = []
         for bucket in self._group_nodes():

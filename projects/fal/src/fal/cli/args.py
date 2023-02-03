@@ -1,9 +1,11 @@
-from uuid import uuid4
-from typing import List, Any
-import os
-import argparse
-import pkg_resources
+from __future__ import annotations
 
+import argparse
+import os
+from typing import Any
+from uuid import uuid4
+
+import pkg_resources
 
 LEVEL_FLAGS = {}
 
@@ -13,7 +15,7 @@ class FalArgsError(Exception):
 
 
 class _LevelFlag:
-    levels: List[str]
+    levels: list[str]
     default: Any
 
     def __init__(self, default):
@@ -241,34 +243,25 @@ def _build_cloud_parser(sub: argparse.ArgumentParser):
         required=True,
     )
 
-    cloud_command_parsers.add_parser(
-        name="login",
-        help="Login to fal cloud"
-    )
+    cloud_command_parsers.add_parser(name="login", help="Login to fal cloud")
 
-    cloud_command_parsers.add_parser(
-        name="logout",
-        help="Logout of fal cloud"
-    )
+    cloud_command_parsers.add_parser(name="logout", help="Logout of fal cloud")
 
     generator_parser = cloud_command_parsers.add_parser(
-        name="key-generate",
-        help="Generate a secret key for fal cloud"
+        name="key-generate", help="Generate a secret key for fal cloud"
     )
 
     generator_parser.add_argument(
         "--host",
         type=str,
         default="api.alpha.fal.ai",
-        help="Specify fal cloud host instance URL"
+        help="Specify fal cloud host instance URL",
     )
 
     generator_parser.add_argument(
-        "--port",
-        type=str,
-        default="443",
-        help="Specify fal cloud host instance PORT"
+        "--port", type=str, default="443", help="Specify fal cloud host instance PORT"
     )
+
 
 def _build_cli_parser():
     parser = argparse.ArgumentParser(
@@ -328,7 +321,7 @@ def _build_cli_parser():
 cli_parser = _build_cli_parser()
 
 
-def parse_args(argv: List[str]) -> argparse.Namespace:
+def parse_args(argv: list[str]) -> argparse.Namespace:
     args = cli_parser.parse_args(argv)
     args_dict = vars(args)
 

@@ -1,12 +1,14 @@
-import networkx as nx
-import pytest
+from __future__ import annotations
 
 from pathlib import Path
-from fal.node_graph import NodeKind
-from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalModelTask
-from fal.planner.tasks import DBTTask, FalModelTask, Status
+
+import networkx as nx
+import pytest
 from tests.planner.data import GRAPH_1, GRAPHS
 from tests.planner.utils import to_scheduler
+
+from fal.node_graph import NodeKind
+from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalModelTask, Status
 
 
 def test_scheduler():

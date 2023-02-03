@@ -1,16 +1,16 @@
+from __future__ import annotations
+
 import functools
-from time import sleep
+from contextlib import contextmanager
 from typing import Any
 
 import pandas as pd
 import sqlalchemy
-from contextlib import contextmanager
+from dbt.adapters import factory
 from dbt.adapters.base import BaseAdapter, BaseRelation, RelationType
 from dbt.adapters.base.connections import AdapterResponse, Connection
 from dbt.config import RuntimeConfig
-from dbt.parser.manifest import MacroManifest, Manifest, ManifestLoader
-
-from dbt.adapters import factory
+from dbt.parser.manifest import MacroManifest, Manifest
 
 _SQLALCHEMY_DIALECTS = {
     "postgres": "postgresql+psycopg2",
@@ -26,8 +26,9 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
 
     sqlalchemy_kwargs = {}
     format_url = lambda url: url
-    if adapter_type == 'trino':
+    if adapter_type == "trino":
         import dbt.adapters.fal_experimental.support.trino as support_trino
+
         return support_trino.create_engine(adapter)
 
     if adapter_type in ("postgres", "redshift"):
@@ -41,7 +42,7 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
             f"dbt-fal does not support {adapter_type} adapter. ",
             f"If you need {adapter_type} support, you can create an issue ",
             "in our GitHub repository: https://github.com/fal-ai/fal. ",
-            "We will look into it ASAP."
+            "We will look into it ASAP.",
         )
         raise NotImplementedError(message)
 
@@ -151,7 +152,9 @@ def prepare_for_adapter(adapter: BaseAdapter, function: Any) -> Any:
     return wrapped
 
 
-def reconstruct_adapter(config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest) -> BaseAdapter:
+def reconstruct_adapter(
+    config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest
+) -> BaseAdapter:
     from dbt.tracking import do_not_track
 
     # Prepare the DBT to not to track us.

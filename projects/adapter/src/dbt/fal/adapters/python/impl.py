@@ -1,29 +1,18 @@
-import abc
-from contextlib import contextmanager
-import time
-from typing import (
-    Optional,
-    Type,
-    Dict,
-    Any,
-    Mapping,
-    Iterator,
-)
+from __future__ import annotations
 
-from dbt.adapters.factory import get_adapter
-from dbt.exceptions import (
-    NotImplementedError,
-    DbtRuntimeError,
-)
-from dbt.contracts.graph.nodes import ResultNode
-from dbt.adapters.protocol import AdapterConfig, ConnectionManagerProtocol
-from dbt.events.functions import fire_event
-from dbt.events.types import (
-    CodeExecution,
-    CodeExecutionStatus,
-)
+import abc
+import time
+from contextlib import contextmanager
+from typing import Any, Iterator, Mapping
+
 from dbt.adapters.base.meta import AdapterMeta, available
-from dbt.contracts.connection import Credentials, Connection, AdapterResponse
+from dbt.adapters.factory import get_adapter
+from dbt.adapters.protocol import AdapterConfig, ConnectionManagerProtocol
+from dbt.contracts.connection import AdapterResponse, Connection, Credentials
+from dbt.contracts.graph.nodes import ResultNode
+from dbt.events.functions import fire_event
+from dbt.events.types import CodeExecution, CodeExecutionStatus
+from dbt.exceptions import DbtRuntimeError, NotImplementedError
 
 
 def log_code_execution(code_execution_function):
@@ -48,7 +37,7 @@ def log_code_execution(code_execution_function):
 
 
 class PythonJobHelper:
-    def __init__(self, parsed_model: Dict, credential: Credentials) -> None:
+    def __init__(self, parsed_model: dict, credential: Credentials) -> None:
         raise NotImplementedError("PythonJobHelper is not implemented yet")
 
     def submit(self, compiled_code: str) -> Any:
@@ -87,11 +76,11 @@ class PythonAdapter(metaclass=AdapterMeta):
 
     """
 
-    ConnectionManager: Type[ConnectionManagerProtocol]
+    ConnectionManager: type[ConnectionManagerProtocol]
 
     # A set of clobber config fields accepted by this adapter
     # for use in materializations
-    AdapterSpecificConfigs: Type[AdapterConfig] = AdapterConfig
+    AdapterSpecificConfigs: type[AdapterConfig] = AdapterConfig
 
     def __init__(self, config):
         self.config = config
@@ -144,7 +133,7 @@ class PythonAdapter(metaclass=AdapterMeta):
 
     @contextmanager
     def connection_named(
-        self, name: str, node: Optional[ResultNode] = None
+        self, name: str, node: ResultNode | None = None
     ) -> Iterator[None]:
         try:
             self.acquire_connection(name)
@@ -219,7 +208,7 @@ class PythonAdapter(metaclass=AdapterMeta):
     # Python
     ###
     @property
-    def python_submission_helpers(self) -> Dict[str, Type[PythonJobHelper]]:
+    def python_submission_helpers(self) -> dict[str, type[PythonJobHelper]]:
         raise NotImplementedError("python_submission_helpers is not specified")
 
     @property

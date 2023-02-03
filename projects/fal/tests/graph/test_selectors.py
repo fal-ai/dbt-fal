@@ -1,10 +1,14 @@
-from typing import Any, Dict
+from __future__ import annotations
+
+from argparse import Namespace
+from typing import Any
+from unittest.mock import MagicMock
+
+import networkx as nx
+from utils import assert_contains_only
+
 from fal.cli.selectors import ExecutionPlan
 from fal.node_graph import NodeGraph
-import networkx as nx
-from argparse import Namespace
-from utils import assert_contains_only
-from unittest.mock import MagicMock
 
 PROJECT_NAME = "test_project"
 
@@ -132,7 +136,7 @@ def test_create_plan_large_graph_model_levels():
             modelm = _model(f"model{n}_{m}")
             digraph.add_edge(modeln, modelm)
 
-    node_lookup: Dict[str, Any] = {node: None for node in digraph.nodes}
+    node_lookup: dict[str, Any] = {node: None for node in digraph.nodes}
     graph = NodeGraph(digraph, node_lookup)
 
     parsed = Namespace(select=["model0+70"])
@@ -245,7 +249,7 @@ def _create_test_graph():
     graph.add_edge(scriptC, modelA)
     graph.add_edge(scriptD, modelA)
 
-    node_lookup: Dict[str, Any] = {
+    node_lookup: dict[str, Any] = {
         node: None for node in graph.nodes if not node.startswith("source.")
     }
     return NodeGraph(graph, node_lookup)

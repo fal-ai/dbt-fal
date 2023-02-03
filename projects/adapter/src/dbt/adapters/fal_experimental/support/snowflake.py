@@ -1,13 +1,12 @@
+from __future__ import annotations
+
 import pandas as pd
-
-from dbt.adapters.base import BaseRelation
-from dbt.adapters.base.connections import AdapterResponse
-
-from dbt.adapters.fal_experimental.adapter_support import new_connection
 
 # [snowflake] extras dependencies
 import snowflake.connector as snowflake
-
+from dbt.adapters.base import BaseRelation
+from dbt.adapters.base.connections import AdapterResponse
+from dbt.adapters.fal_experimental.adapter_support import new_connection
 from dbt.adapters.snowflake import SnowflakeAdapter, SnowflakeConnectionManager
 
 

@@ -19,7 +19,6 @@ import base64
 from contextlib import closing
 from functools import partial
 from multiprocessing.connection import Client, ConnectionWrapper, Listener
-from typing import Union
 
 import dill
 
@@ -42,7 +41,7 @@ def child_connection(address: str) -> ConnectionWrapper:
     return closing(dill_wrapper(Client(address)))
 
 
-def encode_service_address(address: Union[bytes, str]) -> str:
+def encode_service_address(address: bytes | str) -> str:
     if isinstance(address, bytes):
         address = address.decode()
 

@@ -1,4 +1,6 @@
 """Classes and functions for managing features."""
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 

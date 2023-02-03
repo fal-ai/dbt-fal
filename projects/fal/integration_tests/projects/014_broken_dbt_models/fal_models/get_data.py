@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import pandas
-from fal.typing import *
 from _fal_testing import create_model_artifact
+
+from fal.typing import *
 
 df = pandas.DataFrame()
 

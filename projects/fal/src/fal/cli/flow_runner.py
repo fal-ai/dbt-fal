@@ -1,16 +1,18 @@
-import json
+from __future__ import annotations
+
+import argparse
 import copy
+import json
 from pathlib import Path
-from typing import Any, Dict, Optional, cast, Union
+from typing import Any, cast
+
+from faldbt.project import FalDbt, NodeStatus
 
 from fal.cli.fal_runner import create_fal_dbt
-from fal.cli.selectors import ExecutionPlan
 from fal.cli.model_generator import generate_python_dbt_models
+from fal.cli.selectors import ExecutionPlan
 from fal.fal_script import FalScript
 from fal.node_graph import DbtModelNode, FalFlowNode, NodeGraph, ScriptNode
-from faldbt.project import FalDbt, NodeStatus
-import argparse
-
 
 DBT_RUN_RESULTS_FILENAME = "run_results.json"
 FAL_RUN_RESULTS_FILENAME = "fal_results.json"
@@ -23,14 +25,14 @@ def run_threaded(
     parsed: argparse.Namespace,
     node_graph: NodeGraph,
 ) -> int:
+    from fal.planner.executor import parallel_executor
     from fal.planner.plan import (
-        OriginGraph,
         FilteredGraph,
+        OriginGraph,
         PlannedGraph,
         ScriptConnectedGraph,
     )
     from fal.planner.schedule import schedule_graph
-    from fal.planner.executor import parallel_executor
 
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
 
@@ -65,7 +67,7 @@ def fal_flow_run(parsed: argparse.Namespace) -> int:
 
 
 def _mark_dbt_nodes_status(
-    fal_dbt: FalDbt, status: NodeStatus, dbt_node: Optional[str] = None
+    fal_dbt: FalDbt, status: NodeStatus, dbt_node: str | None = None
 ):
     for model in fal_dbt.models:
         if dbt_node is not None:
@@ -75,7 +77,7 @@ def _mark_dbt_nodes_status(
             model.status = status
 
 
-def node_to_script(node: Union[FalFlowNode, None], fal_dbt: FalDbt) -> FalScript:
+def node_to_script(node: FalFlowNode | None, fal_dbt: FalDbt) -> FalScript:
     """Convert dbt node into a FalScript."""
     if node is not None and isinstance(node, ScriptNode):
         return cast(ScriptNode, node).script
@@ -130,6 +132,6 @@ def _combine_fal_run_results(target_path: str) -> None:
             json.dump(combined_results, stream)
 
 
-def _get_all_result_content(file) -> Dict[str, Any]:
+def _get_all_result_content(file) -> dict[str, Any]:
     with open(file) as content:
         return json.load(content)

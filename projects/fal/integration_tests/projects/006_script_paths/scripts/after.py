@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 print("next: 'from utils.blah import x'")
 from utils.process.process_df import process_data
 

@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
-from fal.typing import *
-from fal.packages.environments.virtual_env import _BASE_VENV_DIR
 from _fal_testing import create_model_artifact
+
+from fal.packages.environments.virtual_env import _BASE_VENV_DIR
+from fal.typing import *
 
 # To determine whether this is a fal-created environment or not
 # we'll check whether the executable that is running this script

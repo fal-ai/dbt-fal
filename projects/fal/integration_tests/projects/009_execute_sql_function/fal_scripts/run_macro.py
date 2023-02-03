@@ -1,7 +1,9 @@
-import pandas as pd
-import io
+from __future__ import annotations
+
 import os
 from functools import reduce
+
+import pandas as pd
 
 query = """
     select {{ multiply_by_ten('my_int') }} as my_int_times_ten

@@ -1,12 +1,17 @@
-from typing import Any, Dict, Optional
+from __future__ import annotations
+
+from typing import Any
+
 import yaml
 import yaml.scanner
 
 # the C version is faster, but it doesn't always exist
 try:
-    from yaml import CLoader as Loader, CSafeLoader as SafeLoader, CDumper as Dumper
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
+    from yaml import CSafeLoader as SafeLoader
 except ImportError:
-    from yaml import Loader, SafeLoader, Dumper  # type: ignore  # noqa: F401
+    from yaml import Dumper, Loader, SafeLoader  # type: ignore  # noqa: F401
 
 
 YAML_ERROR_MESSAGE = """
@@ -22,7 +27,7 @@ Raw Error:
 
 def line_no(i, line, width=3):
     line_number = str(i).ljust(width)
-    return "{}| {}".format(line_number, line)
+    return f"{line_number}| {line}"
 
 
 def prefix_with_line_numbers(string, no_start, no_end):
@@ -49,7 +54,7 @@ def contextualized_yaml_error(raw_contents, error):
     )
 
 
-def safe_load(contents) -> Dict[str, Any]:
+def safe_load(contents) -> dict[str, Any]:
     return yaml.load(contents, Loader=SafeLoader)
 
 

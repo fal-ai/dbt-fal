@@ -1,17 +1,15 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 
-from dbt import ui
-from dbt.logger import log_manager  # For export
-from dbt.events.functions import fire_event
-from dbt.events.base_types import (
-    TestLevel as _TestLevel,
-    DebugLevel as _DebugLevel,
-    InfoLevel as _InfoLevel,
-    WarnLevel as _WarnLevel,
-    ErrorLevel as _ErrorLevel,
-)
-
 import faldbt.version as version
+from dbt import ui
+from dbt.events.base_types import DebugLevel as _DebugLevel
+from dbt.events.base_types import ErrorLevel as _ErrorLevel
+from dbt.events.base_types import InfoLevel as _InfoLevel
+from dbt.events.base_types import TestLevel as _TestLevel
+from dbt.events.base_types import WarnLevel as _WarnLevel
+from dbt.events.functions import fire_event
 
 
 class FireEventLogger:

@@ -1,11 +1,12 @@
+from __future__ import annotations
+
+import datetime
 import pathlib
-import sys
-from unittest.mock import Mock, call, patch, ANY
 from pathlib import Path
+from unittest.mock import ANY, Mock, call, patch
 
 import pytest
-import yaml
-import datetime
+
 from fal.telemetry import telemetry
 
 

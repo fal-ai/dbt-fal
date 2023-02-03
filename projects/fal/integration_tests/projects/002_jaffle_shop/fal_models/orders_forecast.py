@@ -3,9 +3,11 @@ Packages:
  - prophet
 """
 
+from __future__ import annotations
+
 import pandas as pd
-from prophet import Prophet
 import sqlalchemy.types as types
+from prophet import Prophet
 
 
 def make_forecast(dataframe: pd.DataFrame, periods: int = 30):
