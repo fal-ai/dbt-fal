@@ -15,6 +15,7 @@ import uuid
 from functools import wraps
 from typing import Any, List, Optional
 import inspect
+from dbt.config.runtime import RuntimeConfig
 
 import platform
 
@@ -108,6 +109,12 @@ def dbt_installed_version():
         return pkg_resources.get_distribution("dbt-core").version
     except ImportError:
         return
+
+
+def get_dbt_adapter_type(config: RuntimeConfig) -> str:
+    """Returns: the configured actual DBT adapter"""
+    target = config.to_target_dict()
+    return target["type"]
 
 
 def fal_installed_version():
@@ -270,6 +277,7 @@ def log_api(
         "total_runtime": str(total_runtime),
         "python_version": python_version(),
         "dbt_version": dbt_installed_version(),
+        "dbt_adapter": get_dbt_adapter_type(config),
         "docker_container": is_docker(),
         "airflow": is_airflow(),
         "github_action": is_github(),

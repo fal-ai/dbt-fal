@@ -351,6 +351,7 @@ def test_redaction():
                 "python_version": ANY,
                 "fal_version": ANY,
                 "dbt_version": ANY,
+                "dbt_adapter": ANY,
                 "docker_container": ANY,
                 "airflow": ANY,
                 "github_action": ANY,

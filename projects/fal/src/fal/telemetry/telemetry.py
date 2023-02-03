@@ -6,6 +6,8 @@ https://github.com/ploomber/ploomber
 Modifications are made to ensure that the code works with fal.
 """
 
+from __future__ import annotations
+
 import datetime
 import http.client as httplib
 import warnings
@@ -20,6 +22,7 @@ from functools import wraps
 from typing import Any, List, Optional
 import inspect
 from contextlib import contextmanager
+from dbt.config.runtime import RuntimeConfig
 
 from fal.utils import cache_static
 
@@ -111,6 +114,14 @@ def dbt_installed_version():
         return pkg_resources.get_distribution("dbt-core").version
     except ImportError:
         return
+
+
+def get_dbt_adapter_type(config: RuntimeConfig | None) -> str | None:
+    """Returns: the configured DBT adapter or None if it's not in a runner context"""
+    if config is not None:
+        target = config.to_target_dict()
+        return target["type"]
+    return None
 
 
 def fal_installed_version():
@@ -301,6 +312,7 @@ def log_api(
         "python_version": python_version(),
         "fal_version": fal_installed_version(),
         "dbt_version": dbt_installed_version(),
+        "dbt_adapter": get_dbt_adapter_type(dbt_config),
         "docker_container": is_docker(),
         "airflow": is_airflow(),
         "github_action": is_github(),
