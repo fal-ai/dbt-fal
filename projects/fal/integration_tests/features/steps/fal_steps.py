@@ -37,9 +37,7 @@ def run_command_step(context):
 @given("the project {project}")
 def set_project_folder(context, project: str):
     project_path = Path.cwd() / "projects" / project
-    print(f"project_path set to {project_path}")
     if not project_path.exists() or not project_path.is_dir():
-        print("project_path is invalid, trying to find it...")
         extra = ""
         try:
             # Try to find the correct option
@@ -48,7 +46,6 @@ def set_project_folder(context, project: str):
             if match:
                 project_number = match.group(1)
                 projects_dir = _find_projects_directory()
-                print(f"resolved path is {projects_dir}")
                 found = [r.name for r in projects_dir.glob(project_number + "_*")]
                 if found:
                     extra = "Is it " + " or ".join(found) + " ?"
