@@ -23,7 +23,7 @@ def _get_fal_root_path() -> Path:
 
     # If this is a development version, we'll install
     # the current fal itself.
-    path = Path(adapter.__file__) 
+    path = Path(fal.__file__) 
     while path is not None: 
         if (path.parent / ".git").exists(): 
             break 
