@@ -168,12 +168,40 @@ def _get_required_key(data: Dict[str, Any], name: str) -> Any:
         raise FalParseError("Missing required key: " + name)
     return data[name]
 
+def _parse_remote_config(
+    config: Dict[str, Any], parsed_config: Dict[str, Any]
+) -> Dict[str, Any]:
+    assert config.get("remote_type"), "remote_type needs to be specified."
+
+    remote_type = REMOTE_TYPES_DICT.get(config["remote_type"])
+
+    assert (
+        remote_type
+    ), f"{config['remote_type']} not recognised. Available remote types: {list(REMOTE_TYPES_DICT.keys())}"
+
+    env_definition = {
+        "kind": remote_type,
+        "configuration": parsed_config,
+    }
+
+    return {
+        "host": config.get("host"),
+        "target_environments": [env_definition],
+    }
+
+def _get_package_from_type(adapter_type: str):
+    SPECIAL_ADAPTERS = {
+        # Documented in dbt website
+        "athena": "dbt-athena-community",
+    }
+    return SPECIAL_ADAPTERS.get(adapter_type, f"dbt-{adapter_type}")
+
 def _get_dbt_packages(
     adapter_type: str,
     is_teleport: bool = False,
     is_remote: bool = False,
 ) -> Iterator[Tuple[str, Optional[str]]]:
-    dbt_adapter = f"dbt-{adapter_type}"
+    dbt_adapter = _get_package_from_type(adapter_type)
     for dbt_plugin_name in [dbt_adapter]:
         distribution = importlib_metadata.distribution(dbt_plugin_name)
 

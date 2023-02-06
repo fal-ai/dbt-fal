@@ -61,7 +61,6 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
     def macro_manifest(self) -> MacroManifest:
         return self._db_adapter.load_macro_manifest()
 
-
     @telemetry.log_call("experimental_submit_python_job", config=True)
     def submit_python_job(
         self, parsed_model: dict, compiled_code: str
