@@ -225,14 +225,21 @@ def _parse_remote_config(config: Dict[str, Any], parsed_config: Dict[str, Any]) 
         "target_environments": [env_definition]
     }
 
+def _get_package_from_type(adapter_type: str):
+    SPECIAL_ADAPTERS = {
+        # Documented in dbt website
+        "athena": "dbt-athena-community",
+    }
+    return SPECIAL_ADAPTERS.get(adapter_type, f"dbt-{adapter_type}")
+
 
 def _get_dbt_packages(
     adapter_type: str,
     is_teleport: bool = False,
     is_remote: bool = False
 ) -> Iterator[Tuple[str, Optional[str]]]:
-    dbt_adapter = f"dbt-{adapter_type}"
-    for dbt_plugin_name in ['dbt-core', dbt_adapter]:
+    dbt_adapter = _get_package_from_type(adapter_type)
+    for dbt_plugin_name in ["dbt-core", dbt_adapter]:
         distribution = importlib_metadata.distribution(dbt_plugin_name)
 
         yield dbt_plugin_name, distribution.version
