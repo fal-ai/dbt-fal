@@ -212,6 +212,7 @@ jobs:
             dbt: "1.1.*"
           - profile: "fal"
             dbt: "1.2.*"
+          # TODO: use dbt-athena-community instead
           # dbt-athena-adapter only supports dbt-core==1.0.* for now
           - profile: "athena"
             dbt: "1.1.*"
