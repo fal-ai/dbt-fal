@@ -1,35 +1,84 @@
-from dataclasses import dataclass
+from contextlib import contextmanager
+import logging
+import datetime
+import sys
 
-from dbt import ui
-from dbt.logger import log_manager  # For export
-from dbt.events.functions import fire_event
+import dbt.ui as ui
+from dbt.logger import log_manager as dbt_log_manager
 
-import faldbt.version as version
+TRACE = logging.DEBUG - 5
+logging.addLevelName(TRACE, "TRACE")
 
-from dbt.events.types import (
-    AdapterEventDebug as _DebugLevel,
-    AdapterEventInfo as _InfoLevel,
-    AdapterEventWarning as _WarnLevel,
-    AdapterEventError as _ErrorLevel,
-)
+class FalLogger:
+    def __init__(self):
+        self._stdout_handler = logging.StreamHandler(sys.stdout)
+        self._stdout_handler.setLevel(logging.INFO)
 
-class FireEventLogger:
+        self._logger = logging.Logger("fal", logging.INFO)
+        self._logger.addHandler(self._stdout_handler)
+
+    def set_level(self, level: int):
+        self._logger.setLevel(level)
+
+    @property
+    def level(self):
+        return self._logger.level
+
+    def log(self, level: int, msg: str, *args, **kwargs):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        if self.level <= logging.DEBUG:
+            prefix = now.strftime(r"%H:%M:%S.%f")
+
+            prefix += f" [{logging.getLevelName(level).lower()[0:5].ljust(5)}]"
+
+            # Spaces to match the spacing of dbt's debug logs, like the following
+            #
+            #     21:32:31.816189 [debug] [MainThread]: Flushing usage events
+            #     21:32:32.530385 [error] [fal       ]: Error in script (...):
+            #     21:32:34.554038 [debug] [Thread-1  ]: Opening a new connection, currently in state closed
+            prefix += " [fal       ]:"
+        else:
+            prefix = now.strftime("%H:%M:%S")
+            prefix += " [fal]:"
+
+        self._logger.log(level, f"{prefix} {_prepare_msg(msg, *args, **kwargs)}")
+
+    def trace(self, msg: str, *args, **kwargs):
+        self.log(TRACE, msg, *args, **kwargs)
+
     def debug(self, msg: str, *args, **kwargs):
-        fire_event(_version_handler(AdapterEventDebug, _prepare_msg(msg, *args, **kwargs)))
+        self.log(logging.DEBUG, msg, *args, **kwargs)
 
     def info(self, msg: str, *args, **kwargs):
-        fire_event(_version_handler(AdapterEventInfo, _prepare_msg(msg, *args, **kwargs)))
-
-    def warn(self, msg: str, *args, **kwargs):
-        fire_event(_version_handler(AdapterEventWarning, _prepare_msg(msg, *args, **kwargs)))
+        self.log(logging.INFO, msg, *args, **kwargs)
 
     def warning(self, msg: str, *args, **kwargs):
-        # Alias to warn
-        return self.warn(msg, *args, **kwargs)
+        self.log(logging.WARNING, ui.warning_tag(msg), *args, **kwargs)
+
+    def warn(self, msg: str, *args, **kwargs):
+        # Alias to warning
+        return self.warning(msg, *args, **kwargs)
 
     def error(self, msg: str, *args, **kwargs):
-        fire_event(_version_handler(AdapterEventError, _prepare_msg(msg, *args, **kwargs)))
+        self.log(logging.ERROR, msg, *args, **kwargs)
 
+class LogManager():
+    def __init__(self, dbt_log_manager):
+        self._dbt_log_manager = dbt_log_manager
+
+    @contextmanager
+    def applicationbound(self):
+        # TODO: probably where we can add threadding information if we want it for debug logs
+        with self._dbt_log_manager.applicationbound():
+            yield
+
+    def set_debug(self):
+        self._dbt_log_manager.set_debug()
+        LOGGER.set_level(logging.DEBUG)
+
+    def set_trace(self):
+        self._dbt_log_manager.set_debug()
+        LOGGER.set_level(TRACE)
 
 def _prepare_msg(msg: str, *args, **kwargs):
     if args or kwargs:
@@ -37,65 +86,5 @@ def _prepare_msg(msg: str, *args, **kwargs):
     else:
         return msg
 
-def _version_handler(cls, msg):
-    if version.is_version_plus('1.4.0'):
-        from dbt.events.proto_types import NodeInfo
-
-        return cls(
-            node_info=NodeInfo("","","","","","","","",{}),
-            name="fal-cli",
-            args=[],
-            base_msg=msg
-        )
-    else:
-        return cls(
-            name="fal-cli",
-            args=[],
-            base_msg=msg
-        )
-
-
-LOGGER = FireEventLogger()
-
-if version.is_version_plus("1.1.0"):
-    _EXTRA_CLASS_INHERIT = ()
-else:
-    from dbt.events.base_types import Cli, Event
-
-    _EXTRA_CLASS_INHERIT = Cli, Event
-
-
-@dataclass
-class AdapterEventDebug(_DebugLevel, *_EXTRA_CLASS_INHERIT):
-    def code(self):
-        return "FAL1000"
-
-    def message(self) -> str:
-        return self.base_msg
-
-
-@dataclass
-class AdapterEventInfo(_InfoLevel, *_EXTRA_CLASS_INHERIT):
-    def code(self):
-        return "FAL2000"
-
-    def message(self) -> str:
-        return self.base_msg
-
-
-@dataclass
-class AdapterEventWarning(_WarnLevel, *_EXTRA_CLASS_INHERIT):
-    def code(self):
-        return "FAL3000"
-
-    def message(self) -> str:
-        return ui.warning_tag(self.base_msg)
-
-
-@dataclass
-class AdapterEventError(_ErrorLevel, *_EXTRA_CLASS_INHERIT):
-    def code(self):
-        return "FAL4000"
-
-    def message(self) -> str:
-        return self.base_msg
+LOGGER = FalLogger()
+log_manager = LogManager(dbt_log_manager)
