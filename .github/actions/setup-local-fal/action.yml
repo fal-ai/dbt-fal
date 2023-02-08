@@ -25,10 +25,6 @@ runs:
       shell: bash
       run: pip install poetry-core=="1.0.*" poetry=="1.1.4"
 
-    - name: Fix jinja
-      shell: sh
-      run: pip install markupsafe==2.0.1
-
     - name: Install dbt
       shell: bash
       run: |
