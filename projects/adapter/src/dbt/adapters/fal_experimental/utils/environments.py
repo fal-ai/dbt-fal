@@ -244,7 +244,7 @@ def _get_dbt_packages(
     is_remote: bool = False,
 ) -> Iterator[Tuple[str, Optional[str]]]:
     dbt_adapter = f"dbt-{adapter_type}"
-    for dbt_plugin_name in ["dbt-core", dbt_adapter]:
+    for dbt_plugin_name in [dbt_adapter]:
         distribution = importlib_metadata.distribution(dbt_plugin_name)
 
         yield dbt_plugin_name, distribution.version
