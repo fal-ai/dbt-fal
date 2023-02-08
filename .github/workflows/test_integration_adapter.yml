@@ -75,7 +75,7 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
-          pip install build wheel 'fal[${{ matrix.profile }}]'
+          pip install build wheel -e '../../fal[${{ matrix.profile }}]'
 
           if [[ -z '${{ matrix.dbt_version }}' ]]
           then
