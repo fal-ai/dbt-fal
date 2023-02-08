@@ -178,7 +178,6 @@ def _build_hosted_env(
         kind = REMOTE_TYPES_DICT[config["type"]]
 
     if kind == "virtualenv":
-
         if "requirements" not in parsed_config.keys():
             parsed_config["requirements"] = []
 
@@ -274,7 +273,7 @@ def _get_dbt_packages(
             dbt_fal_suffix = f" @ git+https://github.com/fal-ai/fal.git@{branch_name}#subdirectory=projects/adapter"
             dbt_fal_version = None
         else:
-            dbt_fal_path = _get_adapter_root_path()
+            dbt_fal_path = _get_project_root_path("adapter")
             if dbt_fal_path is not None:
                 # Can be a pre-release from PyPI
                 dbt_fal_dep = str(dbt_fal_path)
@@ -311,15 +310,17 @@ def _version_is_prerelease(raw_version: str) -> bool:
     return package_version.is_prerelease
 
 
-def _get_adapter_root_path() -> Optional[Path]:
-    import dbt.adapters.fal as adapter
+def _get_project_root_path(pacakge: str) -> Path:
+    import fal
 
-    path = Path(adapter.__file__)
+    # If this is a development version, we'll install
+    # the current fal itself.
+    path = Path(fal.__file__)
     while path is not None:
         if (path.parent / ".git").exists():
             break
         path = path.parent
-    return (path / "adapter")
+    return path / pacakge
 
 
 def get_default_requirements(
