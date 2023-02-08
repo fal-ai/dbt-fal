@@ -42,6 +42,10 @@ importlib-metadata = "^4.12.0"
 ## snowflake
 snowflake-connector-python = { version = "2.7.9", optional = true } # 2.7.10 needs pyarrow 8
 
+## bigquery
+### version defined by dbt-bigquery, installs pyarrow<8
+google-cloud-bigquery = { version = "~3.5.0", extras = ["pandas"], optional = true }
+
 ## redshift
 sqlalchemy-redshift = { version = "^0.8.9", optional = true }
 
@@ -62,7 +66,7 @@ koldstart = { version = "^0.6.16", optional = true }
 [tool.poetry.extras]
 postgres = []
 snowflake = ["snowflake-connector-python"]
-bigquery = []
+bigquery = ["google-cloud-bigquery"]
 redshift = ["sqlalchemy-redshift"]
 duckdb = ["duckdb-engine"]
 athena = []
