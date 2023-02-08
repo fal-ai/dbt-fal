@@ -117,32 +117,6 @@ def _add_vars_option(parser: argparse.ArgumentParser):
     )
 
 
-def _add_experimental_flow_option(parser: argparse.ArgumentParser):
-    parser.add_argument(
-        "--experimental-flow",
-        action="store_true",
-        help="DEPRECATED: no-op",
-    )
-
-
-def _add_experimental_python_models_option(parser: argparse.ArgumentParser):
-    parser.add_argument(
-        "--experimental-models",
-        dest="experimental_python_models",
-        action="store_true",
-        help="DEPRECATED: no-op",
-    )
-
-
-def _add_experimental_threading(parser: argparse.ArgumentParser):
-    parser.add_argument(
-        "--experimental-threads",
-        type=int,
-        help="DEPRECATED: no-op",
-        metavar="INT",
-    )
-
-
 def _build_dbt_selectors(sub: argparse.ArgumentParser):
 
     # fmt: off
@@ -225,9 +199,6 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
     _build_fal_common_options(flow_run_parser)
     _add_threads_option(flow_run_parser)
     _add_state_option(flow_run_parser)
-    _add_experimental_flow_option(flow_run_parser)
-    _add_experimental_python_models_option(flow_run_parser)
-    _add_experimental_threading(flow_run_parser)
     _add_vars_option(flow_run_parser)
     _add_target_option(flow_run_parser)
     _add_full_refresh_option(flow_run_parser)
