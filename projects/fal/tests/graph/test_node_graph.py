@@ -1,12 +1,16 @@
-from typing import Dict, List
+import pytest
 import networkx as nx
 
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 from unittest.mock import patch
 from fal.node_graph import NodeGraph, _add_after_scripts, _add_before_scripts
 from utils import assert_contains_only, create_mock_model
 
+import faldbt.version as version
 
+
+
+@pytest.mark.skipif(version.is_version_plus("1.4.0"), reason="mocking <1.4 modules")
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
 @patch("fal.FalDbt")
 def test_add_after_scripts(parsed_node, fal_dbt_class):
@@ -30,6 +34,7 @@ def test_add_after_scripts(parsed_node, fal_dbt_class):
     )
 
 
+@pytest.mark.skipif(version.is_version_plus("1.4.0"), reason="mocking <1.4 modules")
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
 @patch("fal.FalDbt")
 def test_add_before_scripts(parsed_node, fal_dbt_class):
@@ -66,6 +71,7 @@ def test_empty_fal_dbt(fal_dbt_class):
     assert list(node_graph.node_lookup.keys()) == []
 
 
+@pytest.mark.skipif(version.is_version_plus("1.4.0"), reason="mocking <1.4 modules")
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
 @patch("fal.FalDbt")
 def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
