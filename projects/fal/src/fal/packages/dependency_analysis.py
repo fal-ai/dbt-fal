@@ -37,6 +37,10 @@ def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
     for dbt_plugin_name in package_distributions.get("dbt", []):
         distribution = importlib_metadata.distribution(dbt_plugin_name)
 
+        # Skip dbt-core since it will be determined by other packages being installed
+        if dbt_plugin_name == "dbt-core":
+            continue
+
         # Handle dbt-fal separately (since it needs to be installed
         # with its extras).
         if dbt_plugin_name == "dbt-fal":
