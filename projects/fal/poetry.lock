@@ -1119,8 +1119,8 @@ test = ["pytest", "black", "behave", "mock", "pytest-mock"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.7.2, <4.0"
-content-hash = "620109030b739ae2e17b43855ac051bb4e759f0df07a695b4d59345f70610c9e"
+python-versions = ">=3.7.2, <3.12"
+content-hash = "1992e8d4ee67881c2fe0e96d9a64dd19da33896396caaa1974f7838fe500cbb6"
 
 [metadata.files]
 agate = [
