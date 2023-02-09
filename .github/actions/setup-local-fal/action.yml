@@ -25,6 +25,16 @@ runs:
       shell: bash
       run: pip install poetry-core=="1.0.*" poetry=="1.1.4"
 
+    - name: Install fal
+      shell: sh
+      run: |
+        if [[ '${{ inputs.adapter }}' == 'fal' ]]
+        then
+          pip install -e './projects/fal[postgres]'
+        else
+          pip install -e './projects/fal[${{ inputs.adapter }}]'
+        fi
+
     - name: Install dbt
       shell: bash
       run: |
@@ -52,16 +62,6 @@ runs:
         if [[ '${{ inputs.adapter }}' == 'fal' ]]
         then
           pip install dbt-postgres==${version}
-        fi
-
-    - name: Install fal
-      shell: sh
-      run: |
-        if [[ '${{ inputs.adapter }}' == 'fal' ]]
-        then
-          pip install -e './projects/fal[postgres]'
-        else
-          pip install -e './projects/fal[${{ inputs.adapter }}]'
         fi
 
     - name: List requirements.txt
