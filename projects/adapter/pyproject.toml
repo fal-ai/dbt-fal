@@ -24,7 +24,8 @@ pandas = "^1.3.4"
 "backports.functools_lru_cache" = "^1.6.4"
 sqlalchemy = "^1.4.41"
 
-# adapters
+# Adapters
+
 ## snowflake
 snowflake-connector-python = { version = ">=2.8.0, <2.8.2", extras = ["pandas"], optional = true }
 
