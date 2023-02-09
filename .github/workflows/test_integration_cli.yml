@@ -214,15 +214,13 @@ jobs:
             dbt: "1.1.*"
           - profile: "fal"
             dbt: "1.2.*"
-          # dbt-athena-adapter only supports dbt-core==1.0.* for now
+          # dbt-athena-adapter only supports dbt-core>=1.3
+          - profile: "athena"
+            dbt: "1.0.*"
           - profile: "athena"
             dbt: "1.1.*"
           - profile: "athena"
             dbt: "1.2.*"
-          - profile: "athena"
-            dbt: "1.3.*"
-          - profile: "athena"
-            dbt: "1.4.*"
 
     # Run only the latest commit pushed to PR
     concurrency:

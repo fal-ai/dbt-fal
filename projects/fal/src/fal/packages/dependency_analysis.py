@@ -28,7 +28,7 @@ def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
     # the PyPI names instead of the import names). An example distribution info is the following, which
     # contains both the main exporter of the top-level name (dbt-core) as well as all the packages that
     # export anything to that namespace:
-    #   {"dbt": ["dbt-core", "dbt-postgres", "dbt-athena-adapter"]}
+    #   {"dbt": ["dbt-core", "dbt-postgres", "dbt-athena-community"]}
     #
     # This won't only include dbt.adapters.xxx, but anything that might export anything to the dbt namespace
     # (e.g. a hypothetical plugin that only exports stuff to dbt.includes.xxx) which in theory would allow us
@@ -72,7 +72,7 @@ def _find_fal_extras(package: str) -> set[str]:
 
     # This list is different from the one we obtain in _get_dbt_packages
     # since the names here are the actual import names, not the PyPI names
-    # (e.g. this one will say athena, and the other one will say dbt-athena-adapter).
+    # (e.g. this one will say athena, and the other one will say dbt-athena-community).
     available_dbt_adapters = {
         module_info.name
         for module_info in pkgutil.iter_modules(dbt.adapters.__path__)
