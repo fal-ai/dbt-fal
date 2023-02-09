@@ -31,6 +31,7 @@ jobs:
           # - duckdb
           - snowflake
           - redshift
+          - athena
           - trino
           # - sqlserver # does not support dbt 1.4 yet
         dbt_version:
@@ -93,11 +94,13 @@ jobs:
           pip install --upgrade pip
           pip install build wheel -e '../../fal[${{ matrix.profile }}]'
 
-          if [[ -z '${{ matrix.dbt_version }}' ]]
-          then
-            ADAPTER_PACKAGE="dbt-${{ matrix.profile }}"
-          else
-            ADAPTER_PACKAGE="dbt-${{ matrix.profile }}==${{ matrix.dbt_version }}"
+          ADAPTER_PACKAGE="dbt-${{ matrix.profile }}"
+          if [[ '${{ matrix.profile }}' == 'athena' ]]
+            ADAPTER_PACKAGE="dbt-athena-community"
+          fi
+
+          if [[ -n '${{ matrix.dbt_version }}' ]]
+            ADAPTER_PACKAGE="${ADAPTER_PACKAGE}==${{ matrix.dbt_version }}"
           fi
 
           pushd ..
