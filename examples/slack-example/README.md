@@ -1,4 +1,5 @@
-# Example 1: Send a Slack message about model status
+# Send a Slack message about model status
+
 You can use fal to send Slack messages.
 
 ## Setting up a Slack App:
@@ -41,12 +42,14 @@ export SLACK_TARGET_CHANNEL=your-target-channel
 ```
 
 ## Meta tag
+
 In a `schema.yml` file, within a target model, a meta tag should be added in order to connect the model to fal:
+
 ```yaml
-    meta:
-      fal:
-        scripts:
-          - path_to_fal_script.py
+meta:
+  fal:
+    scripts:
+      - path_to_fal_script.py
 ```
 
 ## Fal script
@@ -65,11 +68,13 @@ client = WebClient(token=SLACK_TOKEN)
 ```
 
 Fal provides a magic variable `context` that gives you access to dbt model information, such as model name and status. We can create a message using this variable:
+
 ```python
 message_text = f"Model: {context.current_model.name}. Status: {context.current_model.status}."
 ```
 
 And finally we post this message to our target Slack channel:
+
 ```python
 try:
     response = client.chat_postMessage(
@@ -81,4 +86,5 @@ except SlackApiError as e:
 ```
 
 ## Full example
+
 You can find the full code example [here](https://github.com/fal-ai/fal_dbt_examples/blob/main/fal_scripts/slack.py).

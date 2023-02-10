@@ -1,4 +1,4 @@
-# Example 4: Run forecasts on metrics and send visualizations to Slack
+# Run forecasts on metrics and send visualizations to Slack
 
 In this example we use [prophet](https://facebook.github.io/prophet/) and [slack_sdk](https://slack.dev/python-slack-sdk/) in order to make predictions on our models and send the resulting plots to slack.
 

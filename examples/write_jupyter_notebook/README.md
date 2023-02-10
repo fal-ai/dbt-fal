@@ -1,4 +1,4 @@
-# Example 2: Use dbt from a Jupyter Notebook
+# Use dbt from a Jupyter Notebook
 
 We also offer fal as an importable package to load in a Python environment to reference and use your dbt models and sources.
 You may want to do this to run some ad-hoc analysis on the data.

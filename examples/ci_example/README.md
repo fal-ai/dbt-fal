@@ -1,4 +1,4 @@
-# Example 7: Incorporate fal into a CI/CD pipeline
+# Incorporate fal into a CI/CD pipeline
 
 You can use fal as part of your CI/CD pipeline. In this example we use [Github Actions](https://github.com/features/actions).
 
