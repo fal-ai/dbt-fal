@@ -1,4 +1,4 @@
-# Example 10: Write dbt artifacts to AWS S3
+# Write dbt artifacts to AWS S3
 
 Dbt artifacts are files created by the dbt compiler after a run is completed. They contain information about the project, help with documentation, calculate test coverage and much more. In this example we are going to focus on two of these artifacts `manifest.json` and `run_results.json`.
 

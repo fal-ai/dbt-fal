@@ -1,4 +1,4 @@
-# Example 5: Run sentiment analysis using HuggingFace and store results in your data warehouse
+# Run sentiment analysis using HuggingFace and store results in your data warehouse
 
 Sentiment Analysis is a powerful technique that takes advantage of NLP to understand opinions based on text. It is usually used to identify customer satisfaction. For simplicity we are taking advantage of a pretrained model and going to use [HuggingFace transformers for sentiment analysis](https://huggingface.co/transformers/quicktour.html).
 

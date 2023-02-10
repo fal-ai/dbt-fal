@@ -3,19 +3,26 @@ sidebar_position: 1
 ---
 
 # Quickstart
+
 dbt-fal adapter is the ✨easiest✨ way to run your [dbt Python models](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/python-models).
 
-Starting with dbt v1.3, you can now build your dbt models in Python. dbt-fal provides the best environment to run your Python models that works with all other data warehouses! With dbt-fal, you can:
+Starting with dbt v1.3, you can now build your dbt models in Python. However the developer experience with existing datawarehouse Python runtimes is not ideal.
+
+dbt-fal provides the best environment to run your Python models that works with all other data warehouses! This includes Postgres, Redshift which do not have Python support, as well as Bigquery, Snowflake which are too hard to work with.
+
+With dbt-fal, you can:
 
 - Build and test your models locally
 - Isolate each model to run in its own environment with its own dependencies
-- [Coming Soon] Run your Python models in the ☁️ cloud ☁️ with elasticly scaling Python environments.
-- [Coming Soon] Even add GPUs to your models for some heavier workloads such as training ML models.
+- Run your Python models in the [☁️ cloud ☁️](cloud/using_fal_cloud) with elasticly scaling Python environments and pay for only what you use.
+- Even add GPUs to your models for some heavy workloads such as training ML models. 🤖
 
 ## 1. Install dbt-fal
-`pip install dbt-fal[bigquery, snowflake]` *Add your current warehouse here*
+
+`pip install dbt-fal[bigquery, snowflake]` _Add your current warehouse here_
 
 ## 2. Update your `profiles.yml` and add the fal adapter
+
 Add another entry to `outputs` in your desired profile (below we've added `dev_with_fal`)
 
 ```yaml
@@ -46,31 +53,3 @@ dbt run
 ```
 
 That is it! It is really that simple 😊
-
-## 4. Environment management with dbt-fal
-If you want some help with environment management (vs sticking to the default env that the dbt process runs in), you can create a fal_project.yml in the same folder as your dbt project and have “named environments”:
-
-In your dbt project folder:
-```bash
-$ touch fal_project.yml
-
-# Paste the config below
-environments:
-  - name: ml
-    type: venv
-    requirements:
-      - prophet
-```
-
-and then in your dbt model:
-
-```bash
-$ vi models/orders_forecast.py
-
-def model(dbt, fal):
-    dbt.config(fal_environment="ml") # Add this line
-
-    df: pd.DataFrame = dbt.ref("orders_daily")
-```
-
-The `dbt.config(fal_environment=“ml”)` will give you an isolated clean env to run things in, so you dont pollute your package space.

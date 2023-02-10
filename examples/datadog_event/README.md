@@ -1,4 +1,4 @@
-# Example 8: Send Datadog event
+# Send Datadog event
 
 ## Setting up Datadog WebAPI
 
