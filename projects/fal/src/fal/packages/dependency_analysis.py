@@ -10,15 +10,7 @@ from fal.utils import cache_static
 import importlib_metadata
 
 
-def _is_fal_pre_release() -> bool:
-    from dbt.semver import VersionSpecifier
-
-    raw_fal_version = importlib_metadata.version("fal")
-    fal_version = VersionSpecifier.from_version_string(raw_fal_version)
-    return fal_version.prerelease
-
-
-def _get_fal_root_path() -> Path:
+def _get_project_root_path(pacakge: str) -> Path:
     import fal
 
     # If this is a development version, we'll install
@@ -28,7 +20,7 @@ def _get_fal_root_path() -> Path:
         if (path.parent / ".git").exists():
             break
         path = path.parent
-    return (path / "fal")
+    return path / pacakge
 
 
 def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
@@ -45,6 +37,10 @@ def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
     for dbt_plugin_name in package_distributions.get("dbt", []):
         distribution = importlib_metadata.distribution(dbt_plugin_name)
 
+        # Skip dbt-core since it will be determined by other packages being installed
+        if dbt_plugin_name == "dbt-core":
+            continue
+
         # Handle dbt-fal separately (since it needs to be installed
         # with its extras).
         if dbt_plugin_name == "dbt-fal":
@@ -52,26 +48,12 @@ def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
 
         yield dbt_plugin_name, distribution.version
 
-    try:
-        dbt_fal_version = importlib_metadata.version("dbt-fal")
-    except importlib_metadata.PackageNotFoundError:
-        # It might not be installed.
-        return None
-
-    if _is_fal_pre_release():
-        dbt_fal_dep = str(_get_fal_root_path() / "projects" / "adapter")
-        # We are going to install it from the local path.
-        dbt_fal_version = None
-    else:
-        dbt_fal_dep = "dbt-fal"
-
-    dbt_fal_extras = _find_fal_extras("dbt-fal")
-    if dbt_fal_extras:
-        dbt_fal_dep += f"[{' ,'.join(dbt_fal_extras)}]"
-    yield dbt_fal_dep, dbt_fal_version
+    package_info = _get_dbt_fal_package_name()
+    if package_info:
+        yield package_info
 
 
-def _find_fal_extras(package: str) -> Iterator[str]:
+def _find_fal_extras(package: str) -> set[str]:
     # Return a possible set of extras that might be required when installing
     # fal in the new environment. The original form which the user has installed
     # is not present to us (it is not saved anywhere during the package installation
@@ -104,18 +86,49 @@ def _find_fal_extras(package: str) -> Iterator[str]:
     # the smallest possible subset of extras that we can install.
     return available_dbt_adapters.intersection(all_extras)
 
+def _is_fal_pre_release() -> bool:
+    raw_fal_version = importlib_metadata.version("fal")
+    return _version_is_prerelease(raw_fal_version)
+
+def _version_is_prerelease(raw_version: str) -> bool:
+    from packaging.version import Version
+
+    package_version = Version(raw_version)
+    return package_version.is_prerelease
+
+def _get_dbt_fal_package_name() -> Optional[Tuple[str, Optional[str]]]:
+    try:
+        dbt_fal_version = importlib_metadata.version("dbt-fal")
+    except importlib_metadata.PackageNotFoundError:
+        # It might not be installed.
+        return None
+
+    if _is_fal_pre_release():
+        dbt_fal_dep = str(_get_project_root_path("adapter"))
+        # We are going to install it from the local path.
+        dbt_fal_version = None
+    else:
+        dbt_fal_dep = "dbt-fal"
+
+    dbt_fal_extras = _find_fal_extras("dbt-fal")
+    if dbt_fal_extras:
+        dbt_fal_dep += f"[{','.join(dbt_fal_extras)}]"
+
+    return dbt_fal_dep, dbt_fal_version
 
 def _get_fal_package_name() -> Tuple[str, Optional[str]]:
     if _is_fal_pre_release():
-        fal_dep, fal_version = str(_get_fal_root_path()), None
+        fal_dep = str(_get_project_root_path("fal"))
+        fal_version = None
     else:
-        fal_dep, fal_version = "fal", importlib_metadata.version("fal")
+        fal_dep = "fal"
+        fal_version = importlib_metadata.version("fal")
 
-    fal_package_name = fal_dep
     fal_extras = _find_fal_extras("fal")
     if fal_extras:
-        fal_package_name += f"[{' ,'.join(fal_extras)}]"
-    return fal_package_name, fal_version
+        fal_dep += f"[{','.join(fal_extras)}]"
+
+    return fal_dep, fal_version
 
 
 def get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
