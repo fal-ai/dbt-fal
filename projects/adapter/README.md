@@ -71,3 +71,8 @@ The `dbt.config(fal_environment=“ml”)` will give you an isolated clean env t
 
 ### 5. [Coming Soon™️] Move your compute to the Cloud!
 Let us know if you are interested in this. We are looking for beta users.
+
+# Have feedback or need help?
+
+- Join us in [fal on Discord](https://discord.com/invite/Fyc9PwrccF)
+- Join the [dbt Community](http://community.getdbt.com/) and go into our [#tools-fal channel](https://getdbt.slack.com/archives/C02V8QW3Q4Q)
