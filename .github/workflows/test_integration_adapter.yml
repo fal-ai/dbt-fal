@@ -79,10 +79,12 @@ jobs:
 
           ADAPTER_PACKAGE="dbt-${{ matrix.profile }}"
           if [[ '${{ matrix.profile }}' == 'athena' ]]
+          then
             ADAPTER_PACKAGE="dbt-athena-community"
           fi
 
           if [[ -n '${{ matrix.dbt_version }}' ]]
+          then
             ADAPTER_PACKAGE="${ADAPTER_PACKAGE}==${{ matrix.dbt_version }}"
           fi
 

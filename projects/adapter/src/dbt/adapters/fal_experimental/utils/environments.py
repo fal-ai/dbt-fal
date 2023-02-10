@@ -239,7 +239,7 @@ def _parse_remote_config(
 
 def _get_package_from_type(adapter_type: str):
     SPECIAL_ADAPTERS = {
-        # Documented in dbt website
+        # Documented in https://docs.getdbt.com/docs/supported-data-platforms#community-adapters
         "athena": "dbt-athena-community",
     }
     return SPECIAL_ADAPTERS.get(adapter_type, f"dbt-{adapter_type}")
