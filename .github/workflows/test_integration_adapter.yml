@@ -132,6 +132,13 @@ jobs:
         working-directory: fal/projects/adapter/integration_tests
         env:
           FAL_STATS_ENABLED: false
+          # Teleport
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # Isolate Cloud
+          FAL_HOST: ${{ secrets.FAL_HOST }}
+          FAL_KEY_SECRET: ${{ secrets.FAL_KEY_SECRET }}
+          FAL_KEY_ID: ${{ secrets.FAL_KEY_ID }}
           # BigQuery
           KEYFILE: ${{ secrets.GCP_SA_KEY }}
           GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
@@ -153,13 +160,13 @@ jobs:
           RS_PASSWORD: ${{ secrets.RS_PASSWORD }}
           RS_DBNAME: ${{ secrets.RS_DBNAME }}
           RS_SCHEMA: ${{ secrets.RS_SCHEMA }}
-          # Teleport
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          # Isolate Cloud
-          FAL_HOST: ${{ secrets.FAL_HOST }}
-          FAL_KEY_SECRET: ${{ secrets.FAL_KEY_SECRET }}
-          FAL_KEY_ID: ${{ secrets.FAL_KEY_ID }}
+          # Athena
+          ATHENA_S3_STAGING_DIR: ${{ secrets.ATHENA_S3_STAGING_DIR }}
+          ATHENA_REGION: ${{ secrets.ATHENA_REGION }}
+          ATHENA_WORK_GROUP: ${{ secrets.ATHENA_WORK_GROUP }}
+          ATHENA_PROFILE: ${{ secrets.ATHENA_PROFILE }}
+          ATHENA_DATABASE: ${{ secrets.ATHENA_DATABASE }}
+          ATHENA_SCHEMA: ${{ secrets.ATHENA_SCHEMA }}
         run: |
           source .venv/bin/activate
 
@@ -182,6 +189,10 @@ jobs:
           if [[ '${{ matrix.profile }}' == "redshift" ]]
           then
             export DBT_DATABASE="$RS_DBNAME" DBT_SCHEMA="$RS_SCHEMA"
+          fi
+          if [[ '${{ matrix.profile }}' == "athena" ]]
+          then
+            export DBT_DATABASE="$ATHENA_DATABASE" DBT_SCHEMA="$ATHENA_SCHEMA"
           fi
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
