@@ -5,9 +5,9 @@ environments:
   - name: funny
     type: venv
     requirements:
-      - pyjokes==0.6.0
+      - pyjokes==0.5.0
 
   - name: funny-conda
     type: conda
     packages:
-      - pyjokes=0.6.0
+      - pyjokes=0.5.0
