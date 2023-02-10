@@ -36,7 +36,7 @@ fal_profile:
     fal_cloud:
       type: fal
       db_profile: db
-      host: rooster.fal.ai:60005
+      host: api.alpha.fal.ai
       key_secret: MY_KEY_SECRET_VALUE
       key_id: MY_KEY_ID_VALUE
     db:
