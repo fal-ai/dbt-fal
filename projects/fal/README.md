@@ -1,3 +1,5 @@
+<base href="https://github.com/fal-ai/fal/blob/main/projects/fal/" target="_blank" />
+
 # fal: do more with dbt
 
 fal is the easiest way to run Python with your [dbt](https://www.getdbt.com/) project.
