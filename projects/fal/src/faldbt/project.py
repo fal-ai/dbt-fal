@@ -14,20 +14,32 @@ from typing import (
 )
 from pathlib import Path
 
-from dbt.node_types import NodeType
-from dbt.contracts.graph.parsed import (
-    ParsedSourceDefinition,
-    TestMetadata,
-    ParsedGenericTestNode,
-    ParsedSingularTestNode,
-)
-from dbt.contracts.graph.compiled import ManifestNode
+import faldbt.version as version
+
+if version.is_version_plus("1.4.0"):
+    from dbt.contracts.graph.nodes import (
+        SourceDefinition,
+        TestMetadata,
+        GenericTestNode,
+        SingularTestNode,
+    )
+    from dbt.contracts.graph.nodes import ManifestNode
+else:
+    from dbt.contracts.graph.parsed import (
+        ParsedSourceDefinition as SourceDefinition,
+        TestMetadata,
+        ParsedGenericTestNode as GenericTestNode,
+        ParsedSingularTestNode as SingularTestNode,
+    )
+    from dbt.contracts.graph.compiled import ManifestNode
 from dbt.contracts.graph.manifest import (
     Manifest,
     MaybeNonSource,
     MaybeParsedSource,
     Disabled,
 )
+
+from dbt.node_types import NodeType
 from dbt.contracts.connection import AdapterResponse
 from dbt.contracts.results import (
     RunResultsArtifact,
@@ -93,9 +105,9 @@ class DbtTest(_DbtNode):
     @classmethod
     def init(cls, node):
         if node.resource_type == NodeType.Test:
-            if isinstance(node, ParsedGenericTestNode):
+            if isinstance(node, GenericTestNode):
                 test = DbtGenericTest(node=node)
-            elif isinstance(node, ParsedSingularTestNode):
+            elif isinstance(node, SingularTestNode):
                 test = DbtSingularTest(node=node)
             else:
                 raise ValueError(f"Unexpected test class {node.__class__.__name__}")
@@ -118,7 +130,7 @@ class DbtGenericTest(DbtTest):
     column: Optional[str] = field(init=False)
 
     def __post_init__(self):
-        assert isinstance(self.node, ParsedGenericTestNode)
+        assert isinstance(self.node, GenericTestNode)
         self.column = self.node.column_name
 
     @property
@@ -155,7 +167,7 @@ class DbtGenericTest(DbtTest):
 @dataclass
 class DbtSingularTest(DbtTest):
     def __post_init__(self):
-        assert isinstance(self.node, ParsedSingularTestNode)
+        assert isinstance(self.node, SingularTestNode)
 
 
 @dataclass
@@ -334,7 +346,7 @@ class DbtManifest:
             if node.resource_type == NodeType.Test
         )
 
-    def get_source_nodes(self) -> Iterable[ParsedSourceDefinition]:
+    def get_source_nodes(self) -> Iterable[SourceDefinition]:
         return self.nativeManifest.sources.values()
 
     def _map_nodes(
@@ -425,7 +437,7 @@ class FalDbt:
         args_vars: str = "{}",
         generated_models: Dict[str, Path] = {},
     ):
-        if not version.IS_DBT_V1PLUS:
+        if not version.is_version_plus("1.0.0"):
             raise NotImplementedError(
                 f"dbt version {version.DBT_VCURRENT} is no longer supported, please upgrade to dbt 1.0.0 or above"
             )
@@ -646,7 +658,7 @@ class FalDbt:
 
     def _source(
         self, target_source_name: str, target_table_name: str
-    ) -> ParsedSourceDefinition:
+    ) -> SourceDefinition:
         target_source: MaybeParsedSource = self._manifest.nativeManifest.resolve_source(
             target_source_name, target_table_name, self.project_dir, self.project_dir
         )

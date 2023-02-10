@@ -43,6 +43,7 @@ on:
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
 
       dbt:
         description: dbt version to test with
@@ -56,6 +57,7 @@ on:
           - "1.1.*"
           - "1.2.*"
           - "1.3.*"
+          - "1.4.*"
 
 jobs:
   matrix-adapter:
@@ -123,6 +125,7 @@ jobs:
             "3.8",
             "3.9",
             "3.10",
+            "3.11",
           ]
           OUTPUT = ["3.8"]
 
@@ -168,6 +171,9 @@ jobs:
         shell: python
         run: |
           OPTIONS = [
+            "1.4.*",
+          ]
+          EXTRA_OPTIONS = [
             "1.0.*",
             "1.1.*",
             "1.2.*",
@@ -178,7 +184,7 @@ jobs:
           if '${{ github.event_name }}' == 'workflow_dispatch':
             INPUT_CHOICE = '${{ github.event.inputs.dbt }}'
             if INPUT_CHOICE == '<ALL>':
-              OUTPUT = OPTIONS
+              OUTPUT = OPTIONS + EXTRA_OPTIONS
             else:
               OUTPUT = [INPUT_CHOICE]
 
@@ -188,8 +194,8 @@ jobs:
   run:
     needs:
       - matrix-adapter
-      - matrix-python
       - matrix-dbt
+      - matrix-python
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -198,7 +204,7 @@ jobs:
         dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
         exclude:
-          # Only dbt 1.1+ supports Python 3.10 (officially)
+          # Only dbt>=1.1 supports Python 3.10 (officially)
           - python: 3.10
             dbt: "1.0.*"
           # dbt-fal is for dbt-core>=1.3
@@ -215,6 +221,8 @@ jobs:
             dbt: "1.2.*"
           - profile: "athena"
             dbt: "1.3.*"
+          - profile: "athena"
+            dbt: "1.4.*"
 
     # Run only the latest commit pushed to PR
     concurrency:

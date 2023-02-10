@@ -25,9 +25,15 @@ runs:
       shell: bash
       run: pip install poetry-core=="1.0.*" poetry=="1.1.4"
 
-    - name: Fix jinja
+    - name: Install fal
       shell: sh
-      run: pip install markupsafe==2.0.1
+      run: |
+        if [[ '${{ inputs.adapter }}' == 'fal' ]]
+        then
+          pip install -e './projects/fal[postgres]'
+        else
+          pip install -e './projects/fal[${{ inputs.adapter }}]'
+        fi
 
     - name: Install dbt
       shell: bash
@@ -51,23 +57,11 @@ runs:
           exit 2
         fi
 
+        echo "${package}==${version}"
+        pip install ${package}==${version}
         if [[ '${{ inputs.adapter }}' == 'fal' ]]
         then
-          pip install -e ./projects/adapter[postgres]
           pip install dbt-postgres==${version}
-        else
-          echo "${package}==${version}"
-          pip install ${package}==${version}
-        fi
-
-    - name: Install fal
-      shell: sh
-      run: |
-        if [[ '${{ inputs.adapter }}' == 'fal' ]]
-        then
-          pip install -e './projects/fal[postgres]'
-        else
-          pip install -e './projects/fal[${{ inputs.adapter }}]'
         fi
 
     - name: List requirements.txt

@@ -11,11 +11,17 @@ import threading
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
 
+import faldbt.version as version
+
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.base import BaseRelation, BaseAdapter, BaseConnectionManager
-from dbt.contracts.graph.compiled import CompileResultNode
 from dbt.config import RuntimeConfig
+
+if version.is_version_plus("1.4.0"):
+    from dbt.contracts.graph.nodes import ResultNode
+else:
+    from dbt.contracts.graph.compiled import CompileResultNode as ResultNode
 
 import pandas as pd
 from pandas.io import sql as pdsql
@@ -26,6 +32,7 @@ from sqlalchemy.sql.ddl import CreateTable
 from sqlalchemy.sql import Insert
 
 from dbt.contracts.sql import RemoteRunResult
+
 
 from faldbt import parse
 from faldbt.logger import LOGGER
@@ -145,7 +152,7 @@ def _clear_relations_cache(adapter: BaseAdapter):
 
 
 def _get_target_relation(
-    adapter: SQLAdapter, target: CompileResultNode
+    adapter: SQLAdapter, target: ResultNode
 ) -> Optional[BaseRelation]:
     with adapter.connection_named(_connection_name("relation", target)):
         with _cache_lock("_get_target_relation"):
@@ -221,7 +228,7 @@ def _agate_table_to_df(table: agate.Table) -> pd.DataFrame:
 def fetch_target(
     project_dir: str,
     profiles_dir: str,
-    target: CompileResultNode,
+    target: ResultNode,
     profile_target: str,
     *,
     config: Optional[RuntimeConfig] = None,
@@ -260,7 +267,7 @@ def _build_table_from_parts(
     return adapter.Relation(path, type=RelationType.Table)
 
 
-def _build_table_from_target(adapter: SQLAdapter, target: CompileResultNode):
+def _build_table_from_target(adapter: SQLAdapter, target: ResultNode):
     return _build_table_from_parts(
         adapter, target.database, target.schema, target.identifier
     )
@@ -271,7 +278,7 @@ def overwrite_target(
     project_dir: str,
     profiles_dir: str,
     profile_target: str,
-    target: CompileResultNode,
+    target: ResultNode,
     *,
     dtype=None,
     config: Optional[RuntimeConfig] = None,
@@ -317,7 +324,7 @@ def write_target(
     project_dir: str,
     profiles_dir: str,
     profile_target: str,
-    target: CompileResultNode,
+    target: ResultNode,
     *,
     dtype=None,
     config: Optional[RuntimeConfig] = None,

@@ -37,9 +37,9 @@ jobs:
           - "1.4.*"
         python:
           - "3.7"
-          # - "3.8"
-          # - "3.9"
-          # - "3.10"
+          - "3.8"
+          - "3.9"
+          - "3.10"
           - "3.11"
         include:
           - profile: snowflake
@@ -75,7 +75,7 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
-          pip install build wheel 'fal[${{ matrix.profile }}]'
+          pip install build wheel -e '../../fal[${{ matrix.profile }}]'
 
           if [[ -z '${{ matrix.dbt_version }}' ]]
           then
