@@ -37,7 +37,7 @@ google-cloud-bigquery = { version = "~3.5.0", extras = ["pandas"], optional = tr
 sqlalchemy-redshift = { version = "^0.8.9", optional = true }
 
 ## trino
-trino = { version = "^0.319.0", extras = ["sqlalchemy"], optional = true }
+trino = { version = "~0.321.0", extras = ["sqlalchemy"], optional = true }
 
 # teleport
 s3fs = { version = ">=2022.8.2", optional = true }
