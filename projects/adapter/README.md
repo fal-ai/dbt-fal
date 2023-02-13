@@ -1,3 +1,5 @@
+<base href="https://github.com/fal-ai/fal/blob/main/projects/adapter/" target="_blank" />
+
 # Welcome to dbt-fal 👋
 
 dbt-fal adapter is the ✨easiest✨ way to run your [dbt Python models](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/python-models).
