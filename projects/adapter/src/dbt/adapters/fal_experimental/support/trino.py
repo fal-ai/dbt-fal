@@ -5,7 +5,7 @@ from dbt.adapters.trino.connections import TrinoCredentials
 import sqlalchemy
 
 def create_engine(adapter: BaseAdapter) -> Any:
-    creds = adapter.config.credentials._db_creds
+    creds = adapter.config.credentials
 
     connect_args = _build_connect_args(creds)
 

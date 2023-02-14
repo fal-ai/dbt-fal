@@ -1,5 +1,6 @@
 @TODO-duckdb
 @TODO-bigquery
+@TODO-trino
 Feature: dbt-fal can query sources
   Background: Project Setup
     Given the project source_freshness
