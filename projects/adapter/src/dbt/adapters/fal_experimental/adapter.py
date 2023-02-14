@@ -57,8 +57,9 @@ def _isolated_runner(
     adapter = reconstruct_adapter(config, manifest, macro_manifest)
     fal_scripts_path = get_fal_scripts_path(config)
     if local_packages is not None:
-        # Shoule we overwrite this?
-        assert not fal_scripts_path.exists(), f"Path: {fal_scripts_path} already exists in isolate cloud."
+        if fal_scripts_path.exists():
+            import shutil
+            shutil.rmtree(fal_scripts_path)
         fal_scripts_path.parent.mkdir(parents=True, exist_ok=True)
         zip_file = zipfile.ZipFile(io.BytesIO(local_packages))
         zip_file.extractall(fal_scripts_path)
