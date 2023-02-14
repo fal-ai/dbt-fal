@@ -1,3 +1,4 @@
+@TODO-trino
 Feature: Python models
   Background: Project Setup
     Given the project simple_project

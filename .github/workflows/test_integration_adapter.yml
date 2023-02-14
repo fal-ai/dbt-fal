@@ -31,7 +31,7 @@ jobs:
           # - duckdb
           - snowflake
           - redshift
-          # - trino
+          - trino
         dbt_version:
           - "1.4.*"
         python:

@@ -318,8 +318,8 @@ def _version_is_prerelease(raw_version: str) -> bool:
     return package_version.is_prerelease
 
 
-def _get_project_root_path(pacakge: str) -> Path:
-    import fal
+def _get_project_root_path(package: str) -> Path:
+    from dbt.adapters import fal
 
     # If this is a development version, we'll install
     # the current fal itself.
@@ -328,7 +328,7 @@ def _get_project_root_path(pacakge: str) -> Path:
         if (path.parent / ".git").exists():
             break
         path = path.parent
-    return path / pacakge
+    return path / package
 
 
 def get_default_requirements(
