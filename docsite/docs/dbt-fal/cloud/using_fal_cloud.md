@@ -11,7 +11,7 @@ sidebar_position: 1
 Skip this step, if you already have the latest version of fal installed,
 
 ```bash
-pip install --upgrade fal
+pip install --upgrade fal[cloud]
 ```
 
 ## 1. Authenticate to fal cloud
@@ -45,7 +45,7 @@ fal_profile:
     fal_cloud:
       type: fal
       db_profile: db
-      host: api.alpha.fal.ai
+      host: cloud
       key_secret: MY_KEY_SECRET_VALUE
       key_id: MY_KEY_ID_VALUE
     db:
@@ -71,7 +71,7 @@ fal_profile:
     prod:
       type: fal
       db_profile: db
-      host: rooster.fal.ai:60005
+      host: cloud
       key_secret: MY_KEY_SECRET_VALUE
       key_id: MY_KEY_ID_VALUE
     db:

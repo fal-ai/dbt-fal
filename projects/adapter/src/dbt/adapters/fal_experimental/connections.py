@@ -45,7 +45,7 @@ class FalConnectionManager(PythonConnectionManager):
 class FalCredentials(Credentials):
     default_environment: str = "local"
     teleport: Optional[TeleportCredentials] = None
-    host: str = ""
+    host: str = "cloud"
     key_secret: str = ""
     key_id: str = ""
 
@@ -53,6 +53,10 @@ class FalCredentials(Credentials):
     # they are ignored for now
     database: str = ""
     schema: str = ""
+
+    def __post_init__(self):
+        if self.host == "cloud":
+            self.host = "api.alpha.fal.ai"
 
     @property
     def type(self):
