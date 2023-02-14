@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, ClassVar, Dict, Iterator, List, Optional, Tuple
 import importlib_metadata
 
 from dbt.events.adapter_endpoint import AdapterLogger
@@ -11,6 +11,9 @@ from dbt.config.runtime import RuntimeConfig
 
 from isolate.backends import BaseEnvironment, BasicCallable, EnvironmentConnection
 from isolate.backends.local import LocalPythonEnvironment
+from isolate.backends.remote import IsolateServer
+
+from koldstart import CloudKeyCredentials
 
 from . import cache_static
 from .yaml_helper import load_yaml
@@ -33,6 +36,13 @@ class FalParseError(Exception):
 class LocalConnection(EnvironmentConnection):
     def run(self, executable: BasicCallable, *args, **kwargs) -> Any:
         return executable(*args, **kwargs)
+
+
+@dataclass
+class KoldstartDummyServer(IsolateServer):
+    machine_type: str
+    target_env_type: str
+    creds: CloudKeyCredentials | None = None
 
 
 def fetch_environment(
@@ -165,9 +175,6 @@ def _build_hosted_env(
     credentials: Any,
     machine_type: str,
 ) -> BaseEnvironment:
-    from isolate_cloud.api import FalHostedServer
-    from isolate_cloud.api import CloudKeyCredentials
-
     if not config.get("type"):
         kind = "virtualenv"
     else:
@@ -196,11 +203,12 @@ def _build_hosted_env(
         "configuration": parsed_config,
     }
 
-    return FalHostedServer.from_config(
+    return KoldstartDummyServer.from_config(
         {
             "host": credentials.host,
             "creds": CloudKeyCredentials(credentials.key_id, credentials.key_secret),
             "machine_type": machine_type,
+            "target_env_type": kind,
             "target_environments": [env_definition],
         }
     )

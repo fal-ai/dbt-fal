@@ -1,6 +1,7 @@
 def model(dbt, fal):
     dbt.config(materialized="table")
     dbt.config(fal_environment="funny-conda")
+    dbt.config(fal_machine="M")
     import pyjokes
     from utils.get_bool import get_bool
 

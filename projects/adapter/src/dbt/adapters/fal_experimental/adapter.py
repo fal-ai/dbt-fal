@@ -4,14 +4,17 @@ import zipfile
 import io
 from functools import partial
 from tempfile import NamedTemporaryFile
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
+from isolate.backends.remote import IsolateServer
 
 from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
+from koldstart import KoldstartHost, isolated
 from dbt.adapters.fal_experimental.utils.environments import (
+    KoldstartDummyServer,
     get_default_pip_dependencies
 )
 
@@ -76,7 +79,7 @@ def run_in_environment_with_adapter(
 
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
-    if type(environment).__name__ in ['IsolateServer', 'FalHostedServer']:
+    if type(environment) in [IsolateServer, KoldstartDummyServer]:
         if type(config.credentials).__name__ == 'BigQueryCredentials' and str(config.credentials.method) == 'service-account':
             raise RuntimeError(
                 "BigQuery credential method `service-account` is not supported." + \
@@ -108,6 +111,16 @@ def run_in_environment_with_adapter(
                 compressed_local_packages = temp_file.read()
         else:
             compressed_local_packages = None
+        
+        if type(environment) == KoldstartDummyServer:
+            environment = cast(KoldstartDummyServer, environment)
+            return run_in_koldstart(
+                environment,
+                code,
+                config,
+                manifest,
+                macro_manifest,
+                compressed_local_packages)
 
         with environment.open_connection(key) as connection:
             execute_model = partial(
@@ -136,3 +149,66 @@ def run_in_environment_with_adapter(
             )
             result = connection.run(execute_model)
             return result
+
+def run_in_koldstart(
+        environment: KoldstartDummyServer,
+        code: str,
+        config: RuntimeConfig,
+        manifest: Manifest,
+        macro_manifest: MacroManifest,
+        local_packages: Any) -> AdapterResponse:
+    execute_model = partial(
+        _isolated_runner,
+        code,
+        config,
+        manifest,
+        macro_manifest,
+        local_packages=local_packages
+    )
+    host = KoldstartHost(url=environment.host, credentials=environment.creds)
+
+    # HACK ALERT: This is a temporary solution for running Python models on Koldstart.
+    # Environments in dbt-fal work with `isolate` abstractions and so far these
+    # have been re-used to get us here. But `koldstart` API uses different
+    # abstractions. So this where we tranform `isolate` objects into `koldstart`
+    # objects and run the resulting isolated function.
+
+    # One big change in `koldstart` is that it supports only one target environment
+    # whereas isolate lets you stack environments on top of each other. We resolve this
+    # in two ways, for `virtualenv` environments we just merge base requirements (dbt-*)
+    # with user requirements, whereas for `conda` environments we create an `env_dict`,
+    # where we add base requirements as `pip` requirements.
+
+    if environment.target_env_type == "virtualenv":
+        requirements = []
+        for env in environment.target_environments:
+            if env.get("configuration", {}).get("requirements"):
+                requirements += env["configuration"]["requirements"]
+        isolated_function = isolated(
+            kind="virtualenv",
+            host=host,
+            requirements=requirements,
+            machine_type=environment.machine_type)(execute_model)
+    elif environment.target_env_type == "conda":
+        env_dict = {
+            "name": "dbt_fal_env",
+            "channels": ["conda-forge", "defaults"],
+            "dependencies": []
+        }
+        for env in environment.target_environments:
+            if env.get("configuration", {}).get("packages"):
+                env_dict["dependencies"] += env["configuration"]["packages"]
+            if env.get("configuration", {}).get("requirements"):
+                env_dict["dependencies"].append({"pip": env["configuration"]["requirements"]})
+        isolated_function = isolated(
+            kind="conda",
+            host=host,
+            env_dict=env_dict,
+            machine_type=environment.machine_type)(execute_model)
+    else:
+        # We should not reach this point, because environment types are validated when the
+        # environment objects are created (in utils/environments.py).
+        raise Exception(f"Environment type not supported: {environment.target_env_type}")
+
+    result = isolated_function()
+    return result

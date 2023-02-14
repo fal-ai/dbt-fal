@@ -132,10 +132,10 @@ tests-no-zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy 
 
 [[package]]
 name = "auth0-python"
-version = "3.24.0"
+version = "3.24.1"
 description = "Auth0 Python SDK"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*"
 
 [package.dependencies]
@@ -292,7 +292,7 @@ name = "cryptography"
 version = "36.0.2"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -367,7 +367,7 @@ name = "dill"
 version = "0.3.5.1"
 description = "serialize all of python"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*"
 
 [package.extras]
@@ -700,7 +700,7 @@ six = "*"
 
 [[package]]
 name = "isolate"
-version = "0.8.0"
+version = "0.10.0"
 description = "Managed isolated environments for Python"
 category = "main"
 optional = false
@@ -716,34 +716,16 @@ tblib = ">=1.7.0,<2.0.0"
 virtualenv = ">=20.4"
 
 [[package]]
-name = "isolate-cloud"
-version = "0.6.15"
-description = "SDK and cli for the fal isolate Cloud service"
-category = "main"
-optional = true
-python-versions = ">=3.7,<4.0"
-
-[package.dependencies]
-auth0-python = ">=3.24.0,<4.0.0"
-click = ">=8.1.3,<9.0.0"
-dill = "0.3.5.1"
-grpcio = ">=1.50.0,<2.0.0"
-isolate = ">=0.5.0"
-isolate-proto = ">=0.0.13,<0.0.14"
-requests = ">=2.28.1,<3.0.0"
-typing-extensions = "4.4"
-
-[[package]]
 name = "isolate-proto"
-version = "0.0.13"
+version = "0.0.19"
 description = "(internal) gRPC definitions for Isolate Cloud"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7,<4"
 
 [package.dependencies]
 grpcio = ">=1.49"
-isolate = {version = "0.8.0", extras = ["grpc"]}
+isolate = "0.10.0"
 protobuf = "*"
 
 [[package]]
@@ -786,6 +768,24 @@ six = ">=1.11.0"
 [package.extras]
 format = ["idna", "jsonpointer (>1.13)", "rfc3987", "strict-rfc3339", "webcolors"]
 format-nongpl = ["idna", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3986-validator (>0.1.0)", "webcolors"]
+
+[[package]]
+name = "koldstart"
+version = "0.6.19"
+description = "koldstart is an easy-to-use Serverless Python Framework"
+category = "main"
+optional = false
+python-versions = ">=3.7,<4.0"
+
+[package.dependencies]
+auth0-python = ">=3.24.0,<4.0.0"
+click = ">=8.1.3,<9.0.0"
+dill = "0.3.5.1"
+grpcio = ">=1.50.0,<2.0.0"
+isolate = "0.10.0"
+isolate-proto = ">=0.0.19,<0.0.20"
+requests = ">=2.28.1,<3.0.0"
+typing-extensions = "4.4"
 
 [[package]]
 name = "leather"
@@ -1133,7 +1133,7 @@ name = "pyjwt"
 version = "2.6.0"
 description = "JSON Web Token implementation in Python"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
@@ -1599,7 +1599,6 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [extras]
 athena = []
 bigquery = ["google-cloud-bigquery"]
-cloud = ["isolate-cloud", "dill"]
 duckdb = []
 postgres = []
 redshift = ["sqlalchemy-redshift"]
@@ -1610,7 +1609,7 @@ trino = ["trino"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.12"
-content-hash = "ec3df5b806bc34d9b30866e114a877e28bf7e41d2bb43e1bb6b99bfcc6d740de"
+content-hash = "b7c8452b1d7065260d75474b0f2702bf6b3b5d7167ce71f4e48d93ea026f0d47"
 
 [metadata.files]
 agate = [
@@ -1738,8 +1737,8 @@ attrs = [
     {file = "attrs-22.1.0.tar.gz", hash = "sha256:29adc2665447e5191d0e7c568fde78b21f9672d344281d0c6e1ab085429b22b6"},
 ]
 auth0-python = [
-    {file = "auth0-python-3.24.0.tar.gz", hash = "sha256:88d7bce9472342e77f2f25fd8b060819b3557000e3a43e2618cd7a0fe5212c71"},
-    {file = "auth0_python-3.24.0-py2.py3-none-any.whl", hash = "sha256:a76e308df407fad9c6c29cd9de9a89bc5c1f7236f051c824923904046aea27a1"},
+    {file = "auth0-python-3.24.1.tar.gz", hash = "sha256:62c2e177b9517879bd8632da9eb7668aedd5775fddea87b0e0e1e9a89b9dd096"},
+    {file = "auth0_python-3.24.1-py2.py3-none-any.whl", hash = "sha256:87dbf603c89fcebfd35f5ba29bc8a820af72a7d5a772f53752ae04d30f191712"},
 ]
 babel = [
     {file = "Babel-2.11.0-py3-none-any.whl", hash = "sha256:1ad3eca1c885218f6dce2ab67291178944f810a10a9b5f3cb8382a5a232b64fe"},
@@ -2250,16 +2249,12 @@ isodate = [
     {file = "isodate-0.6.1.tar.gz", hash = "sha256:48c5881de7e8b0a0d648cb024c8062dc84e7b840ed81e864c7614fd3c127bde9"},
 ]
 isolate = [
-    {file = "isolate-0.8.0-py3-none-any.whl", hash = "sha256:4cd0fd2d11be513dfb92c8407ce8a35f891c730b59e91d4a0cb4999783ad328d"},
-    {file = "isolate-0.8.0.tar.gz", hash = "sha256:61fd2af9cfe4f3a918fee7b5b83b004282a93ec169ab8396a2e56e08c8c4d280"},
-]
-isolate-cloud = [
-    {file = "isolate-cloud-0.6.15.tar.gz", hash = "sha256:73fb972f262739331878554f5376fd8d7e246da2bbc377b0f9ee483b49834eda"},
-    {file = "isolate_cloud-0.6.15-py3-none-any.whl", hash = "sha256:cb5a22192f9657880f7ae64c1102411dbe9c89eadd8f0af21d90550aff5a4f60"},
+    {file = "isolate-0.10.0-py3-none-any.whl", hash = "sha256:901ba0e40177bdfe83ef7dae6c4e0f358346fc2addcff4c89834db41a5d55bd8"},
+    {file = "isolate-0.10.0.tar.gz", hash = "sha256:01c6cb5fb803286e43002e1f165235402abe6c37ffe01aa929d5fc3c77abab45"},
 ]
 isolate-proto = [
-    {file = "isolate_proto-0.0.13-py3-none-any.whl", hash = "sha256:5135e6d4d29a633c3e18973e6ad5810722d7fb2dbe4763cfded9b3c9a25f270f"},
-    {file = "isolate_proto-0.0.13.tar.gz", hash = "sha256:7a1fcec443757dbe784e07eccb2b7846f71f5dd48261252b58b2fb17db57d692"},
+    {file = "isolate_proto-0.0.19-py3-none-any.whl", hash = "sha256:7cd512da43383e5a62cd15ec14374b05d57f6c7e9397651932e84ad5d246741f"},
+    {file = "isolate_proto-0.0.19.tar.gz", hash = "sha256:0ee0bd2f385b500c983d616f1a0086c353bf3645520aca3f4f9118d0de36b517"},
 ]
 jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
@@ -2272,6 +2267,10 @@ jmespath = [
 jsonschema = [
     {file = "jsonschema-3.2.0-py2.py3-none-any.whl", hash = "sha256:4e5b3cf8216f577bee9ce139cbe72eca3ea4f292ec60928ff24758ce626cd163"},
     {file = "jsonschema-3.2.0.tar.gz", hash = "sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a"},
+]
+koldstart = [
+    {file = "koldstart-0.6.19-py3-none-any.whl", hash = "sha256:67a0240def68710dd15c2f86190b65a61840f08301c9b30b2f43bd5cf44f66f2"},
+    {file = "koldstart-0.6.19.tar.gz", hash = "sha256:9040577fa4037e0d5a45d7001c53721d5ee1d7b5bc65cb5a3c0441d76dd13101"},
 ]
 leather = [
     {file = "leather-0.3.4-py2.py3-none-any.whl", hash = "sha256:5e741daee96e9f1e9e06081b8c8a10c4ac199301a0564cdd99b09df15b4603d2"},
