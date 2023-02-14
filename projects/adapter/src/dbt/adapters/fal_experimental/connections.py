@@ -8,6 +8,12 @@ from dbt.dataclass_schema import StrEnum, ExtensibleDbtClassMixin
 from dbt.fal.adapters.python import PythonConnectionManager
 
 
+DEFAULT_HOSTS = {
+    "cloud": "api.alpha.fal.ai",
+    "cloud-eu": "api.eu.fal.ai",
+}
+
+
 class TeleportTypeEnum(StrEnum):
     LOCAL = "local"
     REMOTE_S3 = "s3"
@@ -55,8 +61,8 @@ class FalCredentials(Credentials):
     schema: str = ""
 
     def __post_init__(self):
-        if self.host == "cloud":
-            self.host = "api.alpha.fal.ai"
+        if self.host in list(DEFAULT_HOSTS.keys()):
+            self.host = DEFAULT_HOSTS[self.host]
 
     @property
     def type(self):
