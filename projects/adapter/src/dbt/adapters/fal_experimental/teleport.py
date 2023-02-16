@@ -102,16 +102,17 @@ def run_in_environment_with_teleport(
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
     compressed_local_packages = None
+    is_remote = type(environment.host) is KoldstartHost
 
     deps = get_default_pip_dependencies(
-        is_remote=(type(environment.host)==KoldstartHost),
+        is_remote=is_remote,
         adapter_type=adapter_type,
         is_teleport=True,
     )
 
     fal_scripts_path = get_fal_scripts_path(config)
 
-    if type(environment.host) is KoldstartHost and fal_scripts_path.exists():
+    if is_remote and fal_scripts_path.exists():
         with NamedTemporaryFile() as temp_file:
             with zipfile.ZipFile(
                 temp_file.name, "w", zipfile.ZIP_DEFLATED
@@ -155,7 +156,7 @@ def run_in_environment_with_teleport(
         raise Exception(f"Environment type not supported: {environment.kind}")
 
     # Machine type is only applicable in KoldstartHost
-    if type(environment.host) is KoldstartHost:
+    if is_remote:
         isolated_function = isolated_function.on(machine_type=environment.machine_type)
 
     result = isolated_function()
