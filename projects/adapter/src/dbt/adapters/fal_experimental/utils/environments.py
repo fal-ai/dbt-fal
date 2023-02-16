@@ -66,7 +66,7 @@ def fetch_environment(
             return EnvironmentDefinition(
                 host=host,
                 kind="virtualenv",
-                config={"name": "", "type": "venv"}), False
+                config={"name": "", "type": "venv", "machine_type": machine_type}), False
 
         return EnvironmentDefinition(host=LocalHost(), kind="local", config={}), True
 
@@ -143,6 +143,8 @@ def create_environment(
     parsed_config = {
         key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE
     }
+
+    parsed_config["machine_type"] = machine_type
 
     if credentials.key_secret and credentials.key_id:
         host = KoldstartHost(
