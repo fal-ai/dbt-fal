@@ -1,12 +1,13 @@
-from typing import Any, Callable, Dict, NewType
+from tempfile import NamedTemporaryFile
+from typing import Any, Callable, Dict, NewType, Optional
 from functools import partial
 import functools
+import zipfile
 from dbt.adapters.fal_experimental.connections import TeleportTypeEnum
-from dbt.adapters.fal_experimental.utils.environments import get_default_pip_dependencies
+from dbt.adapters.fal_experimental.utils.environments import EnvironmentDefinition, get_default_pip_dependencies
 from dbt.adapters.fal_experimental.utils import extra_path, get_fal_scripts_path, retrieve_symbol
 from dbt.config.runtime import RuntimeConfig
-from isolate.backends import BaseEnvironment
-from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
+from koldstart import KoldstartHost, isolated
 import pandas as pd
 
 from dbt.contracts.connection import AdapterResponse
@@ -62,10 +63,24 @@ def _build_teleport_storage_options(teleport_info: TeleportInfo) -> Dict[str, st
         raise RuntimeError(f"Teleport storage type {teleport_info.credentials.type} not supported")
     return storage_options
 
-def run_with_teleport(code: str, teleport_info: TeleportInfo, locations: DataLocation, config: RuntimeConfig) -> str:
+def run_with_teleport(
+        code: str,
+        teleport_info: TeleportInfo,
+        locations: DataLocation,
+        config: RuntimeConfig,
+        local_packages: Optional[bytes]) -> str:
     # main symbol is defined during dbt-fal's compilation
     # and acts as an entrypoint for us to run the model.
+    import io
     fal_scripts_path = str(get_fal_scripts_path(config))
+    if local_packages is not None:
+        if fal_scripts_path.exists():
+            import shutil
+            shutil.rmtree(fal_scripts_path)
+        fal_scripts_path.parent.mkdir(parents=True, exist_ok=True)
+        zip_file = zipfile.ZipFile(io.BytesIO(local_packages))
+        zip_file.extractall(fal_scripts_path)
+
     with extra_path(fal_scripts_path):
         main = retrieve_symbol(code, "main")
         return main(
@@ -74,48 +89,74 @@ def run_with_teleport(code: str, teleport_info: TeleportInfo, locations: DataLoc
         )
 
 def run_in_environment_with_teleport(
-    environment: BaseEnvironment,
+    environment: EnvironmentDefinition,
     code: str,
     teleport_info: TeleportInfo,
     locations: DataLocation,
     config: RuntimeConfig,
     adapter_type: str,
 ) -> AdapterResponse:
-    from isolate.backends.remote import IsolateServer
     """Run the 'main' function inside the given code on the
     specified environment.
 
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
-    if type(environment) == IsolateServer:
-        deps = [
-            i
-            for i in get_default_pip_dependencies(
-                    adapter_type,
-                    is_teleport=True,
-                    is_remote=True
-            )
-        ]
+    compressed_local_packages = None
 
-        if environment.target_environment_kind == 'conda':
-            raise NotImplementedError("Remote environment with `conda` is not supported yet.")
-        else:
-            environment.target_environment_config['requirements'].extend(deps)
+    deps = get_default_pip_dependencies(
+        is_remote=(type(environment.host)==KoldstartHost),
+        adapter_type=adapter_type,
+        is_teleport=True,
+    )
 
-        key = environment.create()
+    fal_scripts_path = get_fal_scripts_path(config)
 
-        # TODO: make it work with multiple environments and test fal_scripts_path
-        with environment.open_connection(key) as connection:
-            execute_model = partial(run_with_teleport, code, teleport_info, locations, config)
-            result = connection.run(execute_model)
-            return result
+    if type(environment.host) is KoldstartHost and fal_scripts_path.exists():
+        with NamedTemporaryFile() as temp_file:
+            with zipfile.ZipFile(
+                temp_file.name, "w", zipfile.ZIP_DEFLATED
+            ) as zip_file:
+                for entry in fal_scripts_path.rglob("*"):
+                    zip_file.write(entry, entry.relative_to(fal_scripts_path))
 
+            compressed_local_packages = temp_file.read()
+
+    execute_model = partial(
+        run_with_teleport,
+        code,
+        teleport_info,
+        locations,
+        config,
+        compressed_local_packages)
+
+    if environment.kind == "virtualenv":
+        requirements = environment.config.get("requirements", [])
+        requirements += deps
+        isolated_function = isolated(
+            kind="virtualenv",
+            host=environment.host,
+            requirements=requirements
+        )(execute_model)
+    elif environment.kind == "conda":
+        dependencies = environment.config.pop("packages", [])
+        dependencies.append({"pip": deps})
+        env_dict = {
+            "name": "dbt_fal_env",
+            "channels": ["conda-forge", "defaults"],
+            "dependencies": dependencies
+        }
+        isolated_function = isolated(
+            kind="conda",
+            host=environment.host,
+            env_dict=env_dict)(execute_model)
     else:
-        deps = get_default_pip_dependencies(adapter_type, is_teleport=True)
-        stage = VirtualPythonEnvironment(deps)
+        # We should not reach this point, because environment types are validated when the
+        # environment objects are created (in utils/environments.py).
+        raise Exception(f"Environment type not supported: {environment.kind}")
 
-        # run_with_teleport already handles fal_scripts_path, so we don't need to pass it here
-        with PythonIPC(environment, environment.create(), extra_inheritance_paths=[stage.create()]) as connection:
-            execute_model = partial(run_with_teleport, code, teleport_info, locations, config)
-            result = connection.run(execute_model)
-            return result
+    # Machine type is only applicable in KoldstartHost
+    if type(environment.host) is KoldstartHost:
+        isolated_function = isolated_function.on(machine_type=environment.machine_type)
+
+    result = isolated_function()
+    return result
