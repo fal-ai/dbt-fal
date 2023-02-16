@@ -41,6 +41,7 @@ class EnvironmentDefinition():
     host: Host
     kind: str
     config: dict[Any, Any]
+    machine_type: str = "S"
 
 
 def fetch_environment(
@@ -66,7 +67,8 @@ def fetch_environment(
             return EnvironmentDefinition(
                 host=host,
                 kind="virtualenv",
-                config={"name": "", "type": "venv", "machine_type": machine_type}), False
+                machine_type=machine_type,
+                config={"name": "", "type": "venv"}), False
 
         return EnvironmentDefinition(host=LocalHost(), kind="local", config={}), True
 
@@ -144,15 +146,17 @@ def create_environment(
         key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE
     }
 
-    parsed_config["machine_type"] = machine_type
-
     if credentials.key_secret and credentials.key_id:
         host = KoldstartHost(
             url=credentials.host,
             credentials=CloudKeyCredentials(credentials.key_id, credentials.key_secret))
     else:
         host = LocalHost()
-    return EnvironmentDefinition(host=host, kind=kind, config=parsed_config)
+    return EnvironmentDefinition(
+        host=host,
+        kind=kind,
+        config=parsed_config,
+        machine_type=machine_type)
 
 
 def _is_local_environment(environment_name: str) -> bool:

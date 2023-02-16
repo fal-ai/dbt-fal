@@ -110,11 +110,10 @@ def run_in_environment_with_adapter(
     if environment.kind == "virtualenv":
         requirements = environment.config.get("requirements", [])
         requirements += deps
-
         isolated_function = isolated(
             kind="virtualenv",
             host=environment.host,
-            **environment.config
+            requirements=requirements
         )(execute_model)
     elif environment.kind == "conda":
         dependencies = environment.config.pop("packages", [])
@@ -127,12 +126,15 @@ def run_in_environment_with_adapter(
         isolated_function = isolated(
             kind="conda",
             host=environment.host,
-            env_dict=env_dict,
-            **environment.config)(execute_model)
+            env_dict=env_dict)(execute_model)
     else:
         # We should not reach this point, because environment types are validated when the
         # environment objects are created (in utils/environments.py).
         raise Exception(f"Environment type not supported: {environment.kind}")
+
+    # Machine type is only applicable in KoldstartHost
+    if type(environment.host) is KoldstartHost:
+        isolated_function = isolated_function.on(machine_type=environment.machine_type)
 
     result = isolated_function()
     return result
