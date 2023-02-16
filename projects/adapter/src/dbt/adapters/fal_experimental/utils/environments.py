@@ -55,7 +55,7 @@ def fetch_environment(
     # Local is a special environment where it doesn't need to be defined
     # since it will mirror user's execution context directly.
     if environment_name == "local":
-        if credentials.key_secret and credentials.key_id:
+        if credentials.host in ["cloud", "cloud-eu"]:
             logger.warning(
                 "`local` environments will be executed on fal cloud."
                 + "If you don't want to use fal cloud, you can change your "
