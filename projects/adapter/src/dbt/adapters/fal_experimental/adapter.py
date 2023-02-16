@@ -84,7 +84,7 @@ def run_in_environment_with_adapter(
 
     fal_scripts_path = get_fal_scripts_path(config)
 
-    if fal_scripts_path.exists():
+    if type(environment.host) is KoldstartHost and fal_scripts_path.exists():
         with NamedTemporaryFile() as temp_file:
             with zipfile.ZipFile(
                 temp_file.name, "w", zipfile.ZIP_DEFLATED
@@ -103,6 +103,10 @@ def run_in_environment_with_adapter(
         local_packages=compressed_local_packages
     )
 
+    if environment.kind == "local":
+        result = execute_model()
+        return result
+
     if environment.kind == "virtualenv":
         requirements = environment.config.get("requirements", [])
         requirements += deps
@@ -112,22 +116,19 @@ def run_in_environment_with_adapter(
             host=environment.host,
             **environment.config
         )(execute_model)
-    # elif environment.kind == "conda":
-    #     env_dict = {
-    #         "name": "dbt_fal_env",
-    #         "channels": ["conda-forge", "defaults"],
-    #         "dependencies": [env]
-    #     }
-    #     for env in environment.target_environments:
-    #         if env.get("configuration", {}).get("packages"):
-    #             env_dict["dependencies"] += env["configuration"]["packages"]
-    #         if env.get("configuration", {}).get("requirements"):
-    #             env_dict["dependencies"].append({"pip": env["configuration"]["requirements"]})
-    #     isolated_function = isolated(
-    #         kind="conda",
-    #         host=host,
-    #         env_dict=env_dict,
-    #         machine_type=environment.machine_type)(execute_model)
+    elif environment.kind == "conda":
+        dependencies = environment.config.pop("packages", [])
+        dependencies.append({"pip": deps})
+        env_dict = {
+            "name": "dbt_fal_env",
+            "channels": ["conda-forge", "defaults"],
+            "dependencies": dependencies
+        }
+        isolated_function = isolated(
+            kind="conda",
+            host=environment.host,
+            env_dict=env_dict,
+            **environment.config)(execute_model)
     else:
         # We should not reach this point, because environment types are validated when the
         # environment objects are created (in utils/environments.py).
