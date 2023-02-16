@@ -53,14 +53,21 @@ def fetch_environment(
     fal_project.yml file."""
     # Local is a special environment where it doesn't need to be defined
     # since it will mirror user's execution context directly.
-    if environment_name == "local" and credentials.key_secret and credentials.key_id:
-        logger.warning(
-            "`local` environments will be executed on fal cloud."
-            + "If you don't want to use fal cloud, you can change your "
-            + "profile target to one where fal doesn't have credentials"
-        )
+    if environment_name == "local":
+        if credentials.key_secret and credentials.key_id:
+            logger.warning(
+                "`local` environments will be executed on fal cloud."
+                + "If you don't want to use fal cloud, you can change your "
+                + "profile target to one where fal doesn't have credentials"
+            )
+            host = KoldstartHost(
+                url=credentials.host,
+                credentials=CloudKeyCredentials(credentials.key_id, credentials.key_secret))
+            return EnvironmentDefinition(
+                host=host,
+                kind="virtualenv",
+                config={"name": "", "type": "venv"}), False
 
-        # TODO: come up with a LocalLocalHost
         return EnvironmentDefinition(host=LocalHost(), kind="local", config={}), True
 
     try:
