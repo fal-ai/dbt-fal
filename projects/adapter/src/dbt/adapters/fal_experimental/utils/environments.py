@@ -10,10 +10,8 @@ from dbt.exceptions import DbtRuntimeError
 from dbt.config.runtime import RuntimeConfig
 
 from isolate.backends import BaseEnvironment, BasicCallable, EnvironmentConnection
-from isolate.backends.local import LocalPythonEnvironment
-from isolate.backends.remote import IsolateServer
-
-from koldstart import CloudKeyCredentials
+from koldstart import CloudKeyCredentials, LocalHost
+from koldstart.api import Host, KoldstartHost
 
 from . import cache_static
 from .yaml_helper import load_yaml
@@ -39,10 +37,11 @@ class LocalConnection(EnvironmentConnection):
 
 
 @dataclass
-class KoldstartDummyServer(IsolateServer):
-    machine_type: str
-    target_env_type: str
-    creds: CloudKeyCredentials | None = None
+class EnvironmentDefinition():
+    host: Host
+    kind: str
+    config: dict[Any, Any]
+    machine_type: str = "S"
 
 
 def fetch_environment(
@@ -50,31 +49,29 @@ def fetch_environment(
     environment_name: str,
     machine_type: str = "S",
     credentials: Optional[Any] = None,
-) -> Tuple[BaseEnvironment, bool]:
+) -> Tuple[EnvironmentDefinition, bool]:
     """Fetch the environment with the given name from the project's
     fal_project.yml file."""
     # Local is a special environment where it doesn't need to be defined
     # since it will mirror user's execution context directly.
     if environment_name == "local":
-        if credentials.key_secret and credentials.key_id:
-            # "local" environment in this case is fal cloud
-            # TODO: add docs link
+        if credentials.host in ["cloud", "cloud-eu"]:
             logger.warning(
                 "`local` environments will be executed on fal cloud."
                 + "If you don't want to use fal cloud, you can change your "
                 + "profile target to one where fal doesn't have credentials"
             )
-            return (
-                _build_hosted_env(
-                    config={"name": "", "type": "venv"},
-                    parsed_config={},
-                    credentials=credentials,
-                    machine_type=machine_type,
-                ),
-                False,
-            )
+            host = KoldstartHost(
+                url=credentials.host,
+                credentials=CloudKeyCredentials(credentials.key_id, credentials.key_secret))
+            return EnvironmentDefinition(
+                host=host,
+                kind="virtualenv",
+                machine_type=machine_type,
+                config={"name": "", "type": "venv"}), False
 
-        return LocalPythonEnvironment(), True
+        return EnvironmentDefinition(host=LocalHost(), kind="local", config={}), True
+
     try:
         environments = load_environments(project_root, machine_type, credentials)
     except Exception as exc:
@@ -104,9 +101,8 @@ def db_adapter_config(config: RuntimeConfig) -> RuntimeConfig:
 
 def load_environments(
     base_dir: str, machine_type: str = "S", credentials: Optional[Any] = None
-) -> Dict[str, BaseEnvironment]:
+) -> Dict[str, EnvironmentDefinition]:
     import os
-
     fal_project_path = os.path.join(base_dir, "fal_project.yml")
     if not os.path.exists(fal_project_path):
         raise FalParseError(f"{fal_project_path} must exist to define environments")
@@ -137,81 +133,30 @@ def create_environment(
     config: Dict[str, Any],
     machine_type: str = "S",
     credentials: Optional[Any] = None,
-):
-    from isolate.backends.virtualenv import VirtualPythonEnvironment
-    from isolate.backends.conda import CondaEnvironment
-    from isolate.backends.remote import IsolateServer
+) -> EnvironmentDefinition:
+    if kind not in ["venv", "conda"]:
+        raise ValueError(
+            f"Invalid environment type (of {kind}) for {name}. Please choose from: "
+            + "venv, conda."
+        )
+
+    kind = kind if kind == "conda" else "virtualenv"
 
     parsed_config = {
         key: val for key, val in config.items() if key not in CONFIG_KEYS_TO_IGNORE
     }
 
     if credentials.key_secret and credentials.key_id:
-        return _build_hosted_env(config, parsed_config, credentials, machine_type)
-
-    REGISTERED_ENVIRONMENTS: Dict[str, BaseEnvironment] = {
-        "conda": CondaEnvironment,
-        "venv": VirtualPythonEnvironment,
-        "remote": IsolateServer,
-    }
-
-    env_type = REGISTERED_ENVIRONMENTS.get(kind)
-
-    if env_type is None:
-        raise ValueError(
-            f"Invalid environment type (of {kind}) for {name}. Please choose from: "
-            + ", ".join(REGISTERED_ENVIRONMENTS.keys())
-        )
-
-    if kind == "remote":
-        parsed_config = _parse_remote_config(config, parsed_config)
-
-    return env_type.from_config(parsed_config)
-
-
-def _build_hosted_env(
-    config: Dict[str, Any],
-    parsed_config: Dict[str, Any],
-    credentials: Any,
-    machine_type: str,
-) -> BaseEnvironment:
-    if not config.get("type"):
-        kind = "virtualenv"
+        host = KoldstartHost(
+            url=credentials.host,
+            credentials=CloudKeyCredentials(credentials.key_id, credentials.key_secret))
     else:
-        if config["type"] not in REMOTE_TYPES_DICT.keys():
-            raise RuntimeError(
-                f"Environment type {config['type']} is not supported. Supported types: {REMOTE_TYPES_DICT.keys()}"
-            )
-        kind = REMOTE_TYPES_DICT[config["type"]]
-
-    if kind == "virtualenv":
-        if "requirements" not in parsed_config.keys():
-            parsed_config["requirements"] = []
-
-        parsed_config["requirements"].append(
-            f"dill=={importlib_metadata.version('dill')}"
-        )
-
-    elif kind == "conda":
-        if "packages" not in parsed_config.keys():
-            parsed_config["packages"] = []
-
-        parsed_config["packages"].append(f"dill={importlib_metadata.version('dill')}")
-
-    env_definition = {
-        "kind": kind,
-        "configuration": parsed_config,
-    }
-
-    return KoldstartDummyServer.from_config(
-        {
-            "host": credentials.host,
-            "creds": CloudKeyCredentials(credentials.key_id, credentials.key_secret),
-            "machine_type": machine_type,
-            "target_env_type": kind,
-            "target_environments": [env_definition],
-        }
-    )
+        host = LocalHost()
+    return EnvironmentDefinition(
+        host=host,
+        kind=kind,
+        config=parsed_config,
+        machine_type=machine_type)
 
 
 def _is_local_environment(environment_name: str) -> bool:
@@ -222,29 +167,6 @@ def _get_required_key(data: Dict[str, Any], name: str) -> Any:
     if name not in data:
         raise FalParseError("Missing required key: " + name)
     return data[name]
-
-
-def _parse_remote_config(
-    config: Dict[str, Any], parsed_config: Dict[str, Any]
-) -> Dict[str, Any]:
-    assert config.get("remote_type"), "remote_type needs to be specified."
-
-    remote_type = REMOTE_TYPES_DICT.get(config["remote_type"])
-
-    assert (
-        remote_type
-    ), f"{config['remote_type']} not recognised. Available remote types: {list(REMOTE_TYPES_DICT.keys())}"
-
-    env_definition = {
-        "kind": remote_type,
-        "configuration": parsed_config,
-    }
-
-    return {
-        "host": config.get("host"),
-        "target_environments": [env_definition],
-    }
-
 
 def _get_dbt_packages(
     adapter_type: str,

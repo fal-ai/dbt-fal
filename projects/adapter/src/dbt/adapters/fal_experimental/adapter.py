@@ -9,18 +9,14 @@ from typing import Any, Optional, cast
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
-from isolate.backends.remote import IsolateServer
 
-from isolate.backends.virtualenv import PythonIPC, VirtualPythonEnvironment
 from koldstart import KoldstartHost, isolated
 from dbt.adapters.fal_experimental.utils.environments import (
-    KoldstartDummyServer,
+    EnvironmentDefinition,
     get_default_pip_dependencies
 )
 
 from dbt.parser.manifest import MacroManifest, Manifest
-
-from isolate.backends import BaseEnvironment
 
 from .adapter_support import (
     prepare_for_adapter,
@@ -68,7 +64,7 @@ def _isolated_runner(
 
 
 def run_in_environment_with_adapter(
-    environment: BaseEnvironment,
+    environment: EnvironmentDefinition,
     code: str,
     config: RuntimeConfig,
     manifest: Manifest,
@@ -80,136 +76,67 @@ def run_in_environment_with_adapter(
 
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
-    if type(environment) in [IsolateServer, KoldstartDummyServer]:
-        if type(config.credentials).__name__ == 'BigQueryCredentials' and str(config.credentials.method) == 'service-account':
-            raise RuntimeError(
-                "BigQuery credential method `service-account` is not supported." + \
-                " Please use `service-account-json` instead")
-        deps = [
-            i
-            for i in get_default_pip_dependencies(is_remote=True, adapter_type=adapter_type)
-        ]
+    compressed_local_packages = None
 
-        extra_config = {
-            'kind': 'virtualenv',
-            'configuration': { 'requirements': deps }
-        }
+    is_remote = type(environment.host) is KoldstartHost
 
-        environment.target_environments.append(extra_config)
+    deps = get_default_pip_dependencies(
+        is_remote=is_remote,
+        adapter_type=adapter_type)
 
-        key = environment.create()
+    fal_scripts_path = get_fal_scripts_path(config)
 
-        fal_scripts_path = get_fal_scripts_path(config)
+    if is_remote and fal_scripts_path.exists():
+        with NamedTemporaryFile() as temp_file:
+            with zipfile.ZipFile(
+                temp_file.name, "w", zipfile.ZIP_DEFLATED
+            ) as zip_file:
+                for entry in fal_scripts_path.rglob("*"):
+                    zip_file.write(entry, entry.relative_to(fal_scripts_path))
 
-        if fal_scripts_path.exists():
-            with NamedTemporaryFile() as temp_file:
-                with zipfile.ZipFile(
-                    temp_file.name, "w", zipfile.ZIP_DEFLATED
-                ) as zip_file:
-                    for entry in fal_scripts_path.rglob("*"):
-                        zip_file.write(entry, entry.relative_to(fal_scripts_path))
+            compressed_local_packages = temp_file.read()
 
-                compressed_local_packages = temp_file.read()
-        else:
-            compressed_local_packages = None
-        
-        if type(environment) == KoldstartDummyServer:
-            environment = cast(KoldstartDummyServer, environment)
-            return run_in_koldstart(
-                environment,
-                code,
-                config,
-                manifest,
-                macro_manifest,
-                compressed_local_packages)
-
-        with environment.open_connection(key) as connection:
-            execute_model = partial(
-                _isolated_runner,
-                code,
-                config,
-                manifest,
-                macro_manifest,
-                local_packages=compressed_local_packages,
-            )
-            result = connection.run(execute_model)
-            return result
-
-    else:
-        deps = get_default_pip_dependencies(adapter_type)
-        stage = VirtualPythonEnvironment(deps)
-        fal_scripts_path = get_fal_scripts_path(config)
-
-        with PythonIPC(
-            environment,
-            environment.create(),
-            extra_inheritance_paths=[fal_scripts_path, stage.create()],
-        ) as connection:
-            execute_model = partial(
-                _isolated_runner, code, config, manifest, macro_manifest
-            )
-            result = connection.run(execute_model)
-            return result
-
-def run_in_koldstart(
-        environment: KoldstartDummyServer,
-        code: str,
-        config: RuntimeConfig,
-        manifest: Manifest,
-        macro_manifest: MacroManifest,
-        local_packages: Any) -> AdapterResponse:
     execute_model = partial(
         _isolated_runner,
         code,
         config,
         manifest,
         macro_manifest,
-        local_packages=local_packages
+        local_packages=compressed_local_packages
     )
-    host = KoldstartHost(url=environment.host, credentials=environment.creds)
 
-    # HACK ALERT: This is a temporary solution for running Python models on Koldstart.
-    # Environments in dbt-fal work with `isolate` abstractions and so far these
-    # have been re-used to get us here. But `koldstart` API uses different
-    # abstractions. So this where we tranform `isolate` objects into `koldstart`
-    # objects and run the resulting isolated function.
+    if environment.kind == "local":
+        result = execute_model()
+        return result
 
-    # One big change in `koldstart` is that it supports only one target environment
-    # whereas isolate lets you stack environments on top of each other. We resolve this
-    # in two ways, for `virtualenv` environments we just merge base requirements (dbt-*)
-    # with user requirements, whereas for `conda` environments we create an `env_dict`,
-    # where we add base requirements as `pip` requirements.
-
-    if environment.target_env_type == "virtualenv":
-        requirements = []
-        for env in environment.target_environments:
-            if env.get("configuration", {}).get("requirements"):
-                requirements += env["configuration"]["requirements"]
+    if environment.kind == "virtualenv":
+        requirements = environment.config.get("requirements", [])
+        requirements += deps
         isolated_function = isolated(
             kind="virtualenv",
-            host=host,
-            requirements=requirements,
-            machine_type=environment.machine_type)(execute_model)
-    elif environment.target_env_type == "conda":
+            host=environment.host,
+            requirements=requirements
+        )(execute_model)
+    elif environment.kind == "conda":
+        dependencies = environment.config.pop("packages", [])
+        dependencies.append({"pip": deps})
         env_dict = {
             "name": "dbt_fal_env",
             "channels": ["conda-forge", "defaults"],
-            "dependencies": []
+            "dependencies": dependencies
         }
-        for env in environment.target_environments:
-            if env.get("configuration", {}).get("packages"):
-                env_dict["dependencies"] += env["configuration"]["packages"]
-            if env.get("configuration", {}).get("requirements"):
-                env_dict["dependencies"].append({"pip": env["configuration"]["requirements"]})
         isolated_function = isolated(
             kind="conda",
-            host=host,
-            env_dict=env_dict,
-            machine_type=environment.machine_type)(execute_model)
+            host=environment.host,
+            env_dict=env_dict)(execute_model)
     else:
         # We should not reach this point, because environment types are validated when the
         # environment objects are created (in utils/environments.py).
-        raise Exception(f"Environment type not supported: {environment.target_env_type}")
+        raise Exception(f"Environment type not supported: {environment.kind}")
+
+    # Machine type is only applicable in KoldstartHost
+    if is_remote:
+        isolated_function = isolated_function.on(machine_type=environment.machine_type)
 
     result = isolated_function()
     return result

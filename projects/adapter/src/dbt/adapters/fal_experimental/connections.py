@@ -51,7 +51,7 @@ class FalConnectionManager(PythonConnectionManager):
 class FalCredentials(Credentials):
     default_environment: str = "local"
     teleport: Optional[TeleportCredentials] = None
-    host: str = "cloud"
+    host: str = ""
     key_secret: str = ""
     key_id: str = ""
 

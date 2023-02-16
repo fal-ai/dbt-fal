@@ -42,7 +42,7 @@ jobs:
           # - "3.11"
         include:
           - profile: snowflake
-            teleport: true
+            teleport: false
             cloud: true
           - profile: redshift
             cloud: true
