@@ -83,6 +83,11 @@ def write_df_to_relation(
 
         return support_duckdb.write_df_to_relation(adapter, dataframe, relation)
 
+    elif adapter.type() == "postgres":
+        import dbt.adapters.fal_experimental.support.postgres as support_postgres
+
+        return support_postgres.write_db_to_relation(adapter, dataframe, relation)
+
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
             # TODO: this should probably live in the materialization macro.
@@ -151,6 +156,11 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
         import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
         return support_duckdb.read_relation_as_df(adapter, relation)
+
+    elif adapter.type() == "postgres":
+        import dbt.adapters.fal_experimental.support.postgres as support_postgres
+
+        return support_postgres.read_relation_as_df(adapter, relation)
 
     else:
         with new_connection(adapter, "fal:read_relation_as_df") as connection:
