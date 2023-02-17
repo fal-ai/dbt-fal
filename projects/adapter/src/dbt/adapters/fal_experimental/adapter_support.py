@@ -109,6 +109,29 @@ def write_df_to_relation(
             return AdapterResponse("OK", rows_affected=rows_affected)
 
 
+def _psql_insert_copy(table, conn, keys, data_iter):
+    """Alternative to_sql method for PostgreSQL.
+
+    From https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method
+    """
+    dbapi_conn = conn.connection
+    with dbapi_conn.cursor() as cur:
+        s_buf = StringIO()
+        writer = csv.writer(s_buf)
+        writer.writerows(data_iter)
+        s_buf.seek(0)
+
+        columns = ', '.join(['"{}"'.format(k) for k in keys])
+        if table.schema:
+            table_name = '{}.{}'.format(table.schema, table.name)
+        else:
+            table_name = table.name
+
+        sql = 'COPY {} ({}) FROM STDIN WITH CSV'.format(
+            table_name, columns)
+        cur.copy_expert(sql=sql, file=s_buf)
+
+
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
     """Generic version of the read_df_from_relation."""
 
