@@ -117,7 +117,7 @@ def write_df_to_relation(
 def _psql_insert_copy(table, conn, keys, data_iter):
     """Alternative to_sql method for PostgreSQL.
 
-    From https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method
+    Adapted from https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method
     """
     dbapi_conn = conn.connection
     with dbapi_conn.cursor() as cur:
@@ -126,14 +126,10 @@ def _psql_insert_copy(table, conn, keys, data_iter):
         writer.writerows(data_iter)
         s_buf.seek(0)
 
-        columns = ', '.join(['"{}"'.format(k) for k in keys])
-        if table.schema:
-            table_name = '{}.{}'.format(table.schema, table.name)
-        else:
-            table_name = table.name
+        columns = ", ".join((f'"{k}"' for k in keys))
+        table_name = f"{table.schema}.{table.name}" if table.schema else table.name
 
-        sql = 'COPY {} ({}) FROM STDIN WITH CSV'.format(
-            table_name, columns)
+        sql = f"COPY {table_name} ({columns}) FROM STDIN WITH CSV"
         cur.copy_expert(sql=sql, file=s_buf)
 
 
