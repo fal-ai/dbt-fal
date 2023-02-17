@@ -37,20 +37,16 @@ def write_df_to_relation(
 
         alchemy_engine = _get_alchemy_engine(adapter, connection)
 
-        to_sql_args = {
-            "con": alchemy_engine,
-            "name": temp_relation.identifier,
-            "schema": temp_relation.schema,
-            "if_exists": if_exists,
-            "index": False,
-        }
-
-        if adapter.type() == "postgres":
-            to_sql_args["method"] = _psql_insert_copy
-
         # TODO: probably worth handling errors here an returning
         # a proper adapter response.
-        rows_affected = dataframe.to_sql(**to_sql_args)
+        rows_affected = dataframe.to_sql(
+            con=alchemy_engine,
+            name=temp_relation.identifier,
+            schema=temp_relation.schema,
+            if_exists=if_exists,
+            index=False,
+            method=_psql_insert_copy,
+        )
         adapter.cache.add(temp_relation)
         drop_relation_if_it_exists(adapter, relation)
         adapter.rename_relation(temp_relation, relation)
