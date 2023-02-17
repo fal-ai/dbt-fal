@@ -66,22 +66,24 @@ def write_df_to_relation(
     """Generic version of the write_df_to_relation. Materialize the given
     dataframe to the targeted relation on the adapter."""
 
-    if adapter.type() == "snowflake":
+    adapter_type = adapter.type()
+
+    if adapter_type == "snowflake":
         import dbt.adapters.fal_experimental.support.snowflake as support_snowflake
 
         return support_snowflake.write_df_to_relation(adapter, dataframe, relation)
 
-    elif adapter.type() == "bigquery":
+    elif adapter_type == "bigquery":
         import dbt.adapters.fal_experimental.support.bigquery as support_bq
 
         return support_bq.write_df_to_relation(adapter, dataframe, relation)
 
-    elif adapter.type() == "duckdb":
+    elif adapter_type == "duckdb":
         import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
         return support_duckdb.write_df_to_relation(adapter, dataframe, relation)
 
-    elif adapter.type() == "postgres":
+    elif adapter_type == "postgres":
         import dbt.adapters.fal_experimental.support.postgres as support_postgres
 
         return support_postgres.write_db_to_relation(adapter, dataframe, relation)
@@ -116,22 +118,24 @@ def write_df_to_relation(
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
     """Generic version of the read_df_from_relation."""
 
-    if adapter.type() == "snowflake":
+    adapter_type = adapter.type()
+
+    if adapter_type == "snowflake":
         import dbt.adapters.fal_experimental.support.snowflake as support_snowflake
 
         return support_snowflake.read_relation_as_df(adapter, relation)
 
-    elif adapter.type() == "bigquery":
+    elif adapter_type == "bigquery":
         import dbt.adapters.fal_experimental.support.bigquery as support_bq
 
         return support_bq.read_relation_as_df(adapter, relation)
 
-    elif adapter.type() == "duckdb":
+    elif adapter_type == "duckdb":
         import dbt.adapters.fal_experimental.support.duckdb as support_duckdb
 
         return support_duckdb.read_relation_as_df(adapter, relation)
 
-    elif adapter.type() == "postgres":
+    elif adapter_type == "postgres":
         import dbt.adapters.fal_experimental.support.postgres as support_postgres
 
         return support_postgres.read_relation_as_df(adapter, relation)
