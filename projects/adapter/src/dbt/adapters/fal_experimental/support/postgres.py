@@ -5,7 +5,7 @@ import sqlalchemy
 
 from dbt.adapters.base import BaseRelation
 from dbt.adapters.base.connections import AdapterResponse
-from dbt.adapters.fal_experimental.adapter_support import new_connection
+from dbt.adapters.fal_experimental.adapter_support import drop_relation_if_it_exists, new_connection
 from dbt.adapters.postgres import PostgresAdapter
 
 
