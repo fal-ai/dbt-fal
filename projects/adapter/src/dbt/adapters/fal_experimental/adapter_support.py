@@ -1,5 +1,4 @@
 import functools
-from io import StringIO
 from time import sleep
 from typing import Any
 
@@ -98,45 +97,21 @@ def write_df_to_relation(
 
             alchemy_engine = _get_alchemy_engine(adapter, connection)
 
-            to_sql_args = {
-                "con": alchemy_engine,
-                "name": temp_relation.identifier,
-                "schema": temp_relation.schema,
-                "if_exists": if_exists,
-                "index": False,
-            }
-
-            if adapter.type() == "postgres":
-                to_sql_args["method"] = _psql_insert_copy
-
             # TODO: probably worth handling errors here an returning
             # a proper adapter response.
-            rows_affected = dataframe.to_sql(**to_sql_args)
+            rows_affected = dataframe.to_sql(
+                con=alchemy_engine,
+                name=temp_relation.identifier,
+                schema=temp_relation.schema,
+                if_exists=if_exists,
+                index=False,
+            )
             adapter.cache.add(temp_relation)
             drop_relation_if_it_exists(adapter, relation)
             adapter.rename_relation(temp_relation, relation)
             adapter.commit_if_has_connection()
 
             return AdapterResponse("OK", rows_affected=rows_affected)
-
-
-def _psql_insert_copy(table, conn, keys, data_iter):
-    """Alternative to_sql method for PostgreSQL.
-
-    Adapted from https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method
-    """
-    dbapi_conn = conn.connection
-    with dbapi_conn.cursor() as cur:
-        s_buf = StringIO()
-        writer = csv.writer(s_buf)
-        writer.writerows(data_iter)
-        s_buf.seek(0)
-
-        columns = ", ".join((f'"{k}"' for k in keys))
-        table_name = f"{table.schema}.{table.name}" if table.schema else table.name
-
-        sql = f"COPY {table_name} ({columns}) FROM STDIN WITH CSV"
-        cur.copy_expert(sql=sql, file=s_buf)
 
 
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
