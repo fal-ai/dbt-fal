@@ -43,7 +43,10 @@ def write_df_to_relation(
         )
         drop_relation_if_it_exists(adapter, temp_relation)
 
-        alchemy_engine = _get_alchemy_engine(adapter, connection)
+        alchemy_engine = sqlalchemy.create_engine(
+            "postgresql+psycopg2://",
+            creator=lambda *args, **kwargs: connection.handle,
+        )
 
         # TODO: probably worth handling errors here an returning
         # a proper adapter response.
