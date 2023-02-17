@@ -1,4 +1,4 @@
-<base href="https://github.com/fal-ai/fal/blob/main/projects/adapter/" target="_blank" />
+<!-- <base href="https://github.com/fal-ai/fal/blob/main/projects/adapter/" target="_blank" /> -->
 
 # Welcome to dbt-fal 👋
 

@@ -1,4 +1,4 @@
-<base href="https://github.com/fal-ai/fal/blob/main/projects/fal/" target="_blank" />
+<!-- <base href="https://github.com/fal-ai/fal/blob/main/projects/fal/" target="_blank" /> -->
 
 # fal: do more with dbt
 
@@ -15,7 +15,7 @@ With the `fal` CLI, you can:
 
 Head to our [documentation site](https://docs.fal.ai/) for a deeper dive or play with [in-depth examples](#examples) to see how fal can help you get more done with dbt.
 
-> ❗️ If you would like to write data back to your data-warehouse, we recommend using the [`dbt-fal`](../adapter) adapter.
+> ❗️ If you would like to write data back to your data-warehouse, we recommend using the [`dbt-fal`](https://pypi.org/project/dbt-fal/) adapter.
 
 # Getting Started
 
@@ -221,7 +221,7 @@ ref(context.current_model.name)
 
 ### `write_to_model` function
 
-> ❗️ We recommend using the [`dbt-fal`](../adapter) adapter for writing data back to your data-warehouse.
+> ❗️ We recommend using the [`dbt-fal`](https://pypi.org/project/dbt-fal/) adapter for writing data back to your data-warehouse.
 
 It is also possible to send data back to your data-warehouse. This makes it easy to get the data, process it and upload it back into dbt territory.
 
