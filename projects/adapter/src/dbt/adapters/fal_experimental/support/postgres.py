@@ -1,9 +1,11 @@
 from io import StringIO
 
 import pandas as pd
+import sqlalchemy
 
 from dbt.adapters.base import BaseRelation
 from dbt.adapters.base.connections import AdapterResponse
+from dbt.adapters.fal_experimental.adapter_support import new_connection
 from dbt.adapters.postgres import PostgresAdapter
 
 
@@ -13,7 +15,13 @@ def read_relation_as_df(
     assert adapter.type() == "postgres"
 
     with new_connection(adapter, "fal-postgres:read_relation_as_df") as connection:
-        alchemy_engine = _get_alchemy_engine(adapter, connection)
+        # If the given adapter supports the DBAPI (PEP 249), we can
+        # use its connection directly for the engine.
+        alchemy_engine = sqlalchemy.create_engine(
+            "postgresql+psycopg2://",
+            creator=lambda *args, **kwargs: connection.handle,
+        )
+
         return pd.read_sql_table(
             con=alchemy_engine,
             table_name=relation.identifier,

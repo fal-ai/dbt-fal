@@ -13,7 +13,6 @@ from dbt.parser.manifest import MacroManifest, Manifest, ManifestLoader
 from dbt.adapters import factory
 
 _SQLALCHEMY_DIALECTS = {
-    "postgres": "postgresql+psycopg2",
     "redshift": "redshift+psycopg2",
 }
 
@@ -30,7 +29,7 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
         import dbt.adapters.fal_experimental.support.trino as support_trino
         return support_trino.create_engine(adapter)
 
-    if adapter_type in ("postgres", "redshift"):
+    if adapter_type == "redshift":
         # If the given adapter supports the DBAPI (PEP 249), we can
         # use its connection directly for the engine.
         sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
