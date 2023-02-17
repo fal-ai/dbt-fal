@@ -33,6 +33,8 @@ def write_df_to_relation(
     adapter: PostgresAdapter,
     data: pd.DataFrame,
     relation: BaseRelation,
+    *,
+    if_exists: str = "replace",
 ) -> AdapterResponse:
     assert adapter.type() == "postgres"
 
