@@ -50,7 +50,7 @@ def write_df_to_relation(
 
         # TODO: probably worth handling errors here an returning
         # a proper adapter response.
-        rows_affected = dataframe.to_sql(
+        rows_affected = data.to_sql(
             con=alchemy_engine,
             name=temp_relation.identifier,
             schema=temp_relation.schema,
