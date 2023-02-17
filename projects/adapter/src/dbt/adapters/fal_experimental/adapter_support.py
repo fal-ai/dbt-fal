@@ -86,7 +86,7 @@ def write_df_to_relation(
     elif adapter_type == "postgres":
         import dbt.adapters.fal_experimental.support.postgres as support_postgres
 
-        return support_postgres.write_db_to_relation(adapter, dataframe, relation)
+        return support_postgres.write_df_to_relation(adapter, dataframe, relation)
 
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
