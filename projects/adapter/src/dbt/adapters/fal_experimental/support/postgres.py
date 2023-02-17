@@ -12,7 +12,7 @@ def read_relation_as_df(
 ) -> pd.DataFrame:
     assert adapter.type() == "postgres"
 
-    with new_connection(adapter, "fal:read_relation_as_df") as connection:
+    with new_connection(adapter, "fal-postgres:read_relation_as_df") as connection:
         alchemy_engine = _get_alchemy_engine(adapter, connection)
         return pd.read_sql_table(
             con=alchemy_engine,
@@ -28,7 +28,7 @@ def write_df_to_relation(
 ) -> AdapterResponse:
     assert adapter.type() == "postgres"
 
-    with new_connection(adapter, "fal:write_df_to_relation") as connection:
+    with new_connection(adapter, "fal-postgres:write_df_to_relation") as connection:
         # TODO: this should probably live in the materialization macro.
         temp_relation = relation.replace_path(
             identifier=f"__dbt_fal_temp_{relation.identifier}"
