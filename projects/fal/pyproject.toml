@@ -2,7 +2,7 @@
 name = "fal"
 version = "0.8.2-alpha.0"
 description = "fal allows you to run python scripts directly from your dbt project."
-homepage = "https://github.com/fal-ai/fal"
+homepage = "https://github.com/fal-ai/fal/blob/-/projects/fal"
 documentation = "https://docs.fal.ai"
 repository = "https://github.com/fal-ai/fal"
 readme = "README.md"
