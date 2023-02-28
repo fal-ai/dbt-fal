@@ -1,4 +1,4 @@
-<!-- <base href="https://github.com/fal-ai/fal/blob/main/projects/fal/" target="_blank" /> -->
+<!-- <base href="https://github.com/fal-ai/fal/blob/-/projects/fal/" target="_blank" /> -->
 
 # fal: do more with dbt
 
