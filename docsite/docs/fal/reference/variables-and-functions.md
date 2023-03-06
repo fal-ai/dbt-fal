@@ -244,14 +244,14 @@ Given this bit of `profiles.yml`:
 ```yaml
   fal_extract_load:
     dev:
-      my_fivetran_el
+      my_fivetran_el:
         type: fivetran
         api_key: my_fivetran_key
         api_secret: my_fivetran_secret
         connectors:
           - name: fivetran_connector_1
             id: id_fivetran_connector_1
-      my_airbyte_el
+      my_airbyte_el:
         type: airbyte
         host: http://localhost:8001
         connections:
