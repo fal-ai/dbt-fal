@@ -195,7 +195,6 @@ class FalScript:
                 "list_models_ids": self.faldbt.list_models_ids,
                 "list_sources": self.faldbt.list_sources,
                 "list_features": self.faldbt.list_features,
-                "el": self.faldbt.el,
                 "execute_sql": self.faldbt.execute_sql,
             }
 

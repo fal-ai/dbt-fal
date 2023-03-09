@@ -92,17 +92,6 @@ def get_dbt_config(
     return config
 
 
-def get_el_configs(
-    profiles_dir: str, profile_name: str, target_name: str
-) -> Dict[str, Dict]:
-    path = os.path.join(profiles_dir, "profiles.yml")
-    yml = load_yaml(path)
-    sync_configs = (
-        yml.get(profile_name, {}).get("fal_extract_load", {}).get(target_name, {})
-    )
-    return sync_configs
-
-
 def get_vars_dict(project_dir: str, args_vars: str) -> Dict[str, Any]:
     project_contract = load_dbt_project_contract(project_dir)
 
