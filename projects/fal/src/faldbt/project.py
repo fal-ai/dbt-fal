@@ -54,7 +54,6 @@ import dbt.tracking
 from . import parse
 from . import lib
 from . import version
-from .el_client import FalElClient
 
 from fal.feature_store.feature import Feature
 
@@ -479,13 +478,6 @@ class FalDbt:
             )
 
         lib.register_adapters(self._config)
-
-        el_configs = parse.get_el_configs(
-            self.profiles_dir, self._config.profile_name, self._config.target_name
-        )
-
-        # Setup EL API clients
-        self.el = FalElClient(el_configs)
 
         # Necessary for manifest loading to not fail
         dbt.tracking.initialize_tracking(self.profiles_dir)
