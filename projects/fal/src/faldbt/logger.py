@@ -17,6 +17,18 @@ class FalLogger:
         self._logger = logging.Logger("fal", logging.INFO)
         self._logger.addHandler(self._stdout_handler)
 
+    def __getstate__(self):
+        # Don't pickle the logger
+        d = self.__dict__.copy()
+        d['_logger'] = d['_logger'].name
+        return d
+
+    def __setstate__(self, d):
+        # Set logger when unpickling
+        d['_logger'] = logging.Logger(
+            d['_logger'] if isinstance(d['_logger'], str) else "fal", logging.INFO)
+        self.__dict__.update(d)
+
     def set_level(self, level: int):
         self._logger.setLevel(level)
 
