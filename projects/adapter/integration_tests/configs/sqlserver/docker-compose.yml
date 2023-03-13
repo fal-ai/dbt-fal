@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: fal_sql_server
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: strongPassword1@
+    ports:
+      - 1433:1433
