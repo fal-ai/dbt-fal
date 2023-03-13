@@ -134,10 +134,9 @@ class FalEncAdapter(BaseAdapter):
 
         # TODO: maybe we can do this better?
         with _release_plugin_lock():
-            original_plugin = FACTORY.get_plugin_by_name(fal_credentials.type)
             db_adapter_class = FACTORY.get_adapter_class_by_name(db_credentials.type)
-
-        original_plugin.dependencies = [db_credentials.type]
+            original_plugin = FACTORY.get_plugin_by_name(fal_credentials.type)
+            original_plugin.dependencies = [db_credentials.type]
 
         config.python_adapter_credentials = fal_credentials
         config.sql_adapter_credentials = db_credentials

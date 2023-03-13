@@ -80,6 +80,8 @@ class FalEncAdapterWrapper(FalAdapterMixin):
         return ManifestLoader.get_full_manifest(self.config)
 
     def type(self):
+        # NOTE: This does not let `fal__` macros to be used
+        # Maybe for 1.5 we will get a more reliable way to detect if we are in a SQL or Python context
         if find_funcs_in_stack({"render", "db_materialization"}):
             return self._db_adapter.type()
 

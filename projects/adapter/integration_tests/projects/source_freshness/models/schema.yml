@@ -8,7 +8,7 @@ sources:
       warn_after: { "count": 5, "period": minute }
       error_after: { "count": 30, "period": minute }
     tables:
-      - name: "freshness_table"
+      - name: freshness_table
         loaded_at_field: "current_timestamp"
         columns:
           - name: info

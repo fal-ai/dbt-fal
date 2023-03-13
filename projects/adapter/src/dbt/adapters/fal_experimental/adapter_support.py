@@ -25,8 +25,9 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
 
     sqlalchemy_kwargs = {}
     format_url = lambda url: url
-    if adapter_type == 'trino':
+    if adapter_type == "trino":
         import dbt.adapters.fal_experimental.support.trino as support_trino
+
         return support_trino.create_engine(adapter)
 
     if adapter_type == "redshift":
@@ -40,7 +41,7 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
             f"dbt-fal does not support {adapter_type} adapter. ",
             f"If you need {adapter_type} support, you can create an issue ",
             "in our GitHub repository: https://github.com/fal-ai/fal. ",
-            "We will look into it ASAP."
+            "We will look into it ASAP.",
         )
         raise NotImplementedError(message)
 
@@ -156,15 +157,25 @@ def prepare_for_adapter(adapter: BaseAdapter, function: Any) -> Any:
 
     @functools.wraps(function)
     def wrapped(quoted_relation: str, *args, **kwargs) -> Any:
-        relation = adapter.Relation.create(
-            *quoted_relation.split("."), type=RelationType.Table
+        # HACK: we need to drop the quotes from the relation parts
+        # This was introduced in https://github.com/dbt-labs/dbt-core/pull/7115
+        # and the recommended solution would be to create a macro `fal__resolve_model_name`
+        # but it is not possible thanks a macro resolution error we get by returning the db_adapter type.
+        # The overall solution could be to avoid creating a Relation and just passing the string as is to the read/write functions.
+        parts = map(
+            lambda part: part.strip(adapter.Relation.quote_character),
+            [*quoted_relation.split(".")],
         )
+
+        relation = adapter.Relation.create(*parts, type=RelationType.Table)
         return function(adapter, relation, *args, **kwargs)
 
     return wrapped
 
 
-def reconstruct_adapter(config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest) -> BaseAdapter:
+def reconstruct_adapter(
+    config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest
+) -> BaseAdapter:
     from dbt.tracking import do_not_track
 
     # Prepare the DBT to not to track us.
