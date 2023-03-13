@@ -6,6 +6,8 @@ from functools import partial
 from dataclasses import dataclass, field
 from deprecation import deprecated
 
+import hashlib
+
 from faldbt.parse import normalize_path
 from faldbt.project import DbtModel, FalDbt, FAL
 
@@ -13,6 +15,7 @@ from dbt.contracts.results import RunStatus
 from dbt.config.runtime import RuntimeConfig
 from faldbt.logger import LOGGER
 
+from fal.telemetry import telemetry
 import faldbt.version as version
 
 if version.is_version_plus("1.4.0"):
@@ -155,6 +158,15 @@ class FalScript:
         object.__setattr__(self, "faldbt", faldbt)
         object.__setattr__(self, "hook_arguments", hook_arguments)
         object.__setattr__(self, "is_hook", is_hook)
+
+        telemetry.log_api(
+            action="falscript_initialized",
+            additional_props={
+                "is_global": model is None,
+                "is_hook": is_hook,
+                "script_path": hashlib.md5(path.encode()).hexdigest(),
+            },
+        )
 
     @classmethod
     def from_hook(cls, faldbt: FalDbt, model: DbtModel, hook: Hook):

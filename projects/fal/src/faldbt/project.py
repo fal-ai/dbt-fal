@@ -512,7 +512,6 @@ class FalDbt:
 
         telemetry.log_api(
             action="faldbt_initialized",
-            additional_props={"config_hash": self._config.hashed_name()},
             dbt_config=self._config,
         )
 
