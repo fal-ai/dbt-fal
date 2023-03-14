@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import functools
 from time import sleep
 from typing import Any
@@ -208,3 +209,24 @@ def reload_adapter_cache(adapter: BaseAdapter, manifest: Manifest) -> None:
 def new_connection(adapter: BaseAdapter, connection_name: str) -> Connection:
     with adapter.connection_named(connection_name):
         yield adapter.connections.get_thread_connection()
+
+
+class FalCloudWriter(object):
+    def __init__(self, path: str, options: str):
+        self.path = path
+        self.options = options
+
+    def __enter__(self):
+        self.file = open(self.path, self.options)
+        return self.file
+
+    def __exit__(self, *args):
+        self.file.close()
+
+
+
+@dataclass
+class FalCloudContext:
+    @property
+    def store_open(self):
+        return FalCloudWriter
