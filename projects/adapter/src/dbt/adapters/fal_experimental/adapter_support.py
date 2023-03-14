@@ -14,6 +14,7 @@ from dbt.adapters import factory
 
 _SQLALCHEMY_DIALECTS = {
     "redshift": "redshift+psycopg2",
+    "sqlserver": "mssql+pyodbc",
 }
 
 
@@ -33,6 +34,10 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
     if adapter_type == "redshift":
         # If the given adapter supports the DBAPI (PEP 249), we can
         # use its connection directly for the engine.
+        sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
+        url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
+        url = format_url(url)
+    elif adapter_type == "sqlserver":
         sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
         url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
         url = format_url(url)

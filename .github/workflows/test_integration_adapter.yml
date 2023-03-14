@@ -32,6 +32,7 @@ jobs:
           - snowflake
           - redshift
           - trino
+          # - sqlserver # does not support dbt 1.4 yet
         dbt_version:
           - "1.4.*"
         python:
@@ -67,6 +68,22 @@ jobs:
         working-directory: fal/projects/adapter/integration_tests/configs/trino
         if: contains(fromJSON('["trino"]'), matrix.profile)
         run: docker-compose up -d
+
+      - name: Setup sqlserver dependencies
+        if: contains(fromJSON('["sqlserver"]'), matrix.profile)
+        run: |
+          sudo apt install unixodbc-dev
+          sudo curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list > prod.list
+          sudo cp prod.list /etc/apt/sources.list.d/mssql-release.list
+          sudo apt update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
+
+      - name: Start sqlserver
+        working-directory: fal/projects/adapter/integration_tests/configs/sqlserver
+        if: contains(fromJSON('["sqlserver"]'), matrix.profile)
+        run: |
+          docker-compose up -d
 
       - name: Setup latest dependencies
         working-directory: fal/projects/adapter/integration_tests

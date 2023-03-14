@@ -1,0 +1,25 @@
+config:
+  send_anonymous_usage_stats: False
+
+fal_test:
+  target: staging
+  outputs:
+    staging:
+      type: fal
+      db_profile: db
+    prod:
+      type: fal
+      db_profile: db
+      host: "{{ env_var('FAL_HOST') }}"
+      key_secret: "{{ env_var('FAL_KEY_SECRET') }}"
+      key_id: "{{ env_var('FAL_KEY_ID') }}"
+    db:
+      type: sqlserver
+      driver: 'ODBC Driver 18 for SQL Server'
+      server: localhost
+      port: 1433
+      database: tempdb
+      schema: dbo
+      user: sa
+      password: strongPassword1@
+      trust_cert: true

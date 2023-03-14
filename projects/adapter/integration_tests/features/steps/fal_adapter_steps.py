@@ -140,6 +140,7 @@ def _get_profile(context) -> str:
         "duckdb",
         "athena",
         "trino",
+        "sqlserver"
     ]
     profile = context.config.userdata.get("profile", "postgres")
     if profile not in available_profiles:
