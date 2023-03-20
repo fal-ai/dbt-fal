@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dbt-fal"
-version = "1.3.14a0"
+version = "1.3.15a0"
 description = "Simplest way to run dbt python models."
 readme = "README.md"
 homepage = "https://github.com/fal-ai/fal/adapter"
