@@ -1,5 +1,6 @@
 import os
 import json
+from enum import Enum
 from typing import Dict, Any, List, Optional, Union, Callable
 from pathlib import Path
 from functools import partial
@@ -22,6 +23,25 @@ if version.is_version_plus("1.4.0"):
     from dbt.contracts.graph.nodes import ColumnInfo
 else:
     from dbt.contracts.graph.parsed import ColumnInfo
+
+
+class TimingType(Enum):
+    PRE = "pre"
+    POST = "post"
+
+    def for_script(self):
+        if self == TimingType.PRE:
+            return "before"
+        elif self == TimingType.POST:
+            return "after"
+        else:
+            raise ValueError(f"Unknown timing type: {self}")
+
+    def for_hook(self):
+        return self.value
+
+    def __str__(self):
+        return self.for_hook()
 
 
 class Hook:
@@ -143,33 +163,81 @@ class FalScript:
     faldbt: FalDbt
     hook_arguments: Optional[Dict[str, Any]]
     is_hook: bool
+    timing_type: Optional[TimingType]
 
     def __init__(
         self,
         faldbt: FalDbt,
         model: Optional[DbtModel],
-        path: str,
+        path: Union[str, Path],
         hook_arguments: Optional[Dict[str, Any]] = None,
         is_hook: bool = False,
+        is_model: bool = False,
+        timing_type: Optional[TimingType] = None,
     ):
         # Necessary because of frozen=True
         object.__setattr__(self, "model", model)
-        object.__setattr__(self, "path", normalize_path(faldbt.scripts_dir, path))
+        object.__setattr__(
+            self, "path", path if is_model else normalize_path(faldbt.scripts_dir, path)
+        )
         object.__setattr__(self, "faldbt", faldbt)
         object.__setattr__(self, "hook_arguments", hook_arguments)
         object.__setattr__(self, "is_hook", is_hook)
+        object.__setattr__(self, "timing_type", timing_type)
 
-        telemetry.log_api(
-            action="falscript_initialized",
-            additional_props={
-                "is_global": model is None,
-                "is_hook": is_hook,
-                "script_path": hashlib.md5(path.encode()).hexdigest(),
-            },
-        )
+        self._telemetry()
+
+    def _telemetry(self):
+        try:
+            _is_global = self.model is None
+            _is_hook = self.is_hook
+            _timing_type = str(self.timing_type) if self.timing_type else None
+            _is_model = self.model and self.model.python_model == self.path
+            _path_hash = hashlib.md5(str(self.path).encode()).hexdigest()
+
+            _script_timing_desc = (
+                self.timing_type.for_script() if self.timing_type else "error"
+            )
+            _hook_timing_desc = (
+                self.timing_type.for_hook() if self.timing_type else "error"
+            )
+
+            if _is_global:
+                _script_desc = f"{_script_timing_desc}-global"
+                # globals are not hooks nor scripts
+                _is_hook = None
+
+            elif _is_model:
+                _script_desc = "fal-model"
+                _is_global = None
+                # models are not hooks nor scripts
+                _is_hook = None
+
+            else:
+                if _is_hook:
+                    _script_desc = f"{_hook_timing_desc}-hook"
+                else:
+                    _script_desc = f"{_script_timing_desc}-script"
+
+            telemetry.log_api(
+                action="falscript_initialized",
+                additional_props={
+                    "is_global": _is_global,
+                    "is_hook": _is_hook,
+                    "is_model": _is_model,
+                    "script_timing_type": _timing_type,
+                    "script_desc": _script_desc,
+                    "script_path": _path_hash,
+                },
+            )
+        except:
+            # Ignore telemetry errors
+            pass
 
     @classmethod
-    def from_hook(cls, faldbt: FalDbt, model: DbtModel, hook: Hook):
+    def from_hook(
+        cls, faldbt: FalDbt, model: DbtModel, hook: Hook, timing_type: TimingType
+    ):
         """
         Creates a FalScript from a hook
         """
@@ -180,14 +248,15 @@ class FalScript:
             path=hook.path,
             hook_arguments=hook.arguments,
             is_hook=True,
+            timing_type=timing_type,
         )
 
     @classmethod
     def model_script(cls, faldbt: FalDbt, model: DbtModel):
-        script = FalScript(faldbt, model, "")
-        # HACK: Set the script path specially for this case
-        object.__setattr__(script, "path", model.python_model)
-        return script
+        assert model.python_model, "path for Python models must be set"
+        return FalScript(
+            faldbt=faldbt, model=model, path=model.python_model, is_model=True
+        )
 
     def exec(self):
         """
