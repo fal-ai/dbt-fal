@@ -1,8 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, cast
 
-from fal.fal_script import FalScript
+from fal.fal_script import FalScript, TimingType
 from faldbt.project import DbtModel, FalDbt
 from pathlib import Path
 import networkx as nx
@@ -45,7 +45,7 @@ def _add_after_scripts(
     "Add dbt node to after scripts edges to the graph"
     after_scripts = model.get_scripts(before=False)
     after_fal_scripts = map(
-        lambda script_path: FalScript(faldbt, model, script_path), after_scripts
+        lambda script_path: FalScript(faldbt, model, script_path, timing_type=TimingType.POST), after_scripts
     )
     after_fal_script_nodes = list(
         map(
@@ -74,7 +74,7 @@ def _add_before_scripts(
     "Add before scripts to dbt node edges to the graph"
     before_scripts = model.get_scripts(before=True)
     before_fal_scripts = map(
-        lambda script_path: FalScript(faldbt, model, script_path), before_scripts
+        lambda script_path: FalScript(faldbt, model, script_path, timing_type=TimingType.PRE), before_scripts
     )
     before_fal_script_node = map(
         lambda fal_script: ScriptNode(
@@ -105,14 +105,14 @@ class NodeGraph:
     def from_fal_dbt(cls, fal_dbt: FalDbt):
         graph = nx.DiGraph()
         node_lookup: Dict[str, FalFlowNode] = {}
-        for model in fal_dbt.list_models():
+        for model in cast(List[DbtModel], fal_dbt.list_models()):
             model_fal_node = DbtModelNode(model.unique_id, model)
             node_lookup[model_fal_node.unique_id] = model_fal_node
             graph.add_node(
                 model_fal_node.unique_id,
                 kind=NodeKind.FAL_MODEL if model.python_model else NodeKind.DBT_MODEL,
-                post_hook=model.get_post_hook_paths(),
-                pre_hook=model.get_pre_hook_paths(),
+                pre_hook=model.get_hooks(TimingType.PRE),
+                post_hook=model.get_hooks(TimingType.POST),
                 environment=model.environment_name,
             )
 
@@ -194,7 +194,7 @@ class NodeGraph:
         def has_post_hooks(node_id: str):
             inode = self.get_node(node_id)
             if isinstance(inode, DbtModelNode):
-                return bool(inode.model.get_post_hook_paths())
+                return bool(inode.model.get_hooks(TimingType.POST))
             return False
 
         is_model_pred = lambda node_name: node_name.split(".")[0] == "model"

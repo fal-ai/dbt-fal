@@ -7,7 +7,7 @@ from fal.planner.executor import parallel_executor
 from fal.planner.schedule import Scheduler
 from fal.planner.tasks import FalLocalHookTask, Status, TaskGroup
 
-from fal.fal_script import FalScript
+from fal.fal_script import FalScript, TimingType
 from faldbt.project import FAL, DbtModel, FalDbt, FalGeneralException
 
 
@@ -54,7 +54,7 @@ def fal_run(args: argparse.Namespace):
     if args.before:
         _handle_global_scripts(args, global_scripts, faldbt, selector_flags)
 
-        pre_hook_scripts = _get_hooks_for_model(models, faldbt, "pre-hook")
+        pre_hook_scripts = _get_hooks_for_model(models, faldbt, TimingType.PRE)
 
         _run_scripts(args, pre_hook_scripts, faldbt)
 
@@ -63,7 +63,7 @@ def fal_run(args: argparse.Namespace):
     else:
         _run_scripts(args, scripts, faldbt)
 
-        post_hook_scripts = _get_hooks_for_model(models, faldbt, "post-hook")
+        post_hook_scripts = _get_hooks_for_model(models, faldbt, TimingType.POST)
         _run_scripts(args, post_hook_scripts, faldbt)
         _handle_global_scripts(args, global_scripts, faldbt, selector_flags)
 
@@ -99,12 +99,12 @@ def _scripts_flag(args: argparse.Namespace) -> bool:
 
 
 def _get_hooks_for_model(
-    models: List[DbtModel], faldbt: FalDbt, hook_type: str
+    models: List[DbtModel], faldbt: FalDbt, hook_type: TimingType
 ) -> List[FalScript]:
     return [
-        FalScript.from_hook(faldbt, model, hook)
+        FalScript.from_hook(faldbt, model, hook, hook_type)
         for model in models
-        for hook in model._get_hooks(hook_type=hook_type)
+        for hook in model.get_hooks(hook_type=hook_type)
     ]
 
 
@@ -113,25 +113,29 @@ def _select_scripts(
 ) -> List[FalScript]:
     scripts = []
     scripts_flag = _scripts_flag(args)
+    is_before = bool(args.before)
+    timing_type=TimingType.PRE if is_before else TimingType.POST
 
     for model in models:
-        model_scripts = model.get_scripts(before=bool(args.before))
+        model_scripts = model.get_scripts(before=is_before)
         for path in model_scripts:
             if not scripts_flag:
                 # run all scripts when no --script is passed
-                scripts.append(FalScript(faldbt, model, path))
+                scripts.append(FalScript(faldbt, model, path, timing_type=timing_type))
             elif path in args.scripts:
                 # if --script selector is there only run selected scripts
-                scripts.append(FalScript(faldbt, model, path))
+                scripts.append(FalScript(faldbt, model, path, timing_type=timing_type))
 
     return scripts
 
 
 def _get_global_scripts(faldbt: FalDbt, args: argparse.Namespace):
     scripts_flag = _scripts_flag(args)
+    is_before = bool(args.before)
+    timing_type=TimingType.PRE if is_before else TimingType.POST
     return [
-        FalScript(faldbt, None, path)
-        for path in faldbt._global_script_paths["before" if args.before else "after"]
+        FalScript(faldbt, None, path, timing_type=timing_type)
+        for path in faldbt._global_script_paths["before" if is_before else "after"]
         if not scripts_flag or path in args.scripts
     ]
 

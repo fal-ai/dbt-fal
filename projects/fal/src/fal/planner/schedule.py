@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator, List
+from typing import Iterator, List, Optional
 
 import networkx as nx
 
@@ -20,19 +20,21 @@ from fal.planner.tasks import (
     HookType,
 )
 from fal.utils import DynamicIndexProvider
-from fal.fal_script import Hook, LocalHook, IsolatedHook, create_hook
+from fal.fal_script import Hook, IsolatedHook, create_hook, TimingType
 
 
 def create_hook_task(
     hook: Hook,
     bound_model: DbtModel,
     hook_type: HookType = HookType.HOOK,
+    timing_type: Optional[TimingType] = None,
 ) -> Task:
     local_hook = FalLocalHookTask(
         Path(hook.path),
         bound_model=bound_model,
         arguments=hook.arguments,
         hook_type=hook_type,
+        _timing_type=timing_type,
     )
     if isinstance(hook, IsolatedHook):
         return FalIsolatedHookTask(
@@ -90,11 +92,11 @@ def create_group(
         assert isinstance(flow_node, DbtModelNode)
 
     pre_hook_tasks = [
-        create_hook_task(hook=pre_hook, bound_model=flow_node.model)
+        create_hook_task(hook=pre_hook, bound_model=flow_node.model, timing_type=TimingType.PRE)
         for pre_hook in pre_hooks
     ]
     post_hook_tasks = [
-        create_hook_task(hook=post_hook, bound_model=flow_node.model)
+        create_hook_task(hook=post_hook, bound_model=flow_node.model, timing_type=TimingType.POST)
         for post_hook in post_hooks
     ]
 

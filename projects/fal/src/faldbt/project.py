@@ -63,7 +63,7 @@ from fal.telemetry import telemetry
 from fal.utils import has_side_effects
 
 if TYPE_CHECKING:
-    from fal.fal_script import Hook
+    from fal.fal_script import Hook, TimingType
     from fal.packages.environments import BaseEnvironment
 
 
@@ -246,11 +246,11 @@ class DbtModel(_DbtTestableNode):
     def get_depends_on_nodes(self) -> List[str]:
         return self.node.depends_on_nodes
 
-    def _get_hooks(
+    def get_hooks(
         self,
-        hook_type: str,
+        hook_type: "TimingType",
     ) -> List["Hook"]:
-        from fal.fal_script import create_hook
+        from fal.fal_script import create_hook, TimingType
 
         meta = self.meta or {}
 
@@ -258,7 +258,14 @@ class DbtModel(_DbtTestableNode):
         if not isinstance(keyword_dict, dict):
             return []
 
-        raw_hooks = keyword_dict.get(hook_type) or []
+        if hook_type == TimingType.PRE:
+            hook_key = "pre-hook"
+        elif hook_type == TimingType.POST:
+            hook_key = "post-hook"
+        else:
+            raise ValueError(f"Unexpected hook type {hook_type}")
+
+        raw_hooks = keyword_dict.get(hook_key) or []
         if not isinstance(raw_hooks, list):
             return []
 
@@ -266,9 +273,6 @@ class DbtModel(_DbtTestableNode):
             create_hook(raw_hook, default_environment_name=self.environment_name)
             for raw_hook in raw_hooks
         ]
-
-    get_pre_hook_paths = partialmethod(_get_hooks, hook_type="pre-hook")
-    get_post_hook_paths = partialmethod(_get_hooks, hook_type="post-hook")
 
     def get_scripts(self, *, before: bool) -> List[str]:
         # sometimes properties can *be* there and still be None

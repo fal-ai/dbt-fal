@@ -15,7 +15,7 @@ from typing import Iterator, List, Any, Optional, Dict, Tuple, Union
 
 from faldbt.logger import LOGGER
 
-from fal.node_graph import FalScript
+from fal.fal_script import FalScript, TimingType
 from fal.utils import print_run_info, DynamicIndexProvider
 from faldbt.project import DbtModel, FalDbt, NodeStatus
 
@@ -207,6 +207,7 @@ class FalLocalHookTask(Task):
     bound_model: Optional[DbtModel] = None
     arguments: Optional[Dict[str, Any]] = None
     hook_type: HookType = HookType.HOOK
+    _timing_type: Optional[TimingType] = None
 
     @classmethod
     def from_fal_script(cls, script: FalScript):
@@ -224,6 +225,7 @@ class FalLocalHookTask(Task):
             script.model,
             script.hook_arguments,
             hook_type,
+            script.timing_type,
         )
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
@@ -240,6 +242,7 @@ class FalLocalHookTask(Task):
                 path=str(self.hook_path),
                 hook_arguments=self.arguments,
                 is_hook=self.hook_type is HookType.HOOK,
+                timing_type=self._timing_type,
             )
 
 

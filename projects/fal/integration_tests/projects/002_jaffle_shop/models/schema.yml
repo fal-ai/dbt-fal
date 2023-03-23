@@ -1,5 +1,9 @@
 version: 2
 
+fal:
+  scripts:
+    - global_test.py
+
 models:
   - name: middle_1
 
@@ -41,9 +45,8 @@ models:
 
     meta:
       fal:
-        scripts:
-          after:
-            - send_slack_message.py
+        post-hook:
+          - send_slack_message.py
 
   - name: orders
     description: This table has basic information about orders, as well as some derived facts based on payments
