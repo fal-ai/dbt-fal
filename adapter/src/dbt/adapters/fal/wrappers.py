@@ -97,7 +97,7 @@ class FalEncAdapterWrapper(FalAdapterMixin):
     def get_relation(self, database: str, schema: str, identifier: str):
         # HACK: When compiling Python models, we get an all-False quoting policy
         #       This does not happen in 1.4
-        if self._db_adapter.type() == "athena":
+        if self._db_adapter.type() in ("athena", "sqlserver"):
             # and dbt-athena-community breaks for that case
             self.config.quoting = {"database": True, "schema": True, "identifier": True}
 
