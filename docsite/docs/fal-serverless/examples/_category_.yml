@@ -1,0 +1,7 @@
+label: "Examples"
+position: 6
+collapsible: false
+collapsed: false
+link:
+  type: generated-index
+  title: Examples
