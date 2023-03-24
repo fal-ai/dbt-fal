@@ -53,7 +53,10 @@ class FalEncAdapterWrapper(FalAdapterMixin):
         telemetry.log_api(
             "encapsulate_init",
             config=config,
-            additional_props={"is_teleport": self.is_teleport()},
+            additional_props={
+                "is_teleport": self.is_teleport(),
+                "fal_host": self.credentials.host,
+            },
         )
 
     def submit_python_job(self, *args, **kwargs):
