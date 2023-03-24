@@ -5,22 +5,32 @@ slug: /
 
 # Quickstart
 
-Let's discover `fal` **in less than 5 minutes**.
+fal is the easiest way to run Python with your dbt project.
 
-`fal` allows you to run Python scripts directly from your `dbt` project.
+The fal ecosystem has two main components: The fal CLI and the dbt-fal adapter.
 
-With `fal`, you can:
+### With the dbt-fal Python adapter, you can:
 
-- Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`.
+- Enable a developer-friendly Python environment for most databases, including ones without dbt Python support such as Redshift, Postgres.
+- Use Python libraries such as sklearn or prophet to build more complex dbt models including ML models.
+- Easily manage your Python environments with isolate.
+- Iterate on your Python models locally and then scale them out in the cloud.
+
+Go to the [dbt-fal](/fal/python-models/overview) documentation for more details!
+
+### With the fal CLI, you can:
+
 - Send Slack notifications upon dbt model success or failure.
-- Use Python libraries such as sklearn or prophet to build more complex pipelines downstream of dbt models.
+- Load data from external data sources before a model starts running.
+- Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`
+- Programatically access rich metadata about your dbt project using `FalDbt`.
 
-and more...
+Go to the [fal CLI](/fal/orchestrate-dbt-runs/) documentation for more details!
 
-## 1. Install fal
+## 1. Install fal and dbt-fal
 
 ```bash
-$ pip install fal
+$ pip install fal dbt-fal[postgres]
 ```
 
 ## 2. Go to your dbt directory
