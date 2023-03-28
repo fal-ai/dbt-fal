@@ -132,6 +132,10 @@ class DbtGenericTest(DbtTest):
         assert isinstance(self.node, GenericTestNode)
         self.column = self.node.column_name
 
+        # Column name might be stored in test_metadata
+        if not self.column and self.node.test_metadata.kwargs.get("column_name"):
+            self.column = self.node.test_metadata.kwargs.get("column_name")
+
     @property
     def source_id(self):
         if self.source_ids:
