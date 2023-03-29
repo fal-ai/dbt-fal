@@ -65,13 +65,14 @@ const config = {
             label: 'dbt-fal',
           },
           {
-            to: 'https://blog.fal.ai',
-            label: 'Blog',
-            position: 'left'
+            type: 'docSidebar',
+            position: 'left',
+            sidebarId: 'serverless',
+            label: 'fal-serverless',
           },
           {
-            to: 'https://featuresandlabels.notion.site/Public-Roadmaps-be3edf2bd5e841c490b7a228a5fc58c9',
-            label: 'Roadmap',
+            to: 'https://blog.fal.ai',
+            label: 'Blog',
             position: 'left'
           },
           {
