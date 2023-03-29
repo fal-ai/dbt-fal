@@ -2,7 +2,7 @@
 sidebar_position: 8
 ---
 
-# The fal run command
+# `fal run` command
 
 > **NOTICE**: The `fal run` command was previously the only way to run scripts. We still support the `fal run` behavior but we recommend the [`fal flow run`](.) for more capabilities.
 
@@ -60,3 +60,9 @@ A typical workflow involves running `dbt run` after invoking `fal run --before`.
 $ fal run --before --select boston
 $ dbt run --select boston
 ```
+
+
+from fal import use
+fal = use_dbt(profiles_dir="~/.dbt", project_dir="../my_project")
+fal.ref("model_name")
+fal.write(df, "model_name")

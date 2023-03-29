@@ -1,8 +1,8 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
-# Referring to dbt models and sources from a Python context
+# Refer to dbt models and sources from a Python context
 
 fal introduces variables and functions in the context of a script to make it easier to interact with your data.
 

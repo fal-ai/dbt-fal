@@ -91,8 +91,6 @@ my_df = execute_sql('SELECT * FROM {{ ref("my_model") }}')
 
 As you can see, the query strings support jinja.
 
-Note that the use of `ref` inside `execute_sql` does not create a node in a dbt dag. So in the case of Python models, you still need to specify dependencies in a comment at the top of the file. For more details, [see here](../fal-dbt/python-models.md#dependencies-on-other-models).
-
 ### `list_models` function
 
 You can access model information for all models in the dbt project:

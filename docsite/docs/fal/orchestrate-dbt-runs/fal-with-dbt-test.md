@@ -1,7 +1,7 @@
 ---
 sidebar_position: 6
 ---
-# Run scripts with dbt test results
+# Access dbt test results
 
 If you run `dbt test`, you may want to run some scripts based on the results of the tests (e.g. to notify failures).
 

@@ -20,11 +20,11 @@ picking the right version that would work best for your environment
 
 #### fal & dbt adapter matrix
 
-|     | fal version | Supported dbt adapters                          | Notes                                                                                 |
-| --- | ----------- | ----------------------------------------------- | ------------------------------------------------------------------------------------- |
-|     | 0.3.6>=     | Postgres, BigQuery, Snowflake, Redshift, DuckDB | dbt-bigquery\<=1.1 support is added  ([#443](https://github.com/fal-ai/fal/pull/443)) |
-|     | 0.3.1>=     | Postgres, BigQuery, Snowflake, Redshift, DuckDB |                                                                                       |
-|     | 0.3.0\<=    | Postgres, BigQuery, Snowflake, Redshift         |                                                                                       |
+|     | fal version | Supported dbt adapters                          | Notes                                                                                |
+| --- | ----------- | ----------------------------------------------- | ------------------------------------------------------------------------------------ |
+|     | 0.3.6>=     | Postgres, BigQuery, Snowflake, Redshift, DuckDB | dbt-bigquery\<=1.1 support is added ([#443](https://github.com/fal-ai/fal/pull/443)) |
+|     | 0.3.1>=     | Postgres, BigQuery, Snowflake, Redshift, DuckDB |                                                                                      |
+|     | 0.3.0\<=    | Postgres, BigQuery, Snowflake, Redshift         |                                                                                      |
 
 ## Migration
 
@@ -35,4 +35,4 @@ fal will start showing deprecation warnings for `after` scripts when using
 `fal flow run`. The easiest way forward is migrating them to `post-hook`s, and
 in general the migration is seamless. But if any of the scripts you have is
 using `write_to_source` or `write_to_model` functions, we'd recommend promoting
-them to individual ["Python models"](/Guides/python-models-migration).
+them to individual ["Python models"](/fal/guides/python-models-migration).

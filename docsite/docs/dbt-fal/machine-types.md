@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Selecting Machine Types
+# Machine Types
 
 With fal Cloud, you can choose different sizes of machines to run each of your models. You are charged only for what you use.
 

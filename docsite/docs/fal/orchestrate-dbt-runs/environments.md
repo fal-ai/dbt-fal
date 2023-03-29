@@ -1,4 +1,4 @@
-# Isolated scripts (and environment management)
+# Evironment management
 
 > Note: Isolated scripts feature is still experimental, and there might be both
 > internal and external (user-visible) changes on how these environments are

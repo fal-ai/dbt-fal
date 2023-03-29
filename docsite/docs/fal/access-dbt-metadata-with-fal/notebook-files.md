@@ -2,8 +2,7 @@
 sidebar_position: 10
 ---
 
-# Scripts in .ipynb files
-You can use Jupyter notebook files as `fal` scripts.
+# Jupyter (.ipynb) helpers
 
 ## `init_fal` magic command
 In order to access fal functions such as `ref` and `write_to_model` from within notebook runtime, you can use the `init_fal` magic command. 
@@ -34,16 +33,4 @@ my_df = ref('some_model')
 # We made some predictions and stored them in `my_predictions`
 
 write_to_model(my_predictions)
-```
-Note that the `default_model_name` is only active during notebook runtime. When the script is run with `fal run` or `fal flow run`, fal will determine the model to write to according to the relevant `schema.yml` file. In fal runtime, the `init_fal` line is ignored. 
-
-You can specify a .ipynb file the same way as a regular Python file:
-
-```yaml
-models:
-  - name: some_model
-    meta:
-      fal:
-        scripts:
-            - my_notebook.ipynb
 ```

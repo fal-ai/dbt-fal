@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Selecting `before` and `after` scripts
+# Select `before` and `after` scripts
 
 For node selection, `fal` handles [dbt's selection flags](https://docs.getdbt.com/reference/node-selection/syntax):
 

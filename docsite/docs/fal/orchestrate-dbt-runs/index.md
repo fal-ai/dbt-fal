@@ -1,4 +1,6 @@
-# Running Python in a dbt project
+# Run Python in a dbt project
+
+> ✨ NEW ✨ : If you want to create dbt models head over to the [dbt-fal](/dbt-fal/quickstart) adapter documentation 
 
 fal extends dbt's functionality to run Python scripts before and after dbt models. With fal you can interact with dbt models in your Python scripts seamlessly.
 

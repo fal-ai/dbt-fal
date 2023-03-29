@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Importing fal as a Python package
+# Overview
 
 You may be interested in accessing dbt models and sources easily from a Python script.
 For that, just use the `fal` package and intantiate a FalDbt project:
@@ -30,4 +30,4 @@ tickets = faldbt.ref('stg_zendesk_ticket_data')
 
 ---
 
-Check out the [FalDbt class explanation](./reference/faldbt-class-object.md) in the reference section.
+Check out the [FalDbt class explanation](/fal/reference/faldbt-class-object) in the reference section.
