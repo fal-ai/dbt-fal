@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Machine Types
 
-With fal Cloud, you can choose different sizes of machines to run each of your models. You are charged only for what you use.
+With fal-serverless, you can choose different sizes of machines to run each of your models. You are charged only for what you use.
 
 To use different types of machines:
 
