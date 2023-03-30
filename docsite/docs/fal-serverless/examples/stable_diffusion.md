@@ -55,7 +55,7 @@ def generate(prompt: str):
         model_id,
         num_inference_steps=20,
         torch_dtype=torch.float16,
-        cache_dir="/data/hfcache")
+        cache_dir=os.environ['TRANSFORMERS_CACHE'])
     pipe = pipe.to("cuda")
     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
@@ -67,6 +67,8 @@ def generate(prompt: str):
     return buf
 ```
 We set the package and machine type requirements as `isolated` argument. `generate` function then imports the necessary modules and initializes the stable diffusion pipeline using the specified model ID. It also sets up the Hugging Face transformers cache directory to use fal-serverless persistent [/data directory](../storage_and_persistence). The pipeline is then moved to the GPU and configured with a custom scheduler. Finally, the function generates the image based on the given prompt and returns it as a byte buffer.
+
+If you are running multiple stable diffusion function calls consecutively, it may be beneficial to consider using [@cached functions](../isolated_functions/cached_function) to optimize performance for recurring tasks.
 
 ## Step 4: Generate the image
 Now that we have defined the `generate` function, we can use it to generate an image by passing a prompt:
