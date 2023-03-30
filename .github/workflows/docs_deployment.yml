@@ -6,6 +6,15 @@ on:
     paths:
       - "docsite/**"
   workflow_dispatch:
+    inputs:
+      deployment:
+        description: Deploy to
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
   deploy:
@@ -17,7 +26,7 @@ jobs:
           node-version: '14'
       - run: cd docsite && npm install
       - uses: amondnet/vercel-action@v20
-        if: ${{ github.ref == 'refs/heads/release' }}
+        if: ${{ github.ref == 'refs/heads/release' }} or ${{ inputs.deployment == 'prod' }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
@@ -25,7 +34,7 @@ jobs:
           vercel-args: '--prod'
           working-directory: docsite
       - uses: amondnet/vercel-action@v20
-        if: ${{ github.ref == 'refs/heads/main' }} or ${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.ref == 'refs/heads/main' }} or ${{ inputs.deployment == 'staging' }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
