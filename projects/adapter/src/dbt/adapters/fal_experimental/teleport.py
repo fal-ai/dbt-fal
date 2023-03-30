@@ -7,7 +7,7 @@ from dbt.adapters.fal_experimental.connections import TeleportTypeEnum
 from dbt.adapters.fal_experimental.utils.environments import EnvironmentDefinition, get_default_pip_dependencies
 from dbt.adapters.fal_experimental.utils import extra_path, get_fal_scripts_path, retrieve_symbol
 from dbt.config.runtime import RuntimeConfig
-from koldstart import KoldstartHost, isolated
+from fal_serverless import FalServerlessHost, isolated
 import pandas as pd
 
 from dbt.contracts.connection import AdapterResponse
@@ -102,7 +102,7 @@ def run_in_environment_with_teleport(
     The environment_name must be defined inside fal_project.yml file
     in your project's root directory."""
     compressed_local_packages = None
-    is_remote = type(environment.host) is KoldstartHost
+    is_remote = type(environment.host) is FalServerlessHost
 
     deps = get_default_pip_dependencies(
         is_remote=is_remote,
@@ -155,7 +155,7 @@ def run_in_environment_with_teleport(
         # environment objects are created (in utils/environments.py).
         raise Exception(f"Environment type not supported: {environment.kind}")
 
-    # Machine type is only applicable in KoldstartHost
+    # Machine type is only applicable in FalServerlessHost
     if is_remote:
         isolated_function = isolated_function.on(machine_type=environment.machine_type)
 
