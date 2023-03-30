@@ -10,7 +10,7 @@ from dbt.adapters.base.impl import BaseAdapter
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 
-from koldstart import KoldstartHost, isolated
+from fal_serverless import FalServerlessHost, isolated
 from dbt.adapters.fal_experimental.utils.environments import (
     EnvironmentDefinition,
     get_default_pip_dependencies
@@ -78,7 +78,7 @@ def run_in_environment_with_adapter(
     in your project's root directory."""
     compressed_local_packages = None
 
-    is_remote = type(environment.host) is KoldstartHost
+    is_remote = type(environment.host) is FalServerlessHost
 
     deps = get_default_pip_dependencies(
         is_remote=is_remote,
@@ -134,7 +134,7 @@ def run_in_environment_with_adapter(
         # environment objects are created (in utils/environments.py).
         raise Exception(f"Environment type not supported: {environment.kind}")
 
-    # Machine type is only applicable in KoldstartHost
+    # Machine type is only applicable in FalServerlesshost
     if is_remote:
         isolated_function = isolated_function.on(machine_type=environment.machine_type)
 

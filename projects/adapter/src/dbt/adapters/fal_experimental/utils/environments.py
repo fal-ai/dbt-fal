@@ -10,8 +10,8 @@ from dbt.exceptions import DbtRuntimeError
 from dbt.config.runtime import RuntimeConfig
 
 from isolate.backends import BaseEnvironment, BasicCallable, EnvironmentConnection
-from koldstart import CloudKeyCredentials, LocalHost
-from koldstart.api import Host, KoldstartHost
+from fal_serverless import FalServerlessKeyCredentials, LocalHost
+from fal_serverless.api import Host, FalServerlessHost
 
 from . import cache_static
 from .yaml_helper import load_yaml
@@ -61,9 +61,9 @@ def fetch_environment(
                 + "If you don't want to use fal cloud, you can change your "
                 + "profile target to one where fal doesn't have credentials"
             )
-            host = KoldstartHost(
+            host = FalServerlessHost(
                 url=credentials.host,
-                credentials=CloudKeyCredentials(credentials.key_id, credentials.key_secret))
+                credentials=FalServerlessKeyCredentials(credentials.key_id, credentials.key_secret))
             return EnvironmentDefinition(
                 host=host,
                 kind="virtualenv",
@@ -147,9 +147,9 @@ def create_environment(
     }
 
     if credentials.key_secret and credentials.key_id:
-        host = KoldstartHost(
+        host = FalServerlessHost(
             url=credentials.host,
-            credentials=CloudKeyCredentials(credentials.key_id, credentials.key_secret))
+            credentials=FalServerlessKeyCredentials(credentials.key_id, credentials.key_secret))
     else:
         host = LocalHost()
     return EnvironmentDefinition(
