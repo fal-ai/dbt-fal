@@ -3,32 +3,50 @@ from io import StringIO
 
 import pandas as pd
 import sqlalchemy
+import connectorx as cx
 
 from dbt.adapters.base import BaseRelation
 from dbt.adapters.base.connections import AdapterResponse
 from dbt.adapters.fal_experimental.adapter_support import drop_relation_if_it_exists, new_connection
-from dbt.adapters.postgres import PostgresAdapter
+from dbt.adapters.postgres import PostgresAdapter, PostgresCredentials
 
+def _generate_connection_string(credentials: PostgresCredentials) -> str:
+    username = credentials.user
+    password = credentials.password
+    host = credentials.host
+    port = credentials.port
+    database = credentials.database
+    connection_string = f"postgresql://{username}:{password}@{host}:{port}/{database}"
+    return connection_string
 
 def read_relation_as_df(
     adapter: PostgresAdapter, relation: BaseRelation
 ) -> pd.DataFrame:
     assert adapter.type() == "postgres"
+    db_creds = adapter.config.credentials._db_creds
 
-    with new_connection(adapter, "fal-postgres:read_relation_as_df") as connection:
-        # If the given adapter supports the DBAPI (PEP 249), we can
-        # use its connection directly for the engine.
-        alchemy_engine = sqlalchemy.create_engine(
-            "postgresql+psycopg2://",
-            creator=lambda *args, **kwargs: connection.handle,
-        )
+    # Profiles with properties 'sslmode' or 'role' are handled the old way
+    # connectorx doesn't handle custom SSL settting or connection role
+    if getattr(db_creds, 'sslmode', None) or getattr(db_creds, 'role', None):
+        with new_connection(adapter, "fal-postgres:read_relation_as_df") as connection:
+            # If the given adapter supports the DBAPI (PEP 249), we can
+            # use its connection directly for the engine.
+            alchemy_engine = sqlalchemy.create_engine(
+                "postgresql+psycopg2://",
+                creator=lambda *args, **kwargs: connection.handle,
+            )
+            return pd.read_sql_table(
+                con=alchemy_engine,
+                table_name=relation.identifier,
+                schema=relation.schema,
+            )
 
-        return pd.read_sql_table(
-            con=alchemy_engine,
-            table_name=relation.identifier,
-            schema=relation.schema,
-        )
+    # Other profiles are handled with connectorx
+    connection_str = _generate_connection_string(adapter.config.credentials._db_creds)
+    sql = f"SELECT * FROM {relation}"
+    df = cx.read_sql(connection_str, sql)
 
+    return df
 
 def write_df_to_relation(
     adapter: PostgresAdapter,
