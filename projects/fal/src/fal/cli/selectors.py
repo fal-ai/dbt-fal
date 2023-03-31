@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Optional, Union, Iterator
 from fal.node_graph import NodeGraph
-from faldbt.project import CompileArgs, FalDbt
+from faldbt.project import CompileArgs, FalDbt, FalGeneralException
 from dbt.task.compile import CompileTask
 from enum import Enum
 from functools import reduce
@@ -45,6 +45,7 @@ class ExecutionPlan:
         unique_ids = list(nodeGraph.graph.nodes.keys())
 
         ids_to_execute = unique_ids
+
         if parsed.select:
             ids_to_execute = _filter_node_ids(
                 unique_ids, fal_dbt, list(parsed.select), nodeGraph
@@ -60,6 +61,7 @@ class ExecutionPlan:
 
         # Remove non-model nodes (sources, maybe more?) by making sure they are in the node_lookup dict
         ids_to_execute = [i for i in ids_to_execute if i in nodeGraph.node_lookup]
+
         return cls(list(set(ids_to_execute)), fal_dbt.project_name)
 
 
@@ -104,6 +106,7 @@ def _filter_node_ids(
     output = set()
 
     union = parse_union(selectors)
+
     for intersection in union.components:
         try:
             plan_outputs = [
@@ -147,6 +150,7 @@ class SelectType(Enum):
     MODEL = 1
     SCRIPT = 2
     COMPLEX = 3
+    TAG = 4
 
 
 @dataclass(init=False)
@@ -187,6 +191,8 @@ class SelectorPlan:
             self.unique_ids = [f"model.{fal_dbt.project_name}.{selector}"]
         elif self.type == SelectType.SCRIPT:
             self.unique_ids = _expand_script(selector, unique_ids)
+        elif self.type == SelectType.TAG:
+            self.unique_ids = unique_ids_from_tag_selector(selector, fal_dbt)
         elif self.type == SelectType.COMPLEX:
             self.unique_ids = unique_ids_from_complex_selector(selector, fal_dbt)
 
@@ -227,9 +233,20 @@ def unique_ids_from_complex_selector(select, fal_dbt: FalDbt) -> List[str]:
     graph = compile_task.get_node_selector().get_graph_queue(spec)
     return list(graph.queued)
 
+def unique_ids_from_tag_selector(selector: str, fal_dbt: FalDbt) -> List[str]:
+    parts = selector.split(":")
+    if len(parts) != 2:
+        raise FalGeneralException(f"Expected selector tag:tag_value, got: {selector}")
+    tag = parts[1]
+    ids = [model.unique_id for model in fal_dbt.models if tag in model.node.tags]
+    return ids
+
 
 def _to_select_type(selector: str) -> SelectType:
     if ":" in selector:
+        parts = selector.split(':')
+        if parts[0] == "tag":
+            return SelectType.TAG
         return SelectType.COMPLEX
     else:
         if _is_script_node(selector):
