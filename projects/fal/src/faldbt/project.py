@@ -831,6 +831,9 @@ class FalDbt:
             self._environments = parse.load_environments(self.project_dir)
         return self._environments[name]
 
+    def _get_adapter(self) -> "BaseAdapter":
+        return lib._get_adapter(self.project_dir, self.profiles_dir, self._profile_target, config=self._config)
+
 
 def _get_custom_target(run_results: DbtRunResult):
     if "target" in run_results.nativeRunResult.args:

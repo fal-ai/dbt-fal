@@ -9,7 +9,6 @@ from deprecation import deprecated
 
 import hashlib
 
-from faldbt.parse import normalize_path
 from faldbt.project import DbtModel, FalDbt, FAL
 
 from dbt.contracts.results import RunStatus
@@ -24,6 +23,9 @@ if version.is_version_plus("1.4.0"):
 else:
     from dbt.contracts.graph.parsed import ColumnInfo
 
+def normalize_path(base: str, path: Union[Path, str]):
+    real_base = os.path.realpath(os.path.normpath(base))
+    return Path(os.path.realpath(os.path.join(real_base, path)))
 
 class TimingType(Enum):
     PRE = "pre"
