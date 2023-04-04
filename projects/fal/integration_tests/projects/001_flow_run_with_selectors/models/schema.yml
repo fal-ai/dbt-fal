@@ -10,8 +10,12 @@ models:
   - name: model_a
 
   - name: model_b
+    config:
+      tags: daily
 
   - name: model_c
+    config:
+      tags: daily
     meta:
       fal:
         scripts:
