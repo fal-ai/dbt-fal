@@ -1,5 +1,4 @@
 import functools
-from time import sleep
 from typing import Any
 
 import pandas as pd
@@ -26,6 +25,7 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
 
     sqlalchemy_kwargs = {}
     format_url = lambda url: url
+
     if adapter_type == "trino":
         import dbt.adapters.fal_experimental.support.trino as support_trino
 
@@ -93,13 +93,19 @@ def write_df_to_relation(
         import dbt.adapters.fal_experimental.support.postgres as support_postgres
 
         return support_postgres.write_df_to_relation(adapter, dataframe, relation)
+    elif adapter.type() == "athena":
+        import dbt.adapters.fal_experimental.support.athena as support_athena
+
+        return support_athena.write_df_to_relation(adapter, dataframe, relation, if_exists)
 
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
+
             # TODO: this should probably live in the materialization macro.
             temp_relation = relation.replace_path(
                 identifier=f"__dbt_fal_temp_{relation.identifier}"
             )
+
             drop_relation_if_it_exists(adapter, temp_relation)
 
             alchemy_engine = _get_alchemy_engine(adapter, connection)
@@ -115,11 +121,11 @@ def write_df_to_relation(
             )
             adapter.cache.add(temp_relation)
             drop_relation_if_it_exists(adapter, relation)
+
             adapter.rename_relation(temp_relation, relation)
             adapter.commit_if_has_connection()
 
             return AdapterResponse("OK", rows_affected=rows_affected)
-
 
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
     """Generic version of the read_df_from_relation."""
@@ -146,9 +152,15 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
 
         return support_postgres.read_relation_as_df(adapter, relation)
 
+    elif adapter.type() == "athena":
+        import dbt.adapters.fal_experimental.support.athena as support_athena
+
+        return support_athena.read_relation_as_df(adapter, relation)
+
     else:
         with new_connection(adapter, "fal:read_relation_as_df") as connection:
             alchemy_engine = _get_alchemy_engine(adapter, connection)
+
             return pd.read_sql_table(
                 con=alchemy_engine,
                 table_name=relation.identifier,

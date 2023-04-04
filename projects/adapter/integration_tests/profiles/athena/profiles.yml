@@ -1,0 +1,17 @@
+config:
+  send_anonymous_usage_stats: False
+
+fal_test:
+  target: staging
+  outputs:
+    staging:
+      type: fal
+      db_profile: db
+    db:
+      type: athena
+      s3_staging_dir: "{{ env_var('ATHENA_S3_STAGING_DIR') }}"
+      region_name: us-east-1
+      database: "{{ env_var('ATHENA_DATABASE') }}"
+      schema: "{{ env_var('ATHENA_SCHEMA') }}"
+      work_group: primary
+      num_retries: 0
