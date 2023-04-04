@@ -2,6 +2,7 @@ from typing import Any
 import six
 from dbt.adapters.base.relation import BaseRelation
 from dbt.contracts.connection import AdapterResponse
+from dbt.adapters.fal.wrappers import FalCredentialsWrapper
 import sqlalchemy
 import pandas as pd
 from dbt.adapters.base import BaseAdapter
@@ -9,7 +10,11 @@ from urllib.parse import quote_plus
 
 
 def create_engine(adapter: BaseAdapter) -> Any:
-    creds = adapter.config.credentials._db_creds
+    if isinstance(adapter.config.credentials, FalCredentialsWrapper):
+        creds = adapter.config.credentials._db_creds
+    else:
+        # In isolated environment, credentials are AthenaCredentials
+        creds = adapter.config.credentials
     conn_str = ("awsathena+rest://:@athena.{region_name}.amazonaws.com:443/"
                 "{schema_name}?s3_staging_dir={s3_staging_dir}"
                 "&location={location}&compression=snappy")
@@ -32,12 +37,17 @@ def drop_relation_if_it_exists(adapter: BaseAdapter, relation: BaseRelation) -> 
 def write_df_to_relation(adapter, dataframe, relation, if_exists) -> AdapterResponse:
 
     assert adapter.type() == "athena"
+    if isinstance(adapter.config.credentials, FalCredentialsWrapper):
+        creds = adapter.config.credentials._db_creds
+    else:
+        # In isolated environment, credentials are AthenaCredentials
+        creds = adapter.config.credentials
 
     # This is a quirk of dbt-athena-community, where they set
     # relation.schema = relation.identifier
     temp_relation = relation.replace_path(
         schema=relation.database,
-        database=adapter.config.credentials._db_creds.database,
+        database=creds.database,
         # athena complanes when table location has x.__y
         identifier=f"dbt_fal_temp_{relation.schema}"
     )
