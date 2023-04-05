@@ -2,6 +2,7 @@ from dbt.adapters.base import BaseAdapter, BaseRelation
 from dbt.adapters.base.connections import AdapterResponse
 from dbt.adapters.fal_experimental.adapter_support import new_connection
 import pandas as pd
+import connectorx as cx
 
 # [bigquery] extras dependencies
 import google.cloud.bigquery as bigquery
@@ -13,6 +14,15 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
     sql = f"SELECT * FROM {relation}"
 
     assert adapter.type() == "bigquery"
+
+    db_creds = adapter.config.credentials._db_creds
+    method = getattr(db_creds, 'method', None)
+
+    # Connectorx only supports service-account json authentication
+    if method and method.value == "service-account":
+        connection_str = f"bigquery://{db_creds.keyfile}"
+        df = cx.read_sql(connection_str, sql)
+        return df
 
     with new_connection(adapter, "fal-bigquery:read_relation_as_df") as conn:
 
