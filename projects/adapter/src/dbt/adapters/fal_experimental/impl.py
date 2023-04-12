@@ -66,12 +66,14 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
         self, parsed_model: dict, compiled_code: str
     ) -> AdapterResponse:
         """Execute the given `compiled_code` in the target environment."""
-        environment_name = parsed_model["config"].get(
+        config_dict = parsed_model["config"]
+
+        environment_name = config_dict.get(
             "fal_environment",
             self.credentials.default_environment,
         )
 
-        machine_type = parsed_model["config"].get(
+        machine_type = config_dict.get(
             "fal_machine",
             "S",
         )

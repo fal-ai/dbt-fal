@@ -8,10 +8,10 @@ seed-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
-target-path: "{{ env_var('temp_dir') }}/target"
-
 models:
   +schema: custom
+  # All serverless should run on M machines by default
+  +fal_machine: "M"
   simple_test:
     python:
       +materialized: table
