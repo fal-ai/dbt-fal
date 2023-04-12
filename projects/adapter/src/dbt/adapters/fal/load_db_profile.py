@@ -75,7 +75,7 @@ def load_profiles_info_1_5() -> Tuple[Profile, Dict[str, Any]]:
         ) from error
 
     override_properties = {
-        "threads": flags.THREADS or fal_dict.get("threads"),
+        "threads": flags.THREADS or fal_dict.get("threads") or db_profile.threads,
     }
 
     return db_profile, override_properties

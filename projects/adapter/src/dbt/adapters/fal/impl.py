@@ -32,11 +32,11 @@ def _release_plugin_lock():
 
 DB_PROFILE = None
 DB_RELATION = BaseRelation
-OVERRIDEN_PROPERTIES = {}
+OVERRIDE_PROPERTIES = {}
 
 # NOTE: Should this file run on isolate agents? Could we skip it entirely and build a FalEncAdapterWrapper directly?
 if not is_agent():
-    DB_PROFILE, OVERRIDEN_PROPERTIES = load_profiles_info_1_5()
+    DB_PROFILE, OVERRIDE_PROPERTIES = load_profiles_info_1_5()
     DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
 
 
@@ -76,9 +76,9 @@ class FalEncAdapter(BaseAdapter):
         config.python_adapter_credentials = fal_credentials
         config.sql_adapter_credentials = db_credentials
 
-        for key in OVERRIDEN_PROPERTIES:
-            if OVERRIDEN_PROPERTIES[key] is None:
-                setattr(config, key, getattr(DB_PROFILE, key))
+        for key in OVERRIDE_PROPERTIES:
+            if OVERRIDE_PROPERTIES[key] is not None:
+                setattr(config, key, OVERRIDE_PROPERTIES[key])
 
         with _release_plugin_lock():
             # Temporary credentials for register
