@@ -1,7 +1,6 @@
 from typing import Dict, Any, Tuple, Optional
 
-from dbt.cli.flags import Flags
-from dbt.flags import get_flags
+from dbt.flags import get_flags, Namespace
 from dbt.config.project import load_raw_project
 from dbt.config.profile import read_profile, Profile
 from dbt.config.renderer import ProfileRenderer
@@ -39,7 +38,7 @@ def find_target_name(
 
 
 def load_profiles_info_1_5() -> Tuple[Profile, Dict[str, Any]]:
-    flags: Flags = get_flags()  # type: ignore
+    flags: Namespace = get_flags()
 
     profile_renderer = ProfileRenderer(flags.VARS)
 

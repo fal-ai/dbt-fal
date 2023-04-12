@@ -4,11 +4,12 @@ import zipfile
 import io
 from functools import partial
 from tempfile import NamedTemporaryFile
-from typing import Any, Optional, cast
+from typing import Any, Optional
 
 from dbt.adapters.base.impl import BaseAdapter
 from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
+from dbt.flags import get_flags, Namespace
 
 from fal_serverless import FalServerlessHost, isolated
 from dbt.adapters.fal_experimental.utils.environments import (
@@ -42,6 +43,7 @@ def run_with_adapter(code: str, adapter: BaseAdapter, config: RuntimeConfig) -> 
 
 def _isolated_runner(
     code: str,
+    flags: Namespace,
     config: RuntimeConfig,
     manifest: Manifest,
     macro_manifest: MacroManifest,
@@ -50,7 +52,7 @@ def _isolated_runner(
     # This function can be run in an entirely separate
     # process or an environment, so we need to reconstruct
     # the DB adapter solely from the config.
-    adapter = reconstruct_adapter(config, manifest, macro_manifest)
+    adapter = reconstruct_adapter(flags, config, manifest, macro_manifest)
     fal_scripts_path = get_fal_scripts_path(config)
     if local_packages is not None:
         if fal_scripts_path.exists():
@@ -99,6 +101,7 @@ def run_in_environment_with_adapter(
     execute_model = partial(
         _isolated_runner,
         code,
+        get_flags(),
         config,
         manifest,
         macro_manifest,
