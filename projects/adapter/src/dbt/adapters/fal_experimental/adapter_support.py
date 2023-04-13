@@ -18,14 +18,11 @@ _SQLALCHEMY_DIALECTS = {
 }
 
 
-def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
+def _pandas_conn(adapter: BaseAdapter, connection: Connection) -> Any:
     # The following code heavily depends on the implementation
     # details of the known adapters, hence it can't work for
     # arbitrary ones.
     adapter_type = adapter.type()
-
-    sqlalchemy_kwargs = {}
-    format_url = lambda url: url
 
     if adapter_type == "trino":
         import dbt.adapters.fal_experimental.support.trino as support_trino
@@ -33,15 +30,16 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
         return support_trino.create_engine(adapter)
 
     if adapter_type == "redshift":
-        # If the given adapter supports the DBAPI (PEP 249), we can
-        # use its connection directly for the engine.
-        sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
-        url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
-        url = format_url(url)
+        import dbt.adapters.fal_experimental.support.redshift as support_redshift
+
+        return support_redshift.create_engine(adapter)
+
     elif adapter_type == "sqlserver":
-        sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
         url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
-        url = format_url(url)
+        handle_lambda = lambda *args, **kwargs: connection.handle
+
+        return sqlalchemy.create_engine(url, creator=handle_lambda)
+
     else:
         message = (
             f"dbt-fal does not support {adapter_type} adapter. ",
@@ -50,8 +48,6 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
             "We will look into it ASAP.",
         )
         raise NotImplementedError(message)
-
-    return sqlalchemy.create_engine(url, **sqlalchemy_kwargs)
 
 
 def drop_relation_if_it_exists(adapter: BaseAdapter, relation: BaseRelation) -> None:
@@ -110,12 +106,12 @@ def write_df_to_relation(
 
             drop_relation_if_it_exists(adapter, temp_relation)
 
-            alchemy_engine = _get_alchemy_engine(adapter, connection)
+            conn = _pandas_conn(adapter, connection)
 
             # TODO: probably worth handling errors here an returning
             # a proper adapter response.
             rows_affected = dataframe.to_sql(
-                con=alchemy_engine,
+                con=conn,
                 name=temp_relation.identifier,
                 schema=temp_relation.schema,
                 if_exists=if_exists,
@@ -162,10 +158,10 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
 
     else:
         with new_connection(adapter, "fal:read_relation_as_df") as connection:
-            alchemy_engine = _get_alchemy_engine(adapter, connection)
+            conn = _pandas_conn(adapter, connection)
 
             return pd.read_sql_table(
-                con=alchemy_engine,
+                con=conn,
                 table_name=relation.identifier,
                 schema=relation.schema,
             )
