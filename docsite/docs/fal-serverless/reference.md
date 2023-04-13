@@ -179,3 +179,42 @@ result2 = my_isolated_function() # Almost instant
 print(result1) # Output: "The result is: Hello, World!"
 print(result2) # Output: "The result is: Hello, World!"
 ```
+
+## `sync_dir` Function
+
+The `sync_dir` function allows you to upload local directories to the persistent `/data` directory.
+
+### Syntax
+```python
+from fal_serverless import sync_dir
+
+sync_dir(path_to_local_dir, remote_dir)
+```
+### Parameters
+- `path_to_local_dir` (str): The local path to the directory you want to upload.
+- `remote_dir` (str): The name of the remote directory in which to store the uploaded files. This will be a subdirectory within the `/data/uploads` directory in the serverless environment.
+
+### Usage example
+
+Here's an example of how to use the sync_dir function:
+```python
+from fal_serverless import sync_dir, isolated
+
+# Upload a local directory to the persistent /data directory
+sync_dir("path/to/local/dir", "remote_dir")
+
+# An isolated function to list the contents of the uploaded directory
+@isolated()
+def test():
+    import os
+    os.system("ls /data/sync/remote_dir")
+
+# Execute the test function
+test()  # prints contents of the uploaded directory
+```
+In this example, the local directory specified by path/to/local/dir is uploaded to /data/sync/remote_dir in the fal-serverless environment. The isolated function test then lists the contents of the uploaded directory.
+
+### Notes
+- The `sync_dir` function uses isolated functions to efficiently upload the directory contents in the background.
+- Uploaded files and directories are persistent in the `/data` directory on the fal-serverless platform. This allows you to access them across different isolated functions and invocations.
+- The `sync_dir` function should be called before the execution of any isolated functions that rely on the uploaded data.
