@@ -100,11 +100,11 @@ def run_in_environment_with_adapter(
 
     execute_model = partial(
         _isolated_runner,
-        code,
-        get_flags(),
-        config,
-        manifest,
-        macro_manifest,
+        code=code,
+        flags=get_flags(),
+        config=config,
+        manifest=manifest,
+        macro_manifest=macro_manifest,
         local_packages=compressed_local_packages
     )
 
