@@ -44,7 +44,7 @@ s3fs = { version = ">=2022.8.2", optional = true }
 # fal cloud
 dill = ">=0.3.5.1"
 packaging = "<22"
-fal-serverless = "^0.6.24"
+fal-serverless = "^0.6.28"
 importlib-metadata = "^6.0.0"
 
 [tool.poetry.dev-dependencies]
