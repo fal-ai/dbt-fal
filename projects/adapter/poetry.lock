@@ -132,18 +132,18 @@ tests-no-zope = ["cloudpickle", "cloudpickle", "hypothesis", "hypothesis", "mypy
 
 [[package]]
 name = "auth0-python"
-version = "3.24.1"
+version = "4.1.0"
 description = "Auth0 Python SDK"
 category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*"
+python-versions = ">=3.7"
 
 [package.dependencies]
-pyjwt = {version = ">=1.7.1", extras = ["crypto"]}
+pyjwt = {version = ">=2.6.0", extras = ["crypto"]}
 requests = ">=2.14.0"
 
 [package.extras]
-test = ["coverage", "mock (>=1.3.0)", "pre-commit"]
+test = ["coverage", "pre-commit"]
 
 [[package]]
 name = "babel"
@@ -406,22 +406,23 @@ python-versions = "*"
 
 [[package]]
 name = "fal-serverless"
-version = "0.6.24"
+version = "0.6.28"
 description = "fal Serverless is an easy-to-use Serverless Python Framework"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-auth0-python = ">=3.24.0,<4.0.0"
+auth0-python = ">=4.1.0,<5.0.0"
 click = ">=8.1.3,<9.0.0"
 colorama = ">=0.4.6,<0.5.0"
 datadog-api-client = ">=2.9.0,<3.0.0"
 dill = "0.3.5.1"
 grpc-interceptor = ">=0.15.0,<0.16.0"
 grpcio = ">=1.50.0,<2.0.0"
-isolate = {version = "0.11.0", extras = ["build"]}
-isolate-proto = ">=0.0.22,<0.0.23"
+importlib-metadata = {version = ">=4.4", markers = "python_version < \"3.10\""}
+isolate = {version = "0.11.1", extras = ["build"]}
+isolate-proto = ">=0.0.26,<0.0.27"
 opentelemetry-api = ">=1.15.0,<2.0.0"
 opentelemetry-sdk = ">=1.15.0,<2.0.0"
 portalocker = ">=2.7.0,<3.0.0"
@@ -770,7 +771,7 @@ six = "*"
 
 [[package]]
 name = "isolate"
-version = "0.11.0"
+version = "0.11.1"
 description = "Managed isolated environments for Python"
 category = "main"
 optional = false
@@ -790,7 +791,7 @@ build = ["PyYAML (>=6.0)", "virtualenv (>=20.4)"]
 
 [[package]]
 name = "isolate-proto"
-version = "0.0.22"
+version = "0.0.26"
 description = "(internal) gRPC definitions for Isolate Cloud"
 category = "main"
 optional = false
@@ -798,7 +799,7 @@ python-versions = ">=3.7,<4"
 
 [package.dependencies]
 grpcio = ">=1.49"
-isolate = {version = "0.11.0", extras = ["build"]}
+isolate = {version = "0.11.1", extras = ["build"]}
 protobuf = "*"
 
 [[package]]
@@ -1774,7 +1775,7 @@ trino = ["trino"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.12"
-content-hash = "689e415ce8b576cdbb9732cf96768e66e7f6276ed5a98423c49e9398db0c4fe0"
+content-hash = "a53bb8df07bc228117b29e748b61bfb7671ff9d4216859869864be5edcc56244"
 
 [metadata.files]
 agate = [
@@ -1902,8 +1903,8 @@ attrs = [
     {file = "attrs-22.2.0.tar.gz", hash = "sha256:c9227bfc2f01993c03f68db37d1d15c9690188323c067c641f1a35ca58185f99"},
 ]
 auth0-python = [
-    {file = "auth0-python-3.24.1.tar.gz", hash = "sha256:62c2e177b9517879bd8632da9eb7668aedd5775fddea87b0e0e1e9a89b9dd096"},
-    {file = "auth0_python-3.24.1-py2.py3-none-any.whl", hash = "sha256:87dbf603c89fcebfd35f5ba29bc8a820af72a7d5a772f53752ae04d30f191712"},
+    {file = "auth0-python-4.1.0.tar.gz", hash = "sha256:457009bbbd660b7244247b5e853506d147ecf4cf7dc72a0766330e3057f1180c"},
+    {file = "auth0_python-4.1.0-py2.py3-none-any.whl", hash = "sha256:efe5def4d5829dde85d24dbacb5f793468b15dc2ef3cd2032dfdac20096e099a"},
 ]
 babel = [
     {file = "Babel-2.11.0-py3-none-any.whl", hash = "sha256:1ad3eca1c885218f6dce2ab67291178944f810a10a9b5f3cb8382a5a232b64fe"},
@@ -2099,8 +2100,8 @@ distlib = [
     {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
 ]
 fal-serverless = [
-    {file = "fal_serverless-0.6.24-py3-none-any.whl", hash = "sha256:98adc3d4367651e38f7535dc8fe5bfab35b3cdb9fb2724d161e56cf0d7e4bc0e"},
-    {file = "fal_serverless-0.6.24.tar.gz", hash = "sha256:97e013866c849554289960315c169960abe8544a8a16a6ac705685427f2b107d"},
+    {file = "fal_serverless-0.6.28-py3-none-any.whl", hash = "sha256:3d08dde21ade804d33251e313ebefb78eb2a5dfae34849f1530958086febea59"},
+    {file = "fal_serverless-0.6.28.tar.gz", hash = "sha256:e7c633f05b422cf8356362d70addc3749ef5de4238fe2c2d4487e491f559344f"},
 ]
 filelock = [
     {file = "filelock-3.9.0-py3-none-any.whl", hash = "sha256:f58d535af89bb9ad5cd4df046f741f8553a418c01a7856bf0d173bbc9f6bd16d"},
@@ -2432,12 +2433,12 @@ isodate = [
     {file = "isodate-0.6.1.tar.gz", hash = "sha256:48c5881de7e8b0a0d648cb024c8062dc84e7b840ed81e864c7614fd3c127bde9"},
 ]
 isolate = [
-    {file = "isolate-0.11.0-py3-none-any.whl", hash = "sha256:46d9d3aec7611ed56cd35581a9dc19e7a6a0752dbe7bd09ea06488397694810b"},
-    {file = "isolate-0.11.0.tar.gz", hash = "sha256:082e02d29c3839cc6022ec3d47dbd7d867707d64853941aaf2f35850b165b205"},
+    {file = "isolate-0.11.1-py3-none-any.whl", hash = "sha256:c9362d0c1c60e1f702e48e68e412e462e51077dd90bd3fa44b5d32c7eca5d84f"},
+    {file = "isolate-0.11.1.tar.gz", hash = "sha256:8ae08853965583c28bb3f8459d248d2e7254bfcda88e9c9245aac070b109cfb5"},
 ]
 isolate-proto = [
-    {file = "isolate_proto-0.0.22-py3-none-any.whl", hash = "sha256:81d9dff6c9b59529e7470ecb82a4c4f0c3e8ee20d5e560b8bf16a6bdb8966881"},
-    {file = "isolate_proto-0.0.22.tar.gz", hash = "sha256:ee4ca222d799e3f3c244499f043a104ab4630099a9c7b6424bc762fc1695cdaf"},
+    {file = "isolate_proto-0.0.26-py3-none-any.whl", hash = "sha256:a0557af35e7a6d7345b5014e11bb03f1ceac636c9a5bd3f61db1e59415774691"},
+    {file = "isolate_proto-0.0.26.tar.gz", hash = "sha256:50d1dbcf68188aa7c8f43843c8b4875f18a44be25c7bc2749254acc3f410d98a"},
 ]
 jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
