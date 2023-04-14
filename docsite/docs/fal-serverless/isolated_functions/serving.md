@@ -66,8 +66,8 @@ Here's an example using Flask:
 
 ```python
 @isolated(requirements=["flask"], exposed_port=8080)
-def flask_app(str):
-from flask import Flask, jsonify, request
+def flask_app():
+    from flask import Flask, jsonify, request
 
     app = Flask(__name__)
 
