@@ -190,6 +190,8 @@ def prepare_for_adapter(adapter: BaseAdapter, function: Any) -> Any:
     return wrapped
 
 
+IS_RECONSTRUCTED = False
+
 def reconstruct_adapter(
     config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest
 ) -> BaseAdapter:
@@ -197,6 +199,9 @@ def reconstruct_adapter(
 
     # Prepare the DBT to not to track us.
     do_not_track()
+
+    global IS_RECONSTRUCTED
+    IS_RECONSTRUCTED = True
 
     # Prepare the plugin loading system to handle the adapter.
     factory.load_plugin(config.credentials.type)
