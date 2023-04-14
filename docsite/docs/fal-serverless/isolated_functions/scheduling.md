@@ -38,7 +38,7 @@ def joke_of_the_day():
 fal-serverless function schedule "0 7 * * *" jokes.py joke_of_the_day
 ```
 
-*Voi-la!* That's all that it takes to have your `@isolated` function scheduled.
+*Voilà!* That's all that it takes to have your `@isolated` function scheduled.
 
 **Tip:** if you're not familiar with cron expressions, this [cron editor](https://crontab.guru/) can help you get started.
 
@@ -52,7 +52,7 @@ Once scheduled, functions can be managed with a few commands. Let's check them o
 Get a list of all currently scheduled functions with:
 
 ```
-fal-serverless function schedule list
+fal-serverless crons list
 ```
 
 ### Cancel scheduling
@@ -60,7 +60,7 @@ fal-serverless function schedule list
 In order to cancel a scheduled function, run:
 
 ```
-fal-serverless function schedule cancel <CRON_ID>
+fal-serverless crons cancel <CRON_ID>
 ```
 
 ### List activations
@@ -68,15 +68,15 @@ fal-serverless function schedule cancel <CRON_ID>
 You can get the history of a particular function activation (i.e. execution) with:
 
 ```
-fal-serverless function schedule activations <CRON_ID>
+fal-serverless crons activations <CRON_ID>
 ```
 
-You can also specify `--limit=n` to list the `n` most recent activations.
+You can also specify `--limit=n` to list the `n` most recent activations. It defaults to 15.
 
 ## Logs
 
-Since scheduled functions run asynchronously, logs are stored so they can be retrieved later. This is particularly useful for debugging executions.
+Since scheduled functions run asynchronously, logs are stored so they can be retrieved later. This is particularly useful for debugging executions. Get the logs for a particular activation with:
 
 ```
-fal-serverless function schedule logs <CRON_ID> <ACTIVATION_ID>
+fal-serverless crons logs <CRON_ID> <ACTIVATION_ID>
 ```
