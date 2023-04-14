@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Serving functions though a managed web server
+# Web Endpoints
 
 Serving an `@isolated` function exposes the function through a webserver managed by `fal-serverless`.
 
@@ -14,14 +14,14 @@ To serve a function do the following steps:
 
 ```python
 @isolated(serve=True)
-def call_str(str):
-    return str
+def call_text(text):
+    return text
 ```
 
 2. Use the `fal-serverless` CLI command with the following syntax:
 
 ```
-fal-serverless function serve ./path/to/file call_str --alias call
+fal-serverless function serve ./path/to/file call_text --alias call
 
 >> Registered a new revision for function 'call'  (revision='21847a72-93e6-4227-ae6f-56bf3a90142d').
 >> URL: https://1714827-call.gateway.alpha.fal.ai
@@ -36,7 +36,7 @@ Serving a function with the `--alias` option will create a url that includes the
 Alternatively you can call the `fal-serverless function serve` command without the `--alias` option. In that case `fal-serverless` will create an anonymous function that is only accessible by its revision id.
 
 ```
-fal-serverless function serve ./path/to/file call_str --alias call
+fal-serverless function serve ./path/to/file call_text
 
 Registered anonymous function '37f8658e-b841-4b51-ab1a-92565f3a4c04'.
 URL: https://1714827-37f8658e-b841-4b51-ab1a-92565f3a4c04.gateway.alpha.fal.ai
@@ -66,8 +66,8 @@ Here's an example using Flask:
 
 ```python
 @isolated(requirements=["flask"], exposed_port=8080)
-def flask_app(str):
-from flask import Flask, jsonify, request
+def flask_app():
+    from flask import Flask, jsonify, request
 
     app = Flask(__name__)
 
