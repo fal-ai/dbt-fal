@@ -349,7 +349,8 @@ jobs:
           behave $BEHAVE_TAGS -fplain -D profile=${{ matrix.profile }}
 
       - name: Send custom JSON data to Slack workflow
-        if: (failure() || cancelled()) && github.event_name == 'schedule'
+        if: false
+        # if: (failure() || cancelled()) && github.event_name == 'schedule'
         id: slack
         uses: slackapi/slack-github-action@v1.18.0
         with:
