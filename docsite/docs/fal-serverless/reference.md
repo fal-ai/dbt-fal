@@ -192,7 +192,10 @@ sync_dir(path_to_local_dir, remote_dir)
 ```
 ### Parameters
 - `path_to_local_dir` (str): The local path to the directory you want to upload.
-- `remote_dir` (str): The name of the remote directory in which to store the uploaded files. This will be a subdirectory within the `/data/uploads` directory in the serverless environment.
+- `remote_dir` (str): The remote directory in which to store the uploaded files. This has to be an absolute directory that starts with `/data`.
+
+### Return
+It returns a string with remote directory location for easy usage in other isolated functions.
 
 ### Usage example
 
@@ -201,13 +204,13 @@ Here's an example of how to use the sync_dir function:
 from fal_serverless import sync_dir, isolated
 
 # Upload a local directory to the persistent /data directory
-sync_dir("path/to/local/dir", "remote_dir")
+remote_dir = sync_dir("path/to/local/dir", "/data/remote_dir")
 
 # An isolated function to list the contents of the uploaded directory
 @isolated()
 def test():
     import os
-    os.system("ls /data/sync/remote_dir")
+    os.system(f"ls {remote_dir}")
 
 # Execute the test function
 test()  # prints contents of the uploaded directory
