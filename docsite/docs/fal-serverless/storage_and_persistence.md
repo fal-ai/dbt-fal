@@ -58,3 +58,25 @@ def create_model():
 ```
 
 In this example, the function `train_and_predict` first checks if the model weights file `model_weights.h5` exists in the `/data` directory. If it does, the function loads the weights into the model. If not, the function trains the model and saves the weights to the `/data` directory. This way, on subsequent invocations, the function can simply load the weights from the `/data` directory, which will be much faster than retraining the model from scratch.
+
+## `sync_dir` Function
+
+The `sync_dir` function allows you to easily upload local directories to the persistent `/data` directory. Here's an example of how to use the sync_dir function:
+
+```python
+from fal_serverless import sync_dir, isolated
+
+# Upload a local directory to the persistent /data directory
+sync_dir("path/to/local/dir", "remote_dir")
+
+# An isolated function to list the contents of the uploaded directory
+@isolated()
+def test():
+    import os
+    os.system("ls /data/sync/remote_dir")
+
+# Execute the test function
+test()  # prints contents of the uploaded directory
+```
+
+In this example, the local directory specified by `path/to/local/dir` is uploaded to `/data/sync/remote_dir` in the fal-serverless environment.

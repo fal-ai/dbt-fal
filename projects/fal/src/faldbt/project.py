@@ -463,6 +463,7 @@ class FalDbt:
         self._config = parse.get_dbt_config(
             project_dir=self.project_dir,
             profiles_dir=self.profiles_dir,
+            profile_target=profile_target,
             threads=threads,
         )
 
