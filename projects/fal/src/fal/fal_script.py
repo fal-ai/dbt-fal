@@ -102,6 +102,7 @@ class CurrentModel:
     columns: Dict[str, ColumnInfo]
     tests: List[Any]
     meta: Dict[Any, Any]
+    is_incremental: str
     adapter_response: Optional[CurrentAdapterResponse]
 
 
@@ -358,6 +359,7 @@ class FalScript:
             columns=model.columns,
             tests=tests,
             meta=meta,
+            is_incremental=model.is_incremental,
             adapter_response=current_adapter_response,
         )
 
