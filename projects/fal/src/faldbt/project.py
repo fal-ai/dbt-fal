@@ -234,6 +234,10 @@ class DbtModel(_DbtTestableNode):
     def meta(self):
         return self.node.meta
 
+    @property
+    def is_incremental(self):
+        return self.node.config.materialized == "incremental"
+
     def _get_adapter_response(self):
         return self._adapter_response
 
