@@ -29,7 +29,8 @@ jobs:
           - postgres
           - bigquery
           - snowflake
-          - redshift
+          # TODO: redshift had a bigger change between 1.4 and 1.5 and will be addressed separately
+          # - redshift
           # TODO: enable as 1.5 becomes available for following adapters
           # - athena
           # - trino
@@ -49,8 +50,8 @@ jobs:
           - profile: snowflake
             teleport: true
             cloud: true
-          - profile: redshift
-            cloud: true
+          # - profile: redshift
+          #   cloud: true
           - profile: bigquery
             cloud: true
         # TODO: remove postgres include/exclude when 1.5 is released
