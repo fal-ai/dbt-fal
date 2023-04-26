@@ -38,8 +38,7 @@ jobs:
           # - sqlserver
         dbt_version:
           # TODO: change when 1.5 is released
-          - 1.5.0-b4
-          - 1.5.0-b5
+          - 1.5.0-rc1
         python:
           # - "3.7"
           - "3.8"
@@ -54,16 +53,6 @@ jobs:
           #   cloud: true
           - profile: bigquery
             cloud: true
-        # TODO: remove postgres include/exclude when 1.5 is released
-        exclude:
-          - profile: postgres
-            dbt_version: 1.5.0-b4
-          - profile: snowflake
-            dbt_version: 1.5.0-b5
-          - profile: redshift
-            dbt_version: 1.5.0-b5
-          - profile: bigquery
-            dbt_version: 1.5.0-b5
 
     concurrency:
       group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.profile }}-${{ matrix.python }}"
