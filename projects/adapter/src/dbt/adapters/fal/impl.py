@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from dbt.config.profile import Profile
 from dbt.adapters.base.impl import BaseAdapter, BaseRelation
 from dbt.adapters.factory import FACTORY
+from dbt.adapters.fal_experimental.adapter import IS_RECONSTRUCTED
 
 # TODO: offer in `from isolate import is_agent`
 from isolate.connections.common import is_agent
@@ -96,7 +97,7 @@ DB_RELATION = BaseRelation
 INHERIT_PROPERTIES = defaultdict(lambda: True)
 
 # NOTE: Should this file run on isolate agents? Could we skip it entirely and build a FalEncAdapterWrapper directly?
-if not is_agent():
+if not IS_RECONSTRUCTED:
     DB_PROFILE, PROFILE_PROPERTIES, ARGS_PROPERTIES = load_profiles_info()
     DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
 

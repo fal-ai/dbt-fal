@@ -27,6 +27,8 @@ from .adapter_support import (
 
 from .utils import extra_path, get_fal_scripts_path, retrieve_symbol
 
+IS_RECONSTRUCTED = False
+
 
 def run_with_adapter(code: str, adapter: BaseAdapter, config: RuntimeConfig) -> Any:
     # main symbol is defined during dbt-fal's compilation
@@ -50,6 +52,10 @@ def _isolated_runner(
     # This function can be run in an entirely separate
     # process or an environment, so we need to reconstruct
     # the DB adapter solely from the config.
+    global IS_RECONSTRUCTED
+    IS_RECONSTRUCTED = True
+    from .adapter_support import reconstruct_adapter
+
     adapter = reconstruct_adapter(config, manifest, macro_manifest)
     fal_scripts_path = get_fal_scripts_path(config)
     if local_packages is not None:
