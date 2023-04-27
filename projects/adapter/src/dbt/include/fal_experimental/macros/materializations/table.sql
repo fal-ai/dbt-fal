@@ -1,3 +1,4 @@
+-- This file may be outdated because we actually use the `fal` materialization
 {% materialization table, adapter='fal_experimental', supported_languages=['python'] -%}
 
   -- TODO: change to sync_teleport() when available in dbt-core
