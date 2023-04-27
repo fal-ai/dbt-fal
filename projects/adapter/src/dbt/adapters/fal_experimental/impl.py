@@ -100,7 +100,7 @@ class FalAdapterMixin(TeleportAdapter, metaclass=AdapterMeta):
             teleport_info = self._build_teleport_info()
             if is_local:
                 result_table_path = run_with_teleport(
-                    compiled_code,
+                    code=compiled_code,
                     teleport_info=teleport_info,
                     locations=self._relation_data_location_cache,
                     config=db_adapter_config(self.config)

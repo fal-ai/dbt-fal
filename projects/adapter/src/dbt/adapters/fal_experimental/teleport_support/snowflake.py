@@ -1,8 +1,6 @@
-from typing import List
 from dbt.adapters.fal_experimental.connections import TeleportCredentials
 from dbt.fal.adapters.teleport.impl import TeleportAdapter
 from dbt.fal.adapters.teleport.info import TeleportInfo
-from dbt.adapters.fal_experimental.adapter_support import new_connection
 from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.base.impl import BaseAdapter
 
