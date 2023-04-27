@@ -26,7 +26,7 @@ sqlalchemy = "^1.4.41"
 # Adapters
 
 ## snowflake
-snowflake-connector-python = { version = ">=2.8.0, <2.8.2", extras = ["pandas"], optional = true }
+snowflake-connector-python = { version = "~=3.0", extras = ["pandas"], optional = true }
 
 ## bigquery
 ### version defined by dbt-bigquery, installs pyarrow<8
