@@ -10,6 +10,10 @@ from datetime import datetime
 import re
 
 
+def target_path(context):
+    return str(Path(context.temp_dir.name) / "target")
+
+
 @when("the following shell command is invoked")
 def run_command_step(context):
     context.exc = None
@@ -46,7 +50,7 @@ def set_project_folder(context, project: str):
     context.base_dir = str(project_path)
     context.temp_dir = tempfile.TemporaryDirectory()
     context.project_name = _load_dbt_project_file(context)["name"]
-    os.environ["temp_dir"] = context.temp_dir.name
+    os.environ["DBT_TARGET_PATH"] = target_path(context)
 
 
 @then("the following models are calculated in order")
@@ -93,9 +97,7 @@ def _get_dated_dbt_models(context):
 
 
 def _load_dbt_result_file(context):
-    with open(
-        os.path.join(context.temp_dir.name, "target", "run_results.json")
-    ) as stream:
+    with open(os.path.join(target_path(context), "run_results.json")) as stream:
         return json.load(stream)["results"]
 
 
@@ -105,10 +107,9 @@ def _load_dbt_project_file(context):
 
 
 def _load_target_run_model(context, model_name: str, file_ext: str):
-
     # TODO: we should use fal to find these files from fal reading the dbt_project.yml and making it easily available
     models_dir: Path = (
-        Path(context.temp_dir.name) / "target" / "run" / context.project_name / "models"
+        Path(target_path(context)) / "run" / context.project_name / "models"
     )
 
     found_model_files = list(models_dir.rglob(f"{model_name}.{file_ext}"))
@@ -121,7 +122,6 @@ def _load_target_run_model(context, model_name: str, file_ext: str):
 def _replace_vars(context, msg):
     return (
         msg.replace("$baseDir", context.base_dir)
-        .replace("$tempDir", str(context.temp_dir.name))
         .replace("$profilesDir", _get_profiles_dir(context))
         .replace("$profile", _get_profile(context))
     )
@@ -140,7 +140,7 @@ def _get_profile(context) -> str:
         "duckdb",
         "athena",
         "trino",
-        "sqlserver"
+        "sqlserver",
     ]
     profile = context.config.userdata.get("profile", "postgres")
     if profile not in available_profiles:

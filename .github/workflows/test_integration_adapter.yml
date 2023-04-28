@@ -28,14 +28,16 @@ jobs:
         profile:
           - postgres
           - bigquery
-          # - duckdb
           - snowflake
-          - redshift
-          - athena
-          - trino
-          # - sqlserver # does not support dbt 1.4 yet
+          # TODO: redshift had a bigger change between 1.4 and 1.5 and will be addressed separately
+          # - redshift
+          # TODO: enable as 1.5 becomes available for following adapters
+          # - athena
+          # - trino
+          # - duckdb
+          # - sqlserver
         dbt_version:
-          - "1.4.*"
+          - "1.5.0"
         python:
           # - "3.7"
           - "3.8"
@@ -46,8 +48,8 @@ jobs:
           - profile: snowflake
             teleport: true
             cloud: true
-          - profile: redshift
-            cloud: true
+          # - profile: redshift
+          #   cloud: true
           - profile: bigquery
             cloud: true
 
