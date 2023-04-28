@@ -6,8 +6,9 @@
 
   {%- if adapter.is_teleport() -%}
     {%- for _ref in model.refs -%}
-        {%- set resolved = ref(*_ref) -%}
-        {%- do adapter.sync_teleport_relation(ref(*_ref)) -%}
+      {% set _ref_args = [_ref.get('package'), _ref['name']] if _ref.get('package') else [_ref['name'],] %}
+      {%- set resolved = ref(*_ref_args, v=_ref.get('version')) -%}
+      {%- do adapter.sync_teleport_relation(resolved) -%}
     {%- endfor -%}
   {%- endif -%}
 

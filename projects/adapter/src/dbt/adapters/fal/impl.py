@@ -1,9 +1,10 @@
-from typing import Dict, Any, Tuple
+from typing import Optional
 
 from collections import defaultdict
 from contextlib import contextmanager
-from dbt.config.profile import Profile
-from dbt.adapters.base.impl import BaseAdapter, BaseRelation
+from dbt.adapters.base.impl import BaseAdapter
+from dbt.adapters.base.relation import BaseRelation
+from dbt.adapters.protocol import AdapterConfig
 from dbt.adapters.factory import FACTORY
 
 # TODO: offer in `from isolate import is_agent`
@@ -11,6 +12,13 @@ from isolate.connections.common import is_agent
 
 from .connections import FalEncCredentials
 from .wrappers import FalEncAdapterWrapper, FalCredentialsWrapper
+
+from .load_db_profile import load_profiles_info_1_5
+
+
+class FalConfigs(AdapterConfig):
+    fal_environment: Optional[str]
+    fal_machine: Optional[str]
 
 
 @contextmanager
@@ -22,101 +30,28 @@ def _release_plugin_lock():
         FACTORY.lock.acquire()
 
 
-def load_profiles_info() -> Tuple[Profile, Dict[str, bool], Dict[str, bool]]:
-    import os
-
-    from dbt.config.profile import read_profile
-    from dbt.config.project import Project
-    from dbt.config.renderer import ProfileRenderer
-    from dbt.config.utils import parse_cli_vars
-    from dbt.main import _build_base_subparser, _add_common_arguments
-    from dbt import flags
-
-    # includes vars, profile, target
-    parser = _build_base_subparser()
-    _add_common_arguments(parser)
-    args, _unknown = parser.parse_known_args()
-
-    # dbt-core does os.chdir(project_dir) before reaching this location
-    # from https://github.com/dbt-labs/dbt-core/blob/73116fb816498c4c45a01a2498199465202ec01b/core/dbt/task/base.py#L186
-    project_root = os.getcwd()
-
-    # from https://github.com/dbt-labs/dbt-core/blob/19c48e285ec381b7f7fa2dbaaa8d8361374136ba/core/dbt/config/runtime.py#L193-L203
-    version_check = bool(flags.VERSION_CHECK)
-    partial = Project.partial_load(project_root, verify_version=version_check)
-
-    cli_vars: Dict[str, Any] = parse_cli_vars(getattr(args, "vars", "{}"))
-    profile_renderer = ProfileRenderer(cli_vars)
-    project_profile_name = partial.render_profile_name(profile_renderer)
-
-    # from https://github.com/dbt-labs/dbt-core/blob/19c48e285ec381b7f7fa2dbaaa8d8361374136ba/core/dbt/config/profile.py#L423-L425
-    profile_name = Profile.pick_profile_name(
-        getattr(args, "profile", None), project_profile_name
-    )
-    raw_profiles = read_profile(flags.PROFILES_DIR)
-    raw_profile = raw_profiles[profile_name]
-
-    # from https://github.com/dbt-labs/dbt-core/blob/19c48e285ec381b7f7fa2dbaaa8d8361374136ba/core/dbt/config/profile.py#L287-L293
-    target_override = getattr(args, "target", None)
-    if target_override is not None:
-        target_name = target_override
-    elif "target" in raw_profile:
-        target_name = profile_renderer.render_value(raw_profile["target"])
-    else:
-        target_name = "default"
-
-    fal_dict = Profile._get_profile_data(raw_profile, profile_name, target_name)
-    db_profile = fal_dict.get("db_profile")
-    assert db_profile, "fal credentials must have a `db_profile` property set"
-
-    try:
-        db_profile = Profile.from_raw_profiles(
-            raw_profiles,
-            profile_name,
-            renderer=profile_renderer,
-            target_override=db_profile,
-        )
-
-        return (
-            db_profile,
-            {"threads": "threads" in fal_dict},
-            {"threads": args.threads is not None},
-        )
-    except AttributeError as error:
-        if "circular import" in str(error):
-            raise AttributeError(
-                "Do not wrap a type 'fal' profile with another type 'fal' profile"
-            ) from error
-        else:
-            raise
-
-
 DB_PROFILE = None
 DB_RELATION = BaseRelation
-INHERIT_PROPERTIES = defaultdict(lambda: True)
+OVERRIDE_PROPERTIES = {}
 
 # NOTE: Should this file run on isolate agents? Could we skip it entirely and build a FalEncAdapterWrapper directly?
 if not is_agent():
-    DB_PROFILE, PROFILE_PROPERTIES, ARGS_PROPERTIES = load_profiles_info()
+    DB_PROFILE, OVERRIDE_PROPERTIES = load_profiles_info_1_5()
     DB_RELATION = FACTORY.get_relation_class_by_name(DB_PROFILE.credentials.type)
-
-    for key, val in PROFILE_PROPERTIES.items():
-        if val:
-            INHERIT_PROPERTIES[key] = False
-    for key, val in ARGS_PROPERTIES.items():
-        if val:
-            INHERIT_PROPERTIES[key] = False
 
 
 class FalEncAdapter(BaseAdapter):
     Relation = DB_RELATION  # type: ignore
+
+    # TODO: how do we actually use this?
+    AdapterSpecificConfigs = FalConfigs
 
     def __new__(cls, config):
         # There are two different credentials types which can be passed to FalEncAdapter
         # 1. FalEncCredentials
         # 2. FalCredentialsWrapper
         #
-        # For the first one, we have to go through parsing the profiles.yml (so that we
+        # For `FalEncCredentials`, we have to go through parsing the profiles.yml (so that we
         # can obtain the real 'db' credentials). But for the other one, we can just use
         # the bound credentials directly (e.g. in isolated mode where we don't actually
         # have access to the profiles.yml file).
@@ -140,8 +75,10 @@ class FalEncAdapter(BaseAdapter):
 
         config.python_adapter_credentials = fal_credentials
         config.sql_adapter_credentials = db_credentials
-        if INHERIT_PROPERTIES["threads"]:
-            config.threads = DB_PROFILE.threads
+
+        for key in OVERRIDE_PROPERTIES:
+            if OVERRIDE_PROPERTIES[key] is not None:
+                setattr(config, key, OVERRIDE_PROPERTIES[key])
 
         with _release_plugin_lock():
             # Temporary credentials for register

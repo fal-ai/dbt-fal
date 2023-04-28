@@ -7,7 +7,8 @@ from contextlib import contextmanager
 from dbt.adapters.base import BaseAdapter, BaseRelation, RelationType
 from dbt.adapters.base.connections import AdapterResponse, Connection
 from dbt.config import RuntimeConfig
-from dbt.parser.manifest import MacroManifest, Manifest, ManifestLoader
+from dbt.parser.manifest import MacroManifest, Manifest
+from dbt.flags import Namespace
 
 from dbt.adapters import factory
 
@@ -96,11 +97,12 @@ def write_df_to_relation(
     elif adapter.type() == "athena":
         import dbt.adapters.fal_experimental.support.athena as support_athena
 
-        return support_athena.write_df_to_relation(adapter, dataframe, relation, if_exists)
+        return support_athena.write_df_to_relation(
+            adapter, dataframe, relation, if_exists
+        )
 
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
-
             # TODO: this should probably live in the materialization macro.
             temp_relation = relation.replace_path(
                 identifier=f"__dbt_fal_temp_{relation.identifier}"
@@ -126,6 +128,7 @@ def write_df_to_relation(
             adapter.commit_if_has_connection()
 
             return AdapterResponse("OK", rows_affected=rows_affected)
+
 
 def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.DataFrame:
     """Generic version of the read_df_from_relation."""
@@ -191,14 +194,21 @@ def prepare_for_adapter(adapter: BaseAdapter, function: Any) -> Any:
 
 
 def reconstruct_adapter(
-    config: RuntimeConfig, manifest: Manifest, macro_manifest: MacroManifest
+    flags: Namespace,
+    config: RuntimeConfig,
+    manifest: Manifest,
+    macro_manifest: MacroManifest,
 ) -> BaseAdapter:
+    from dbt.flags import set_flags
     from dbt.tracking import do_not_track
 
-    # Prepare the DBT to not to track us.
+    # Avoid dbt tracking
     do_not_track()
 
-    # Prepare the plugin loading system to handle the adapter.
+    # Flags need to be set before any plugin is loaded
+    set_flags(flags)
+
+    # Prepare the plugin loading system to handle the adapter
     factory.load_plugin(config.credentials.type)
     factory.load_plugin(config.python_adapter_credentials.type)
     factory.register_adapter(config)
