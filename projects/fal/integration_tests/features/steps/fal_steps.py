@@ -23,14 +23,25 @@ FAL_MODEL = 1
 FAL_SCRIPT = 2
 
 
+def temp_path(context, *paths: str):
+    return str(Path(context.temp_dir.name).joinpath(*paths))
+
+def target_path(context, *paths: str):
+    return temp_path(context, "target", *paths)
+
+def artifact_glob(context):
+    return Path(temp_path(context)).glob("*.txt")
+
+def _command_replace(command: str, context):
+    return (
+        command.replace("$baseDir", context.base_dir)
+        .replace("$profilesDir", str(_set_profiles_dir(context)))
+        .replace("$tempDir", temp_path(context))
+    )
+
 @when("the following shell command is invoked")
 def run_command_step(context):
-    profiles_dir = _set_profiles_dir(context)
-    command = (
-        context.text.replace("$baseDir", context.base_dir)
-        .replace("$profilesDir", str(profiles_dir))
-        .replace("$tempDir", str(context.temp_dir.name))
-    )
+    command = _command_replace(context.text, context)
     os.system(command)
 
 
@@ -54,8 +65,8 @@ def set_project_folder(context, project: str):
 
     context.base_dir = str(project_path)
     context.temp_dir = tempfile.TemporaryDirectory()
-    os.environ["temp_dir"] = context.temp_dir.name
     os.environ["project_dir"] = context.base_dir
+    os.environ["DBT_TARGET_PATH"] = target_path(context)
 
 
 @when("the data is seeded")
@@ -77,8 +88,7 @@ def seed_data_custom_target(context, target, profiles_dir):
 
 @when("state is stored in {folder_name}")
 def persist_state(context, folder_name):
-    target_path = reduce(os.path.join, [context.temp_dir.name, "target"])
-    os.system(f"mv {target_path} {context.temp_dir.name}/{folder_name}")
+    os.system(f"mv {target_path(context)} {temp_path(context, folder_name)}")
 
 
 @when("the file {file} is created with the content")
@@ -97,19 +107,18 @@ def add_model(context, file):
         f.close()
 
 
-@when("the following command is invoked")
-def invoke_command(context):
-    _clear_all_artifacts(context.temp_dir.name)
-    profiles_dir = _set_profiles_dir(context)
-    args: str = context.text.replace("$baseDir", context.base_dir)
-    args = args.replace("$profilesDir", str(profiles_dir))
-    args = args.replace("$tempDir", context.temp_dir.name)
-
+def _invoke_command(context, command: str):
+    _clear_all_artifacts(context)
+    args = _command_replace(command, context)
     args_list = shlex.split(args)
 
+    cli(args_list)
+
+@when("the following command is invoked")
+def invoke_command(context):
     context.exc = None
     try:
-        cli(args_list)
+        _invoke_command(context, context.text)
     except BaseException:
         import sys
 
@@ -146,12 +155,8 @@ def invoke_command_error(context, etype: str, msg: str):
 
 @then("the following command will fail")
 def invoke_failing_fal_flow(context):
-    profiles_dir = _set_profiles_dir(context)
-    args = context.text.replace("$baseDir", context.base_dir)
-    args = args.replace("$profilesDir", str(profiles_dir))
-    args = args.replace("$tempDir", str(context.temp_dir.name))
     try:
-        cli(shlex.split(args))
+        _invoke_command(context, context.text)
         assert False, "Command should have failed."
     except Exception as e:
         print(e)
@@ -175,17 +180,16 @@ def check_script_files_dont_exist(context):
         assert False, f"Script files {to_report} should NOT BE present"
 
 
-def _clear_all_artifacts(dir_name):
+def _clear_all_artifacts(context):
     """Clear all artifacts that are left behind by Python scripts and models."""
-    directory = Path(dir_name)
-    for artifact in directory.glob("*.txt"):
+    for artifact in artifact_glob(context):
         artifact.unlink()
 
 
 @then("the script {script} output file has the lines")
 def check_file_has_lines(context, script):
     filename = _script_filename(script)
-    with open(_temp_dir_path(context, filename)) as handle:
+    with open(temp_path(context, filename)) as handle:
         handle_lines = [line.strip().lower() for line in handle]
         expected_lines = [line.lower() for line in context.table.headings]
         for line in expected_lines:
@@ -195,9 +199,7 @@ def check_file_has_lines(context, script):
 @then("no models are calculated")
 def no_models_are_run(context):
     fal_results = _get_fal_results_file_name(context)
-    fal_results_paths = list(
-        map(lambda file: os.path.join(context.temp_dir.name, file), fal_results)
-    )
+    fal_results_paths = [temp_path(context, res) for res in fal_results]
     for fal_result_path in fal_results_paths:
         if exists(fal_result_path):
             data = json.load(open(fal_result_path))
@@ -210,7 +212,7 @@ def no_models_are_run(context):
 
 @then("no scripts are run")
 def no_scripts_are_run(context):
-    results = glob.glob(f"{context.temp_dir.name}/*.txt")
+    results = list(artifact_glob(context))
 
     assert len(results) == 0
 
@@ -337,10 +339,6 @@ def _script_filename(script: str, model_name: Optional[str] = None):
     return script_name
 
 
-def _temp_dir_path(context, file):
-    return os.path.join(context.temp_dir.name, file)
-
-
 def _get_all_models(context) -> List[str]:
     """Retrieve all models (both DBT and Python)."""
     all_models = _get_dated_dbt_models(context) + _get_dated_fal_artifacts(
@@ -376,7 +374,6 @@ def _get_dated_dbt_models(context):
 def _get_dated_fal_artifacts(context, *kinds):
     assert kinds, "Specify at least one artifact kind."
 
-    directory = Path(context.temp_dir.name)
     return [
         # DBT run result files use UTC as the timezone for the timestamps, so
         # we need to be careful on using the same method for the local files as well.
@@ -384,22 +381,22 @@ def _get_dated_fal_artifacts(context, *kinds):
             artifact.name,
             datetime.fromtimestamp(artifact.stat().st_mtime, tz=timezone.utc),
         )
-        for artifact in directory.glob("*.txt")
+        for artifact in artifact_glob(context)
         if len(artifact.suffixes) in kinds
     ]
 
 
 def _load_dbt_result_file(context):
     with open(
-        os.path.join(context.temp_dir.name, "target", "run_results.json")
+        target_path(context, "run_results.json")
     ) as stream:
         return json.load(stream)["results"]
 
 
 def _get_fal_results_file_name(context):
-    target_path = os.path.join(context.temp_dir.name, "target")
+    target = target_path(context)
     pattern = re.compile("fal_results_*.\\.json")
-    target_files = list(os.walk(target_path))[0][2]
+    target_files = list(os.walk(target))[0][2]
     return list(filter(lambda file: pattern.match(file), target_files))
 
 
