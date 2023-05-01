@@ -12,12 +12,7 @@ from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultAr
 from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
 
-import faldbt.version as version
-
-if version.is_version_plus("1.4.0"):
-    from dbt.exceptions import IncompatibleSchemaError, DbtRuntimeError
-else:
-    from dbt.exceptions import IncompatibleSchemaException as IncompatibleSchemaError, RuntimeException as DbtRuntimeError
+from dbt.exceptions import IncompatibleSchemaError, DbtRuntimeError
 
 from fal.utils import cache_static
 

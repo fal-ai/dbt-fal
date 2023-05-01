@@ -1,7 +1,6 @@
 from collections import defaultdict
 import os.path
 from dataclasses import dataclass, field
-from functools import partialmethod
 from typing import (
     Dict,
     Iterable,
@@ -16,22 +15,16 @@ from pathlib import Path
 
 import faldbt.version as version
 
-if version.is_version_plus("1.4.0"):
-    from dbt.contracts.graph.nodes import (
-        SourceDefinition,
-        TestMetadata,
-        GenericTestNode,
-        SingularTestNode,
-    )
-    from dbt.contracts.graph.nodes import ManifestNode
-else:
-    from dbt.contracts.graph.parsed import (
-        ParsedSourceDefinition as SourceDefinition,
-        TestMetadata,
-        ParsedGenericTestNode as GenericTestNode,
-        ParsedSingularTestNode as SingularTestNode,
-    )
-    from dbt.contracts.graph.compiled import ManifestNode
+from dbt.cli.main import dbtRunner, dbtRunnerResult
+
+from dbt.contracts.graph.nodes import (
+    SourceDefinition,
+    TestMetadata,
+    GenericTestNode,
+    SingularTestNode,
+)
+from dbt.contracts.graph.nodes import ManifestNode
+
 from dbt.contracts.graph.manifest import (
     Manifest,
     MaybeNonSource,
@@ -49,7 +42,6 @@ from dbt.contracts.results import (
     FreshnessNodeOutput,
 )
 from dbt.task.compile import CompileTask
-import dbt.tracking
 
 from . import parse
 from . import lib
@@ -422,7 +414,7 @@ class DbtManifest:
 
 @dataclass
 class CompileArgs:
-    selector_name: Optional[str]
+    selector: Optional[str]
     select: List[str]
     models: List[str]
     exclude: Tuple[str]
@@ -441,7 +433,7 @@ class FalDbt:
         profiles_dir: str,
         select: List[str] = [],
         exclude: Tuple[str] = tuple(),
-        selector_name: Optional[str] = None,
+        selector: Optional[str] = None,
         threads: Optional[int] = None,
         state: Optional[str] = None,
         profile_target: Optional[str] = None,
@@ -475,10 +467,7 @@ class FalDbt:
             parse.get_dbt_results(self.project_dir, self._config)
         )
 
-        self.method = "run"
-
         if self._run_results.nativeRunResult:
-            self.method = self._run_results.nativeRunResult.args["rpc_method"]
             if profile_target is None:
                 profile_target = _get_custom_target(self._run_results)
 
@@ -492,15 +481,18 @@ class FalDbt:
 
         lib.register_adapters(self._config)
 
-        # Necessary for manifest loading to not fail
-        dbt.tracking.initialize_tracking(self.profiles_dir)
+        parse_result = self._dbt_invoke("parse")
+        native_manifest = parse_result.result
 
-        args = CompileArgs(selector_name, select, select, exclude, self._state, None)
-        self._compile_task = CompileTask(args, self._config)
+        # Necessary for manifest loading to not fail
+        # dbt.tracking.initialize_tracking(self.profiles_dir)
+
+        args = CompileArgs(selector, select, select, exclude, self._state, None)
+        self._compile_task = CompileTask(args, self._config, native_manifest)
 
         self._compile_task._runtime_initialize()
 
-        self._manifest = DbtManifest(self._compile_task.manifest)
+        self._manifest = DbtManifest(native_manifest)
 
         freshness_execution_results = DbtFreshnessExecutionResult(
             parse.get_dbt_sources_artifact(self.project_dir, self._config)
@@ -527,6 +519,26 @@ class FalDbt:
             action="faldbt_initialized",
             dbt_config=self._config,
         )
+
+    def _dbt_invoke(
+        self, cmd: str, args: Optional[List[str]] = None
+    ) -> dbtRunnerResult:
+        runner = dbtRunner()
+
+        if args is None:
+            args = []
+
+        project_args = [
+            "--project-dir",
+            self.project_dir,
+            "--profiles-dir",
+            self.profiles_dir,
+            "--target",
+            self._profile_target,
+        ]
+
+        # TODO: Intervene the dbt logs and capture them to avoid printing them to the console
+        return runner.invoke([cmd] + project_args + args)
 
     @property
     def source_paths(self) -> List[str]:
@@ -626,8 +638,9 @@ class FalDbt:
     def _model(
         self, target_model_name: str, target_package_name: Optional[str]
     ) -> ManifestNode:
+        # HACK: always setting node package as self.project_dir
         target_model: MaybeNonSource = self._manifest.nativeManifest.resolve_ref(
-            target_model_name, target_package_name, self.project_dir, self.project_dir
+            target_model_name, target_package_name, None, self.project_dir, self.project_dir
         )
         package_str = f"'{target_package_name}'." if target_package_name else ""
         model_str = f"{package_str}'{target_model_name}'"
@@ -796,7 +809,6 @@ class FalDbt:
         """Execute a sql query."""
 
         with telemetry.log_time("execute_sql", dbt_config=self._config):
-
             # HACK: we need to pass config in because of weird behavior of execute_sql when
             # ran from GitHub Actions. For some reason, it can not find the right profile.
             # Haven't been able to reproduce this behavior locally and therefore developed

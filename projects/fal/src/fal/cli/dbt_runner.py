@@ -103,16 +103,21 @@ def _dbt_run_through_python(
 
     warnings.filterwarnings("ignore", category=DeprecationWarning, module="logbook")
 
-    from dbt.main import handle_and_check
+    from dbt.cli.main import dbtRunner
+    from dbt.contracts.results import RunExecutionResult
 
-    run_results = exc = None
+    runner = dbtRunner()
+
+    run_results: Optional[RunExecutionResult] = None
+    exc = None
     try:
-        run_results, success = handle_and_check(args)
+        runner_run_results = runner.invoke(args)
+        run_results = runner_run_results.result
     except BaseException as _exc:
-        return_code = getattr(exc, "code", 1)
+        return_code = getattr(_exc, "code", 1)
         exc = _exc
     else:
-        return_code = 0 if success else 1
+        return_code = 0 if runner_run_results.success else 1
 
     LOGGER.debug(f"dbt exited with return code {return_code}")
 
