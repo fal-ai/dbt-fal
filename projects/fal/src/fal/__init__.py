@@ -9,3 +9,4 @@ from faldbt.project import (
     DbtSingularTest,
 )
 from fal.fal_script import Context, CurrentModel
+from fal.serverless.runner import FalServerlessRunner
