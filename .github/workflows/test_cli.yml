@@ -54,4 +54,5 @@ jobs:
         working-directory: projects/fal
         env:
           FAL_STATS_ENABLED: false
+          DBT_TARGET_PATH: mockTarget
         run: pytest tests -s

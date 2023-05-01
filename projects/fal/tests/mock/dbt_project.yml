@@ -8,7 +8,6 @@ test-paths: ["tests"]
 seed-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
-target-path: "mockTarget"
 clean-targets:
   - "target"
   - "dbt_modules"

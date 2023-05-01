@@ -27,7 +27,7 @@ def test_run():
         cli(["fal", "run", "--profiles-dir", profiles_dir])
         assert False, "Should not reach"
     except DbtProjectError as e:
-        assert "no dbt_project.yml found at expected path" in str(e.msg)
+        assert "no dbt_project.yml found at expected path" in str(e.msg).lower()
 
 
 def test_flow_run():
@@ -35,7 +35,7 @@ def test_flow_run():
         cli(["fal", "flow", "run", "--profiles-dir", profiles_dir])
         assert False, "Should not reach"
     except DbtProjectError as e:
-        assert "no dbt_project.yml found at expected path" in str(e)
+        assert "no dbt_project.yml found at expected path" in str(e).lower()
 
 
 def test_no_arg(capfd):
@@ -46,6 +46,7 @@ def test_no_arg(capfd):
 
 def test_run_with_project_dir(capfd):
     with ProjectTemporaryDirectory() as tmp_dir:
+        # TODO: should it run without a run_results and no selection flags?
         cli(["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
 
 
