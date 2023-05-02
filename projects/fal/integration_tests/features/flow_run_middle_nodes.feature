@@ -3,7 +3,7 @@ Feature: `flow run` command with py nodes in the middle
     Given the project 002_jaffle_shop
     When the data is seeded
 
-  Scenario: fal flow run command with selectors
+  Scenario: fal flow run command with selectors middle nodes
     When the following command is invoked:
       """
       fal flow run --profiles-dir $profilesDir --project-dir $baseDir --select middle_1+

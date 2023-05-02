@@ -22,7 +22,7 @@ Feature: `flow run` command
     And the following scripts are ran:
       | agent_wait_time.before.py | agent_wait_time.after.py | model_c.before.py |
 
-  Scenario: fal flow run command with selectors
+  Scenario: fal flow run command with selectors single model
     Given the project 001_flow_run_with_selectors
     When the data is seeded
     When the following command is invoked:
@@ -76,7 +76,7 @@ Feature: `flow run` command
     Then the following models are calculated:
       | intermediate_model_1 |
 
-  Scenario: fal flow run command with selectors
+  Scenario: fal flow run command with selectors single model again
     Given the project 001_flow_run_with_selectors
     When the data is seeded
     And the file $baseDir/models/new_model.sql is created with the content:

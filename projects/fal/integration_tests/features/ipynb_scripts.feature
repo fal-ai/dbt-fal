@@ -1,6 +1,6 @@
 Feature: fal works with ipynb features
 
-  Scenario: fal flow run command with selectors
+  Scenario: fal flow run command for ipynb scripts
     Given the project 007_ipynb_scripts
     When the data is seeded
     When the following command is invoked:
