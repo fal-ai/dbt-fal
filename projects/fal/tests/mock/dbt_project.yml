@@ -8,6 +8,8 @@ test-paths: ["tests"]
 seed-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
+# TODO (target-path): Deprecated but keeping until https://github.com/dbt-labs/dbt-core/issues/7465 is resolved
+target-path: "mockTarget"
 clean-targets:
   - "target"
   - "dbt_modules"
