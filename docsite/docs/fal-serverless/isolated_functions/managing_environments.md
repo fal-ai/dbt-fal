@@ -28,6 +28,14 @@ def my_function():
   ...
 ```
 
+You can also specify an exact version using the `==` operator.
+
+```python
+@isolated(kind="virtualenv", requirements=["pyjokes==0.0.6"])
+def my_function():
+  ...
+```
+
 ## `conda` environments
 
 `conda` environmet allow users to define both system and Python packages. When using a `conda` environment, you dependencies can be specified by using the `packages` argument, which takes a list of package names. For example:
