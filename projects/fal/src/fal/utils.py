@@ -1,8 +1,7 @@
 """Fal utilities."""
 import copy
 from faldbt.logger import LOGGER
-from typing import List, TYPE_CHECKING
-
+from typing import List, TYPE_CHECKING, TypeVar
 
 try:
     from functools import lru_cache
@@ -48,8 +47,9 @@ class _ReInitialize:
     def __setstate__(self, state):
         super().__init__(*state["args"], **state["kwargs"])
 
+Cls = TypeVar("Cls", bound=type)
 
-def has_side_effects(cls):
+def has_side_effects(cls: "Cls") -> "Cls":
     """The given class has possible side-effects that might
     make the regular serialization problematic (e.g. registering
     adapters to DBT's global factory)."""

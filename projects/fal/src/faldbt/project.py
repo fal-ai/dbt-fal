@@ -12,6 +12,7 @@ from typing import (
     TYPE_CHECKING,
 )
 from pathlib import Path
+from deprecation import deprecated
 
 import faldbt.version as version
 
@@ -186,7 +187,7 @@ class DbtSource(_DbtTestableNode):
     freshness: Optional[FreshnessNodeOutput] = field(default=None)
 
     def __repr__(self):
-        attrs = ["name", "tests", "status"]
+        attrs = ["name", "table_name", "tests", "status"]
         props = ", ".join([f"{item}={repr(getattr(self, item))}" for item in attrs])
         return f"DbtSource({props})"
 
@@ -309,12 +310,17 @@ class DbtModel(_DbtTestableNode):
 
 @dataclass
 class DbtRunResult:
-    nativeRunResult: Optional[RunResultsArtifact]
+    native_run_result: Optional[RunResultsArtifact]
+
+    @property
+    @deprecated(details="Use native_run_result instead")
+    def nativeRunResult(self):
+        return self.native_run_result
 
     @property
     def results(self) -> Sequence[RunResultOutput]:
-        if self.nativeRunResult:
-            return self.nativeRunResult.results
+        if self.native_run_result:
+            return self.native_run_result.results
         else:
             return []
 
@@ -333,24 +339,29 @@ class DbtFreshnessExecutionResult:
 
 @dataclass
 class DbtManifest:
-    nativeManifest: Manifest
+    native_manifest: Manifest
+
+    @property
+    @deprecated(details="Use native_manifest instead")
+    def nativeManifest(self):
+        return self.native_manifest
 
     def get_model_nodes(self) -> Iterable[ManifestNode]:
         return (
             node
-            for node in self.nativeManifest.nodes.values()
+            for node in self.native_manifest.nodes.values()
             if node.resource_type == NodeType.Model
         )
 
     def get_test_nodes(self) -> Iterable[ManifestNode]:
         return (
             node
-            for node in self.nativeManifest.nodes.values()
+            for node in self.native_manifest.nodes.values()
             if node.resource_type == NodeType.Test
         )
 
     def get_source_nodes(self) -> Iterable[SourceDefinition]:
-        return self.nativeManifest.sources.values()
+        return self.native_manifest.sources.values()
 
     def _map_nodes(
         self,
@@ -467,7 +478,7 @@ class FalDbt:
             parse.get_dbt_results(self.project_dir, self._config)
         )
 
-        if self._run_results.nativeRunResult:
+        if self._run_results.native_run_result:
             if profile_target is None:
                 profile_target = _get_custom_target(self._run_results)
 
@@ -541,14 +552,13 @@ class FalDbt:
         return runner.invoke([cmd] + project_args + args)
 
     @property
+    def model_paths(self) -> List[str]:
+        return self._config.model_paths
+
+    @property
+    @deprecated(details="Use model_paths instead")
     def source_paths(self) -> List[str]:
-        # BACKWARDS: Change intorduced in 1.0.0
-        if hasattr(self._config, "model_paths"):
-            return self._config.model_paths
-        elif hasattr(self._config, "source_paths"):
-            return self._config.source_paths  # type: ignore
-        else:
-            raise RuntimeError("No model_paths in config")
+        return self.model_paths
 
     @property
     def _profile_target(self):
@@ -639,8 +649,12 @@ class FalDbt:
         self, target_model_name: str, target_package_name: Optional[str]
     ) -> ManifestNode:
         # HACK: always setting node package as self.project_dir
-        target_model: MaybeNonSource = self._manifest.nativeManifest.resolve_ref(
-            target_model_name, target_package_name, None, self.project_dir, self.project_dir
+        target_model: MaybeNonSource = self._manifest.native_manifest.resolve_ref(
+            target_model_name,
+            target_package_name,
+            None,
+            self.project_dir,
+            self.project_dir,
         )
         package_str = f"'{target_package_name}'." if target_package_name else ""
         model_str = f"{package_str}'{target_model_name}'"
@@ -676,8 +690,14 @@ class FalDbt:
     def _source(
         self, target_source_name: str, target_table_name: str
     ) -> SourceDefinition:
-        target_source: MaybeParsedSource = self._manifest.nativeManifest.resolve_source(
-            target_source_name, target_table_name, self.project_dir, self.project_dir
+        # HACK: always setting node package as self.project_dir
+        target_source: MaybeParsedSource = (
+            self._manifest.native_manifest.resolve_source(
+                target_source_name,
+                target_table_name,
+                self.project_dir,
+                self.project_dir,
+            )
         )
 
         if target_source is None:
@@ -850,6 +870,6 @@ class FalDbt:
 
 
 def _get_custom_target(run_results: DbtRunResult):
-    if "target" in run_results.nativeRunResult.args:
-        return run_results.nativeRunResult.args["target"]
+    if "target" in run_results.native_run_result.args:
+        return run_results.native_run_result.args["target"]
     return None

@@ -158,7 +158,7 @@ def _get_filtered_models(faldbt: FalDbt, all, selected, before) -> List[DbtModel
         not all
         and not selected
         and not before
-        and faldbt._run_results.nativeRunResult is None
+        and faldbt._run_results.native_run_result is None
     ):
         from faldbt.parse import FalParseError
 
