@@ -2,8 +2,6 @@
 
 fal is the easiest way to run Python with your [dbt](https://www.getdbt.com/) project.
 
-**NEW:** Sign up for a private beta of [fal Cloud](https://fal.ai#signup)
-
 <p align="center">
   <a href="https://fal.ai#signup">
     <img src="https://badgen.net/badge/icon/Sign%20up%20for%20fal%20Cloud/purple?icon=terminal&label" alt="fal Cloud" />
