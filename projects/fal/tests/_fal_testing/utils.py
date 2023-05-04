@@ -19,7 +19,7 @@ def create_artifact(context, suffix, additional_data=None):
 
 
 def create_file(output, file_name):
-    temp_dir = Path(os.environ["temp_dir"])
+    temp_dir = Path(os.getenv("temp_dir", "."))
     temp_file = temp_dir / file_name
     temp_file.write_text(output)
 

@@ -14,7 +14,7 @@ df.columns = df.columns.str.lower()  # Snowflake has uppercase columns
 df = df.astype({"my_int_times_ten": int})
 
 output = f"\nModel dataframe first row:\n{df.iloc[0]}"
-temp_dir = os.environ["temp_dir"]
+temp_dir = os.getenv("temp_dir", ".")
 write_dir = open(
     reduce(os.path.join, [temp_dir, context.current_model.name + ".run_macro.txt"]),
     "w",

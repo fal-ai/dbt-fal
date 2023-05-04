@@ -12,7 +12,7 @@ output = main_check(output)
 if __name__ == "__main__":
     output += "passed main if\n"
 
-temp_dir = os.environ["temp_dir"]
+temp_dir = os.getenv("temp_dir", ".")
 print(temp_dir)
 write_dir = open(
     reduce(os.path.join, [temp_dir, model_name + ".middle_script.txt"]), "w"

@@ -7,6 +7,6 @@ df: pd.DataFrame = ref(model_name)
 
 output = str(df)
 
-path = reduce(os.path.join, [os.environ["temp_dir"], model_name + ".after.txt"])
+path = reduce(os.path.join, [os.getenv("temp_dir", "."), model_name + ".after.txt"])
 with open(path, "w") as file:
     file.write(output)
