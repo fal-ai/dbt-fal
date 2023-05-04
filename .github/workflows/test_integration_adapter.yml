@@ -29,8 +29,7 @@ jobs:
           - postgres
           - bigquery
           - snowflake
-          # TODO: redshift had a bigger change between 1.4 and 1.5 and will be addressed separately
-          # - redshift
+          - redshift
           # TODO: enable as 1.5 becomes available for following adapters
           # - athena
           # - trino
