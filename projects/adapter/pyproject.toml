@@ -16,7 +16,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.12"
+python = ">=3.7.2, <3.12"
 dbt-core = ">=1.5.0, <1.6"
 posthog = "^1.4.5"
 pandas = "^1.3.4"
@@ -33,8 +33,7 @@ snowflake-connector-python = { version = "~=3.0", extras = ["pandas"], optional 
 google-cloud-bigquery = { version = "~3.5.0", extras = ["pandas"], optional = true }
 
 ## redshift
-sqlalchemy-redshift = { version = "^0.8.9", optional = true }
-awswrangler = { version = ">=3.0.0", extras = ["redshift"], optional = true}
+awswrangler = { version = ">=3.0.0", extras = ["redshift"], optional = true, python = ">=3.8" }
 
 ## trino
 trino = { version = "~0.321.0", extras = ["sqlalchemy"], optional = true }
@@ -55,7 +54,7 @@ pytest = "^5.2"
 postgres = []
 snowflake = ["snowflake-connector-python"]
 bigquery = ["google-cloud-bigquery"]
-redshift = ["sqlalchemy-redshift", "awswrangler"]
+redshift = ["awswrangler"]
 duckdb = []
 athena = []
 trino = ["trino"]
