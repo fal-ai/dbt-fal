@@ -13,7 +13,6 @@ from dbt.flags import Namespace
 from dbt.adapters import factory
 
 _SQLALCHEMY_DIALECTS = {
-    "redshift": "redshift+psycopg2",
     "sqlserver": "mssql+pyodbc",
 }
 
@@ -32,12 +31,6 @@ def _get_alchemy_engine(adapter: BaseAdapter, connection: Connection) -> Any:
 
         return support_trino.create_engine(adapter)
 
-    if adapter_type == "redshift":
-        # If the given adapter supports the DBAPI (PEP 249), we can
-        # use its connection directly for the engine.
-        sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
-        url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
-        url = format_url(url)
     elif adapter_type == "sqlserver":
         sqlalchemy_kwargs["creator"] = lambda *args, **kwargs: connection.handle
         url = _SQLALCHEMY_DIALECTS.get(adapter_type, adapter_type) + "://"
@@ -100,6 +93,10 @@ def write_df_to_relation(
         return support_athena.write_df_to_relation(
             adapter, dataframe, relation, if_exists
         )
+    elif adapter_type == "redshift":
+        import dbt.adapters.fal_experimental.support.redshift as support_redshift
+
+        return support_redshift.write_df_to_relation(adapter, dataframe, relation)
 
     else:
         with new_connection(adapter, "fal:write_df_to_relation") as connection:
@@ -159,6 +156,11 @@ def read_relation_as_df(adapter: BaseAdapter, relation: BaseRelation) -> pd.Data
         import dbt.adapters.fal_experimental.support.athena as support_athena
 
         return support_athena.read_relation_as_df(adapter, relation)
+
+    elif adapter.type() == "redshift":
+        import dbt.adapters.fal_experimental.support.redshift as support_redshift
+
+        return support_redshift.read_relation_as_df(adapter, relation)
 
     else:
         with new_connection(adapter, "fal:read_relation_as_df") as connection:

@@ -33,7 +33,7 @@ snowflake-connector-python = { version = "~=3.0", extras = ["pandas"], optional 
 google-cloud-bigquery = { version = "~3.5.0", extras = ["pandas"], optional = true }
 
 ## redshift
-sqlalchemy-redshift = { version = "^0.8.9", optional = true }
+awswrangler = { version = ">=3.0.0", extras = ["redshift"], optional = true, python = ">=3.8" }
 
 ## trino
 trino = { version = "~0.321.0", extras = ["sqlalchemy"], optional = true }
@@ -54,7 +54,7 @@ pytest = "^5.2"
 postgres = []
 snowflake = ["snowflake-connector-python"]
 bigquery = ["google-cloud-bigquery"]
-redshift = ["sqlalchemy-redshift"]
+redshift = ["awswrangler"]
 duckdb = []
 athena = []
 trino = ["trino"]
