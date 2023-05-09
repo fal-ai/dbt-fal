@@ -242,10 +242,13 @@ def log_api(
     timestamp, event id and stats information.
     """
 
+    print("logging api")
     if not check_stats_enabled():
+        print("check sats not enabled exiting")
         return
 
     if not is_online():
+        print("is not onlone exiting")
         return
 
     additional_props = additional_props or {}
@@ -295,8 +298,23 @@ def log_api(
 
     if is_install:
         posthog.capture(distinct_id=uid, event="install_success", properties=all_props)
+        fal_events_capture(uid, "install_success", all_props)
 
     posthog.capture(distinct_id=uid, event=action, properties=all_props)
+    fal_events_capture(uid, "install_success", all_props)
+
+
+def fal_events_capture(id: str, event_name: str, props: dict):
+    import requests
+
+    print("sending request to fal events")
+    print("id: ", id)
+    print("event_name: ", event_name)
+    print("props: ", props)
+
+    url = "https://1714827-save.gateway.alpha.fal.ai?fal_key_id=d774b96a-abc1-426b-9677-a0fc0b5a408c&fal_key_secret=16e62bb1022120392f971aef01f8fe8f"
+    headers = {"content-type": "application/json", "Accept-Charset": "UTF-8"}
+    requests.post(url, data=props, headers=headers)
 
 
 def log_call(action, log_args: List[str] = [], config: bool = False):
@@ -305,7 +323,6 @@ def log_call(action, log_args: List[str] = [], config: bool = False):
     def _log_call(func):
         @wraps(func)
         def wrapper(*func_args, **func_kwargs):
-
             sig = inspect.signature(func).bind(*func_args, **func_kwargs)
             sig.apply_defaults()
             log_args_props = dict(

@@ -50,6 +50,7 @@ class FalEncAdapterWrapper(FalAdapterMixin):
         # self._parse_replacements_ is set by metaclass=AdapterMeta
         self._parse_replacements_.update(self._db_adapter._parse_replacements_)
 
+        print("ENCAPSULATE INIT")
         telemetry.log_api(
             "encapsulate_init",
             config=config,
