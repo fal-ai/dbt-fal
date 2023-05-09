@@ -4,7 +4,13 @@ sidebar_position: 1
 
 # Quickstart
 
-Let's discover **fal-serverless in less than 5 minutes**.
+fal-serverless is a serverless Python runtime that lets you run and scale code in the cloud with no infra management.
+
+With fal-serverless, you can build pipelines, serve ML models and scale them up to many users. You scale down to 0 when you don't use any resources.
+
+fal-serverless supports custom compute resources including GPUs (A100s and T4).
+
+Let's discover **fal-serverless in less than 2 minutes**.
 
 ## Install fal-serverless
 
