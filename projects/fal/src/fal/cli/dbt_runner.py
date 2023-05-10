@@ -125,7 +125,8 @@ def _dbt_run_through_python(
     # We'll dump it directly to the fal results file (instead of first dumping it to
     # run results and then copying it over).
     if run_results is not None:
-        run_results.write(os.path.join(target_path, f"fal_results_{run_index}.json"))
+        run_results_path = os.path.join(target_path, f"fal_results_{run_index}.json")
+        run_results.write(run_results_path)
     else:
         connection.send(exc)
         return

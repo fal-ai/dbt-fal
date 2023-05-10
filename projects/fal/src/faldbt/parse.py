@@ -141,13 +141,7 @@ def get_dbt_manifest(config) -> Manifest:
 def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
     sources_path = os.path.join(project_dir, config.target_path, "sources.json")
     try:
-        # BACKWARDS: Change intorduced in 1.0.0
-        if hasattr(FreshnessExecutionResultArtifact, "read_and_check_versions"):
-            return FreshnessExecutionResultArtifact.read_and_check_versions(
-                sources_path
-            )
-        else:
-            return FreshnessExecutionResultArtifact.read(sources_path)
+        return FreshnessExecutionResultArtifact.read_and_check_versions(sources_path)
 
     except IncompatibleSchemaError as exc:
         # TODO: add test for this case
@@ -158,16 +152,11 @@ def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
         return None
 
 
-def get_dbt_results(
-    project_dir: str, config: RuntimeConfig
-) -> Optional[RunResultsArtifact]:
-    results_path = os.path.join(project_dir, config.target_path, "run_results.json")
+def get_dbt_results(project_dir: str, config: RuntimeConfig) -> Optional[RunResultsArtifact]:
+    # Changed in dbt 1.5.0 to use path relative to CWD instead of path relative to project_dir
+    results_path = os.path.join(config.target_path, "run_results.json")
     try:
-        # BACKWARDS: Change intorduced in 1.0.0
-        if hasattr(RunResultsArtifact, "read_and_check_versions"):
-            return RunResultsArtifact.read_and_check_versions(results_path)
-        else:
-            return RunResultsArtifact.read(results_path)
+        return RunResultsArtifact.read_and_check_versions(results_path)
 
     except IncompatibleSchemaError as exc:
         # TODO: add test for this case
