@@ -84,6 +84,13 @@ def get_dbt_config(
         os.chdir(owd)
     else:
         config = RuntimeConfig.from_args(args)
+
+    # HACK: issue in dbt-core 1.5.0 https://github.com/dbt-labs/dbt-core/issues/7465
+    env_target_path = os.getenv("DBT_TARGET_PATH")
+    if env_target_path:
+        config.target_path = env_target_path
+    # TODO: should we check flags too?
+
     return config
 
 

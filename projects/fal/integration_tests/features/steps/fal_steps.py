@@ -67,7 +67,9 @@ def set_project_folder(context, project: str):
     context.temp_dir = tempfile.TemporaryDirectory()
     os.environ["project_dir"] = context.base_dir
     os.environ["temp_dir"] = context.temp_dir.name
-    os.environ["DBT_TARGET_PATH"] = target_path(context)
+
+    # TODO: re-enable when the issue https://github.com/dbt-labs/dbt-core/issues/7465 is fixed
+    # os.environ["DBT_TARGET_PATH"] = target_path(context)
 
 
 @when("the data is seeded")
