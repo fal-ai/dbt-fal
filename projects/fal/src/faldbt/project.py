@@ -472,6 +472,7 @@ class FalDbt:
             profiles_dir=self.profiles_dir,
             profile_target=profile_target,
             threads=threads,
+            vars=args_vars
         )
 
         self._run_results = DbtRunResult(
@@ -493,7 +494,7 @@ class FalDbt:
         lib.register_adapters(self._config)
 
         parse_result = self._dbt_invoke("parse")
-        native_manifest = parse_result.result
+        native_manifest: Manifest = parse_result.result # type: ignore
 
         # Necessary for manifest loading to not fail
         # dbt.tracking.initialize_tracking(self.profiles_dir)

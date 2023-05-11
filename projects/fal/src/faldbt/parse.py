@@ -43,6 +43,7 @@ class RuntimeArgs:
     single_threaded: bool
     profile: Optional[str]
     target: Optional[str]
+    vars: Dict[str, str]
 
 
 def load_dbt_project_contract(project_dir: str) -> ProjectContract:
@@ -62,9 +63,12 @@ def get_dbt_config(
     profile_target: Optional[str] = None,
     threads: Optional[int] = None,
     profile: Optional[str] = None,
+    vars: str = "{}",
 ) -> RuntimeConfig:
     # Construct a phony config
     import os
+
+    vars_dict = parse_cli_vars(vars)
 
     args = RuntimeArgs(
         project_dir=project_dir,
@@ -73,6 +77,7 @@ def get_dbt_config(
         single_threaded=False,
         profile=profile,
         target=profile_target,
+        vars=vars_dict,
     )
 
     if project_dir and not "PYTEST_CURRENT_TEST" in os.environ:
