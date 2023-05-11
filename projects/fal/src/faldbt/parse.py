@@ -146,7 +146,8 @@ def get_dbt_manifest(config) -> Manifest:
 
 
 def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
-    sources_path = os.path.join(project_dir, config.target_path, "sources.json")
+    # Changed in dbt 1.5.0 to use path relative to CWD instead of path relative to project_dir
+    sources_path = os.path.join(config.target_path, "sources.json")
     try:
         return FreshnessExecutionResultArtifact.read_and_check_versions(sources_path)
 
