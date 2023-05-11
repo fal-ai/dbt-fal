@@ -196,7 +196,7 @@ def check_file_has_lines(context, script):
         handle_lines = [line.strip().lower() for line in handle]
         expected_lines = [line.lower() for line in context.table.headings]
         for line in expected_lines:
-            assert line in handle_lines, f"{line} not in {handle_lines}"
+            assert line in handle_lines, f"Line '{line}' not in {handle_lines}"
 
 
 @then("no models are calculated")
