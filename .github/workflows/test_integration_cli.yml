@@ -86,10 +86,10 @@ jobs:
             PR_DESCRIPTION = re.sub("<!--.*?-->", "", PR_DESCRIPTION, flags=re.DOTALL)
 
             # Only test adapters mentioned in the pull request title or branch.
-            # We always test postgres as a sanity check.
+            # We always test postgres and fal adapter as a sanity check.
             OUTPUT = [
               a for a in OPTIONS + EXTRA_OPTIONS
-              if a == 'postgres' or
+              if a == 'postgres' or a == 'fal' or
                 a in PR_TITLE or
                 a in PR_BRANCH or
                 a in PR_DESCRIPTION
