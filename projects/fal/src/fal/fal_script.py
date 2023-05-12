@@ -17,12 +17,8 @@ from dbt.config.runtime import RuntimeConfig
 from faldbt.logger import LOGGER
 
 from fal.telemetry import telemetry
-import faldbt.version as version
 
-if version.is_version_plus("1.4.0"):
-    from dbt.contracts.graph.nodes import ColumnInfo
-else:
-    from dbt.contracts.graph.parsed import ColumnInfo
+from dbt.contracts.graph.nodes import ColumnInfo
 
 
 class TimingType(Enum):

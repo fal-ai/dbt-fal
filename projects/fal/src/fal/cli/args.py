@@ -118,7 +118,6 @@ def _add_vars_option(parser: argparse.ArgumentParser):
 
 
 def _build_dbt_selectors(sub: argparse.ArgumentParser):
-
     # fmt: off
     sub.add_argument(
         "-s", "--select",
@@ -145,13 +144,13 @@ def _build_dbt_selectors(sub: argparse.ArgumentParser):
 
 
 def _build_run_parser(sub: argparse.ArgumentParser):
-
     # fmt: off
     _build_dbt_selectors(sub)
     _build_dbt_common_options(sub)
     _build_fal_common_options(sub)
     _add_threads_option(sub)
     _add_target_option(sub)
+    _add_vars_option(sub)
 
     sub.add_argument(
         "--all",
@@ -180,7 +179,6 @@ def _build_run_parser(sub: argparse.ArgumentParser):
 
 
 def _build_flow_parser(sub: argparse.ArgumentParser):
-
     flow_command_parsers = sub.add_subparsers(
         title="flow commands",
         dest="flow_command",
@@ -214,32 +212,33 @@ def _build_cloud_parser(sub: argparse.ArgumentParser):
 
     cloud_command_parsers.add_parser(
         name="login",
-        help="Login to fal cloud"
+        help="Login to fal cloud",
     )
 
     cloud_command_parsers.add_parser(
         name="logout",
-        help="Logout of fal cloud"
+        help="Logout of fal cloud",
     )
 
     generator_parser = cloud_command_parsers.add_parser(
         name="key-generate",
-        help="Generate a secret key for fal cloud"
+        help="Generate a secret key for fal cloud",
     )
 
     generator_parser.add_argument(
         "--host",
         type=str,
         default="api.alpha.fal.ai",
-        help="Specify fal cloud host instance URL"
+        help="Specify fal cloud host instance URL",
     )
 
     generator_parser.add_argument(
         "--port",
         type=str,
         default="443",
-        help="Specify fal cloud host instance PORT"
+        help="Specify fal cloud host instance PORT",
     )
+
 
 def _build_cli_parser():
     parser = argparse.ArgumentParser(

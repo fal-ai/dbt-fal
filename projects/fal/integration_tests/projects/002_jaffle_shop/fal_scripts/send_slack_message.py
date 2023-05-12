@@ -14,7 +14,7 @@ df.info(buf=buf, memory_usage=False)
 info = buf.getvalue()
 
 output = output + f"\nModel dataframe information:\n{info}"
-temp_dir = os.environ["temp_dir"]
+temp_dir = os.getenv("temp_dir", ".")
 print(temp_dir)
 write_dir = open(
     reduce(os.path.join, [temp_dir, model_name + ".send_slack_message.txt"]), "w"

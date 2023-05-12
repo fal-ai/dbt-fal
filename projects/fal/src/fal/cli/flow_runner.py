@@ -47,10 +47,8 @@ def run_threaded(
 
 
 def fal_flow_run(parsed: argparse.Namespace) -> int:
-    arg_vars = getattr(parsed, "vars", "{}")
-
     # fal-format Python models
-    generated_models = generate_python_dbt_models(parsed.project_dir, arg_vars)
+    generated_models = generate_python_dbt_models(parsed.project_dir, parsed.vars)
 
     fal_dbt = create_fal_dbt(parsed, generated_models)
     _mark_dbt_nodes_status(fal_dbt, NodeStatus.Skipped)

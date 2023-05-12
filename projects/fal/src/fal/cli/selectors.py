@@ -227,7 +227,7 @@ class SelectorPlan:
 
 def unique_ids_from_complex_selector(select, fal_dbt: FalDbt) -> List[str]:
     args = CompileArgs(None, [select], [select], tuple(), fal_dbt._state, None)
-    compile_task = CompileTask(args, fal_dbt._config)
+    compile_task = CompileTask(args, fal_dbt._config, fal_dbt._manifest.native_manifest)
     compile_task._runtime_initialize()
     spec = compile_task.get_selection_spec()
     graph = compile_task.get_node_selector().get_graph_queue(spec)

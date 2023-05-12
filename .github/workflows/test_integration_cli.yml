@@ -53,11 +53,7 @@ on:
         options:
           - "<ALL>"
           - "latest"
-          - "1.0.*"
-          - "1.1.*"
-          - "1.2.*"
-          - "1.3.*"
-          - "1.4.*"
+          - "1.5.*"
 
 jobs:
   matrix-adapter:
@@ -171,13 +167,7 @@ jobs:
         shell: python
         run: |
           OPTIONS = [
-            "1.4.*",
-          ]
-          EXTRA_OPTIONS = [
-            "1.0.*",
-            "1.1.*",
-            "1.2.*",
-            "1.3.*",
+            "1.5.*",
           ]
           OUTPUT = OPTIONS
 
@@ -203,26 +193,6 @@ jobs:
         profile: ${{ fromJSON(needs.matrix-adapter.outputs.list) }}
         dbt: ${{ fromJSON(needs.matrix-dbt.outputs.list) }}
         python: ${{ fromJSON(needs.matrix-python.outputs.list) }}
-        exclude:
-          # Only dbt>=1.1 supports Python 3.10 (officially)
-          - python: 3.10
-            dbt: "1.0.*"
-          # dbt-fal is for dbt-core>=1.3
-          - profile: "fal"
-            dbt: "1.0.*"
-          - profile: "fal"
-            dbt: "1.1.*"
-          - profile: "fal"
-            dbt: "1.2.*"
-          # dbt-athena-adapter only supports dbt-core==1.0.* for now
-          - profile: "athena"
-            dbt: "1.1.*"
-          - profile: "athena"
-            dbt: "1.2.*"
-          - profile: "athena"
-            dbt: "1.3.*"
-          - profile: "athena"
-            dbt: "1.4.*"
 
     # Run only the latest commit pushed to PR
     concurrency:

@@ -10,7 +10,7 @@ for node in sources:
         # NOTE: removing the namespace prefix
         output += f"({node.name}, {node.table_name.split('__ns__')[1]}) {node.freshness.status}\n"
 
-temp_dir = os.environ["temp_dir"]
+temp_dir = os.getenv("temp_dir", ".")
 write_dir = open(os.path.join(temp_dir, "GLOBAL.freshness.txt"), "w")
 write_dir.write(output)
 write_dir.close()

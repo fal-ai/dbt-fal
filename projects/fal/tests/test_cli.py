@@ -21,21 +21,39 @@ class ProjectTemporaryDirectory(tempfile.TemporaryDirectory):
         shutil.rmtree(self.name, ignore_errors=True)
         shutil.copytree(project_dir, self.name)
 
+    def __enter__(self):
+        os.environ["DBT_TARGET_PATH"] = os.path.join(self.name, "mockTarget")
+        return super().__enter__()
+
+    def __exit__(self, exc, value, tb):
+        del os.environ["DBT_TARGET_PATH"]
+        return super().__exit__(exc, value, tb)
+
 
 def test_run():
     try:
-        cli(["fal", "run", "--profiles-dir", profiles_dir])
+        cli([
+            # fmt: off
+            "fal", "run",
+            "--profiles-dir", profiles_dir,
+            # fmt: on
+        ])
         assert False, "Should not reach"
     except DbtProjectError as e:
-        assert "no dbt_project.yml found at expected path" in str(e.msg)
+        assert "no dbt_project.yml found at expected path" in str(e.msg).lower()
 
 
 def test_flow_run():
     try:
-        cli(["fal", "flow", "run", "--profiles-dir", profiles_dir])
+        cli([
+            # fmt: off
+            "fal", "flow", "run",
+            "--profiles-dir", profiles_dir,
+            # fmt: on
+        ])
         assert False, "Should not reach"
     except DbtProjectError as e:
-        assert "no dbt_project.yml found at expected path" in str(e)
+        assert "no dbt_project.yml found at expected path" in str(e).lower()
 
 
 def test_no_arg(capfd):
@@ -46,7 +64,14 @@ def test_no_arg(capfd):
 
 def test_run_with_project_dir(capfd):
     with ProjectTemporaryDirectory() as tmp_dir:
-        cli(["fal", "run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir])
+        # TODO: should it run without a run_results and no selection flags?
+        cli([
+            # fmt: off
+            "fal", "run",
+            "--project-dir", tmp_dir,
+            "--profiles-dir", profiles_dir,
+            # fmt: on
+        ])
 
 
 def test_version(capfd):
@@ -150,20 +175,21 @@ def test_flow_run_with_full_refresh(capfd):
 
 def test_flow_run_with_vars(capfd):
     with ProjectTemporaryDirectory() as tmp_dir:
+        var_str = "some: value"
         captured = _run_fal(
             [
                 # fmt: off
                 "flow", "run",
                 "--project-dir", tmp_dir,
                 "--profiles-dir", profiles_dir,
-                "--vars", "{some: 'value'}"
+                "--vars", var_str,
                 # fmt: on
             ],
             capfd,
         )
 
         executing_re = re.compile(
-            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile --vars {some: 'value'}"
+            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile --vars " + var_str
         )
         found = executing_re.findall(captured.out)
         # We run each model separately
@@ -230,7 +256,14 @@ def test_no_run_results(capfd):
 
         # Without selection flag
         captured = _run_fal(
-            ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir], capfd
+            [
+                # fmt: off
+                "run",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                # fmt: on
+            ],
+            capfd,
         )
         assert (
             "Cannot define models to run without selection flags or dbt run_results artifact"
@@ -239,7 +272,14 @@ def test_no_run_results(capfd):
 
         # With selection flag
         captured = _run_fal(
-            ["run", "--project-dir", tmp_dir, "--profiles-dir", profiles_dir, "--all"],
+            [
+                # fmt: off
+                "run",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                "--all",
+                # fmt: on
+            ],
             capfd,
         )
 
@@ -292,13 +332,12 @@ def test_target(capfd):
 
         captured = _run_fal(
             [
+                # fmt: off
                 "run",
-                "--project-dir",
-                tmp_dir,
-                "--profiles-dir",
-                profiles_dir,
-                "--target",
-                "false_target",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
+                "--target", "false_target",
+                # fmt: on
             ],
             capfd,
         )
@@ -356,14 +395,12 @@ def test_broken_schemas(broken_schema, monkeypatch):
         with pytest.raises((ValueError, TypeError)):
             cli(
                 [
-                    "fal",
-                    "flow",
-                    "run",
-                    "--project-dir",
-                    tmp_dir,
-                    "--profiles-dir",
-                    profiles_dir,
+                    # fmt: off
+                    "fal", "flow", "run",
+                    "--project-dir", tmp_dir,
+                    "--profiles-dir", profiles_dir,
                     "--exclude=model_with_scripts",
+                    # fmt: on
                 ],
             )
 
@@ -404,14 +441,12 @@ def test_schemas(schema, monkeypatch):
 
         cli(
             [
-                "fal",
-                "flow",
-                "run",
-                "--project-dir",
-                tmp_dir,
-                "--profiles-dir",
-                profiles_dir,
+                # fmt: off
+                "fal", "flow", "run",
+                "--project-dir", tmp_dir,
+                "--profiles-dir", profiles_dir,
                 "--exclude=model_with_scripts",
+                # fmt: on
             ],
         )
 

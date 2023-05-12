@@ -10,6 +10,7 @@ import faldbt.version as version
 
 
 
+# TODO: fix mocking for 1.5 and remove skips
 @pytest.mark.skipif(version.is_version_plus("1.4.0"), reason="mocking <1.4 modules")
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
 @patch("fal.FalDbt")

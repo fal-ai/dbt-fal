@@ -16,7 +16,7 @@ info = buf.getvalue()
 
 output = output + f"\nModel dataframe information:\n{info}"
 output = output + f"\nModel alias is {model_alias}"
-temp_dir = os.environ["temp_dir"]
+temp_dir = os.getenv("temp_dir", ".")
 write_dir = open(reduce(os.path.join, [temp_dir, model_name + ".post_hook2.txt"]), "w")
 write_dir.write(output)
 write_dir.close()

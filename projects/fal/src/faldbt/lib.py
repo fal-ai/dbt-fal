@@ -11,17 +11,12 @@ import threading
 import dbt.flags as flags
 import dbt.adapters.factory as adapters_factory
 
-import faldbt.version as version
-
 from dbt.contracts.connection import AdapterResponse
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.base import BaseRelation, BaseAdapter, BaseConnectionManager
 from dbt.config import RuntimeConfig
 
-if version.is_version_plus("1.4.0"):
-    from dbt.contracts.graph.nodes import ResultNode
-else:
-    from dbt.contracts.graph.compiled import CompileResultNode as ResultNode
+from dbt.contracts.graph.nodes import ResultNode
 
 import pandas as pd
 from pandas.io import sql as pdsql
@@ -123,7 +118,6 @@ def _execute_sql(
     *,
     new_conn=True,
 ) -> Tuple[AdapterResponse, pd.DataFrame]:
-
     if adapter.type() == "bigquery":
         return _bigquery_execute_sql(adapter, sql, new_conn)
 

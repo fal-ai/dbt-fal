@@ -12,12 +12,7 @@ from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultAr
 from dbt.contracts.project import UserConfig
 from dbt.config.profile import read_user_config
 
-import faldbt.version as version
-
-if version.is_version_plus("1.4.0"):
-    from dbt.exceptions import IncompatibleSchemaError, DbtRuntimeError
-else:
-    from dbt.exceptions import IncompatibleSchemaException as IncompatibleSchemaError, RuntimeException as DbtRuntimeError
+from dbt.exceptions import IncompatibleSchemaError, DbtRuntimeError
 
 from fal.utils import cache_static
 
@@ -48,6 +43,7 @@ class RuntimeArgs:
     single_threaded: bool
     profile: Optional[str]
     target: Optional[str]
+    vars: Dict[str, str]
 
 
 def load_dbt_project_contract(project_dir: str) -> ProjectContract:
@@ -67,9 +63,12 @@ def get_dbt_config(
     profile_target: Optional[str] = None,
     threads: Optional[int] = None,
     profile: Optional[str] = None,
+    vars: str = "{}",
 ) -> RuntimeConfig:
     # Construct a phony config
     import os
+
+    vars_dict = parse_cli_vars(vars)
 
     args = RuntimeArgs(
         project_dir=project_dir,
@@ -78,6 +77,7 @@ def get_dbt_config(
         single_threaded=False,
         profile=profile,
         target=profile_target,
+        vars=vars_dict,
     )
 
     if project_dir and not "PYTEST_CURRENT_TEST" in os.environ:
@@ -89,6 +89,13 @@ def get_dbt_config(
         os.chdir(owd)
     else:
         config = RuntimeConfig.from_args(args)
+
+    # HACK: issue in dbt-core 1.5.0 https://github.com/dbt-labs/dbt-core/issues/7465
+    env_target_path = os.getenv("DBT_TARGET_PATH")
+    if env_target_path:
+        config.target_path = env_target_path
+    # TODO: should we check flags too?
+
     return config
 
 
@@ -144,15 +151,10 @@ def get_dbt_manifest(config) -> Manifest:
 
 
 def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
-    sources_path = os.path.join(project_dir, config.target_path, "sources.json")
+    # Changed in dbt 1.5.0 to use path relative to CWD instead of path relative to project_dir
+    sources_path = os.path.join(config.target_path, "sources.json")
     try:
-        # BACKWARDS: Change intorduced in 1.0.0
-        if hasattr(FreshnessExecutionResultArtifact, "read_and_check_versions"):
-            return FreshnessExecutionResultArtifact.read_and_check_versions(
-                sources_path
-            )
-        else:
-            return FreshnessExecutionResultArtifact.read(sources_path)
+        return FreshnessExecutionResultArtifact.read_and_check_versions(sources_path)
 
     except IncompatibleSchemaError as exc:
         # TODO: add test for this case
@@ -163,16 +165,11 @@ def get_dbt_sources_artifact(project_dir: str, config: RuntimeConfig):
         return None
 
 
-def get_dbt_results(
-    project_dir: str, config: RuntimeConfig
-) -> Optional[RunResultsArtifact]:
-    results_path = os.path.join(project_dir, config.target_path, "run_results.json")
+def get_dbt_results(project_dir: str, config: RuntimeConfig) -> Optional[RunResultsArtifact]:
+    # Changed in dbt 1.5.0 to use path relative to CWD instead of path relative to project_dir
+    results_path = os.path.join(config.target_path, "run_results.json")
     try:
-        # BACKWARDS: Change intorduced in 1.0.0
-        if hasattr(RunResultsArtifact, "read_and_check_versions"):
-            return RunResultsArtifact.read_and_check_versions(results_path)
-        else:
-            return RunResultsArtifact.read(results_path)
+        return RunResultsArtifact.read_and_check_versions(results_path)
 
     except IncompatibleSchemaError as exc:
         # TODO: add test for this case

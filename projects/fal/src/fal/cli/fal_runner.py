@@ -2,10 +2,11 @@ import argparse
 from pathlib import Path
 from typing import Any, Dict, List
 
-from dbt.flags import PROFILES_DIR
+from dbt.flags import get_flags, set_from_args
 from fal.planner.executor import parallel_executor
 from fal.planner.schedule import Scheduler
 from fal.planner.tasks import FalLocalHookTask, Status, TaskGroup
+from dbt.cli.resolvers import default_profiles_dir
 
 from fal.fal_script import FalScript, TimingType
 from faldbt.project import FAL, DbtModel, FalDbt, FalGeneralException
@@ -14,9 +15,12 @@ from faldbt.project import FAL, DbtModel, FalDbt, FalGeneralException
 def create_fal_dbt(
     args: argparse.Namespace, generated_models: Dict[str, Path] = {}
 ) -> FalDbt:
-    profiles_dir = PROFILES_DIR
-    if args.profiles_dir is not None:
-        profiles_dir = args.profiles_dir
+    if args.profiles_dir is None:
+        args.profiles_dir = default_profiles_dir()
+
+    set_from_args(args, None)
+    flags = get_flags()
+    profiles_dir = flags.PROFILES_DIR
 
     real_state = None
     if hasattr(args, "state") and args.state is not None:
@@ -31,7 +35,7 @@ def create_fal_dbt(
         args.threads,
         real_state,
         args.target,
-        getattr(args, "vars", "{}"),
+        args.vars,
         generated_models,
     )
 
@@ -154,7 +158,7 @@ def _get_filtered_models(faldbt: FalDbt, all, selected, before) -> List[DbtModel
         not all
         and not selected
         and not before
-        and faldbt._run_results.nativeRunResult is None
+        and faldbt._run_results.native_run_result is None
     ):
         from faldbt.parse import FalParseError
 
