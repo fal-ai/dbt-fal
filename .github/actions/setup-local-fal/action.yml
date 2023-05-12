@@ -42,7 +42,7 @@ runs:
         # overwrite for specific adapters
         if [[ '${{ inputs.adapter }}' == 'athena' ]]
         then
-          package=dbt-athena-adapter
+          package=dbt-athena-community
         fi
 
         if [[ '${{ inputs.dbt }}' == 'latest' ]]
