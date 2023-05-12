@@ -6,7 +6,7 @@ from typing import Any, List, Dict, Optional, Union, TYPE_CHECKING
 
 from dbt.contracts.project import Project as ProjectContract
 from dbt.config import RuntimeConfig, Project
-from dbt.config.utils import parse_cli_vars
+from dbt.config.utils import parse_cli_vars as dbt_parse_cli_vars
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultArtifact
 from dbt.contracts.project import UserConfig
@@ -63,13 +63,12 @@ def get_dbt_config(
     profile_target: Optional[str] = None,
     threads: Optional[int] = None,
     profile: Optional[str] = None,
-    vars: str = "{}",
+    args_vars: str = "{}",
 ) -> RuntimeConfig:
     # Construct a phony config
     import os
 
-    vars_dict = parse_cli_vars(vars)
-
+    vars = get_vars_dict(project_dir, args_vars)
     args = RuntimeArgs(
         project_dir=project_dir,
         profiles_dir=profiles_dir,
@@ -77,7 +76,7 @@ def get_dbt_config(
         single_threaded=False,
         profile=profile,
         target=profile_target,
-        vars=vars_dict,
+        vars=vars,
     )
 
     if project_dir and not "PYTEST_CURRENT_TEST" in os.environ:
@@ -108,6 +107,15 @@ def get_vars_dict(project_dir: str, args_vars: str) -> Dict[str, Any]:
 
     # cli_vars have higher priority
     return {**vars, **cli_vars}
+
+def parse_cli_vars(args_vars: str) -> Dict[str, Any]:
+    if not args_vars:
+        return {}
+
+    try:
+        return dbt_parse_cli_vars(args_vars)
+    except DbtRuntimeError as exc:
+        raise FalParseError(exc)
 
 
 @cache_static
