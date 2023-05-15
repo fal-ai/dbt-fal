@@ -2,7 +2,7 @@
 
 In this example we will use [sklearn](https://scikit-learn.org/stable/index.html) and [slack_sdk](https://slack.dev/python-slack-sdk/) to find anomalies on a time-series numerical dataset.
 
-See [slack example](slack-example.md), for instructions on how to set up a minimal Slack bot.
+See [slack example](../slack-example/README.md), for instructions on how to set up a minimal Slack bot.
 
 The model we use for this example has two columns: `y` and `ds`, where `y` is a metric measure and `ds` is a timestamp.
 
