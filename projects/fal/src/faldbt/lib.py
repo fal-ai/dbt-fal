@@ -105,12 +105,21 @@ def _get_adapter(
     return adapter
 
 
+# HACK: to avoid https://github.com/uqfoundation/dill/issues/321
+# When the lock is unpickled in the other thread, it is initialized as locked
+if hasattr(threading, "_PyRLock"):
+    _lock: threading.RLock = threading._PyRLock()  # type: ignore
+else:
+    _lock = threading.RLock()
+
 @contextmanager
-def _cache_lock(adapter, info: str = ""):
+def _cache_lock(info: str = ""):
+    global _lock
+
     operationId = uuid4()
     LOGGER.debug("Locking  {} {}", operationId, info)
 
-    with adapter.cache.lock:
+    with _lock:
         yield
 
 
@@ -156,7 +165,7 @@ def _get_target_relation(
     adapter: SQLAdapter, target: ResultNode
 ) -> Optional[BaseRelation]:
     with adapter.connection_named(_connection_name("relation", target)):
-        with _cache_lock(adapter, "_get_target_relation"):
+        with _cache_lock("_get_target_relation"):
             _clear_relations_cache(adapter)
 
             # This ROLLBACKs so it has to be a new connection
@@ -420,7 +429,7 @@ def _replace_relation(
     with adapter.connection_named(
         _connection_name("replace_relation", original_relation, _hash=False)
     ):
-        with _cache_lock(adapter, "_replace_relation"):
+        with _cache_lock("_replace_relation"):
             adapter.connections.begin()
 
             _clear_relations_cache(adapter)
@@ -465,7 +474,7 @@ def _replace_relation(
 
 def _drop_relation(adapter: SQLAdapter, relation: BaseRelation):
     with adapter.connection_named(_connection_name("drop_relation", relation)):
-        with _cache_lock(adapter, "_drop_relation"):
+        with _cache_lock("_drop_relation"):
             adapter.connections.begin()
 
             _clear_relations_cache(adapter)
