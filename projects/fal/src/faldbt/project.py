@@ -16,6 +16,7 @@ from deprecation import deprecated
 
 import faldbt.version as version
 
+from dbt.cli.resolvers import default_profiles_dir
 from dbt.cli.main import dbtRunner, dbtRunnerResult
 
 from dbt.contracts.graph.nodes import (
@@ -440,8 +441,8 @@ class FalDbt:
     # TODO: figure out a meaningful __repr__ for this class
     def __init__(
         self,
-        project_dir: str,
-        profiles_dir: str,
+        project_dir: Optional[str] = None,
+        profiles_dir: Optional[str] = None,
         select: List[str] = [],
         exclude: Tuple[str] = tuple(),
         selector: Optional[str] = None,
@@ -456,15 +457,34 @@ class FalDbt:
                 f"dbt version {version.DBT_VCURRENT} is no longer supported, please upgrade to dbt 1.0.0 or above"
             )
 
-        self.project_dir = os.path.realpath(os.path.expanduser(project_dir))
-        self.profiles_dir = os.path.realpath(os.path.expanduser(profiles_dir))
+        if project_dir is None:
+            project_dir = os.getcwd()
+
+        if profiles_dir is None:
+            profiles_dir = str(default_profiles_dir())
+
+        project_dir = os.path.realpath(os.path.expanduser(project_dir))
+        profiles_dir = os.path.realpath(os.path.expanduser(profiles_dir))
+
+        vars = parse.parse_cli_vars(args_vars)
+
+        flags = lib.initialize_dbt_flags(
+            profiles_dir=profiles_dir,
+            project_dir=project_dir,
+            threads=threads,
+            profile_target=profile_target,
+            vars=vars,
+        )
+
+        self.project_dir = flags.PROJECT_DIR
+        self.profiles_dir = flags.PROFILES_DIR
+
         self._state = None
         if state is not None:
             self._state = Path(os.path.realpath(os.path.expanduser(state)))
 
         self.scripts_dir = parse.get_scripts_dir(self.project_dir, args_vars)
 
-        lib.initialize_dbt_flags(profiles_dir=self.profiles_dir)
 
         # Can be overwritten if profile_target is not None
         self._config = parse.get_dbt_config(
@@ -472,7 +492,7 @@ class FalDbt:
             profiles_dir=self.profiles_dir,
             profile_target=profile_target,
             threads=threads,
-            vars=args_vars
+            args_vars=args_vars,
         )
 
         self._run_results = DbtRunResult(
@@ -489,6 +509,7 @@ class FalDbt:
                 profiles_dir=self.profiles_dir,
                 threads=threads,
                 profile_target=profile_target,
+                args_vars=args_vars,
             )
 
         lib.register_adapters(self._config)

@@ -2,11 +2,9 @@ import argparse
 from pathlib import Path
 from typing import Any, Dict, List
 
-from dbt.flags import get_flags, set_from_args
 from fal.planner.executor import parallel_executor
 from fal.planner.schedule import Scheduler
 from fal.planner.tasks import FalLocalHookTask, Status, TaskGroup
-from dbt.cli.resolvers import default_profiles_dir
 
 from fal.fal_script import FalScript, TimingType
 from faldbt.project import FAL, DbtModel, FalDbt, FalGeneralException
@@ -15,20 +13,13 @@ from faldbt.project import FAL, DbtModel, FalDbt, FalGeneralException
 def create_fal_dbt(
     args: argparse.Namespace, generated_models: Dict[str, Path] = {}
 ) -> FalDbt:
-    if args.profiles_dir is None:
-        args.profiles_dir = default_profiles_dir()
-
-    set_from_args(args, None)
-    flags = get_flags()
-    profiles_dir = flags.PROFILES_DIR
-
     real_state = None
     if hasattr(args, "state") and args.state is not None:
         real_state = args.state
 
     return FalDbt(
         args.project_dir,
-        profiles_dir,
+        args.profiles_dir,
         args.select,
         args.exclude,
         args.selector,
@@ -72,10 +63,12 @@ def fal_run(args: argparse.Namespace):
         _handle_global_scripts(args, global_scripts, faldbt, selector_flags)
 
 
-def _handle_global_scripts(args: argparse.Namespace,
-                           global_scripts: List[FalScript],
-                           faldbt: FalDbt,
-                           selector_flags: Any) -> None:
+def _handle_global_scripts(
+    args: argparse.Namespace,
+    global_scripts: List[FalScript],
+    faldbt: FalDbt,
+    selector_flags: Any,
+) -> None:
     scripts_flag = _scripts_flag(args)
     if not scripts_flag and not selector_flags:
         # run globals when no --script is passed and no selector is passed
@@ -118,7 +111,7 @@ def _select_scripts(
     scripts = []
     scripts_flag = _scripts_flag(args)
     is_before = bool(args.before)
-    timing_type=TimingType.PRE if is_before else TimingType.POST
+    timing_type = TimingType.PRE if is_before else TimingType.POST
 
     for model in models:
         model_scripts = model.get_scripts(before=is_before)
@@ -136,7 +129,7 @@ def _select_scripts(
 def _get_global_scripts(faldbt: FalDbt, args: argparse.Namespace):
     scripts_flag = _scripts_flag(args)
     is_before = bool(args.before)
-    timing_type=TimingType.PRE if is_before else TimingType.POST
+    timing_type = TimingType.PRE if is_before else TimingType.POST
     return [
         FalScript(faldbt, None, path, timing_type=timing_type)
         for path in faldbt._global_script_paths["before" if is_before else "after"]
@@ -145,9 +138,7 @@ def _get_global_scripts(faldbt: FalDbt, args: argparse.Namespace):
 
 
 def _get_models_with_keyword(faldbt: FalDbt) -> List[DbtModel]:
-    return list(
-        filter(lambda model: FAL in model.meta, faldbt.list_models())
-    )
+    return list(filter(lambda model: FAL in model.meta, faldbt.list_models()))
 
 
 def _get_filtered_models(faldbt: FalDbt, all, selected, before) -> List[DbtModel]:

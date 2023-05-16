@@ -4,7 +4,7 @@ import six
 from enum import Enum
 from dataclasses import dataclass
 from uuid import uuid4
-from typing import Iterator, List, Optional, Tuple
+from typing import Dict, Iterator, List, Optional, Tuple
 from urllib.parse import quote_plus
 import threading
 
@@ -40,23 +40,44 @@ class WriteModeEnum(Enum):
 
 @dataclass
 class FlagsArgs:
+    project_dir: str
     profiles_dir: str
+    threads: Optional[int]
+    profile: Optional[str]
+    target: Optional[str]
+    vars: Optional[Dict[str, str]]
     use_colors: Optional[bool]
 
 
-def initialize_dbt_flags(profiles_dir: str):
+def initialize_dbt_flags(
+    profiles_dir: str,
+    project_dir: str,
+    profile_target: Optional[str],
+    vars: Optional[dict],
+    threads: Optional[int],
+):
     """
     Initializes the flags module from dbt, since it's accessed from around their code.
     """
-    args = FlagsArgs(profiles_dir, None)
-    user_config = parse.get_dbt_user_config(profiles_dir)
+    args = FlagsArgs(
+        use_colors=None,
+        project_dir=project_dir,
+        profiles_dir=profiles_dir,
+        # TODO: accept profile flag too
+        profile=None,
+        target=profile_target,
+        vars=vars,
+        threads=threads,
+    )
 
-    flags.set_from_args(args, user_config)
+    flags.set_from_args(args, None)
 
     # Set invocation id
     import dbt.events.functions as events_functions
 
     events_functions.set_invocation_id()
+
+    return flags.get_flags()
 
 
 def register_adapters(config: RuntimeConfig):
@@ -84,27 +105,22 @@ def _get_adapter(
     return adapter
 
 
-global _lock
-# RLock supports recursive locking by the same thread
-_lock = threading.RLock()
-
+# HACK: to avoid https://github.com/uqfoundation/dill/issues/321
+# When the lock is unpickled in the other thread, it is initialized as locked
+if hasattr(threading, "_PyRLock"):
+    _lock: threading.RLock = threading._PyRLock()  # type: ignore
+else:
+    _lock = threading.RLock()
 
 @contextmanager
 def _cache_lock(info: str = ""):
+    global _lock
+
     operationId = uuid4()
     LOGGER.debug("Locking  {} {}", operationId, info)
 
-    _lock.acquire()
-    LOGGER.debug("Acquired {}", operationId)
-
-    try:
+    with _lock:
         yield
-    except:
-        LOGGER.debug("Error during lock operation {}", operationId)
-        raise
-    finally:
-        _lock.release()
-        LOGGER.debug("Released {}", operationId)
 
 
 def _connection_name(prefix: str, obj, _hash: bool = True):
