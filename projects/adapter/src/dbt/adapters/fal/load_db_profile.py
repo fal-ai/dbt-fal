@@ -40,7 +40,7 @@ def find_target_name(
 def load_profiles_info_1_5() -> Tuple[Profile, Dict[str, Any]]:
     flags: Namespace = get_flags()
 
-    profile_renderer = ProfileRenderer(flags.VARS)
+    profile_renderer = ProfileRenderer(getattr(flags, "VARS", {}))
 
     profile_name = find_profile_name(flags.PROFILE, flags.PROJECT_DIR, profile_renderer)
 
@@ -74,7 +74,7 @@ def load_profiles_info_1_5() -> Tuple[Profile, Dict[str, Any]]:
         ) from error
 
     override_properties = {
-        "threads": flags.THREADS or fal_dict.get("threads") or db_profile.threads,
+        "threads": getattr(flags, "THREADS", None) or fal_dict.get("threads") or db_profile.threads,
     }
 
     return db_profile, override_properties
