@@ -2,6 +2,7 @@ from functools import reduce
 import os
 from behave import *
 
+import subprocess
 import tempfile
 import json
 import yaml
@@ -17,17 +18,34 @@ def target_path(context):
 @when("the following shell command is invoked")
 def run_command_step(context):
     context.exc = None
-
-    profiles_dir = _get_profiles_dir(context)
+    context.shell_stdout = None
+    context.shell_stderr = None
 
     command = _replace_vars(context, context.text)
     try:
-        os.system(command)
-    except:
-        import sys
+        process = subprocess.run(command, shell=True, capture_output=True)
+        context.shell_stdout = process.stdout.decode("utf-8")
+        context.shell_stderr = process.stderr.decode("utf-8")
 
-        context.exc = sys.exc_info()
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(
+                process.returncode, command, context.shell_stdout, context.shell_stderr
+            )
+    except BaseException as e:
+        context.exc = e
 
+@then("there should be no errors")
+def check_no_errors(context):
+    msg = f"Exception found: {context.exc}"
+
+    if isinstance(context.exc, subprocess.CalledProcessError):
+        msg = f"Command failed with return code {context.exc.returncode}"
+        if context.exc.stdout is not None:
+            msg += "\nstdout:\n" + context.exc.stdout
+        if context.exc.stderr is not None:
+            msg += "\nstderr:\n" + context.exc.stderr
+
+    assert context.exc is None, msg
 
 @given("the project {project}")
 def set_project_folder(context, project: str):
