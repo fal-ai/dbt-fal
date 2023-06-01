@@ -346,7 +346,7 @@ test = ["hypothesis (>=1.11.4,!=3.79.2)", "iso8601", "pretend", "pytest (>=6.2.0
 
 [[package]]
 name = "datadog-api-client"
-version = "2.11.0"
+version = "2.12.0"
 description = "Collection of all Datadog Public endpoints"
 category = "main"
 optional = false
@@ -360,8 +360,8 @@ urllib3 = ">=1.15"
 
 [package.extras]
 apm = ["ddtrace (>=1.2.0)"]
-async = ["aiosonic"]
-tests = ["aiosonic", "glom", "jinja2", "mypy", "pytest", "pytest-asyncio", "pytest-bdd (==6.0.1)", "pytest-randomly", "pytest-recording", "python-dateutil", "types-python-dateutil", "zstandard"]
+async = ["aiosonic (==0.15.1)"]
+tests = ["aiosonic (==0.15.1)", "glom", "jinja2", "mypy", "pytest", "pytest-asyncio", "pytest-bdd (==6.0.1)", "pytest-randomly", "pytest-recording", "python-dateutil", "types-python-dateutil", "zstandard"]
 zstandard = ["zstandard"]
 
 [[package]]
@@ -456,7 +456,7 @@ python-versions = "*"
 
 [[package]]
 name = "fal-serverless"
-version = "0.6.28"
+version = "0.6.33"
 description = "fal Serverless is an easy-to-use Serverless Python Framework"
 category = "main"
 optional = false
@@ -466,15 +466,17 @@ python-versions = ">=3.7,<4.0"
 auth0-python = ">=4.1.0,<5.0.0"
 click = ">=8.1.3,<9.0.0"
 colorama = ">=0.4.6,<0.5.0"
-datadog-api-client = ">=2.9.0,<3.0.0"
+datadog-api-client = "2.12.0"
 dill = "0.3.5.1"
 grpc-interceptor = ">=0.15.0,<0.16.0"
 grpcio = ">=1.50.0,<2.0.0"
 importlib-metadata = {version = ">=4.4", markers = "python_version < \"3.10\""}
-isolate = {version = "0.11.1", extras = ["build"]}
-isolate-proto = ">=0.0.26,<0.0.27"
+isolate = {version = "0.12.0", extras = ["build"]}
+isolate-proto = ">=0.0.28,<0.0.29"
 opentelemetry-api = ">=1.15.0,<2.0.0"
 opentelemetry-sdk = ">=1.15.0,<2.0.0"
+packaging = ">=21.3"
+pathspec = ">=0.11.1,<0.12.0"
 portalocker = ">=2.7.0,<3.0.0"
 requests = ">=2.28.1,<3.0.0"
 rich = ">=13.3.2,<14.0.0"
@@ -778,7 +780,7 @@ six = "*"
 
 [[package]]
 name = "isolate"
-version = "0.11.1"
+version = "0.12.0"
 description = "Managed isolated environments for Python"
 category = "main"
 optional = false
@@ -798,7 +800,7 @@ build = ["PyYAML (>=6.0)", "virtualenv (>=20.4)"]
 
 [[package]]
 name = "isolate-proto"
-version = "0.0.26"
+version = "0.0.28"
 description = "(internal) gRPC definitions for Isolate Cloud"
 category = "main"
 optional = false
@@ -806,7 +808,7 @@ python-versions = ">=3.7,<4"
 
 [package.dependencies]
 grpcio = ">=1.49"
-isolate = {version = "0.11.1", extras = ["build"]}
+isolate = {version = "0.12.0", extras = ["build"]}
 protobuf = "*"
 
 [[package]]
@@ -1128,7 +1130,7 @@ future = "*"
 
 [[package]]
 name = "pathspec"
-version = "0.10.3"
+version = "0.11.1"
 description = "Utility library for gitignore style pattern matching of file paths."
 category = "main"
 optional = false
@@ -1818,7 +1820,7 @@ trino = ["trino"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.12"
-content-hash = "31657eab619559346ea87eede883aa19e95c0f5e7441371f3b85fde264e48b4a"
+content-hash = "279966edb58ba9825e815bf6ef251465a81002305e2a050cc33bc7863d4d50d7"
 
 [metadata.files]
 agate = [
@@ -2110,8 +2112,8 @@ cryptography = [
     {file = "cryptography-38.0.4.tar.gz", hash = "sha256:175c1a818b87c9ac80bb7377f5520b7f31b3ef2a0004e2420319beadedb67290"},
 ]
 datadog-api-client = [
-    {file = "datadog-api-client-2.11.0.tar.gz", hash = "sha256:e0e9291074b8bc45873ba857b89e5b53752f812f14885eac35a01ddab574532d"},
-    {file = "datadog_api_client-2.11.0-py3-none-any.whl", hash = "sha256:26b0e9bd190dbc15d1f3c27e777eb2eaf32e61dd16c1ef3ef52d88dd9c207b55"},
+    {file = "datadog-api-client-2.12.0.tar.gz", hash = "sha256:8d139a535249b8bea516537b8ada7c746eadd59187f9e02de8c2ae85c3ae0b31"},
+    {file = "datadog_api_client-2.12.0-py3-none-any.whl", hash = "sha256:28b3bd1f4dfe27d44c71ae13f8906fce8483f69c950a078c330778de49f10746"},
 ]
 db-dtypes = [
     {file = "db-dtypes-1.0.5.tar.gz", hash = "sha256:ee68f30cbccf343124ef0abebc7f8cc9a74ef8ed7ee4ff61f586117e8040a9d6"},
@@ -2152,8 +2154,8 @@ distlib = [
     {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
 ]
 fal-serverless = [
-    {file = "fal_serverless-0.6.28-py3-none-any.whl", hash = "sha256:3d08dde21ade804d33251e313ebefb78eb2a5dfae34849f1530958086febea59"},
-    {file = "fal_serverless-0.6.28.tar.gz", hash = "sha256:e7c633f05b422cf8356362d70addc3749ef5de4238fe2c2d4487e491f559344f"},
+    {file = "fal_serverless-0.6.33-py3-none-any.whl", hash = "sha256:79d1a83b8d8093b6d8d2ab88968eb182d58812767ac63d7cd898416b4a64da29"},
+    {file = "fal_serverless-0.6.33.tar.gz", hash = "sha256:b079b9e9dcf7b4628d7eab851fcd98c246a6a4bd167d531cb300a1c3738cb736"},
 ]
 filelock = [
     {file = "filelock-3.9.0-py3-none-any.whl", hash = "sha256:f58d535af89bb9ad5cd4df046f741f8553a418c01a7856bf0d173bbc9f6bd16d"},
@@ -2470,12 +2472,12 @@ isodate = [
     {file = "isodate-0.6.1.tar.gz", hash = "sha256:48c5881de7e8b0a0d648cb024c8062dc84e7b840ed81e864c7614fd3c127bde9"},
 ]
 isolate = [
-    {file = "isolate-0.11.1-py3-none-any.whl", hash = "sha256:c9362d0c1c60e1f702e48e68e412e462e51077dd90bd3fa44b5d32c7eca5d84f"},
-    {file = "isolate-0.11.1.tar.gz", hash = "sha256:8ae08853965583c28bb3f8459d248d2e7254bfcda88e9c9245aac070b109cfb5"},
+    {file = "isolate-0.12.0-py3-none-any.whl", hash = "sha256:e8275ae1edd9553a942a11d33fa8dae0b5f9ea5618def7c6d03f8ad18633a070"},
+    {file = "isolate-0.12.0.tar.gz", hash = "sha256:ba1e7873f7ac8caf2e428ce595d61f5a6ebe54750018a3356adcb57e8fc35567"},
 ]
 isolate-proto = [
-    {file = "isolate_proto-0.0.26-py3-none-any.whl", hash = "sha256:a0557af35e7a6d7345b5014e11bb03f1ceac636c9a5bd3f61db1e59415774691"},
-    {file = "isolate_proto-0.0.26.tar.gz", hash = "sha256:50d1dbcf68188aa7c8f43843c8b4875f18a44be25c7bc2749254acc3f410d98a"},
+    {file = "isolate_proto-0.0.28-py3-none-any.whl", hash = "sha256:88ba7570acaf2ccecb4b3bdc1789ae97b604ddd2028a56739c7f98e05b262ddc"},
+    {file = "isolate_proto-0.0.28.tar.gz", hash = "sha256:d5917bc82fe602a7600f5d09033ff4e2e1cf090fd23da24761fbea165d968362"},
 ]
 jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
@@ -2907,8 +2909,8 @@ parsedatetime = [
     {file = "parsedatetime-2.4.tar.gz", hash = "sha256:3d817c58fb9570d1eec1dd46fa9448cd644eeed4fb612684b02dfda3a79cb84b"},
 ]
 pathspec = [
-    {file = "pathspec-0.10.3-py3-none-any.whl", hash = "sha256:3c95343af8b756205e2aba76e843ba9520a24dd84f68c22b9f93251507509dd6"},
-    {file = "pathspec-0.10.3.tar.gz", hash = "sha256:56200de4077d9d0791465aa9095a01d421861e405b5096955051deefd697d6f6"},
+    {file = "pathspec-0.11.1-py3-none-any.whl", hash = "sha256:d8af70af76652554bd134c22b3e8a1cc46ed7d91edcdd721ef1a0c51a84a5293"},
+    {file = "pathspec-0.11.1.tar.gz", hash = "sha256:2798de800fa92780e33acca925945e9a19a133b715067cf165b8866c15a31687"},
 ]
 platformdirs = [
     {file = "platformdirs-3.0.0-py3-none-any.whl", hash = "sha256:b1d5eb14f221506f50d6604a561f4c5786d9e80355219694a1b244bcd96f4567"},
