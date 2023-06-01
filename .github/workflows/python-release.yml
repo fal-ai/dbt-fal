@@ -61,7 +61,7 @@ jobs:
 
       - name: Install poetry
         shell: bash
-        run: pip install poetry=="1.4.2"
+        run: pip install poetry=="1.5.1"
 
       - name: Bump to publishing version
         working-directory: ${{ env.PACKAGE_DIR }}
