@@ -33,7 +33,7 @@ jobs:
           - redshift
           - athena
           - trino
-          # - sqlserver # does not support dbt 1.4 yet
+          - sqlserver
         dbt_version:
           - "1.4.*"
         python:

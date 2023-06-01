@@ -99,6 +99,13 @@ class FalEncAdapterWrapper(FalAdapterMixin):
         else:
             getattr(super(), name)
 
+    def get_relation(self, database: str, schema: str, identifier: str):
+        # HACK: When compiling sqlserver Python models, we get an all-False quoting policy
+        if self._db_adapter.type() in ("sqlserver"):
+            self.config.quoting = {"database": True, "schema": True, "identifier": True}
+
+        return self._db_adapter.get_relation(database, schema, identifier)
+
 
 def find_funcs_in_stack(funcs: Set[str]) -> bool:
     import inspect
