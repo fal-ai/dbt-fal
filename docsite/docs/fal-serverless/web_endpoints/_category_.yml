@@ -1,7 +1,7 @@
-label: "Examples"
-position: 7
+label: "Isolated Functions"
+position: 6
 collapsible: false
 collapsed: false
 link:
   type: generated-index
-  title: Examples
+  title: Web Endpoints
