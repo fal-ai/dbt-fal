@@ -93,7 +93,7 @@ def chat_app():
     uvicorn.run(app, host="0.0.0.0", port=8080)
 ```
 
-As you may have noticed, this example also includes the webserver code to serve the model. We wanted to include it to demonstrate how to stream the LMM results. To deploy the `app` function as a web server with fal-serverless run the following command:
+As you may have noticed, this example also includes the webserver code to serve the model. We wanted to include it to demonstrate how to stream the LMM results. To deploy the `chat_app` function as a web server with fal-serverless run the following command:
 
 ```
 fal-serverless function serve /path_to_file.py chat_app
