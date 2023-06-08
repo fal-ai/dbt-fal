@@ -66,7 +66,7 @@ Once you have the request id you may use this request id to get the status of th
 ```python
 import requests
 
-response = requests.post("123-app.gateway.alpha.fal.ai/fal/queue/{request_id}/get")
+response = requests.get("123-app.gateway.alpha.fal.ai/fal/queue/{request_id}/get")
 data = await response.json()
 queue_position = data.get("queue_position") // 5
 queue_position = data.get("status") // IN_PROGRESS
@@ -79,7 +79,7 @@ If your request is still in the queue and not already being processed you may ca
 ```python
 import requests
 
-response = requests.post("123-app.gateway.alpha.fal.ai/fal/queue/{request_id}/cancel")
+response = requests.put("123-app.gateway.alpha.fal.ai/fal/queue/{request_id}/cancel")
 ```
 
 # Webhooks
