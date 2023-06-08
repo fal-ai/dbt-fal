@@ -6,7 +6,6 @@ fal-serverless is a serverless platform that enables you to run Python functions
 from fal_serverless import isolated, cached
 
 requirements = [
-    "fal_serverless",
     "transformers",
     "sentencepiece",
     "accelerate",
@@ -40,7 +39,7 @@ def load_model():
     model.to("cuda")
     return tokenizer, model
 
-@isolated(requirements=requirements, machine_type="GPU", keep_alive=60, exposed_port=8080)
+@isolated(requirements=requirements, machine_type="GPU", keep_alive=30, exposed_port=8080)
 def chat_app():
     from fastapi import FastAPI, HTTPException
     from fastapi.responses import StreamingResponse
@@ -97,5 +96,5 @@ def chat_app():
 As you may have noticed, this example also includes the webserver code to serve the model. We wanted to include it to demonstrate how to stream the LMM results. To deploy the `app` function as a web server with fal-serverless run the following command:
 
 ```
-fal-serverless function serve /path_to_file.py app
+fal-serverless function serve /path_to_file.py chat_app
 ```
