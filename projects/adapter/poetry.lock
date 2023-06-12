@@ -456,7 +456,7 @@ python-versions = "*"
 
 [[package]]
 name = "fal-serverless"
-version = "0.6.33"
+version = "0.6.34"
 description = "fal Serverless is an easy-to-use Serverless Python Framework"
 category = "main"
 optional = false
@@ -471,8 +471,8 @@ dill = "0.3.5.1"
 grpc-interceptor = ">=0.15.0,<0.16.0"
 grpcio = ">=1.50.0,<2.0.0"
 importlib-metadata = {version = ">=4.4", markers = "python_version < \"3.10\""}
-isolate = {version = "0.12.0", extras = ["build"]}
-isolate-proto = ">=0.0.28,<0.0.29"
+isolate = {version = ">=0.12.2,<1.0", extras = ["build"]}
+isolate-proto = ">=0.0.30,<0.0.31"
 opentelemetry-api = ">=1.15.0,<2.0.0"
 opentelemetry-sdk = ">=1.15.0,<2.0.0"
 packaging = ">=21.3"
@@ -780,7 +780,7 @@ six = "*"
 
 [[package]]
 name = "isolate"
-version = "0.12.0"
+version = "0.12.2"
 description = "Managed isolated environments for Python"
 category = "main"
 optional = false
@@ -800,7 +800,7 @@ build = ["PyYAML (>=6.0)", "virtualenv (>=20.4)"]
 
 [[package]]
 name = "isolate-proto"
-version = "0.0.28"
+version = "0.0.30"
 description = "(internal) gRPC definitions for Isolate Cloud"
 category = "main"
 optional = false
@@ -808,7 +808,7 @@ python-versions = ">=3.7,<4"
 
 [package.dependencies]
 grpcio = ">=1.49"
-isolate = {version = "0.12.0", extras = ["build"]}
+isolate = {version = ">=0.12.2,<1.0", extras = ["build"]}
 protobuf = "*"
 
 [[package]]
@@ -1820,7 +1820,7 @@ trino = ["trino"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2, <3.12"
-content-hash = "279966edb58ba9825e815bf6ef251465a81002305e2a050cc33bc7863d4d50d7"
+content-hash = "1446bff627bcc93285b147fa7c623d39e583ae7e32a3a438787a99e269e8d390"
 
 [metadata.files]
 agate = [
@@ -2154,8 +2154,8 @@ distlib = [
     {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
 ]
 fal-serverless = [
-    {file = "fal_serverless-0.6.33-py3-none-any.whl", hash = "sha256:79d1a83b8d8093b6d8d2ab88968eb182d58812767ac63d7cd898416b4a64da29"},
-    {file = "fal_serverless-0.6.33.tar.gz", hash = "sha256:b079b9e9dcf7b4628d7eab851fcd98c246a6a4bd167d531cb300a1c3738cb736"},
+    {file = "fal_serverless-0.6.34-py3-none-any.whl", hash = "sha256:3d4c860d46f8c5246070fdcbd645b6dca2377ff5085ebdb91d6a11e4b1d1c3ff"},
+    {file = "fal_serverless-0.6.34.tar.gz", hash = "sha256:8ca548b68125e9b782012b2037411b13c72953f8b03ed36e1e6479678a2842f9"},
 ]
 filelock = [
     {file = "filelock-3.9.0-py3-none-any.whl", hash = "sha256:f58d535af89bb9ad5cd4df046f741f8553a418c01a7856bf0d173bbc9f6bd16d"},
@@ -2472,12 +2472,12 @@ isodate = [
     {file = "isodate-0.6.1.tar.gz", hash = "sha256:48c5881de7e8b0a0d648cb024c8062dc84e7b840ed81e864c7614fd3c127bde9"},
 ]
 isolate = [
-    {file = "isolate-0.12.0-py3-none-any.whl", hash = "sha256:e8275ae1edd9553a942a11d33fa8dae0b5f9ea5618def7c6d03f8ad18633a070"},
-    {file = "isolate-0.12.0.tar.gz", hash = "sha256:ba1e7873f7ac8caf2e428ce595d61f5a6ebe54750018a3356adcb57e8fc35567"},
+    {file = "isolate-0.12.2-py3-none-any.whl", hash = "sha256:222e85a37c6b10bc13780a5ae38b2ab73a2c69ef09d9f99aae305c9e14bd7324"},
+    {file = "isolate-0.12.2.tar.gz", hash = "sha256:dddffa589a0894e0dcc6722241e892cad009888366da9dc50f9253d98fb28e8b"},
 ]
 isolate-proto = [
-    {file = "isolate_proto-0.0.28-py3-none-any.whl", hash = "sha256:88ba7570acaf2ccecb4b3bdc1789ae97b604ddd2028a56739c7f98e05b262ddc"},
-    {file = "isolate_proto-0.0.28.tar.gz", hash = "sha256:d5917bc82fe602a7600f5d09033ff4e2e1cf090fd23da24761fbea165d968362"},
+    {file = "isolate_proto-0.0.30-py3-none-any.whl", hash = "sha256:d860326071323fd3277e446fed5d0bbe8a0f1ab33851d274d480c851cfe2fb58"},
+    {file = "isolate_proto-0.0.30.tar.gz", hash = "sha256:6b311e96c16dafafe6223f2afe2acc670eb7ccc936189fb36bce71f55eeb6872"},
 ]
 jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
