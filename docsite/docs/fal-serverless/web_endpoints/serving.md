@@ -42,6 +42,16 @@ Registered anonymous function '37f8658e-b841-4b51-ab1a-92565f3a4c04'.
 URL: https://1714827-37f8658e-b841-4b51-ab1a-92565f3a4c04.gateway.alpha.fal.ai
 ```
 
+### Public URLs
+
+By default each registered function is private. In other words requires the caller to pass a FAL key ID and key secret either in the header or as query params. If you wish to skip this validation you can register your function to be public. A public URL is open to the internet and anyone who has access to the URL will be able to call it.
+
+To expose a public URL set the `--auth` option to `public`:
+
+```
+fal-serverless function serve ./path/to/file call_text --auth public
+```
+
 ## Access Served Function via REST API
 
 To access the served function, make a POST REST API request to the following URL:

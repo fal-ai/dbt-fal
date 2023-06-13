@@ -1,8 +1,13 @@
+---
+sidebar_position: 7
+---
+
 # Secrets
 
 `fal-serverless` offers a convenient way to manage sensitive information, such as API keys or database credentials, within your isolated functions. The secrets functionality enables you to store and access secrets as environment variables, ensuring that your sensitive data remains protected while being readily available when needed.
 
 ## Managing Secrets
+
 ### Setting Secrets
 
 To store a secret, use the `fal-serverless secrets set` command followed by the secret name and its corresponding value:
