@@ -90,3 +90,24 @@ def flask_app():
 ```
 
 In this example, the Flask app is exposed on port 8080 and returns the input string as a JSON response.
+
+## Access Web Endpoint Logs
+Logs for function calls for web endpoints can be accessed via fal-serverless CLI.
+
+```bash
+fal-serverless function logs
+```
+
+By default the above command will print out the latest 100 log entries from all of your web endpoints. You can also specify an endpoint url:
+
+```bash
+fal-serverless function logs --url $MY_ENDPOINT_URL
+```
+
+Here's how to specify how many lines should be printed:
+
+```bash
+fal-serverless function logs --url $MY_ENDPOINT_URL --lines 20
+```
+
+The above command will print out the latest 20 lines of logs for a web endpoint deployed at `$MY_ENDPOINT_URL`.
