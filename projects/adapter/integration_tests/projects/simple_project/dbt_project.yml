@@ -10,10 +10,11 @@ snapshot-paths: ["snapshots"]
 
 models:
   +schema: custom
-  # All serverless should run on M machines by default
-  +fal_machine: "M"
+  # All serverless should run on S machines by default
+  +fal_machine: S
   simple_test:
-    python:
-      +materialized: table
     base:
       +materialized: table
+      +post-hook:
+        # NOTE: completely ignored for Python models
+        - "ALTER TABLE {{ this }} ADD COLUMN my_post_hook text"

@@ -1,7 +1,7 @@
 -- To test full-refresh
 {{ config(materialized='incremental') }}
 
-WITH data AS (
+WITH final AS (
     SELECT 
         my_int,
         my_text,
@@ -11,4 +11,4 @@ WITH data AS (
 )
 
 SELECT *
-FROM data
+FROM final
