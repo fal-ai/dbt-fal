@@ -42,9 +42,8 @@ trino = { version = "~0.321.0", extras = ["sqlalchemy"], optional = true }
 s3fs = { version = ">=2022.8.2", optional = true }
 
 # fal cloud
-dill = ">=0.3.5.1"
 packaging = ">=23"
-fal-serverless = "^0.6.34"
+fal-serverless = "^0.6.35"
 importlib-metadata = "^6.0.0"
 
 [tool.poetry.dev-dependencies]
