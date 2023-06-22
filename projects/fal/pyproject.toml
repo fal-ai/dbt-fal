@@ -53,9 +53,6 @@ sqlalchemy-redshift = { version = "^0.8.9", optional = true }
 ## duckdb
 duckdb-engine = { version = "^0.1.8", optional = true }
 
-# fal cloud
-koldstart = { version = "^0.6.16", optional = true }
-
 # dev
 pytest = { version = "^5.2", optional = true }
 black = { version = "^22.3", optional = true }
@@ -81,7 +78,7 @@ test = [
 dev = [
     "matplotlib"
 ]
-cloud = ["koldstart"]
+cloud = []
 
 [tool.poetry.dev-dependencies]
 pytest = { version = "^5.2", optional = true }

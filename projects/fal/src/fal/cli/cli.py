@@ -37,27 +37,5 @@ def _cli(argv: List[str]):
         elif parsed.command == "run":
             fal_run(parsed)
 
-        elif parsed.command == "cloud":
-            import koldstart.auth as auth
-            if parsed.cloud_command == "login":
-                auth.login()
-
-            elif parsed.cloud_command == "logout":
-                auth.logout()
-
-            elif parsed.cloud_command == "key-generate":
-                from koldstart.sdk import KoldstartClient
-                client = KoldstartClient(f"{parsed.host}:{parsed.port}")
-                try:
-                    with client.connect() as connection:
-                        result = connection.create_user_key()
-                        print(
-                            "Generated key id and key secret.\n"
-                            "This is the only time the secret will be visible.\n"
-                            "You will need to generate a new key pair if you lose access to this secret."
-                        )
-                        print(f"KEY_ID='{result[1]}'\nKEY_SECRET='{result[0]}'")
-                except ClickException as e:
-                    if e.message == "Use `isolate-cloud login` flow":
-                        raise RuntimeError("Login by running `fal cloud login`.")
-                    raise e
+        else:
+            raise ClickException(f"Unknown command {parsed.command}")
