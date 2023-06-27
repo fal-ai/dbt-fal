@@ -26,29 +26,18 @@ runs:
       run: pip install poetry-core=="1.0.*" poetry=="1.1.4"
 
     - name: Install fal
-      shell: sh
-      run: |
-        if [[ '${{ inputs.adapter }}' == 'fal' ]]
-        then
-          pip install -e './projects/fal[postgres]'
-        else
-          pip install -e './projects/fal[${{ inputs.adapter }}]'
-        fi
-
-    - name: Install dbt
       shell: bash
       run: |
-        package=dbt-${{ inputs.adapter }}
+        package='dbt-${{ inputs.adapter }}'
         # overwrite for specific adapters
         if [[ '${{ inputs.adapter }}' == 'athena' ]]
         then
-          package=dbt-athena-adapter
+          package='dbt-athena-adapter'
         fi
 
         if [[ '${{ inputs.dbt }}' == 'latest' ]]
         then
           version='*'
-          pip install ${package}
         elif [[ '${{ inputs.dbt }}' =~ ^1.*$ ]]
         then
           version='${{ inputs.dbt }}'
@@ -57,12 +46,23 @@ runs:
           exit 2
         fi
 
-        echo "${package}==${version}"
-        pip install ${package}==${version}
         if [[ '${{ inputs.adapter }}' == 'fal' ]]
         then
-          pip install dbt-postgres==${version}
+          extra="dbt-postgres==${version}"
+        else
+          extra=""
         fi
+
+        if [[ '${{ inputs.adapter }}' == 'fal' ]]
+        then
+          project='./projects/fal[postgres]'
+        else
+          project='./projects/fal[${{ inputs.adapter }}]'
+        fi
+
+        echo "${project}" "${package}==${version}" $extra
+        pip install -e "${project}" "${package}==${version}" $extra
+
 
     - name: List requirements.txt
       shell: sh
