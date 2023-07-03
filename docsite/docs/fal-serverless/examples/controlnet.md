@@ -1,7 +1,11 @@
-# Deploying a Custom ControlNet Model Using fal-serverless
+---
+sidebar_position: 2
+---
 
-fal-serverless is a serverless platform that enables you to run Python functions on cloud infrastructure. In this example, we will demonstrate how to use fal-serverless for deploying a custom ControlNet model.
+# Restyle Room Photos with ControlNet
+In this example, we will demonstrate how to use fal-serverless for deploying a ControlNet model.
 
+## 1. Create a new file called controlnet.py
 ```python
 from __future__ import annotations
 from fal_serverless import isolated, cached
@@ -9,7 +13,6 @@ from fal_serverless import isolated, cached
 from pathlib import Path
 import base64
 import io
-
 
 requirements = [
     "controlnet-aux",
@@ -20,12 +23,6 @@ requirements = [
     "accelerate",
     "xformers"
 ]
-
-def image_to_base64(image_path):
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
-    return encoded_string
-
 
 def read_image_bytes(file_path):
     with open(file_path, "rb") as file:
@@ -69,10 +66,6 @@ def resize_image(input_image, resolution):
     )
     return img
 
-def save_image_from_bytes(image_bytes, output_path):
-    with open(output_path, "wb") as file:
-        file.write(image_bytes)
-
 @isolated(
     requirements=requirements,
     machine_type="GPU",
@@ -90,7 +83,6 @@ def generate(
 
     pipe = load_model()
     image = Image.open(io.BytesIO(image_bytes))
-
 
     canny = CannyDetector()
     init_image = image.convert("RGB")
@@ -123,3 +115,23 @@ def generate(
     list_of_bytes = [read_image_bytes(out_dir / f) for f in file_names]
     return list_of_bytes
 ```
+
+## 2. Deploy the model as an endpoint
+To use this fal-serverless function as an API, you can serve it with the `fal-serverless` CLI command:
+
+```bash
+fal-serverless fn serve controlnet.py generate --alias controlnet --auth public
+```
+
+This will return a URL like:
+```
+Registered a new revision for function 'controltest' (revision='c75db134-23f0-4863-94cd-3358d6c8d94c').
+URL: https://user_id-controlnet.gateway.alpha.fal.ai
+```
+
+## 3. Test it out
+```bash
+curl https://user_id-controlnet.gateway.alpha.fal.ai/ -H 'content-type: application/json' -H 'accept: application/json, */*;q=0.5' -d '{"image_url":"https://restore.tchabitat.org/hubfs/blog/2019%20Blog%20Images/July/Old%20Kitchen%20Cabinets%20-%20Featured%20Image.jpg","prompt":"scandinavian kitchen","num_samples":1,"num_steps":30}'
+```
+
+This should return a JSON with the image encoded in base64.
