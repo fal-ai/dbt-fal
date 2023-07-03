@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Image restoration with Transformers
+# Restore Old Images with Transformers
 
 In this example, we will demonstrate how to use the [SwinIR](https://github.com/JingyunLiang/SwinIR) library and fal-serverless to restore images. SwinIR is an image restoration library that uses a Swin Transformer to restore images. The [Swin Transformer](https://arxiv.org/abs/2103.14030) is a type of neural network architecture that is designed for processing images. The Swin Transformer is similar to the popular Vision Transformer (ViT) architecture, but it uses a hierarchical structure that allows it to process images more efficiently. SwinIR uses a pre-trained Swin Transformer to restore images.
 
