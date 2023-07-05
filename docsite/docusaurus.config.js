@@ -12,7 +12,7 @@ const config = {
   baseUrl: '/',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/fal-logo.svg',
+  favicon: 'img/new-logo-no-text.png',
   organizationName: 'fal-ai', // Usually your GitHub org/user name.
   projectName: 'fal', // Usually your repo name.
   plugins: [require.resolve("@cmfcmf/docusaurus-search-local")],
@@ -46,10 +46,9 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: 'Features & Labels',
         logo: {
           alt: 'fal Logo',
-          src: 'img/fal-logo.svg',
+          src: 'img/new-logo.png',
         },
         items: [
           {
