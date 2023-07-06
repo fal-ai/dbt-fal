@@ -54,20 +54,15 @@ const config = {
           {
             type: 'docSidebar',
             position: 'left',
-            sidebarId: 'docs',
-            label: 'fal ',
+            sidebarId: 'serverless',
+            label: 'fal-serverless',
+            href: '/',
           },
           {
             type: 'docSidebar',
             position: 'left',
             sidebarId: 'adapter',
             label: 'dbt-fal',
-          },
-          {
-            type: 'docSidebar',
-            position: 'left',
-            sidebarId: 'serverless',
-            label: 'fal-serverless',
           },
           {
             to: 'https://blog.fal.ai',

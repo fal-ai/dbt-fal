@@ -4,52 +4,87 @@ sidebar_position: 1
 
 # Quickstart
 
-dbt-fal adapter is the ✨easiest✨ way to run your [dbt Python models](https://docs.getdbt.com/docs/building-a-dbt-project/building-models/python-models).
+fal is the easiest way to run Python with your dbt project.
 
-Starting with dbt v1.3, you can now build your dbt models in Python. However the developer experience with existing datawarehouse Python runtimes is not ideal.
+The fal ecosystem has two main components: The fal CLI and the dbt-fal adapter.
 
-dbt-fal provides the best environment to run your Python models that works with all other data warehouses. This includes Postgres, Redshift which do not have Python support, as well as Bigquery, Snowflake which are too hard to work with.
+### With the dbt-fal Python adapter, you can:
 
-With dbt-fal, you can:
+- Enable a developer-friendly Python environment for most databases, including ones without dbt Python support such as Redshift, Postgres.
+- Use Python libraries such as sklearn or prophet to build more complex dbt models including ML models.
+- Easily manage your Python environments with isolate.
+- Iterate on your Python models locally and then scale them out in the cloud.
 
-- Build and test your models locally
-- Isolate each model to run in its own environment with its own dependencies
-- Run your Python models in the [☁️ cloud ☁️](/fal/python-models/using-fal-serverless) with elasticly scaling Python environments and pay for only what you use.
-- Even add GPUs to your models for some heavy workloads such as training ML models. 🤖
+Go to the [dbt-fal](/fal/python-models/overview) documentation for more details!
 
-## 1. Install dbt-fal
+### With the fal CLI, you can:
 
-`pip install dbt-fal[bigquery, snowflake]` _Add your current warehouse here_
+- Send Slack notifications upon dbt model success or failure.
+- Load data from external data sources before a model starts running.
+- Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`
+- Programatically access rich metadata about your dbt project using `FalDbt`.
 
-## 2. Update your `profiles.yml` and add the fal adapter
+Go to the [fal CLI](/fal/orchestrate-dbt-runs/) documentation for more details!
 
-Add another entry to `outputs` in your desired profile (below we've added `dev_with_fal`)
-
-```yaml
-jaffle_shop:
-  target: dev_with_fal # target points at the new output
-  outputs:
-    dev_bigquery:
-      type: bigquery
-      method: service-account
-      keyfile: /path/to/keyfile.json
-      project: my_gcp_project
-      dataset: my_dbt_dataset
-      threads: 4
-      timeout_seconds: 300
-      location: US
-      priority: interactive
-    dev_with_fal: # Name of your new output
-      type: fal
-      db_profile: dev_bigquery # This points to your main adapter
-```
-
-Don't forget to point to your main adapter with the `db_profile` attribute. This is how the fal adapter knows how to connect to your data warehouse.
-
-## 3. Run dbt
+## 1. Install fal and dbt-fal
 
 ```bash
-dbt run
+$ pip install fal dbt-fal[postgres]
 ```
 
-That is it! It is really that simple 😊
+## 2. Go to your dbt directory
+
+```bash
+$ cd ~/src/my_dbt_project
+```
+
+## 3. Create a Python script: `send_slack_message.py`
+
+```python
+import os
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+
+CHANNEL_ID = os.getenv("SLACK_CHANNEL")
+SLACK_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+
+client = WebClient(token=SLACK_TOKEN)
+
+message_text = f"Model: {context.current_model.name}. Status: {context.current_model.status}."
+
+if str(context.current_model.status) == 'success':
+  # Read model as pandas.DataFrame
+  df = ref(context.current_model.name)
+  message_text += f" Size: {df.size}."
+
+try:
+    response = client.chat_postMessage(
+        channel=CHANNEL_ID,
+        text=message_text
+    )
+except SlackApiError as e:
+    assert e.response["error"]
+```
+
+As you can see from the `context` object, fal makes certain variables (and functions) avaliable in this script. [Check out the fal scripts section for more details](./reference/variables-and-functions.md)
+
+## 4. Add a `meta` section in your `schema.yml`
+
+```yaml
+models:
+  - name: some_model
+    meta:
+      fal:
+        scripts:
+          - send_slack_message.py
+```
+
+## 5. Run `fal flow run`
+
+This command manages your dbt runs for you, by running scripts and models in the correct order.
+
+```bash
+$ fal flow run
+# 1. dbt model `some_model` is run
+# 2. slack message is sent with the run result
+```
