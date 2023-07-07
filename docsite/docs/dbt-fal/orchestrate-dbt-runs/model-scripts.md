@@ -32,6 +32,6 @@ overview between these two features:
 | Runs even if the underlying model's `dbt run` fails             | ❌               | ✅                                                            |
 | Can be [parameterized](./structured-hooks.md)                   | ❌               | ✅                                                            |
 | Can be individually selected / executed                         | ✅               | ❌                                                            |
-| Can use `write_to_source`/`write_to_model`                      | ✅               | ❌ (use [Python models](/fal/python-models/overview) instead) |
+| Can use `write_to_source`/`write_to_model`                      | ✅               | ❌ (use [Python models](/dbt-fal/python-models/overview) instead) |
 
 If you have an existing project and want to move away from `after` scripts, please see the related section in the ["Compatibility" page](../compatibility.md).

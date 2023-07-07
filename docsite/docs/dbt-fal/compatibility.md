@@ -35,4 +35,4 @@ fal will start showing deprecation warnings for `after` scripts when using
 `fal flow run`. The easiest way forward is migrating them to `post-hook`s, and
 in general the migration is seamless. But if any of the scripts you have is
 using `write_to_source` or `write_to_model` functions, we'd recommend promoting
-them to individual ["Python models"](/fal/guides/python-models-migration).
+them to individual ["Python models"](/dbt-fal/guides/python-models-migration).

@@ -6,7 +6,7 @@ sidebar_position: 1
 
 fal is the easiest way to run Python with your dbt project.
 
-The fal ecosystem has two main components: The fal CLI and the dbt-fal adapter.
+The fal ecosystem has two main components: the dbt-fal adapter and the fal CLI.
 
 ### With the dbt-fal Python adapter, you can:
 
@@ -15,7 +15,7 @@ The fal ecosystem has two main components: The fal CLI and the dbt-fal adapter.
 - Easily manage your Python environments with isolate.
 - Iterate on your Python models locally and then scale them out in the cloud.
 
-Go to the [dbt-fal](/fal/python-models/overview) documentation for more details!
+Go to the [dbt-fal](/dbt-fal/python-models/overview) documentation for more details!
 
 ### With the fal CLI, you can:
 
@@ -24,7 +24,7 @@ Go to the [dbt-fal](/fal/python-models/overview) documentation for more details!
 - Download dbt models into a Python context with a familiar syntax: `ref('my_dbt_model')`
 - Programatically access rich metadata about your dbt project using `FalDbt`.
 
-Go to the [fal CLI](/fal/orchestrate-dbt-runs/) documentation for more details!
+Go to the [fal CLI](/dbt-fal/orchestrate-dbt-runs/) documentation for more details!
 
 ## 1. Install fal and dbt-fal
 

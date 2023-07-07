@@ -30,4 +30,4 @@ tickets = faldbt.ref('stg_zendesk_ticket_data')
 
 ---
 
-Check out the [FalDbt class explanation](/fal/reference/faldbt-class-object) in the reference section.
+Check out the [FalDbt class explanation](/dbt-fal/reference/faldbt-class-object) in the reference section.

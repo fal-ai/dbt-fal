@@ -14,7 +14,7 @@ With dbt-fal, you can:
 
 - Build and test your models locally
 - Isolate each model to run in its own environment with its own dependencies
-- Run your Python models in the [☁️ cloud ☁️](/fal-serverless/quickstart) with elasticly scaling Python environments and pay for only what you use.
+- Run your Python models in the [☁️ cloud ☁️](/) with elasticly scaling Python environments and pay for only what you use.
 - Even add GPUs to your models for some heavy workloads such as training ML models. 🤖
 
 ## 1. Install dbt-fal
