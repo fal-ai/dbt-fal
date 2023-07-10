@@ -1,6 +1,6 @@
 """Fal utilities."""
 import copy
-from faldbt.logger import LOGGER
+from fal.integration.logger import LOGGER
 from typing import List, TYPE_CHECKING, TypeVar
 
 try:

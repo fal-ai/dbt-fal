@@ -7,7 +7,7 @@ from fal.planner.schedule import Scheduler
 from fal.planner.tasks import FalLocalHookTask, Status, TaskGroup
 
 from fal.fal_script import FalScript, TimingType
-from faldbt.project import FAL, DbtModel, FalDbt, FalGeneralException
+from fal.integration.project import FAL, DbtModel, FalDbt, FalGeneralException
 
 
 def create_fal_dbt(
@@ -151,7 +151,7 @@ def _get_filtered_models(faldbt: FalDbt, all, selected, before) -> List[DbtModel
         and not before
         and faldbt._run_results.native_run_result is None
     ):
-        from faldbt.parse import FalParseError
+        from fal.integration.parse import FalParseError
 
         raise FalParseError(
             "Cannot define models to run without selection flags or dbt run_results artifact or --before flag"

@@ -8,7 +8,7 @@ from fal.cli.selectors import ExecutionPlan
 from fal.cli.model_generator import generate_python_dbt_models
 from fal.fal_script import FalScript
 from fal.node_graph import DbtModelNode, FalFlowNode, NodeGraph, ScriptNode
-from faldbt.project import FalDbt, NodeStatus
+from fal.integration.project import FalDbt, NodeStatus
 import argparse
 
 

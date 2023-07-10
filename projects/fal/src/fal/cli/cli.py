@@ -8,7 +8,7 @@ from .args import parse_args
 from .fal_runner import fal_run
 from fal.telemetry import telemetry
 
-from faldbt.logger import log_manager
+from fal.integration.logger import log_manager
 
 
 def cli(argv: List[str] = sys.argv):

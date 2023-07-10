@@ -29,8 +29,8 @@ from sqlalchemy.sql import Insert
 from dbt.contracts.sql import RemoteRunResult
 
 
-from faldbt import parse
-from faldbt.logger import LOGGER
+from fal.integration import parse
+from fal.integration.logger import LOGGER
 
 
 class WriteModeEnum(Enum):

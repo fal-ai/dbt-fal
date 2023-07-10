@@ -5,13 +5,13 @@ from typing import Callable, Iterable, List, TypeVar
 from pathlib import Path
 from fal.fal_script import python_from_file
 
-from faldbt.parse import get_fal_models_dirs, load_dbt_project_contract
+from fal.integration.parse import get_fal_models_dirs, load_dbt_project_contract
 from fal.cli.model_generator.module_check import (
     generate_dbt_dependencies,
     write_to_model_check,
 )
 
-from faldbt.logger import LOGGER
+from fal.integration.logger import LOGGER
 
 from fal.telemetry import telemetry
 

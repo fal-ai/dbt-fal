@@ -16,8 +16,8 @@ from dbt.exceptions import IncompatibleSchemaError, DbtRuntimeError
 
 from fal.utils import cache_static
 
-from faldbt.logger import LOGGER
-from faldbt.utils.yaml_helper import load_yaml
+from fal.integration.logger import LOGGER
+from fal.integration.utils.yaml_helper import load_yaml
 from fal.telemetry import telemetry
 
 if TYPE_CHECKING:

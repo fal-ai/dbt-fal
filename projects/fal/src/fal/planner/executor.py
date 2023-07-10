@@ -19,9 +19,9 @@ from fal.planner.tasks import (
     FalLocalHookTask,
     HookType,
 )
-from faldbt.project import FalDbt
+from fal.integration.project import FalDbt
 
-from faldbt.logger import LOGGER
+from fal.integration.logger import LOGGER
 
 
 class State(Enum):

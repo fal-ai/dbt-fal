@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Optional, Union, Iterator
 from fal.node_graph import NodeGraph
-from faldbt.project import CompileArgs, FalDbt, FalGeneralException
+from fal.integration.project import CompileArgs, FalDbt, FalGeneralException
 from dbt.task.compile import CompileTask
 from enum import Enum
 from functools import reduce

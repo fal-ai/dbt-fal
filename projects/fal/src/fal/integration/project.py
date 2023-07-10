@@ -14,7 +14,7 @@ from typing import (
 from pathlib import Path
 from deprecation import deprecated
 
-import faldbt.version as version
+import fal.integration.version as version
 
 from dbt.cli.resolvers import default_profiles_dir
 from dbt.cli.main import dbtRunner, dbtRunnerResult

@@ -243,7 +243,7 @@ def get_dbt_config():
     try:
         from dbt.flags import PROFILES_DIR
         from fal.cli.args import parse_args
-        from faldbt.parse import get_dbt_config
+        from fal.integration.parse import get_dbt_config
 
         args = parse_args(sys.argv[1:])
 

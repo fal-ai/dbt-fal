@@ -1,6 +1,6 @@
 from dbt.contracts.results import NodeStatus
 
-from faldbt.project import (
+from fal.integration.project import (
     FalDbt,
     DbtModel,
     DbtSource,

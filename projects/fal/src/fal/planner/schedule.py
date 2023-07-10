@@ -6,7 +6,7 @@ from typing import Iterator, List, Optional
 
 import networkx as nx
 
-from faldbt.project import DbtModel
+from fal.integration.project import DbtModel
 from fal.node_graph import DbtModelNode, NodeGraph, NodeKind, ScriptNode
 from fal.planner.tasks import (
     SUCCESS,

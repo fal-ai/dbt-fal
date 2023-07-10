@@ -234,7 +234,7 @@ jobs:
 
       - name: Setup behave
         working-directory: projects/fal/integration_tests
-        run: pip install behave
+        run: pip install behave ipython
 
       - name: Run tests
         id: test_run

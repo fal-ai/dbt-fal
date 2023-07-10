@@ -13,7 +13,7 @@ from typing import Any, Callable, ContextManager, Generic, Iterator, TypeVar, Di
 
 from platformdirs import user_cache_dir
 
-from faldbt.logger import LOGGER
+from fal.integration.logger import LOGGER
 from fal.packages import bridge, isolated_runner
 
 BASE_CACHE_DIR = Path(user_cache_dir("fal", "fal"))

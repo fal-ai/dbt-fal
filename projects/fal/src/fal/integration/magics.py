@@ -11,7 +11,7 @@ def init_fal(line="", local_ns={}):
 
     Example:
     """
-    from faldbt.magics import init_fal
+    from fal.integration.magics import init_fal
 
     %init_fal project_dir=/my_project_dir profiles_dir=/my_profiles_dir default_model_name=my_model
     """

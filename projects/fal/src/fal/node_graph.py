@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Tuple, Dict, cast
 
 from fal.fal_script import FalScript, TimingType
-from faldbt.project import DbtModel, FalDbt
+from fal.integration.project import DbtModel, FalDbt
 from pathlib import Path
 import networkx as nx
 import os as os

@@ -13,11 +13,11 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Iterator, List, Any, Optional, Dict, Tuple, Union
 
-from faldbt.logger import LOGGER
+from fal.integration.logger import LOGGER
 
 from fal.fal_script import FalScript, TimingType
 from fal.utils import print_run_info, DynamicIndexProvider
-from faldbt.project import DbtModel, FalDbt, NodeStatus
+from fal.integration.project import DbtModel, FalDbt, NodeStatus
 
 from datetime import datetime, timezone
 

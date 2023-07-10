@@ -2,7 +2,7 @@ import sys
 from fal import FalDbt
 from _fal_testing import create_file
 
-from faldbt.project import DbtGenericTest, DbtSingularTest
+from fal.integration.project import DbtGenericTest, DbtSingularTest
 
 project_dir = "."
 if len(sys.argv) >= 2:

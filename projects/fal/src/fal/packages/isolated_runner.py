@@ -36,7 +36,7 @@ DEBUG_TIMEOUT = 60 * 15
 
 
 def run_client(address: str, *, with_pdb: bool = False) -> int:
-    from faldbt.logger import LOGGER
+    from fal.integration.logger import LOGGER
     from fal.packages import bridge
 
     if with_pdb:
@@ -88,7 +88,7 @@ def _get_shell_bootstrap() -> str:
 
 
 def _fal_main() -> None:
-    from faldbt.logger import LOGGER
+    from fal.integration.logger import LOGGER
     from fal.packages import bridge
 
     LOGGER.debug("Starting the isolated process at PID {}", os.getpid())
@@ -125,7 +125,7 @@ def _process_primary_env_packages() -> None:
 def main():
     _process_primary_env_packages()
 
-    from faldbt.logger import log_manager
+    from fal.integration.logger import log_manager
 
     # TODO: do we still need this?
     with log_manager.applicationbound():

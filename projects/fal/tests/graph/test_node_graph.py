@@ -6,7 +6,7 @@ from unittest.mock import patch
 from fal.node_graph import NodeGraph, _add_after_scripts, _add_before_scripts
 from utils import assert_contains_only, create_mock_model
 
-import faldbt.version as version
+import fal.integration.version as version
 
 
 
