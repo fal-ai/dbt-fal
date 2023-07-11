@@ -124,6 +124,7 @@ jobs:
           popd
 
       - name: Setup behave
+        working-directory: fal/projects/adapter/integration_tests
         run: pip install behave
 
       - name: Run tests
