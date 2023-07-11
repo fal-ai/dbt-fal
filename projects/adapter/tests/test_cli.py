@@ -77,7 +77,7 @@ def test_run_with_project_dir(capfd):
 def test_version(capfd):
     import pkg_resources
 
-    version = pkg_resources.get_distribution("fal").version
+    version = pkg_resources.get_distribution("dbt-fal").version
     captured = _run_fal(["--version"], capfd)
     assert f"fal {version}" in captured.out
 

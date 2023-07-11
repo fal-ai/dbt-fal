@@ -127,7 +127,7 @@ def get_dbt_adapter_type(config: RuntimeConfig | None) -> str | None:
 def fal_installed_version():
     """Returns: fal version"""
     try:
-        return pkg_resources.get_distribution("fal").version
+        return pkg_resources.get_distribution("dbt-fal").version
     except ImportError:
         return
 

@@ -208,7 +208,7 @@ def _build_cli_parser():
         description="Run Python scripts on dbt models",
     )
 
-    version = pkg_resources.get_distribution("fal").version
+    version = pkg_resources.get_distribution("dbt-fal").version
     parser.add_argument(
         "-v",
         "--version",
