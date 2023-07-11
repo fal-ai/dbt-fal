@@ -210,7 +210,7 @@ jobs:
           adapter: ${{ matrix.profile }}
 
       - name: Start Docker database
-        working-directory: projects/adapter/integration_tests
+        working-directory: projects/adapter/cli_tests
         # TODO: make redshift use a real connection
         if: contains(fromJSON('["redshift", "postgres", "fal"]'), matrix.profile)
         run: docker-compose up -d

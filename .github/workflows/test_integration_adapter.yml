@@ -62,7 +62,7 @@ jobs:
           path: "fal"
 
       - name: Start Docker database
-        working-directory: fal/projects/adapter/integration_tests
+        working-directory: fal/projects/adapter/cli_tests
         if: contains(fromJSON('["postgres"]'), matrix.profile)
         run: docker-compose up -d
 
@@ -93,7 +93,6 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
-          pip install build wheel -e '../../fal[${{ matrix.profile }}]'
 
           ADAPTER_PACKAGE="dbt-${{ matrix.profile }}"
           if [[ '${{ matrix.profile }}' == 'athena' ]]
@@ -125,7 +124,6 @@ jobs:
           popd
 
       - name: Setup behave
-        working-directory: fal/projects/adapter/integration_tests
         run: pip install behave
 
       - name: Run tests
