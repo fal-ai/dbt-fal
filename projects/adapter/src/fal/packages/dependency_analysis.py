@@ -41,16 +41,11 @@ def _get_dbt_packages() -> Iterator[Tuple[str, Optional[str]]]:
         if dbt_plugin_name == "dbt-core":
             continue
 
-        # Handle dbt-fal separately (since it needs to be installed
-        # with its extras).
+        # Skip dbt-fal since it is already handled by _get_dbt_fal_package_name
         if dbt_plugin_name == "dbt-fal":
             continue
 
         yield dbt_plugin_name, distribution.version
-
-    package_info = _get_dbt_fal_package_name()
-    if package_info:
-        yield package_info
 
 
 def _find_fal_extras(package: str) -> set[str]:
@@ -86,8 +81,8 @@ def _find_fal_extras(package: str) -> set[str]:
     # the smallest possible subset of extras that we can install.
     return available_dbt_adapters.intersection(all_extras)
 
-def _is_fal_pre_release() -> bool:
-    raw_fal_version = importlib_metadata.version("fal")
+def _running_pre_release() -> bool:
+    raw_fal_version = importlib_metadata.version("dbt-fal")
     return _version_is_prerelease(raw_fal_version)
 
 def _version_is_prerelease(raw_version: str) -> bool:
@@ -96,19 +91,20 @@ def _version_is_prerelease(raw_version: str) -> bool:
     package_version = Version(raw_version)
     return package_version.is_prerelease
 
-def _get_dbt_fal_package_name() -> Optional[Tuple[str, Optional[str]]]:
-    try:
-        dbt_fal_version = importlib_metadata.version("dbt-fal")
-    except importlib_metadata.PackageNotFoundError:
-        # It might not be installed.
-        return None
-
-    if _is_fal_pre_release():
-        dbt_fal_dep = str(_get_project_root_path("adapter"))
-        # We are going to install it from the local path.
-        dbt_fal_version = None
+def _get_dbt_fal_package() -> Tuple[str, Optional[str]]:
+    if _running_pre_release():
+        proj_path = _get_project_root_path("adapter")
+        if proj_path.exists():
+            # We are going to install it from the local path.
+            dbt_fal_dep = str(proj_path)
+            dbt_fal_version = None
+        else:
+            # We are going to install it from PyPI.
+            dbt_fal_dep = "dbt-fal"
+            dbt_fal_version = importlib_metadata.version("dbt-fal")
     else:
         dbt_fal_dep = "dbt-fal"
+        dbt_fal_version = importlib_metadata.version("dbt-fal")
 
     dbt_fal_extras = _find_fal_extras("dbt-fal")
     if dbt_fal_extras:
@@ -116,23 +112,8 @@ def _get_dbt_fal_package_name() -> Optional[Tuple[str, Optional[str]]]:
 
     return dbt_fal_dep, dbt_fal_version
 
-def _get_fal_package_name() -> Tuple[str, Optional[str]]:
-    if _is_fal_pre_release():
-        fal_dep = str(_get_project_root_path("fal"))
-        fal_version = None
-    else:
-        fal_dep = "fal"
-        fal_version = importlib_metadata.version("fal")
-
-    fal_extras = _find_fal_extras("fal")
-    if fal_extras:
-        fal_dep += f"[{','.join(fal_extras)}]"
-
-    return fal_dep, fal_version
-
-
 def get_default_requirements() -> Iterator[Tuple[str, Optional[str]]]:
-    yield _get_fal_package_name()
+    yield _get_dbt_fal_package()
     yield from _get_dbt_packages()
 
 
