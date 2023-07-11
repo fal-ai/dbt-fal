@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
     paths:
-      - "projects/fal/**"
+      - "projects/adapter/**"
       - ".github/**"
       - "!.github/workflows/*adapter*"
   workflow_dispatch:
@@ -40,18 +40,18 @@ jobs:
           adapter: postgres
 
       - name: Start Docker database
-        working-directory: projects/fal/tests
+        working-directory: projects/adapter/tests
         run: docker-compose up -d
 
       - name: Setup pytest
         run: pip install pytest pytest-mock mock black
 
       - name: Run dbt
-        working-directory: projects/fal
+        working-directory: projects/adapter
         run: dbt run --profiles-dir tests/mock/mockProfile/ --project-dir tests/mock
 
       - name: Run tests
-        working-directory: projects/fal
+        working-directory: projects/adapter
         env:
           FAL_STATS_ENABLED: false
           DBT_TARGET_PATH: mockTarget

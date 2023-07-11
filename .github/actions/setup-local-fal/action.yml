@@ -25,7 +25,7 @@ runs:
       shell: bash
       run: pip install poetry-core=="1.0.*" poetry=="1.1.4"
 
-    - name: Install fal
+    - name: Install dbt-fal
       shell: bash
       run: |
         package='dbt-${{ inputs.adapter }}'
@@ -55,9 +55,9 @@ runs:
 
         if [[ '${{ inputs.adapter }}' == 'fal' ]]
         then
-          project='./projects/fal[postgres]'
+          project='./projects/adapter[postgres]'
         else
-          project='./projects/fal[${{ inputs.adapter }}]'
+          project='./projects/adapter[${{ inputs.adapter }}]'
         fi
 
         echo "${project}" "${package}==${version}" $extra

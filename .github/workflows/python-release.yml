@@ -5,15 +5,6 @@ name: PyPI Release
 on:
   workflow_dispatch:
     inputs:
-      package:
-        description: Package
-        required: false
-        default: fal
-        type: choice
-        options:
-          - fal
-          - dbt-fal
-
       version:
         description: Version
         required: false
@@ -49,15 +40,8 @@ jobs:
 
       - name: Package setup
         run: |
-          if [[ ${{ inputs.package }} == fal ]]
-          then
-            echo "PACKAGE_DIR=projects/fal" >> $GITHUB_ENV
-            echo "TAG_PREFIX=v" >> $GITHUB_ENV
-          elif [[ ${{ inputs.package }} == dbt-fal ]]
-          then
-            echo "PACKAGE_DIR=projects/adapter" >> $GITHUB_ENV
-            echo "TAG_PREFIX=adapter-v" >> $GITHUB_ENV
-          fi
+          echo "PACKAGE_DIR=projects/adapter" >> $GITHUB_ENV
+          echo "TAG_PREFIX=adapter-v" >> $GITHUB_ENV
 
       - name: Install poetry
         shell: bash
@@ -120,12 +104,12 @@ jobs:
       - name: Publish GitHub
         uses: softprops/action-gh-release@v1
         with:
-          name: ${{ inputs.package }} ${{ env.publishing_version }}
+          name: dbt-fal ${{ env.publishing_version }}
           body: ${{ steps.release.outputs.RELEASE_BODY }}
           tag_name: ${{ env.TAG_PREFIX }}${{ env.publishing_version }}
           files: |
-            ${{ env.PACKAGE_DIR }}/dist/${{ inputs.package }}-${{ env.publishing_version }}-py3-none-any.whl
-            ${{ env.PACKAGE_DIR }}/dist/${{ inputs.package }}-${{ env.publishing_version }}.tar.gz
+            ${{ env.PACKAGE_DIR }}/dist/dbt-fal-${{ env.publishing_version }}-py3-none-any.whl
+            ${{ env.PACKAGE_DIR }}/dist/dbt-fal-${{ env.publishing_version }}.tar.gz
 
       - name: Publish PyPI
         working-directory: ${{ env.PACKAGE_DIR }}
@@ -153,9 +137,9 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
-          branch: bump-${{ inputs.package }}-${{ env.publishing_version }}
+          branch: bump-dbt-fal-${{ env.publishing_version }}
           delete-branch: true
-          title: Bump the pyproject.toml ${{ inputs.package }} version
+          title: Bump the pyproject.toml dbt-fal version
           base: main
           token: ${{ secrets.RELEASER_GITHUB_PAT }}
           body: ${{ steps.release.outputs.RELEASE_BODY }}

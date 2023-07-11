@@ -13,12 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        dir: ["projects/fal", "projects/adapter"]
 
     # Run only the latest commit pushed to PR
     concurrency:
-      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}-${{ matrix.dir }}"
+      group: "${{ github.head_ref || github.run_id }}-${{ github.workflow }}"
       cancel-in-progress: true
 
     steps:
@@ -36,7 +34,7 @@ jobs:
         run: pip install poetry==1.2.*
 
       - name: Check poetry lock
-        working-directory: ${{ matrix.dir }}
+        working-directory: "projects/adapter"
         run: poetry lock --no-update
 
       - name: Pull Remote Changes
