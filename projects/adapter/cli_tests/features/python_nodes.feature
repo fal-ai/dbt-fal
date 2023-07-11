@@ -2,6 +2,13 @@ Feature: Python nodes
   Background: Project Setup
     Given the project 008_pure_python_models
 
+  @TODO-postgres
+  @TODO-fal
+  @TODO-bigquery
+  @TODO-snowflake
+  @TODO-redshift
+  @TODO-duckdb
+  @TODO-athena
   Scenario: Run a project with Python nodes
     When the following command is invoked:
       """

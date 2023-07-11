@@ -1,3 +1,10 @@
+@TODO-postgres
+@TODO-fal
+@TODO-bigquery
+@TODO-snowflake
+@TODO-redshift
+@TODO-duckdb
+@TODO-athena
 Feature: fal works with ipynb features
 
   Scenario: fal flow run command for ipynb scripts

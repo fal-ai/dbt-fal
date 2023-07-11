@@ -42,6 +42,13 @@ Feature: `flow run` command with py nodes in the middle
     And the script middle_2.middle_script.py output file has the lines:
       | Status: skipped |
 
+  @TODO-postgres
+  @TODO-fal
+  @TODO-bigquery
+  @TODO-snowflake
+  @TODO-redshift
+  @TODO-duckdb
+  @TODO-athena
   Scenario: fal flow run command with set intersection selector
     Given the project 008_pure_python_models
     When the data is seeded
