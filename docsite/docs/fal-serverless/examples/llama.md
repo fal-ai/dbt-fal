@@ -49,6 +49,7 @@ dependencies:
   - cuda-toolkit
   - pip
   - pip:
+      - pydantic==1.10.7
       - llama-cpp-python[server]
       - cmake
       - setuptools
