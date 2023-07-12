@@ -233,12 +233,12 @@ jobs:
           conda-channels: anaconda, conda-forge
 
       - name: Setup behave
-        working-directory: projects/adapter/integration_tests
+        working-directory: projects/adapter/cli_tests
         run: pip install behave ipython
 
       - name: Run tests
         id: test_run
-        working-directory: projects/adapter/integration_tests
+        working-directory: projects/adapter/cli_tests
         env:
           FAL_STATS_ENABLED: false
           # BigQuery
