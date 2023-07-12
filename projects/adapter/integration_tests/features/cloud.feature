@@ -8,6 +8,7 @@ Feature: isolate cloud
       """
       dbt --debug run --profiles-dir $profilesDir --project-dir $baseDir -t prod --select +model_c+
       """
+    Then there should be no errors
     Then the following models are calculated in order:
       | model_a | model_c | model_d |
 
@@ -16,5 +17,6 @@ Feature: isolate cloud
       """
       dbt --debug run --profiles-dir $profilesDir --project-dir $baseDir -t prod --select +model_e
       """
+    Then there should be no errors
     Then the following models are calculated in order:
       | model_a | model_e |

@@ -106,18 +106,19 @@ jobs:
           fi
 
           pushd ..
-          if [[ '${{ matrix.teleport }}' == 'true' ]] && [[ '${{ matrix.cloud }}' == 'true' ]]
+          EXTRAS="${{ matrix.profile }}"
+
+          if [[ '${{ matrix.teleport }}' == 'true' ]]
           then
-            DBT_FAL_PACKAGE=".[${{ matrix.profile }},teleport,cloud]"
-          elif [[ '${{ matrix.teleport }}' == 'true' ]]
-          then
-            DBT_FAL_PACKAGE=".[${{ matrix.profile }},teleport]"
-          elif [[ '${{ matrix.cloud }}' == 'true' ]]
-          then
-            DBT_FAL_PACKAGE=".[${{ matrix.profile }},cloud]"
-          else
-            DBT_FAL_PACKAGE=".[${{ matrix.profile }}]"
+            EXTRAS="$EXTRAS,teleport"
           fi
+
+          if [[ '${{ matrix.cloud }}' == 'true' ]]
+          then
+            EXTRAS="$EXTRAS,cloud"
+          fi
+
+          DBT_FAL_PACKAGE=".[$EXTRAS]"
 
           echo "pip install $ADAPTER_PACKAGE -e $DBT_FAL_PACKAGE"
           pip install $ADAPTER_PACKAGE -e $DBT_FAL_PACKAGE

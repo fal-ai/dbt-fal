@@ -142,6 +142,7 @@ def _replace_vars(context, msg):
         msg.replace("$baseDir", context.base_dir)
         .replace("$profilesDir", _get_profiles_dir(context))
         .replace("$profile", _get_profile(context))
+        .replace("$targetPath", target_path(context))
     )
 
 

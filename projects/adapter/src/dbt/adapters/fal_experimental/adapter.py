@@ -112,13 +112,19 @@ def run_in_environment_with_adapter(
         result = execute_model()
         return result
 
+    extra = {}
+    if is_remote:
+        # Machine type is only applicable in FalServerlesshost
+        extra = {"machine_type": environment.machine_type}
+
     if environment.kind == "virtualenv":
         requirements = environment.config.get("requirements", [])
         requirements += deps
         isolated_function = isolated(
             kind="virtualenv",
             host=environment.host,
-            requirements=requirements
+            requirements=requirements,
+            **extra
         )(execute_model)
     elif environment.kind == "conda":
         dependencies = environment.config.pop("packages", [])
@@ -131,15 +137,13 @@ def run_in_environment_with_adapter(
         isolated_function = isolated(
             kind="conda",
             host=environment.host,
-            env_dict=env_dict)(execute_model)
+            env_dict=env_dict,
+            **extra
+        )(execute_model)
     else:
         # We should not reach this point, because environment types are validated when the
         # environment objects are created (in utils/environments.py).
         raise Exception(f"Environment type not supported: {environment.kind}")
-
-    # Machine type is only applicable in FalServerlesshost
-    if is_remote:
-        isolated_function = isolated_function.on(machine_type=environment.machine_type)
 
     result = isolated_function()
     return result
