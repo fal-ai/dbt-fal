@@ -5,8 +5,7 @@ on:
     types: [assigned, opened, synchronize, reopened]
     paths:
       - "projects/adapter/**"
-      - ".github/**"
-      - "!.github/workflows/*adapter*"
+      - ".github/actions/**"
 
   push:
     branches: [main]
