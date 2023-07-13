@@ -3,12 +3,12 @@ import copy
 from pathlib import Path
 from typing import Any, Dict, Optional, cast, Union
 
-from fal.cli.fal_runner import create_fal_dbt
-from fal.cli.selectors import ExecutionPlan
-from fal.cli.model_generator import generate_python_dbt_models
-from fal.fal_script import FalScript
-from fal.node_graph import DbtModelNode, FalFlowNode, NodeGraph, ScriptNode
-from fal.integration.project import FalDbt, NodeStatus
+from fal.dbt.cli.fal_runner import create_fal_dbt
+from fal.dbt.cli.selectors import ExecutionPlan
+from fal.dbt.cli.model_generator import generate_python_dbt_models
+from fal.dbt.fal_script import FalScript
+from fal.dbt.node_graph import DbtModelNode, FalFlowNode, NodeGraph, ScriptNode
+from fal.dbt.integration.project import FalDbt, NodeStatus
 import argparse
 
 
@@ -23,14 +23,14 @@ def run_threaded(
     parsed: argparse.Namespace,
     node_graph: NodeGraph,
 ) -> int:
-    from fal.planner.plan import (
+    from fal.dbt.planner.plan import (
         OriginGraph,
         FilteredGraph,
         PlannedGraph,
         ScriptConnectedGraph,
     )
-    from fal.planner.schedule import schedule_graph
-    from fal.planner.executor import parallel_executor
+    from fal.dbt.planner.schedule import schedule_graph
+    from fal.dbt.planner.executor import parallel_executor
 
     execution_plan = ExecutionPlan.create_plan_from_graph(parsed, node_graph, fal_dbt)
 

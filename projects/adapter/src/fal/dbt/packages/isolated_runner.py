@@ -36,8 +36,8 @@ DEBUG_TIMEOUT = 60 * 15
 
 
 def run_client(address: str, *, with_pdb: bool = False) -> int:
-    from fal.integration.logger import LOGGER
-    from fal.packages import bridge
+    from fal.dbt.integration.logger import LOGGER
+    from fal.dbt.packages import bridge
 
     if with_pdb:
         # This condition will only be activated if we want to
@@ -88,8 +88,8 @@ def _get_shell_bootstrap() -> str:
 
 
 def _fal_main() -> None:
-    from fal.integration.logger import LOGGER
-    from fal.packages import bridge
+    from fal.dbt.integration.logger import LOGGER
+    from fal.dbt.packages import bridge
 
     LOGGER.debug("Starting the isolated process at PID {}", os.getpid())
 
@@ -125,7 +125,7 @@ def _process_primary_env_packages() -> None:
 def main():
     _process_primary_env_packages()
 
-    from fal.integration.logger import log_manager
+    from fal.dbt.integration.logger import log_manager
 
     # TODO: do we still need this?
     with log_manager.applicationbound():

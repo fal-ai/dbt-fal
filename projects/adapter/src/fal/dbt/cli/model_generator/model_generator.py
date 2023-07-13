@@ -3,17 +3,17 @@ from functools import partial
 import re
 from typing import Callable, Iterable, List, TypeVar
 from pathlib import Path
-from fal.fal_script import python_from_file
+from fal.dbt.fal_script import python_from_file
 
-from fal.integration.parse import get_fal_models_dirs, load_dbt_project_contract
-from fal.cli.model_generator.module_check import (
+from fal.dbt.integration.parse import get_fal_models_dirs, load_dbt_project_contract
+from fal.dbt.cli.model_generator.module_check import (
     generate_dbt_dependencies,
     write_to_model_check,
 )
 
-from fal.integration.logger import LOGGER
+from fal.dbt.integration.logger import LOGGER
 
-from fal.telemetry import telemetry
+from fal.dbt.telemetry import telemetry
 
 SQL_MODEL_TEMPLATE = """
 {{ config(materialized='ephemeral') }}

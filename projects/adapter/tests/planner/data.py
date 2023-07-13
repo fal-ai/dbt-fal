@@ -1,4 +1,4 @@
-from fal.node_graph import NodeKind
+from fal.dbt.node_graph import NodeKind
 from tests.planner.utils import to_graph
 
 GRAPH_1 = [

@@ -10,15 +10,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Dict, Any
 
-from fal.packages.environments.base import (
+from fal.dbt.packages.environments.base import (
     BASE_CACHE_DIR,
     BaseEnvironment,
     DualPythonIPC,
     log_env,
     rmdir_on_fail,
 )
-from fal.packages.environments.virtual_env import get_primary_virtual_env
-from fal.utils import cache_static
+from fal.dbt.packages.environments.virtual_env import get_primary_virtual_env
+from fal.dbt.utils import cache_static
 
 _BASE_CONDA_DIR = BASE_CACHE_DIR / "conda"
 _BASE_CONDA_DIR.mkdir(exist_ok=True)

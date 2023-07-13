@@ -1,5 +1,5 @@
-from fal.cli.args import parse_args
-from fal.cli.dbt_runner import get_dbt_command_list
+from fal.dbt.cli.args import parse_args
+from fal.dbt.cli.dbt_runner import get_dbt_command_list
 from tests.graph.utils import assert_contains_only
 import os
 

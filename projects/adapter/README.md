@@ -300,7 +300,7 @@ You may be interested in accessing dbt models and sources easily from a Jupyter 
 For that, just import the `fal` package and intantiate a FalDbt project:
 
 ```py
-from fal import FalDbt
+from fal.dbt import FalDbt
 faldbt = FalDbt(profiles_dir="~/.dbt", project_dir="../my_project")
 
 faldbt.list_sources()

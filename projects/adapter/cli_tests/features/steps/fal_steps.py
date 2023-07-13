@@ -4,7 +4,7 @@ import shlex
 from typing import List, Optional
 from behave import *
 import glob
-from fal.cli import cli
+from fal.dbt.cli import cli
 import tempfile
 import json
 import unittest
@@ -242,8 +242,8 @@ def _find_projects_directory():
 
 def _verify_node_order(context):
     import networkx as nx
-    from fal import FalDbt
-    from fal.node_graph import NodeGraph
+    from fal.dbt import FalDbt
+    from fal.dbt.node_graph import NodeGraph
 
     fal_dbt = FalDbt(
         profiles_dir=_set_profiles_dir(context), project_dir=context.base_dir

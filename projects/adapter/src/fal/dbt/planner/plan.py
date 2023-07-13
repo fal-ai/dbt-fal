@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Callable, Iterator, List, Set
 
 import networkx as nx
-from fal.node_graph import NodeKind
-from fal.cli.selectors import ExecutionPlan, _is_before_script, _is_after_script
-from fal.integration.logger import LOGGER
+from fal.dbt.node_graph import NodeKind
+from fal.dbt.cli.selectors import ExecutionPlan, _is_before_script, _is_after_script
+from fal.dbt.integration.logger import LOGGER
 from dataclasses import dataclass
 
 

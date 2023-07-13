@@ -1,5 +1,5 @@
 import pandas
-from fal.typing import *
+from fal.dbt.typing import *
 from _fal_testing import create_model_artifact
 
 df = pandas.DataFrame()

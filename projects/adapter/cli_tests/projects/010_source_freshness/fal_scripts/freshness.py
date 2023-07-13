@@ -1,6 +1,6 @@
 from typing import List
 import os
-from fal import DbtSource
+from fal.dbt import DbtSource
 
 output = ""
 # TODO add real test for freshness

@@ -35,7 +35,7 @@ def before_tag(context, tag):
     elif "requires-conda" == tag:
         # See if conda is available, and if not skip the
         # current scenerio.
-        from fal.packages.environments.conda import get_conda_executable
+        from fal.dbt.packages.environments.conda import get_conda_executable
 
         try:
             executable = get_conda_executable()

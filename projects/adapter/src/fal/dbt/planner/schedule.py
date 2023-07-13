@@ -6,9 +6,9 @@ from typing import Iterator, List, Optional
 
 import networkx as nx
 
-from fal.integration.project import DbtModel
-from fal.node_graph import DbtModelNode, NodeGraph, NodeKind, ScriptNode
-from fal.planner.tasks import (
+from fal.dbt.integration.project import DbtModel
+from fal.dbt.node_graph import DbtModelNode, NodeGraph, NodeKind, ScriptNode
+from fal.dbt.planner.tasks import (
     SUCCESS,
     Task,
     DBTTask,
@@ -19,8 +19,8 @@ from fal.planner.tasks import (
     Status,
     HookType,
 )
-from fal.utils import DynamicIndexProvider
-from fal.fal_script import Hook, IsolatedHook, create_hook, TimingType
+from fal.dbt.utils import DynamicIndexProvider
+from fal.dbt.fal_script import Hook, IsolatedHook, create_hook, TimingType
 
 
 def create_hook_task(

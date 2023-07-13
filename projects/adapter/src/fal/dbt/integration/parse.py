@@ -14,14 +14,14 @@ from dbt.config.profile import read_user_config
 
 from dbt.exceptions import IncompatibleSchemaError, DbtRuntimeError
 
-from fal.utils import cache_static
+from fal.dbt.utils import cache_static
 
-from fal.integration.logger import LOGGER
-from fal.integration.utils.yaml_helper import load_yaml
-from fal.telemetry import telemetry
+from fal.dbt.integration.logger import LOGGER
+from fal.dbt.integration.utils.yaml_helper import load_yaml
+from fal.dbt.telemetry import telemetry
 
 if TYPE_CHECKING:
-    from fal.packages.environments import BaseEnvironment
+    from fal.dbt.packages.environments import BaseEnvironment
 
 FAL_SCRIPTS_PATH = "fal-scripts-path"
 FAL_MODELS_PATHS = "fal-models-paths"
@@ -225,8 +225,8 @@ def _get_required_key(data: Dict[str, Any], name: str) -> Any:
 
 
 def load_environments(base_dir: str) -> Dict[str, "BaseEnvironment"]:
-    from fal.packages.environments import create_environment
-    from fal.fal_script import _is_local_environment
+    from fal.dbt.packages.environments import create_environment
+    from fal.dbt.fal_script import _is_local_environment
 
     try:
         fal_project_path = os.path.join(base_dir, "fal_project.yml")

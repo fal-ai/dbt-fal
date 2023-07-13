@@ -2,9 +2,9 @@ import networkx as nx
 import pytest
 
 from pathlib import Path
-from fal.node_graph import NodeKind
-from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalModelTask
-from fal.planner.tasks import DBTTask, FalModelTask, Status
+from fal.dbt.node_graph import NodeKind
+from fal.dbt.planner.tasks import FAILURE, SUCCESS, DBTTask, FalModelTask
+from fal.dbt.planner.tasks import DBTTask, FalModelTask, Status
 from tests.planner.data import GRAPH_1, GRAPHS
 from tests.planner.utils import to_scheduler
 

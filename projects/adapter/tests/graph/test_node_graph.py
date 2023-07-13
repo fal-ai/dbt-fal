@@ -3,10 +3,10 @@ import networkx as nx
 
 from unittest.mock import MagicMock
 from unittest.mock import patch
-from fal.node_graph import NodeGraph, _add_after_scripts, _add_before_scripts
 from utils import assert_contains_only, create_mock_model
 
-import fal.integration.version as version
+from fal.dbt.node_graph import NodeGraph, _add_after_scripts, _add_before_scripts
+import fal.dbt.integration.version as version
 
 
 

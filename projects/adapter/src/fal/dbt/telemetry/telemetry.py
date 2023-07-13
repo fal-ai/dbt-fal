@@ -24,7 +24,7 @@ import inspect
 from contextlib import contextmanager
 from dbt.config.runtime import RuntimeConfig
 
-from fal.utils import cache_static
+from fal.dbt.utils import cache_static
 
 import platform
 
@@ -242,8 +242,8 @@ def write_conf_file(conf_path, to_write, error=None):
 def get_dbt_config():
     try:
         from dbt.flags import PROFILES_DIR
-        from fal.cli.args import parse_args
-        from fal.integration.parse import get_dbt_config
+        from fal.dbt.cli.args import parse_args
+        from fal.dbt.integration.parse import get_dbt_config
 
         args = parse_args(sys.argv[1:])
 

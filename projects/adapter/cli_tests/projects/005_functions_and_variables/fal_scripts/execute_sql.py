@@ -1,4 +1,4 @@
-from fal.typing import *
+from fal.dbt.typing import *
 from _fal_testing.utils import create_dynamic_artifact
 
 df = execute_sql('SELECT 1 as a, 2 as b, 3 as c')

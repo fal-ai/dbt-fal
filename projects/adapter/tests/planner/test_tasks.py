@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from fal.planner.tasks import FAILURE, SUCCESS, DBTTask, FalLocalHookTask, FalModelTask
-from fal.utils import DynamicIndexProvider
+from fal.dbt.planner.tasks import FAILURE, SUCCESS, DBTTask, FalLocalHookTask, FalModelTask
+from fal.dbt.utils import DynamicIndexProvider
 
 
 @dataclass

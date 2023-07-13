@@ -1,6 +1,6 @@
 from datetime import datetime as dt, timezone as tz
 from pandas import DataFrame
-from fal import FalDbt
+from fal.dbt import FalDbt
 from sys import argv
 import os
 

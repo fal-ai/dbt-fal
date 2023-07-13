@@ -1,4 +1,4 @@
-from fal import DbtModel
+from fal.dbt import DbtModel
 from copy import deepcopy
 from unittest.mock import MagicMock
 

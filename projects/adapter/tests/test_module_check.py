@@ -1,5 +1,5 @@
 import ast
-from fal.cli.model_generator.module_check import (
+from fal.dbt.cli.model_generator.module_check import (
     generate_dbt_dependencies,
     write_to_model_check,
 )

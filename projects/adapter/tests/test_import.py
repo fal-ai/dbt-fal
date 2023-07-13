@@ -1,4 +1,4 @@
-from fal import FalDbt
+from fal.dbt import FalDbt
 from pathlib import Path
 import os
 

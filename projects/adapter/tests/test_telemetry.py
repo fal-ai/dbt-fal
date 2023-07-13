@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 import datetime
-from fal.telemetry import telemetry
+from fal.dbt.telemetry import telemetry
 
 
 @pytest.fixture

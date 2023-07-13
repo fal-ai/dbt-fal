@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
 
-from fal.typing import *
-from fal.packages.environments.virtual_env import _BASE_VENV_DIR
+from fal.dbt.typing import *
+from fal.dbt.packages.environments.virtual_env import _BASE_VENV_DIR
 from _fal_testing import create_model_artifact
 
 # To determine whether this is a fal-created environment or not

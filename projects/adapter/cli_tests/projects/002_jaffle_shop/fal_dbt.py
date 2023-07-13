@@ -1,8 +1,8 @@
 import sys
-from fal import FalDbt
+from fal.dbt import FalDbt
 from _fal_testing import create_file
 
-from fal.integration.project import DbtGenericTest, DbtSingularTest
+from fal.dbt.integration.project import DbtGenericTest, DbtSingularTest
 
 project_dir = "."
 if len(sys.argv) >= 2:

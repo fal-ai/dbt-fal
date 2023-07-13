@@ -14,7 +14,7 @@ from typing import (
 from pathlib import Path
 from deprecation import deprecated
 
-import fal.integration.version as version
+import fal.dbt.integration.version as version
 
 from dbt.cli.resolvers import default_profiles_dir
 from dbt.cli.main import dbtRunner, dbtRunnerResult
@@ -49,16 +49,16 @@ from . import parse
 from . import lib
 from . import version
 
-from fal.feature_store.feature import Feature
+from fal.dbt.feature_store.feature import Feature
 
 import pandas as pd
 
-from fal.telemetry import telemetry
-from fal.utils import has_side_effects
+from fal.dbt.telemetry import telemetry
+from fal.dbt.utils import has_side_effects
 
 if TYPE_CHECKING:
-    from fal.fal_script import Hook, TimingType
-    from fal.packages.environments import BaseEnvironment
+    from fal.dbt.fal_script import Hook, TimingType
+    from fal.dbt.packages.environments import BaseEnvironment
 
 
 class FalGeneralException(Exception):
@@ -252,7 +252,7 @@ class DbtModel(_DbtTestableNode):
         self,
         hook_type: "TimingType",
     ) -> List["Hook"]:
-        from fal.fal_script import create_hook, TimingType
+        from fal.dbt.fal_script import create_hook, TimingType
 
         meta = self.meta or {}
 

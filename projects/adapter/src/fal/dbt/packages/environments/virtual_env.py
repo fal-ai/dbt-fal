@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Dict, Any
 
-from fal.packages.dependency_analysis import get_default_pip_dependencies
-from fal.packages.environments.base import (
+from fal.dbt.packages.dependency_analysis import get_default_pip_dependencies
+from fal.dbt.packages.environments.base import (
     BASE_CACHE_DIR,
     BaseEnvironment,
     DualPythonIPC,
@@ -17,7 +17,7 @@ from fal.packages.environments.base import (
     python_path_for,
     rmdir_on_fail,
 )
-from fal.utils import cache_static
+from fal.dbt.utils import cache_static
 
 _BASE_VENV_DIR = BASE_CACHE_DIR / "venvs"
 _BASE_VENV_DIR.mkdir(exist_ok=True)

@@ -3,12 +3,12 @@ import sys
 
 from click.exceptions import ClickException
 
-from fal.cli.flow_runner import fal_flow_run
+from fal.dbt.cli.flow_runner import fal_flow_run
 from .args import parse_args
 from .fal_runner import fal_run
-from fal.telemetry import telemetry
+from fal.dbt.telemetry import telemetry
 
-from fal.integration.logger import log_manager
+from fal.dbt.integration.logger import log_manager
 
 
 def cli(argv: List[str] = sys.argv):

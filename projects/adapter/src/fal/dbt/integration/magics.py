@@ -1,6 +1,6 @@
 from IPython.core.magic import register_line_magic, needs_local_scope
 from functools import partial
-from fal import FalDbt
+from fal.dbt import FalDbt
 
 
 @register_line_magic
@@ -11,7 +11,7 @@ def init_fal(line="", local_ns={}):
 
     Example:
     """
-    from fal.integration.magics import init_fal
+    from fal.dbt.integration.magics import init_fal
 
     %init_fal project_dir=/my_project_dir profiles_dir=/my_profiles_dir default_model_name=my_model
     """

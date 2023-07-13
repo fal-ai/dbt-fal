@@ -1,6 +1,6 @@
 """Fal utilities."""
 import copy
-from fal.integration.logger import LOGGER
+from fal.dbt.integration.logger import LOGGER
 from typing import List, TYPE_CHECKING, TypeVar
 
 try:
@@ -9,7 +9,7 @@ except ImportError:
     from backports.functools_lru_cache import lru_cache
 
 if TYPE_CHECKING:
-    from fal.fal_script import FalScript
+    from fal.dbt.fal_script import FalScript
 
 
 def print_run_info(scripts: List["FalScript"]):

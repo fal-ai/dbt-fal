@@ -5,13 +5,13 @@ from typing import Iterator, List, Optional, Tuple
 
 import importlib_metadata
 
-from fal.utils import cache_static
+from fal.dbt.utils import cache_static
 
 import importlib_metadata
 
 
 def _get_project_root_path(pacakge: str) -> Path:
-    import fal
+    import fal.dbt as fal
 
     # If this is a development version, we'll install
     # the current fal itself.

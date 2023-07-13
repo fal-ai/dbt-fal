@@ -4,7 +4,7 @@ DEPENDENCY:
 - ref('model_a')
 """
 from _fal_testing.utils import create_model_artifact
-from fal.typing import *
+from fal.dbt.typing import *
 
 df = ref("model_b")
 

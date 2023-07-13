@@ -13,11 +13,11 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Iterator, List, Any, Optional, Dict, Tuple, Union
 
-from fal.integration.logger import LOGGER
+from fal.dbt.integration.logger import LOGGER
 
-from fal.fal_script import FalScript, TimingType
-from fal.utils import print_run_info, DynamicIndexProvider
-from fal.integration.project import DbtModel, FalDbt, NodeStatus
+from fal.dbt.fal_script import FalScript, TimingType
+from fal.dbt.utils import print_run_info, DynamicIndexProvider
+from fal.dbt.integration.project import DbtModel, FalDbt, NodeStatus
 
 from datetime import datetime, timezone
 
@@ -162,7 +162,7 @@ class DBTTask(Task):
     model_ids: List[str]
 
     def execute(self, args: argparse.Namespace, fal_dbt: FalDbt) -> int:
-        from fal.cli.dbt_runner import dbt_run_through_python
+        from fal.dbt.cli.dbt_runner import dbt_run_through_python
 
         model_names = _unique_ids_to_model_names(self.model_ids)
         output = dbt_run_through_python(

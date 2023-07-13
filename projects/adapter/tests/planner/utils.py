@@ -6,16 +6,16 @@ from pathlib import Path
 
 import networkx as nx
 
-from fal.cli.selectors import ExecutionPlan
-from fal.node_graph import DbtModelNode, NodeGraph
-from fal.planner.plan import (
+from fal.dbt.cli.selectors import ExecutionPlan
+from fal.dbt.node_graph import DbtModelNode, NodeGraph
+from fal.dbt.planner.plan import (
     FilteredGraph,
     OriginGraph,
     PlannedGraph,
     ScriptConnectedGraph,
 )
-from fal.planner.schedule import schedule_graph
-from fal.fal_script import LocalHook
+from fal.dbt.planner.schedule import schedule_graph
+from fal.dbt.fal_script import LocalHook
 
 
 class ModelDict(defaultdict):

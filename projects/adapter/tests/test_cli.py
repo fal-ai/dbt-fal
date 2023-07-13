@@ -7,7 +7,7 @@ import pytest
 from pathlib import Path
 
 from dbt.exceptions import DbtProjectError
-from fal.cli import cli
+from fal.dbt.cli import cli
 
 profiles_dir = os.path.join(Path.cwd(), "tests/mock/mockProfile")
 project_dir = os.path.join(Path.cwd(), "tests/mock")

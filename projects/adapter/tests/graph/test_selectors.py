@@ -1,6 +1,6 @@
 from typing import Any, Dict
-from fal.cli.selectors import ExecutionPlan
-from fal.node_graph import NodeGraph
+from fal.dbt.cli.selectors import ExecutionPlan
+from fal.dbt.node_graph import NodeGraph
 import networkx as nx
 from argparse import Namespace
 from utils import assert_contains_only
