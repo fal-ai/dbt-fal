@@ -29,26 +29,26 @@ class FakeScript:
 
 def mock_dbt_run(mocker, return_code):
     mocker.patch(
-        "fal.cli.dbt_runner.dbt_run_through_python",
+        "fal.dbt.cli.dbt_runner.dbt_run_through_python",
         return_value=FakeCLIOutput(return_code, {}),
     )
     mocker.patch(
-        "fal.planner.tasks._map_cli_output_model_results",
+        "fal.dbt.planner.tasks._map_cli_output_model_results",
         return_value=[],
     )
 
 
 def mock_script_construction(mocker, return_code):
     mocker.patch(
-        "fal.fal_script.FalScript.__new__",
+        "fal.dbt.fal_script.FalScript.__new__",
         return_value=FakeScript(),
     )
     mocker.patch(
-        "fal.fal_script.FalScript.model_script",
+        "fal.dbt.fal_script.FalScript.model_script",
         return_value=FakeScript(),
     )
     mocker.patch(
-        "fal.planner.tasks.run_script",
+        "fal.dbt.planner.tasks.run_script",
         return_value=return_code,
     )
 

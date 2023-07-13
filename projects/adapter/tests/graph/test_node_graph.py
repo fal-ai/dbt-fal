@@ -13,7 +13,7 @@ import fal.dbt.integration.version as version
 # TODO: fix mocking for 1.5 and remove skips
 @pytest.mark.skipif(version.is_version_plus("1.4.0"), reason="mocking <1.4 modules")
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
-@patch("fal.FalDbt")
+@patch("fal.dbt.FalDbt")
 def test_add_after_scripts(parsed_node, fal_dbt_class):
     graph = nx.DiGraph()
     node_lookup = {}
@@ -37,7 +37,7 @@ def test_add_after_scripts(parsed_node, fal_dbt_class):
 
 @pytest.mark.skipif(version.is_version_plus("1.4.0"), reason="mocking <1.4 modules")
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
-@patch("fal.FalDbt")
+@patch("fal.dbt.FalDbt")
 def test_add_before_scripts(parsed_node, fal_dbt_class):
     graph = nx.DiGraph()
     node_lookup = {}
@@ -62,7 +62,7 @@ def test_add_before_scripts(parsed_node, fal_dbt_class):
     )
 
 
-@patch("fal.FalDbt")
+@patch("fal.dbt.FalDbt")
 def test_empty_fal_dbt(fal_dbt_class):
     fal_dbt_instance = fal_dbt_class("/dir", "/profiles")
     fal_dbt_instance.scripts_dir = "/dir"
@@ -74,7 +74,7 @@ def test_empty_fal_dbt(fal_dbt_class):
 
 @pytest.mark.skipif(version.is_version_plus("1.4.0"), reason="mocking <1.4 modules")
 @patch("dbt.contracts.graph.parsed.ParsedModelNode")
-@patch("fal.FalDbt")
+@patch("fal.dbt.FalDbt")
 def test_create_with_fal_dbt(parsed_node, fal_dbt_class):
     modelA = create_mock_model(parsed_node, "modelA", ["scriptA.py", "scriptB.py"], [])
     modelB = create_mock_model(parsed_node, "modelB", ["scriptB.py"], ["model.modelA"])
