@@ -204,7 +204,7 @@ def _build_flow_parser(sub: argparse.ArgumentParser):
 
 def _build_cli_parser():
     parser = argparse.ArgumentParser(
-        prog="fal",
+        prog="dbt-fal",
         description="Run Python scripts on dbt models",
     )
 
