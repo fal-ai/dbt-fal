@@ -58,7 +58,7 @@ def test_flow_run():
 
 def test_no_arg(capfd):
     captured = _run_fal([], capfd)
-    assert re.match("usage: fal (.|\n)* COMMAND", captured.err)
+    assert re.match("usage: dbt-fal (.|\n)* COMMAND", captured.err)
     assert "the following arguments are required: COMMAND" in captured.err
 
 
