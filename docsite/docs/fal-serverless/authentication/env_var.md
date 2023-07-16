@@ -8,8 +8,10 @@ For automated credential management, fal-serverless provides key-based credentia
 
 ## Generating API Keys
 
+Run the following command to generate a KEY with the scope of your choice.
+
 ```bash
-fal-serverless key generate
+fal-serverless key generate --scope ADMIN
 ```
 
 If successful, the following message should be printed out in your terminal:
@@ -23,6 +25,20 @@ KEY_SECRET='your-key-secret'
 ```
 
 You should note the values of `KEY_ID` and `KEY_SECRET`.
+
+## Key Scopes
+
+Key scopes provide a way to control the permissions and access levels of different keys within a system. By assigning scopes to keys, you can limit the operations and resources that each key can access. Currently there are only two levels of control `ADMIN` scope and `API` scope. If you are just consuming model APIs, using `API` scope is recommended.
+
+### ADMIN Scope
+
+- Grants full acccess to the SDK.
+- Grants full access to CLI operations.
+- Grants access to Model API endpoints.
+
+### API Scope
+
+- Grants access to Model API endpoints.
 
 ## Using the API credentials
 

@@ -23,7 +23,7 @@ fal-serverless auth login
 ### 3. Generate keys to access fal-serverless
 
 ```
-fal-serverless key generate
+fal-serverless key generate --scope ADMIN
 ```
 
 ### 4. Update your dbt profiles.yml
