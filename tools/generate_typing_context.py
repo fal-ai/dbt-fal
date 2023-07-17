@@ -18,8 +18,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import pandas as pd
     from typing import Optional, Dict, List, Protocol, Any
-    from faldbt.project import DbtModel, DbtTest, DbtSource, Feature
-    from fal.fal_script import Context, CurrentModel
+    from fal.dbt.integration.project import DbtModel, DbtTest, DbtSource, Feature
+    from fal.dbt.fal_script import Context, CurrentModel
 
 {protocols}
 
@@ -46,8 +46,8 @@ write_to_model: _Write_To_Model
 {annotations}
 """
 
-TYPING_CONTEXT_FILE = "projects/fal/src/fal/typing.py"
-FAL_DBT_FILE = "projects/fal/src/faldbt/project.py"
+TYPING_CONTEXT_FILE = "projects/adapter/src/fal/dbt/typing.py"
+FAL_DBT_FILE = "projects/adapter/src/fal/dbt/integration/project.py"
 FAL_DBT_CLS = "FalDbt"
 MANUAL_ANNOTATIONS = ["write_to_model"]
 

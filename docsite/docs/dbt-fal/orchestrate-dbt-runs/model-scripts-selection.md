@@ -20,7 +20,7 @@ You may pass more than one selection at a time and use graph operators:
 
 ```bash
 $ fal flow run --select model_alpha+ model_beta+
-Executing command: dbt --log-format json run --project-dir /Users/matteo/Projects/fal/fal_dbt_examples --profiles-dir . --exclude lombardia_covid miami
+Executing command: dbt --log-format json run --project-dir fal/fal_dbt_examples --profiles-dir . --exclude lombardia_covid miami
 Running with dbt=1.0.3
 ...
 1 of 2 START view model dbt_matteo.model_alpha......... [RUN]

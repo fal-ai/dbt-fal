@@ -5,8 +5,7 @@ on:
     types: [assigned, opened, synchronize, reopened]
     paths:
       - "projects/adapter/**"
-      - ".github/**"
-      - "!.github/workflows/*cli*"
+      - ".github/actions/**"
 
   push:
     branches: [main]
@@ -62,7 +61,7 @@ jobs:
           path: "fal"
 
       - name: Start Docker database
-        working-directory: fal/projects/fal/integration_tests
+        working-directory: fal/projects/adapter/cli_tests
         if: contains(fromJSON('["postgres"]'), matrix.profile)
         run: docker-compose up -d
 
@@ -93,7 +92,6 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
-          pip install build wheel -e '../../fal[${{ matrix.profile }}]'
 
           ADAPTER_PACKAGE="dbt-${{ matrix.profile }}"
           if [[ '${{ matrix.profile }}' == 'athena' ]]
@@ -107,18 +105,19 @@ jobs:
           fi
 
           pushd ..
-          if [[ '${{ matrix.teleport }}' == 'true' ]] && [[ '${{ matrix.cloud }}' == 'true' ]]
+          EXTRAS="${{ matrix.profile }}"
+
+          if [[ '${{ matrix.teleport }}' == 'true' ]]
           then
-            DBT_FAL_PACKAGE=".[${{ matrix.profile }},teleport,cloud]"
-          elif [[ '${{ matrix.teleport }}' == 'true' ]]
-          then
-            DBT_FAL_PACKAGE=".[${{ matrix.profile }},teleport]"
-          elif [[ '${{ matrix.cloud }}' == 'true' ]]
-          then
-            DBT_FAL_PACKAGE=".[${{ matrix.profile }},cloud]"
-          else
-            DBT_FAL_PACKAGE=".[${{ matrix.profile }}]"
+            EXTRAS="$EXTRAS,teleport"
           fi
+
+          if [[ '${{ matrix.cloud }}' == 'true' ]]
+          then
+            EXTRAS="$EXTRAS,cloud"
+          fi
+
+          DBT_FAL_PACKAGE=".[$EXTRAS]"
 
           echo "pip install $ADAPTER_PACKAGE -e $DBT_FAL_PACKAGE"
           pip install $ADAPTER_PACKAGE -e $DBT_FAL_PACKAGE

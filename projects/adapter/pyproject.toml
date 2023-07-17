@@ -1,13 +1,16 @@
 [tool.poetry]
 name = "dbt-fal"
 version = "1.5.5a0"
-description = "Simplest way to run dbt python models."
+description = "Run python scripts from any dbt project."
 readme = "README.md"
-homepage = "https://github.com/fal-ai/fal/blob/-/projects/adapter"
+homepage = "https://github.com/fal-ai/fal"
 repository = "https://github.com/fal-ai/fal"
 authors = [ "Features & Labels <hello@fal.ai>" ]
 packages = [
-    { include = "dbt", from = "src" }
+    { include = "dbt", from = "src" },
+    # cli package
+    { include = "fal", from = "src" },
+    { include = "_fal_testing", from = "tests" },
 ]
 
 keywords = [ "dbt", "pandas", "fal", "runtime" ]
@@ -17,10 +20,24 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.7.2, <3.12"
-dbt-core = ">=1.5.0, <1.6"
-posthog = "^1.4.5"
+dbt-core = ">=1.5,<=1.5.1"
 pandas = "^1.3.4"
+posthog = "^1.4.5"
 "backports.functools_lru_cache" = "^1.6.4"
+
+# cli
+PyYAML = "^6.0"
+agate-sql = "^0.5.8"
+astor = "^0.8.1"
+deprecation = "^2.1.0"
+
+## Environment management related dependencies
+## TODO use fal-serverless instead
+platformdirs = "^2.5.2"
+virtualenv = "^20.16.2"
+dill = ">=0.3.6,<0.3.7"
+
+# dbt-fal
 sqlalchemy = "^1.4.41"
 
 # Adapters
@@ -34,6 +51,10 @@ google-cloud-bigquery = { version = "~3.5.0", extras = ["pandas"], optional = tr
 
 ## redshift
 awswrangler = { version = ">=3.0.0", extras = ["redshift"], optional = true, python = ">=3.8" }
+sqlalchemy-redshift = { version = "^0.8.9", optional = true }
+
+## duckdb
+duckdb-engine = { version = "^0.1.8", optional = true }
 
 ## trino
 trino = { version = "~0.321.0", extras = ["sqlalchemy"], optional = true }
@@ -46,19 +67,31 @@ packaging = ">=23"
 fal-serverless = "^0.6.35"
 importlib-metadata = "^6.0.0"
 
-[tool.poetry.dev-dependencies]
-pytest = "^5.2"
-
 [tool.poetry.extras]
 postgres = []
 snowflake = ["snowflake-connector-python"]
 bigquery = ["google-cloud-bigquery"]
-redshift = ["awswrangler"]
-duckdb = []
+redshift = ["awswrangler", "sqlalchemy-redshift"]
+duckdb = ["duckdb-engine"]
 athena = []
 trino = ["trino"]
 teleport = ["s3fs"]
 
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^5.2"
+black = "^22.3"
+behave = "^1.2.6"
+mock = "^4.0.3"
+pytest-mock = "^3.7.0"
+matplotlib = "^3.5.2"
+requests = "^2.27.1"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+dbt-fal = "fal.cli:cli"
