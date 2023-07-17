@@ -83,12 +83,15 @@ jobs:
           prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}*' --abbrev=0)
           echo "prev_version_tag=$prev_version_tag" >> $GITHUB_ENV
 
-          # set __version__.py files in src directory
-          VERSION_FILE_CONTENT="version = '$publishing_version'"
-          VERSION_FILES=$(find src -name __version__.py)
-          for FILE_PATH in $VERSION_FILES; do
-            echo $VERSION_FILE_CONTENT > $FILE_PATH
-          done
+          if [[ ${{ inputs.package }} == dbt-fal ]]
+          then
+            # set __version__.py files in src directory
+            VERSION_FILE_CONTENT="version = '$publishing_version'"
+            VERSION_FILES=$(find src -name __version__.py)
+            for FILE_PATH in $VERSION_FILES; do
+              echo $VERSION_FILE_CONTENT > $FILE_PATH
+            done
+          fi
 
       - name: Build package
         working-directory: ${{ env.PACKAGE_DIR }}
