@@ -101,12 +101,25 @@ def _get_dbt_fal_package() -> Tuple[str, Optional[str]]:
         else:
             # We are going to install it from PyPI.
             dbt_fal_dep = "dbt-fal"
-            dbt_fal_version = importlib_metadata.version("dbt-fal")
+            try:
+                dbt_fal_version = importlib_metadata.version("dbt-fal")
+            except importlib_metadata.PackageNotFoundError:
+                # TODO: remove once `fal` is no longer a supported package
+                dbt_fal_version = importlib_metadata.version("fal")
     else:
         dbt_fal_dep = "dbt-fal"
-        dbt_fal_version = importlib_metadata.version("dbt-fal")
+        try:
+            dbt_fal_version = importlib_metadata.version("dbt-fal")
+        except importlib_metadata.PackageNotFoundError:
+            # TODO: remove once `fal` is no longer a supported package
+            dbt_fal_version = importlib_metadata.version("fal")
 
-    dbt_fal_extras = _find_fal_extras("dbt-fal")
+    try:
+        dbt_fal_extras = _find_fal_extras("dbt-fal")
+    except importlib_metadata.PackageNotFoundError:
+        # TODO: remove once `fal` is no longer a supported package
+        dbt_fal_extras = _find_fal_extras("fal")
+
     if dbt_fal_extras:
         dbt_fal_dep += f"[{','.join(dbt_fal_extras)}]"
 

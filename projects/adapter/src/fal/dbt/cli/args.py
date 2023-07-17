@@ -208,7 +208,12 @@ def _build_cli_parser():
         description="Run Python scripts on dbt models",
     )
 
-    version = pkg_resources.get_distribution("dbt-fal").version
+    try:
+        version = pkg_resources.get_distribution("dbt-fal").version
+    except pkg_resources.DistributionNotFound:
+        # TODO: remove once `fal` is no longer a supported package
+        version = pkg_resources.get_distribution("fal").version
+
     parser.add_argument(
         "-v",
         "--version",

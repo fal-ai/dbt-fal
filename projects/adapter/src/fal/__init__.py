@@ -1,3 +1,5 @@
+# TODO: remove once `fal` is no longer a supported package
+# The whole file
 DBT_FAL_IMPORT_NOTICE = \
 """The dbt tool `fal` and `dbt-fal` adapter have been merged into a single tool.
 Please import from the `fal.dbt` module instead.
