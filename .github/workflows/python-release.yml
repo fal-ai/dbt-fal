@@ -51,7 +51,7 @@ jobs:
         run: |
           if [[ ${{ inputs.package }} == fal ]]
           then
-            echo "PACKAGE_DIR=projects/adapter/_fal" >> $GITHUB_ENV
+            echo "PACKAGE_DIR=projects/adapter" >> $GITHUB_ENV
             echo "TAG_PREFIX=v" >> $GITHUB_ENV
           elif [[ ${{ inputs.package }} == dbt-fal ]]
           then
@@ -83,15 +83,12 @@ jobs:
           prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}*' --abbrev=0)
           echo "prev_version_tag=$prev_version_tag" >> $GITHUB_ENV
 
-          if [[ ${{ inputs.package }} == dbt-fal ]]
-          then
-            # set __version__.py files in src directory
-            VERSION_FILE_CONTENT="version = '$publishing_version'"
-            VERSION_FILES=$(find src -name __version__.py)
-            for FILE_PATH in $VERSION_FILES; do
-              echo $VERSION_FILE_CONTENT > $FILE_PATH
-            done
-          fi
+          # set __version__.py files in src directory
+          VERSION_FILE_CONTENT="version = '$publishing_version'"
+          VERSION_FILES=$(find src -name __version__.py)
+          for FILE_PATH in $VERSION_FILES; do
+            echo $VERSION_FILE_CONTENT > $FILE_PATH
+          done
 
       - name: Build package
         working-directory: ${{ env.PACKAGE_DIR }}
