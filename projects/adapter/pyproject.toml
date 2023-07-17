@@ -94,4 +94,6 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-dbt-fal = "fal.cli:cli"
+dbt-fal = "fal.dbt.cli:cli"
+# NOTE: deprecated use
+fal = "fal.dbt.cli:fal_cli"
