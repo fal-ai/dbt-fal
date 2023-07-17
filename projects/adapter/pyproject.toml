@@ -95,5 +95,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 dbt-fal = "fal.dbt.cli:cli"
-# NOTE: deprecated use
+# TODO: remove once `fal` is no longer a supported package
 fal = "fal.dbt.cli:fal_cli"

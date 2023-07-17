@@ -11,6 +11,7 @@ from fal.dbt.telemetry import telemetry
 from fal.dbt.integration.logger import log_manager
 
 
+# TODO: remove once `fal` is no longer a supported package
 DBT_FAL_COMMAND_NOTICE = \
 """The dbt tool `fal` and `dbt-fal` adapter have been merged into a single tool.
 Please use the new `dbt-fal` command line tool instead.
@@ -20,6 +21,7 @@ Then run your command like
     dbt-fal <command>
 """
 
+# TODO: remove once `fal` is no longer a supported package
 def fal_cli(argv: List[str] = sys.argv):
     print(DBT_FAL_COMMAND_NOTICE)
     cli(argv)
