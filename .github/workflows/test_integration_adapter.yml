@@ -5,7 +5,7 @@ on:
     types: [assigned, opened, synchronize, reopened]
     paths:
       - "projects/adapter/**"
-      - ".github/actions/**"
+      - ".github/workflows/test_integration_adapter.yml"
 
   push:
     branches: [main]

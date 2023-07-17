@@ -5,8 +5,8 @@ on:
     types: [assigned, opened, synchronize, reopened]
     paths:
       - "projects/adapter/**"
-      - ".github/**"
-      - "!.github/workflows/*adapter*"
+      - ".github/actions/setup-local-fal/**"
+      - ".github/workflows/test_cli.yml"
   workflow_dispatch:
 
 jobs:

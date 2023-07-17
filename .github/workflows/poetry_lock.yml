@@ -4,9 +4,9 @@ on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
     paths:
+      - "projects/adapter/pyproject.toml"
+      - "projects/adapter/poetry.lock"
       - ".github/workflows/poetry_lock.yml"
-      - "**/pyproject.toml"
-      - "**/poetry.lock"
 
 jobs:
   run:

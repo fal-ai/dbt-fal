@@ -5,10 +5,13 @@ on:
     types: [assigned, opened, synchronize, reopened]
     paths:
       - "projects/adapter/**"
-      - ".github/actions/**"
+      - ".github/actions/setup-local-fal/**"
+      - ".github/workflows/test_integration_cli.yml"
 
   push:
     branches: [main]
+    paths:
+      - "projects/adapter/**"
 
   schedule:
     # every monday

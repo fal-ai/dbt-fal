@@ -3,12 +3,9 @@ name: Generate typing module
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened]
-    paths-ignore:
-      - "examples/**"
-      - "docsite/**"
-      - "README.md"
-      - "LICENSE"
-      - "docker/**"
+    paths:
+      - "projects/adapter/**"
+      - ".github/workflows/generate_typing.yml"
 
 jobs:
   run:
