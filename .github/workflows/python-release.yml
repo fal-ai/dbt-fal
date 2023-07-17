@@ -152,7 +152,7 @@ jobs:
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
-        if: inputs.package == dbt-fal
+        if: inputs.package == 'dbt-fal'
         with:
           branch: bump-${{ inputs.package }}-${{ env.publishing_version }}
           delete-branch: true
