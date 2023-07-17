@@ -11,6 +11,19 @@ from fal.dbt.telemetry import telemetry
 from fal.dbt.integration.logger import log_manager
 
 
+DBT_FAL_COMMAND_NOTICE = \
+"""The dbt tool `fal` and `dbt-fal` adapter have been merged into a single tool.
+Please use the new `dbt-fal` command line tool instead.
+Running `pip install dbt-fal` will install the new tool and the adapter alongside.
+Then run your command like
+
+    dbt-fal <command>
+"""
+
+def fal_cli(argv: List[str] = sys.argv):
+    print(DBT_FAL_COMMAND_NOTICE)
+    cli(argv)
+
 def cli(argv: List[str] = sys.argv):
     # Wrapper to be able to shutdown telemetry afterwards
     try:
