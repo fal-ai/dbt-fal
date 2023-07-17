@@ -1,6 +1,8 @@
 [tool.poetry]
 name = "dbt-fal"
 version = "1.5.6a0"
+# name = "fal"
+# version = "0.9.4a0"
 description = "Run python scripts from any dbt project."
 readme = "README.md"
 homepage = "https://github.com/fal-ai/fal"
