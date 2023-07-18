@@ -1,0 +1,48 @@
+name: fal serverless Integration Tests
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+    paths:
+      - "projects/fal_serverless/**"
+      - ".github/workflows/test_integration_serverless.yml"
+
+  push:
+    branches: [main]
+    paths:
+      - "projects/fal_serverless/**"
+
+  schedule:
+    # every monday
+    - cron: "0 0 * * 1"
+
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Setup python
+        run: python -m venv .venv
+
+      - name: Install package locally
+        run: |
+          source .venv/bin/activate
+          pip install -e projects/fal_serverless
+          pip install pytest pytest-asyncio
+
+      - name: Run integration tests
+        env:
+          FAL_KEY_ID: ${{ secrets.FAL_CLOUD_KEY_ID }}
+          FAL_KEY_SECRET: ${{ secrets.FAL_CLOUD_KEY_SECRET }}
+          FAL_HOST: api.${{ vars.FAL_CLOUD_INTEGRATION_TEST_HOST }}
+        run: |
+          source .venv/bin/activate
+          pytest projects/fal_serverless/tests/integration_test.py
