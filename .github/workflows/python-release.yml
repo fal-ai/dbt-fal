@@ -11,7 +11,7 @@ on:
         default: fal
         type: choice
         options:
-          - fal
+          - fal-serverless
           - dbt-fal
 
       version:
@@ -32,9 +32,104 @@ on:
         type: boolean
 
 jobs:
-  deploy:
+  deploy-fal-serverless:
+    if: inputs.package == 'fal-serverless' && ( github.ref == 'refs/heads/release' || inputs.publish_from_any_branch )
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+
+      - name: Package setup
+        run: |
+          echo "PACKAGE_DIR=projects/fal_serverless" >> $GITHUB_ENV
+          echo "TAG_PREFIX=serverless-v" >> $GITHUB_ENV
+
+      - name: Install poetry
+        shell: bash
+        run: pip install poetry=="1.4.2"
+
+      # TODO: should be protected with a condition for fal-serverless only
+      - name: Add Datadog APP and API keys
+        env:
+          DATADOG_API_KEY: ${{ secrets.FAL_SERVERLESS_CLI_DD_API_KEY }}
+          DATADOG_APP_KEY: ${{ secrets.FAL_SERVERLESS_CLI_DD_APP_KEY }}
+        run: |
+          cat << "EOF" > ${{ env.PACKAGE_DIR }}/src/fal_serverless/env.py
+          from __future__ import annotations
+
+          CLI_ENV = "prod"
+
+          DATADOG_API_KEY = "${{ env.DATADOG_API_KEY }}"
+          DATADOG_APP_KEY = "${{ env.DATADOG_APP_KEY }}"
+
+          EOF
+
+      - name: Bump publishing version and build
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          VERSION_TYPE="${{ inputs.version }}"
+
+          if [[ ! "$VERSION_TYPE" == prerelease ]]
+          then
+            # Don't bump for prereleases, publish them
+            poetry version $VERSION_TYPE
+          fi
+
+          # version has format '0.4.1'
+          publishing_version=$(poetry version -s)
+          echo "publishing_version=$publishing_version" >> $GITHUB_ENV
+
+          # tag has format 'v0.4.0' (note the 'v')
+          prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}*' --abbrev=0)
+          echo "prev_version_tag=$prev_version_tag" >> $GITHUB_ENV
+
+      - name: Build package
+        working-directory: ${{ env.PACKAGE_DIR }}
+        shell: bash
+        run: poetry build
+
+      # TODO: Add missing steps
+      # - Generate a changelog
+      # - Set the release body
+      # - Publish GitHub release
+      # - Set the PR body from the release body
+
+      - name: Publish PyPI
+        working-directory: ${{ env.PACKAGE_DIR }}
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USER }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: poetry publish -u $PYPI_USERNAME -p $PYPI_PASSWORD -v -n
+
+      - name: Bump repo version
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: poetry version prerelease
+
+      # TODO: should be protected with a condition for fal-serverless only
+      - name: Reset Datadog APP and API keys
+        working-directory: ${{ env.PACKAGE_DIR }}
+        shell: bash
+        run: git checkout src/fal_serverless/env.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          branch: bump-${{ inputs.package }}-${{ env.publishing_version }}
+          delete-branch: true
+          title: "chore: Bump the ${{ inputs.package }} pyproject.toml version"
+          base: main
+          token: ${{ secrets.RELEASER_GITHUB_PAT }}
+
+  deploy-dbt-fal:
     # Run only for `release` branch or if marked as acceptable
-    if: github.ref == 'refs/heads/release' || inputs.publish_from_any_branch
+    if: inputs.package == 'dbt-fal' && ( github.ref == 'refs/heads/release' || inputs.publish_from_any_branch )
 
     runs-on: ubuntu-latest
 
@@ -83,6 +178,7 @@ jobs:
           prev_version_tag=$(git describe --tags --match '${{ env.TAG_PREFIX }}*' --abbrev=0)
           echo "prev_version_tag=$prev_version_tag" >> $GITHUB_ENV
 
+          # TODO: should be a separete step for dbt-fal only
           # set __version__.py files in src directory
           VERSION_FILE_CONTENT="version = '$publishing_version'"
           VERSION_FILES=$(find src -name __version__.py)
@@ -93,9 +189,6 @@ jobs:
       - name: Build package
         working-directory: ${{ env.PACKAGE_DIR }}
         shell: bash
-        env:
-          PYPI_USERNAME: ${{ secrets.PYPI_USER }}
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: poetry build
 
       - name: Generate a changelog
@@ -117,7 +210,7 @@ jobs:
           r="${r//$'\r'/'%0D'}"   # Multiline escape sequences for '\r'
           echo "::set-output name=RELEASE_BODY::$r"
 
-      - name: Publish GitHub
+      - name: Publish GitHub release
         uses: softprops/action-gh-release@v1
         with:
           name: ${{ inputs.package }} ${{ env.publishing_version }}
@@ -142,6 +235,7 @@ jobs:
         run: |
           poetry version prerelease
 
+          # TODO: should be a separete step for dbt-fal only
           # set __version__.py files in src directory
           VERSION=$(poetry version -s)
           VERSION_FILE_CONTENT="version = '$VERSION'"
@@ -152,11 +246,12 @@ jobs:
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
+        # TODO: remove this condition after merge of 2 release jobs
         if: inputs.package == dbt-fal
         with:
           branch: bump-${{ inputs.package }}-${{ env.publishing_version }}
           delete-branch: true
-          title: Bump the pyproject.toml ${{ inputs.package }} version
+          title: "chore: Bump the ${{ inputs.package }} pyproject.toml version"
           base: main
           token: ${{ secrets.RELEASER_GITHUB_PAT }}
           body: ${{ steps.release.outputs.RELEASE_BODY }}
