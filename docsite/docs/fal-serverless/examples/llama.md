@@ -7,12 +7,17 @@ sidebar_position: 3
 In this example, we will demonstrate how to use fal-serverless for deploying Llama 2 and serving it through a OpenAI API compatible server with SSE.
 
 # 1. Use already deployed example
+:::tip
+
+You can go to [Llama 2 Playground](https://llama.fal.ai/) to see it in action.
+
+:::
 
 If you want to use an already deployed API, here is a public endpoint running on a T4:
 
 https://110602490-llama-server.gateway.alpha.fal.ai/docs
 
-To see this API in action:
+To use this endpoint:
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
