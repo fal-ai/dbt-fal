@@ -2,9 +2,9 @@
 sidebar_position: 3
 ---
 
-# Run LLMs with llama.cpp (OpenAI API Compatible Server)
+# Run Llama 2 with llama.cpp (OpenAI API Compatible Server)
 
-In this example, we will demonstrate how to use fal-serverless for deploying any llama based language model and serving it through a OpenAI API compatible server with SSE.
+In this example, we will demonstrate how to use fal-serverless for deploying Llama 2 and serving it through a OpenAI API compatible server with SSE.
 
 # 1. Use already deployed example
 
@@ -26,7 +26,6 @@ curl -X POST -H "Content-Type: application/json" \
     }
    ],
    "stream": true,
-   "model": "gpt-3.5-turbo",
    "max_tokens": 2000
    }' \
 https://110602490-llama-server.gateway.alpha.fal.ai/v1/chat/completions \
@@ -60,8 +59,8 @@ dependencies:
 ```python
 from fal_serverless import isolated, cached
 
-MODEL_URL = "https://huggingface.co/TheBloke/Vicuna-7B-CoT-GGML/resolve/main/vicuna-7B-cot.ggmlv3.q4_0.bin"
-MODEL_PATH = "/data/models/vicuna-7B-cot.ggmlv3.q4_0.bin"
+MODEL_URL = "https://huggingface.co/TheBloke/Llama-2-13B-chat-GGML/resolve/main/llama-2-13b-chat.ggmlv3.q4_0.bin"
+MODEL_PATH = "/data/models/llama-2-13b-chat.ggmlv3.q4_0.bin"
 
 @isolated(
     kind="conda",
