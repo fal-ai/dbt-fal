@@ -68,7 +68,7 @@ def tta(
     buff = io.BytesIO()
     write(buff, 16000, waveform[0][0])
 
-    return output
+    return buff
 ```
 
 The `tta` function above has the `isolated` decorator, that has three arguments: `requirements`, `machine_type` and `keep_alive`. The `requirements` argument sets our modification of AudioLDM as a package dependency. `machine_type` specifies that the function should run [on a `GPU` machine](../scaling/machine_types), and `keep_alive` makes sure that the target environment [stays alive for 30 seconds](../isolated_functions/keep_alive) after the function execution is complete. So if `tta` is called again within 30 seconds, the target environment is reused.
