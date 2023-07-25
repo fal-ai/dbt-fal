@@ -24,6 +24,15 @@ requirements = [
     "xformers"
 ]
 
+
+def get_image_from_url_as_bytes(url: str) -> bytes:
+    import requests
+
+    response = requests.get(url)
+    # This will raise an exception if the request returned an HTTP error code
+    response.raise_for_status()
+    return response.content
+
 def read_image_bytes(file_path):
     with open(file_path, "rb") as file:
         image_bytes = file.read()
@@ -70,9 +79,10 @@ def resize_image(input_image, resolution):
     requirements=requirements,
     machine_type="GPU",
     keep_alive=30,
+    serve=True
 )
 def generate(
-    image_bytes: bytes, prompt: str, num_samples: int, num_steps: int, gcs=False
+    image_url: str, prompt: str, num_samples: int, num_steps: int, gcs=False
 ) -> list[bytes] | None:
 
     from controlnet_aux import CannyDetector
@@ -80,6 +90,9 @@ def generate(
     import numpy as np
     import uuid
     import os
+    from base64 import b64encode
+
+    image_bytes = get_image_from_url_as_bytes(image_url)
 
     pipe = load_model()
     image = Image.open(io.BytesIO(image_bytes))
@@ -113,7 +126,9 @@ def generate(
     ]
 
     list_of_bytes = [read_image_bytes(out_dir / f) for f in file_names]
-    return list_of_bytes
+    raw_image = list_of_bytes[0]
+
+    return b64encode(raw_image).decode("utf-8")
 ```
 
 ## 2. Deploy the model as an endpoint
@@ -131,7 +146,7 @@ URL: https://user_id-controlnet.gateway.alpha.fal.ai
 
 ## 3. Test it out
 ```bash
-curl https://user_id-controlnet.gateway.alpha.fal.ai/ -H 'content-type: application/json' -H 'accept: application/json, */*;q=0.5' -d '{"image_url":"https://restore.tchabitat.org/hubfs/blog/2019%20Blog%20Images/July/Old%20Kitchen%20Cabinets%20-%20Featured%20Image.jpg","prompt":"scandinavian kitchen","num_samples":1,"num_steps":30}'
+curl https://user_id-controlnet.gateway.alpha.fal.ai/ -H 'content-type: application/json' -H 'accept: application/json' -d '{"image_url":"https://restore.tchabitat.org/hubfs/blog/2019%20Blog%20Images/July/Old%20Kitchen%20Cabinets%20-%20Featured%20Image.jpg","prompt":"scandinavian kitchen","num_samples":1,"num_steps":30}'
 ```
 
 This should return a JSON with the image encoded in base64.
