@@ -62,7 +62,7 @@ dependencies:
 **llama_cpp.py**
 
 ```python
-from fal_serverless import isolated, cached
+from fal_serverless import isolated
 
 MODEL_URL = "https://huggingface.co/TheBloke/Llama-2-13B-chat-GGML/resolve/main/llama-2-13b-chat.ggmlv3.q4_0.bin"
 MODEL_PATH = "/data/models/llama-2-13b-chat.ggmlv3.q4_0.bin"

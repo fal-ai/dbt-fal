@@ -65,7 +65,7 @@ Replace `<userid>` with your user ID (e.g., `123` if your github id is `github|1
 Here's an example of a cURL request to call the served function:
 
 ```bash
-curl -X POST "https://123-d9ff88a9-6ae3-45cf-ab67-022e33e4418e.gateway.alpha.fal.ai" -H "Content-Type: application/json" -H "X-Fal-Key-Id:xxxx" -H "X-Fal-Key-Secret:xxxx" -d '{"str":"str to be returned"}'
+curl -X POST "https://123-d9ff88a9-6ae3-45cf-ab67-022e33e4418e.gateway.alpha.fal.ai" -H "Content-Type: application/json" -H "Authorization: Basic $FAL_KEY_ID:$FAL_KEY_SECRET" -d '{"str":"str to be returned"}'
 ```
 
 ## Expose Function Using Python Web Framework
