@@ -2,6 +2,8 @@
 sidebar_position: 1
 ---
 
+# Model APIs
+
 In 2 short steps, programmatically create a beautiful image using the SDXL model.
 
 **Step 1.** Click on the [Create a Key Pair](https://serverless.fal.ai/dashboard
