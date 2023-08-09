@@ -122,6 +122,11 @@ class DbtTest(_DbtNode):
 class DbtGenericTest(DbtTest):
     column: Optional[str] = field(init=False)
 
+    def __repr__(self):
+        attrs = ["name", "_status", "model_ids", "source_ids", "column"]
+        props = ", ".join([f"{item}={repr(getattr(self, item))}" for item in attrs])
+        return f"DbtGenericTest({props})"
+
     def __post_init__(self):
         assert isinstance(self.node, GenericTestNode)
         self.column = self.node.column_name
