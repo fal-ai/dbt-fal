@@ -27,7 +27,6 @@ Python version to test:
 <!-- Add relevant ones -->
 - 3.8
 <!--
-- 3.7
 - 3.9
 - 3.10
 -->
