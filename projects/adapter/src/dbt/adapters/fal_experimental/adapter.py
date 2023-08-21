@@ -11,7 +11,7 @@ from dbt.config.runtime import RuntimeConfig
 from dbt.contracts.connection import AdapterResponse
 from dbt.flags import get_flags, Namespace
 
-from fal_serverless import FalServerlessHost, isolated
+from fal import FalServerlessHost, isolated
 from dbt.adapters.fal_experimental.utils.environments import (
     EnvironmentDefinition,
     get_default_pip_dependencies

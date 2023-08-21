@@ -10,8 +10,8 @@ from dbt.exceptions import DbtRuntimeError
 from dbt.config.runtime import RuntimeConfig
 
 from isolate.backends import BaseEnvironment, BasicCallable, EnvironmentConnection
-from fal_serverless import FalServerlessKeyCredentials, LocalHost
-from fal_serverless.api import Host, FalServerlessHost
+from fal import FalServerlessKeyCredentials, LocalHost
+from fal.api import Host, FalServerlessHost
 
 from . import cache_static
 from .yaml_helper import load_yaml
@@ -37,7 +37,7 @@ class LocalConnection(EnvironmentConnection):
 
 
 @dataclass
-class EnvironmentDefinition():
+class EnvironmentDefinition:
     host: Host
     kind: str
     config: dict[Any, Any]
@@ -63,12 +63,19 @@ def fetch_environment(
             )
             host = FalServerlessHost(
                 url=credentials.host,
-                credentials=FalServerlessKeyCredentials(credentials.key_id, credentials.key_secret))
-            return EnvironmentDefinition(
-                host=host,
-                kind="virtualenv",
-                machine_type=machine_type,
-                config={"name": "", "type": "venv"}), False
+                credentials=FalServerlessKeyCredentials(
+                    credentials.key_id, credentials.key_secret
+                ),
+            )
+            return (
+                EnvironmentDefinition(
+                    host=host,
+                    kind="virtualenv",
+                    machine_type=machine_type,
+                    config={"name": "", "type": "venv"},
+                ),
+                False,
+            )
 
         return EnvironmentDefinition(host=LocalHost(), kind="local", config={}), True
 
@@ -103,6 +110,7 @@ def load_environments(
     base_dir: str, machine_type: str = "S", credentials: Optional[Any] = None
 ) -> Dict[str, EnvironmentDefinition]:
     import os
+
     fal_project_path = os.path.join(base_dir, "fal_project.yml")
     if not os.path.exists(fal_project_path):
         raise FalParseError(f"{fal_project_path} must exist to define environments")
@@ -149,14 +157,15 @@ def create_environment(
     if credentials.key_secret and credentials.key_id:
         host = FalServerlessHost(
             url=credentials.host,
-            credentials=FalServerlessKeyCredentials(credentials.key_id, credentials.key_secret))
+            credentials=FalServerlessKeyCredentials(
+                credentials.key_id, credentials.key_secret
+            ),
+        )
     else:
         host = LocalHost()
     return EnvironmentDefinition(
-        host=host,
-        kind=kind,
-        config=parsed_config,
-        machine_type=machine_type)
+        host=host, kind=kind, config=parsed_config, machine_type=machine_type
+    )
 
 
 def _is_local_environment(environment_name: str) -> bool:
@@ -167,6 +176,7 @@ def _get_required_key(data: Dict[str, Any], name: str) -> Any:
     if name not in data:
         raise FalParseError("Missing required key: " + name)
     return data[name]
+
 
 def _parse_remote_config(
     config: Dict[str, Any], parsed_config: Dict[str, Any]
@@ -189,12 +199,14 @@ def _parse_remote_config(
         "target_environments": [env_definition],
     }
 
+
 def _get_package_from_type(adapter_type: str):
     SPECIAL_ADAPTERS = {
         # Documented in https://docs.getdbt.com/docs/supported-data-platforms#community-adapters
         "athena": "dbt-athena-community",
     }
     return SPECIAL_ADAPTERS.get(adapter_type, f"dbt-{adapter_type}")
+
 
 def _get_dbt_packages(
     adapter_type: str,
@@ -287,6 +299,7 @@ def get_default_requirements(
     is_remote: bool = False,
 ) -> Iterator[Tuple[str, Optional[str]]]:
     yield from _get_dbt_packages(adapter_type, is_teleport, is_remote)
+
 
 @cache_static
 def get_default_pip_dependencies(

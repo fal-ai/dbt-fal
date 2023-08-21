@@ -41,7 +41,6 @@ on:
         type: choice
         options:
           - "<ALL>"
-          - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
@@ -119,7 +118,6 @@ jobs:
         shell: python
         run: |
           OPTIONS = [
-            "3.7",
             "3.8",
             "3.9",
             "3.10",
