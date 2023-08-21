@@ -112,7 +112,7 @@ def dbt_installed_version():
     """Returns: dbt version"""
     try:
         return pkg_resources.get_distribution("dbt-core").version
-    except ImportError:
+    except pkg_resources.DistributionNotFound:
         return
 
 
@@ -128,7 +128,7 @@ def fal_installed_version():
     """Returns: fal version"""
     try:
         return pkg_resources.get_distribution("dbt-fal").version
-    except ImportError:
+    except pkg_resources.DistributionNotFound:
         return
 
 
