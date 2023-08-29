@@ -22,7 +22,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-dbt-core = ">=1.5,<=1.5.1"
+dbt-core = ">=1.5,<=1.5.5"
 pandas = "^1.3.4"
 posthog = "^1.4.5"
 "backports.functools_lru_cache" = "^1.6.4"
