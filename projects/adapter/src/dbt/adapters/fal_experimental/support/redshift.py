@@ -46,6 +46,7 @@ def write_df_to_relation(
             table=temp_relation.identifier,
             schema=temp_relation.schema,
             index=False,
+            varchar_lengths_default=65535
         )
 
         adapter.cache.add(temp_relation)
