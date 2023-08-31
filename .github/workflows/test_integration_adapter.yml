@@ -28,9 +28,7 @@ jobs:
           - postgres
           - bigquery
           - snowflake
-          - redshift
           # TODO: enable as 1.5 becomes available for following adapters
-          # - athena
           # - trino
           # - duckdb
           # - sqlserver
@@ -45,8 +43,6 @@ jobs:
           - profile: snowflake
             teleport: true
             cloud: true
-          # - profile: redshift
-          #   cloud: true
           - profile: bigquery
             cloud: true
 
@@ -93,10 +89,6 @@ jobs:
           pip install --upgrade pip
 
           ADAPTER_PACKAGE="dbt-${{ matrix.profile }}"
-          if [[ '${{ matrix.profile }}' == 'athena' ]]
-          then
-            ADAPTER_PACKAGE="dbt-athena-community"
-          fi
 
           if [[ -n '${{ matrix.dbt_version }}' ]]
           then
@@ -152,20 +144,6 @@ jobs:
           SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
           # Duckdb
           DB_PATH: ${{ github.workspace }}/duck.db
-          # Redshift
-          RS_HOST: ${{ secrets.RS_HOST }}
-          RS_PORT: ${{ secrets.RS_PORT }}
-          RS_USER: ${{ secrets.RS_USER }}
-          RS_PASSWORD: ${{ secrets.RS_PASSWORD }}
-          RS_DBNAME: ${{ secrets.RS_DBNAME }}
-          RS_SCHEMA: ${{ secrets.RS_SCHEMA }}
-          # Athena
-          ATHENA_S3_STAGING_DIR: ${{ secrets.ATHENA_S3_STAGING_DIR }}
-          ATHENA_REGION: ${{ secrets.ATHENA_REGION }}
-          ATHENA_WORK_GROUP: ${{ secrets.ATHENA_WORK_GROUP }}
-          ATHENA_PROFILE: ${{ secrets.ATHENA_PROFILE }}
-          ATHENA_DATABASE: ${{ secrets.ATHENA_DATABASE }}
-          ATHENA_SCHEMA: ${{ secrets.ATHENA_SCHEMA }}
         run: |
           source .venv/bin/activate
 
@@ -184,14 +162,6 @@ jobs:
             #   database: "{{ env_var('DBT_DATABASE', 'test') }}"
             #   schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
             export DBT_DATABASE="" DBT_SCHEMA=""
-          fi
-          if [[ '${{ matrix.profile }}' == "redshift" ]]
-          then
-            export DBT_DATABASE="$RS_DBNAME" DBT_SCHEMA="$RS_SCHEMA"
-          fi
-          if [[ '${{ matrix.profile }}' == "athena" ]]
-          then
-            export DBT_DATABASE="$ATHENA_DATABASE" DBT_SCHEMA="$ATHENA_SCHEMA"
           fi
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
