@@ -3,14 +3,14 @@
 dbt-fal is the easiest way to run Python with your [dbt](https://www.getdbt.com/) project.
 
 <p align="center">
-  <a href="https://fal.ai#signup">
-    <img src="https://badgen.net/badge/icon/Sign%20up%20for%20fal%20Cloud/purple?icon=terminal&label" alt="fal Cloud" />
+  <a href="https://fal.ai">
+    <img src="https://badgen.net/badge/icon/Sign%20up%20for%20fal%20Serverless/purple?icon=terminal&label" alt="fal Serverless" />
   </a>&nbsp;
-  <a href="https://pepy.tech/project/fal">
-    <img src="https://static.pepy.tech/personalized-badge/fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads" alt="Total downloads" />
+  <a href="https://pepy.tech/project/dbt-fal">
+    <img src="https://static.pepy.tech/personalized-badge/dbt-fal?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads" alt="Total downloads" />
   </a>&nbsp;
-  <a href="https://pypi.org/project/fal/">
-    <img src="https://badge.fury.io/py/fal.svg" alt="fal on PyPI" />
+  <a href="https://pypi.org/project/dbt-fal/">
+    <img src="https://badge.fury.io/py/dbt-fal.svg" alt="dbt-fal on PyPI" />
   </a>&nbsp;
   <a href="https://getdbt.slack.com/archives/C02V8QW3Q4Q">
     <img src="https://badgen.net/badge/icon/%23tools-fal%20on%20dbt%20Slack/orange?icon=slack&label" alt="Slack channel" />
