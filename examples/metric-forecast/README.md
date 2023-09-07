@@ -19,7 +19,7 @@ meta:
 
 ## Make a forecast
 
-First, we write a function that will fit a given DataFrame and make a prediction based on that fit. Assuming we already have a DataFrame with histotic data, fitting this data using prophet is done like this:
+First, we write a function that will fit a given DataFrame and make a prediction based on that fit. Assuming we already have a DataFrame with historic data, fitting this data using prophet is done like this:
 
 ```python
 from fbprophet import Prophet
