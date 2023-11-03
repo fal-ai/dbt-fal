@@ -29,9 +29,7 @@ on:
           - postgres
           - bigquery
           - snowflake
-          - redshift
           - duckdb
-          - athena
           - fal
 
       python:
@@ -72,9 +70,7 @@ jobs:
             'fal'
           ]
           EXTRA_OPTIONS = [
-            'redshift',
             'duckdb',
-            'athena',
           ]
           OUTPUT = OPTIONS
 
@@ -211,18 +207,8 @@ jobs:
 
       - name: Start Docker database
         working-directory: projects/adapter/cli_tests
-        # TODO: make redshift use a real connection
-        if: contains(fromJSON('["redshift", "postgres", "fal"]'), matrix.profile)
+        if: contains(fromJSON('["postgres", "fal"]'), matrix.profile)
         run: docker-compose up -d
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        # TODO: make redshift use a real connection
-        if: contains(fromJSON('["redshift", "athena"]'), matrix.profile)
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
 
       - name: Install conda
         uses: s-weigand/setup-conda@v1
@@ -245,14 +231,6 @@ jobs:
           KEYFILE: ${{ secrets.GCP_SA_KEY }}
           GCLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
           BQ_DATASET: ${{ secrets.BQ_DATASET }}
-          # Redshift
-          # TODO: change to {{ secrets.* }} when testing with real Redshift
-          RS_DB_NAME: test
-          RS_SCHEMA: dbt_fal
-          RS_HOST: localhost
-          RS_PASSWORD: pass
-          RS_PORT: 5432
-          RS_USER: pguser
           # Snowflake
           SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
           SF_USER: ${{ secrets.SF_USER }}
@@ -263,22 +241,11 @@ jobs:
           SF_SCHEMA: ${{ secrets.SF_SCHEMA }}
           # Duckdb
           DB_PATH: ${{ github.workspace }}/duck.db
-          # Athena
-          ATHENA_S3_STAGING_DIR: ${{ secrets.ATHENA_S3_STAGING_DIR }}
-          ATHENA_REGION: ${{ secrets.ATHENA_REGION }}
-          ATHENA_WORK_GROUP: ${{ secrets.ATHENA_WORK_GROUP }}
-          ATHENA_PROFILE: ${{ secrets.ATHENA_PROFILE }}
-          ATHENA_DATABASE: ${{ secrets.ATHENA_DATABASE }}
-          ATHENA_SCHEMA: ${{ secrets.ATHENA_SCHEMA }}
         run: |
           # Database and schema setup for sources
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
           then
             export DBT_DATABASE="$GCLOUD_PROJECT" DBT_SCHEMA="$BQ_DATASET"
-          fi
-          if [[ '${{ matrix.profile }}' == "redshift" ]]
-          then
-            export DBT_DATABASE="$RS_DB_NAME" DBT_SCHEMA="$RS_SCHEMA"
           fi
           if [[ '${{ matrix.profile }}' == "snowflake" ]]
           then
@@ -290,10 +257,6 @@ jobs:
             #   database: "{{ env_var('DBT_DATABASE', 'test') }}"
             #   schema: "{{ env_var('DBT_SCHEMA', 'dbt_fal') }}"
             export DBT_DATABASE="" DBT_SCHEMA=""
-          fi
-          if [[ '${{ matrix.profile }}' == "athena" ]]
-          then
-            export DBT_DATABASE="$ATHENA_DATABASE" DBT_SCHEMA="$ATHENA_SCHEMA"
           fi
 
           if [[ '${{ matrix.profile }}' == "bigquery" ]]
