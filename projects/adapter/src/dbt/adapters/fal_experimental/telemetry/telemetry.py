@@ -182,6 +182,10 @@ def check_stats_enabled() -> bool:
     2. If DO_NOT_TRACK is defined, check its value
     3. Otherwise use the value in stats_enabled in the config.yaml file
     """
+
+    # Disable telemetry entirely for now
+    return False
+
     if "FAL_STATS_ENABLED" in os.environ:
         val = os.environ["FAL_STATS_ENABLED"].lower().strip()
         return val != "0" and val != "false" and val != ""
