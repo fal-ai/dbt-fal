@@ -12,9 +12,9 @@ on:
     paths:
       - "projects/adapter/**"
 
-  schedule:
+  # schedule:
     # every monday
-    - cron: "0 0 * * 1"
+    # - cron: "0 0 * * 1"
 
   workflow_dispatch:
 
