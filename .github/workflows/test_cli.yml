@@ -19,9 +19,9 @@ jobs:
           - "3.8"
           # - "3.9"
           - "3.10"
-          # - "3.11"
+          - "3.11"
         dbt:
-          - "1.5.*"
+          - "1.7.*"
 
     # Run only the latest commit pushed to PR
     concurrency:
