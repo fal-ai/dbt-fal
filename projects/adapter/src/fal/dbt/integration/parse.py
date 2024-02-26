@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, List, Dict, Optional, Union, TYPE_CHECKING
 
 from dbt.contracts.project import Project as ProjectContract
-from dbt.config import RuntimeConfig, Project
+from dbt.config import RuntimeConfig, Project, PartialProject
 from dbt.config.utils import parse_cli_vars as dbt_parse_cli_vars
 from dbt.contracts.graph.manifest import Manifest
 from dbt.contracts.results import RunResultsArtifact, FreshnessExecutionResultArtifact
@@ -47,7 +47,7 @@ class RuntimeArgs:
 
 
 def load_dbt_project_contract(project_dir: str) -> ProjectContract:
-    partial_project = Project.partial_load(project_dir)
+    partial_project = PartialProject.from_project_root(project_dir)
     contract = ProjectContract.from_dict(partial_project.project_dict)
     if not hasattr(contract, "model_paths") or contract.model_paths is None:
         setattr(contract, "model_paths", contract.source_paths)
