@@ -436,6 +436,7 @@ class CompileArgs:
     models: List[str]
     exclude: Tuple[str]
     state: Optional[Path]
+    defer_state: Optional[Path]
     single_threaded: Optional[bool]
 
 
@@ -453,6 +454,7 @@ class FalDbt:
         selector: Optional[str] = None,
         threads: Optional[int] = None,
         state: Optional[str] = None,
+        defer_state: Optional[str] = None,
         profile_target: Optional[str] = None,
         args_vars: str = "{}",
         generated_models: Dict[str, Path] = {},
@@ -485,8 +487,12 @@ class FalDbt:
         self.profiles_dir = flags.PROFILES_DIR
 
         self._state = None
+        self._defer_state = None
         if state is not None:
             self._state = Path(os.path.realpath(os.path.expanduser(state)))
+
+        if defer_state is not None:
+            self._defer_state = Path(os.path.realpath(os.path.expanduser(defer_state)))
 
         self.scripts_dir = parse.get_scripts_dir(self.project_dir, args_vars)
 
@@ -525,7 +531,7 @@ class FalDbt:
         # Necessary for manifest loading to not fail
         # dbt.tracking.initialize_tracking(self.profiles_dir)
 
-        args = CompileArgs(selector, select, select, exclude, self._state, None)
+        args = CompileArgs(selector, select, select, exclude, self._state, self._defer_state, None)
         self._compile_task = CompileTask(args, self._config, native_manifest)
 
         self._compile_task._runtime_initialize()

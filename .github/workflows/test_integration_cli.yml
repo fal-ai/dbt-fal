@@ -52,7 +52,7 @@ on:
         options:
           - "<ALL>"
           - "latest"
-          - "1.5.*"
+          - "1.7.*"
 
 jobs:
   matrix-adapter:
@@ -163,7 +163,7 @@ jobs:
         shell: python
         run: |
           OPTIONS = [
-            "1.5.*",
+            "1.7.*",
           ]
           OUTPUT = OPTIONS
 

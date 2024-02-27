@@ -14,8 +14,11 @@ def create_fal_dbt(
     args: argparse.Namespace, generated_models: Dict[str, Path] = {}
 ) -> FalDbt:
     real_state = None
+    real_defer_state = None
     if hasattr(args, "state") and args.state is not None:
         real_state = args.state
+    if hasattr(args, "real_defer_state") and args.defer_state is not None:
+        real_defer_state = args.state
 
     return FalDbt(
         args.project_dir,
@@ -25,6 +28,7 @@ def create_fal_dbt(
         args.selector,
         args.threads,
         real_state,
+        real_defer_state,
         args.target,
         args.vars,
         generated_models,
