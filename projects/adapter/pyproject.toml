@@ -43,6 +43,7 @@ dill = "0.3.7"
 sqlalchemy = "^1.4.41"
 
 # https://github.com/dbt-labs/dbt-core/issues/9566
+# TODO: Remove when this project advances to dbt-core 1.8.x
 protobuf = ">=4.0.0,<5"
 
 # Adapters
