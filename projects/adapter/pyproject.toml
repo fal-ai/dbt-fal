@@ -42,6 +42,9 @@ dill = "0.3.7"
 # dbt-fal
 sqlalchemy = "^1.4.41"
 
+# https://github.com/dbt-labs/dbt-core/issues/9566
+protobuf = ">=4.0.0,<5"
+
 # Adapters
 
 ## snowflake
