@@ -683,6 +683,7 @@ class FalDbt:
     ) -> ManifestNode:
         # HACK: always setting node package as self.project_dir
         target_model: MaybeNonSource = self._manifest.native_manifest.resolve_ref(
+            None,
             target_model_name,
             target_package_name,
             None,
