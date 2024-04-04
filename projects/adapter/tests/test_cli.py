@@ -96,7 +96,7 @@ def test_flow_run_with_project_dir(capfd):
         )
 
         executing_re = re.compile(
-            r": dbt run --threads 1 --project-dir [\w\d\/\-\_]+ --profiles-dir [\w\d\/\-\_]+tests/mock/mockProfile"
+            r": dbt run --threads 1 --project-dir [\w\d\/\-\_]+ --profiles-dir [\w\d\/\-\_\.]+tests/mock/mockProfile"
         )
         found = executing_re.findall(captured.out)
         # We run each model separately
@@ -118,7 +118,7 @@ def test_flow_run_with_project_dir_and_select(capfd):
         )
 
         executing_re = re.compile(
-            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile \--select|\--models model_with_before_scripts"
+            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_\.]+tests/mock/mockProfile \--select|\--models model_with_before_scripts"
         )
         found = executing_re.findall(captured.out)
         assert len(found) == 1
@@ -144,7 +144,7 @@ def test_flow_run_with_defer(capfd):
         )
 
         executing_re = re.compile(
-            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile --defer --state [\w\/\-\_]+/target"
+            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_\.]+tests/mock/mockProfile --defer --state [\w\/\-\_]+/target"
         )
         found = executing_re.findall(captured.out)
         # We run each model separately
@@ -166,7 +166,7 @@ def test_flow_run_with_full_refresh(capfd):
         )
 
         executing_re = re.compile(
-            r": dbt run --threads 1 --project-dir [\w\d\/\-\_]+ --profiles-dir [\w\d\/\-\_]+tests/mock/mockProfile --full-refresh"
+            r": dbt run --threads 1 --project-dir [\w\d\/\-\_]+ --profiles-dir [\w\d\/\-\_\.]+tests/mock/mockProfile --full-refresh"
         )
         found = executing_re.findall(captured.out)
         # We run each model separately
@@ -189,7 +189,7 @@ def test_flow_run_with_vars(capfd):
         )
 
         executing_re = re.compile(
-            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_]+tests/mock/mockProfile --vars " + var_str
+            r": dbt run --threads 1 --project-dir [\w\/\-\_]+ --profiles-dir [\w\/\-\_\.]+tests/mock/mockProfile --vars " + var_str
         )
         found = executing_re.findall(captured.out)
         # We run each model separately
