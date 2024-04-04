@@ -67,7 +67,7 @@ def test_run_with_project_dir(capfd):
         # TODO: should it run without a run_results and no selection flags?
         cli([
             # fmt: off
-            "fal", "run",
+            "fal", "run", "--all",
             "--project-dir", tmp_dir,
             "--profiles-dir", profiles_dir,
             # fmt: on
