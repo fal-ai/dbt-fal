@@ -252,7 +252,7 @@ def test_selection(capfd):
 
 def test_no_run_results(capfd):
     with ProjectTemporaryDirectory() as tmp_dir:
-        shutil.rmtree(os.path.join(tmp_dir, "mockTarget"))
+        shutil.rmtree(os.path.join(tmp_dir, "mockTarget"), ignore_errors=True)
 
         # Without selection flag
         captured = _run_fal(
