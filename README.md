@@ -22,7 +22,13 @@ dbt-fal is the easiest way to run Python with your [dbt](https://www.getdbt.com/
 
 # 🌅 Sunset Announcement
 
-As of April 2024, **dbt-fal** has been officially sunsetted. This strategic pivot allows our team to focus on creating [the world's first generative media platform for developers](https://fal.ai) — a venture we believe in passionately. This decision was made after careful consideration, and we want to extend our sincerest gratitude to all our users and contributors who have been part of this journey. Together, we've achieved remarkable things, and we look forward to continuing this journey of innovation with you.
+**Hey everyone!**
+
+Just wanted to drop in and share some news: as of April 2024, we’re saying goodbye to dbt-fal. Yep, it’s been quite the ride, but we’re switching gears to pour all our energy into something super exciting – creating the first-ever generative media platform for developers over at [fal.ai](https://fal.ai)! 🚀 We’re all in on this and can’t wait to see where it takes us.
+
+**Big thanks** to every single one of you who’s been with us on the dbt-fal adventure. Your support and contributions mean the world. We’ve done some awesome stuff together, and this isn’t the end. Just a new chapter. So, here’s to more amazing things ahead, and we’re stoked to have you join us for the ride.
+
+Cheers!
 
 ## ❗ What Does This Mean?
 
