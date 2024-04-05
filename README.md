@@ -22,7 +22,7 @@ dbt-fal is the easiest way to run Python with your [dbt](https://www.getdbt.com/
 
 # 🌅 Sunset Announcement
 
-As of April 2024, **dbt-fal** has been officially sunsetted. This decision was made after careful consideration, and we want to extend our sincerest gratitude to all our users and contributors who have been part of this journey. While it's always tough to say goodbye, we're proud of what we've accomplished together.
+As of April 2024, **dbt-fal** has been officially sunsetted. This strategic pivot allows our team to focus on creating the [world's first generative media platform specifically designed for developers](https://fal.ai) — a venture we believe in passionately. This decision was made after careful consideration, and we want to extend our sincerest gratitude to all our users and contributors who have been part of this journey. While it's always tough to say goodbye, we're proud of what we've accomplished together.
 
 ## ❗ What Does This Mean?
 
