@@ -45,7 +45,7 @@ Yes, the project will remain available for use, but please be aware that no new 
 Unfortunately, none that we are aware of.
 
 ### I have more questions. Who can I talk to?
-Please feel free to contact us on our [discord](https://fal.ai/).
+If you want to talk about dbt Python support, the best place to do so is the dbt Slack community. For other questions, reach out to hello@fal.ai
 
 ## 🙌 Special Thanks
 We want to take a moment to thank everyone who contributed to dbt-fal, from our amazing contributors and users to anyone who spread the word about our project. Your support was invaluable.
