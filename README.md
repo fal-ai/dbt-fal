@@ -20,6 +20,30 @@ dbt-fal is the easiest way to run Python with your [dbt](https://www.getdbt.com/
   </a>
 </p>
 
+# 🌅 Sunset Announcement
+
+As of April 2024, **dbt-fal** has been officially sunsetted. This decision was made after careful consideration, and we want to extend our sincerest gratitude to all our users and contributors who have been part of this journey. While it's always tough to say goodbye, we're proud of what we've accomplished together.
+
+## ❗ What Does This Mean?
+
+- **No Further Development:** The project will no longer receive updates or new features.
+- **Security Vulnerabilities:** We will not be addressing new security vulnerabilities after April 8 2024. We advise users to consider this when deciding to continue the use of the project.
+- **Archival:** The repository will be archived, making it read-only. While the code will remain accessible for educational and historical purposes, we encourage users to fork the repository if they wish to continue development on their own.
+
+## 💬 FAQ
+
+### Can I still use dbt-fal?
+Yes, the project will remain available for use, but please be aware that no new updates or security patches will be provided moving forward.
+
+### What are some alternatives to dbt-fal?
+Unfortunately, none that we are aware of.
+
+### I have more questions. Who can I talk to?
+Please feel free to contact us on our [discord](https://fal.ai/).
+
+## 🙌 Special Thanks
+We want to take a moment to thank everyone who contributed to dbt-fal, from our amazing contributors and users to anyone who spread the word about our project. Your support was invaluable.
+
 # Introduction - 📖 [README](./projects/adapter)
 
 The dbt-fal ecosystem has two main components: The command line and the adapter.
