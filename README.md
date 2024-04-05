@@ -20,6 +20,36 @@ dbt-fal is the easiest way to run Python with your [dbt](https://www.getdbt.com/
   </a>
 </p>
 
+# 🌅 Sunset Announcement
+
+**Hey everyone!**
+
+Just wanted to drop in and share some news: as of April 2024, we’re saying goodbye to dbt-fal. Yep, it’s been quite the ride, but we’re switching gears to pour all our energy into something super exciting – creating the first-ever generative media platform for developers over at [fal.ai](https://fal.ai)! 🚀 We’re all in on this and can’t wait to see where it takes us.
+
+**Big thanks** to every single one of you who’s been with us on the dbt-fal adventure. Your support and contributions mean the world. We’ve done some awesome stuff together, and this isn’t the end. Just a new chapter. So, here’s to more amazing things ahead, and we’re stoked to have you join us for the ride.
+
+Cheers!
+
+## ❗ What Does This Mean?
+
+- **No Further Development:** The project will no longer receive updates or new features.
+- **Security Vulnerabilities:** We will not be addressing new security vulnerabilities after April 8, 2024. We advise users to consider this when deciding to continue the use of the project.
+- **Archival:** The repository will be archived, making it read-only. While the code will remain accessible for educational and historical purposes, we encourage users to fork the repository if they wish to continue development on their own.
+
+## 💬 FAQ
+
+### Can I still use dbt-fal?
+Yes, the project will remain available for use, but please be aware that no new updates or security patches will be provided moving forward.
+
+### What are some alternatives to dbt-fal?
+Unfortunately, none that we are aware of.
+
+### I have more questions. Who can I talk to?
+If you want to talk about dbt Python support, the best place to do so is the [dbt Slack community](https://www.getdbt.com/community/join-the-community). For other questions, feel free to reach out to hello@fal.ai
+
+## 🙌 Special Thanks
+We want to take a moment to thank everyone who contributed to dbt-fal, from our amazing contributors and users to anyone who spread the word about our project. Your support was invaluable.
+
 # Introduction - 📖 [README](./projects/adapter)
 
 The dbt-fal ecosystem has two main components: The command line and the adapter.
