@@ -27,7 +27,7 @@ As of April 2024, **dbt-fal** has been officially sunsetted. This strategic pivo
 ## ❗ What Does This Mean?
 
 - **No Further Development:** The project will no longer receive updates or new features.
-- **Security Vulnerabilities:** We will not be addressing new security vulnerabilities after April 8 2024. We advise users to consider this when deciding to continue the use of the project.
+- **Security Vulnerabilities:** We will not be addressing new security vulnerabilities after April 8, 2024. We advise users to consider this when deciding to continue the use of the project.
 - **Archival:** The repository will be archived, making it read-only. While the code will remain accessible for educational and historical purposes, we encourage users to fork the repository if they wish to continue development on their own.
 
 ## 💬 FAQ
