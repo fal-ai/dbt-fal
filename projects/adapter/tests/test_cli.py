@@ -1,5 +1,6 @@
 import inspect
 import os
+from pathlib import Path
 import re
 import shutil
 import tempfile
@@ -252,7 +253,9 @@ def test_selection(capfd):
 
 def test_no_run_results(capfd):
     with ProjectTemporaryDirectory() as tmp_dir:
-        shutil.rmtree(os.path.join(tmp_dir, "mockTarget"), ignore_errors=True)
+        p = Path(os.path.join(tmp_dir, "mockTarget"))
+        if p.exists():
+            shutil.rmtree(p)
 
         # Without selection flag
         captured = _run_fal(
